@@ -1,0 +1,32 @@
+"use client"
+
+import { AlertCircle, RefreshCw } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+
+interface ApiStatusBannerProps {
+  onRetry?: () => void
+}
+
+export function ApiStatusBanner({ onRetry }: ApiStatusBannerProps) {
+  return (
+    <Alert variant="destructive" className="mb-6">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>API холбогдох боломжгүй байна</AlertTitle>
+      <AlertDescription className="mt-2 space-y-2">
+        <p>Backend API-тай холбогдож чадсангүй. Дараах зүйлсийг шалгаарай:</p>
+        <ul className="ml-4 list-disc space-y-1 text-sm">
+          <li>Backend server ажиллаж байгаа эсэх</li>
+          <li>NEXT_PUBLIC_API_BASE_URL environment variable зөв тохируулсан эсэх</li>
+          <li>CORS тохиргоо зөв байгаа эсэх</li>
+        </ul>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry} className="mt-2 bg-transparent">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Дахин оролдох
+          </Button>
+        )}
+      </AlertDescription>
+    </Alert>
+  )
+}
