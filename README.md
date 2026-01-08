@@ -31,6 +31,5 @@ Continue building your app on:
 
 ## Environment variables
 
-- `NEXT_PUBLIC_API_BASE`: Backend API base URL (e.g. `https://api.jkmcopilot.com`).
+- `NEXT_PUBLIC_API_BASE_URL`: Backend API base URL (e.g. `https://api.jkmcopilot.com`).
   - If not set, the app falls back to `https://api.jkmcopilot.com`.
-- Legacy fallback: `NEXT_PUBLIC_API_BASE_URL` is also supported.

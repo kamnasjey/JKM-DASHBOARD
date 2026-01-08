@@ -17,7 +17,7 @@ export function ApiStatusBanner({ onRetry }: ApiStatusBannerProps) {
         <p>Backend API-тай холбогдож чадсангүй. Дараах зүйлсийг шалгаарай:</p>
         <ul className="ml-4 list-disc space-y-1 text-sm">
           <li>Backend server ажиллаж байгаа эсэх</li>
-          <li>NEXT_PUBLIC_API_BASE (эсвэл NEXT_PUBLIC_API_BASE_URL) environment variable зөв тохируулсан эсэх</li>
+          <li>NEXT_PUBLIC_API_BASE_URL environment variable зөв тохируулсан эсэх</li>
           <li>CORS тохиргоо зөв байгаа эсэх</li>
         </ul>
         {onRetry && (
