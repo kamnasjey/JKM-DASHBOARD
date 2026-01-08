@@ -67,7 +67,7 @@ export function TargetAudience() {
         <p className="text-lg font-medium md:text-xl">
           JKM бол таны оронд trade хийдэг бот биш.
           <br />
-          <span className="text-primary">Таныг илүү ухаантай трейдер болгодог AI.</span>
+          <span className="text-primary">Таныг дараагийн түвшний трейдэр болгох багаж юм.</span>
         </p>
       </div>
     </section>

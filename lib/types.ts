@@ -1,96 +1,87 @@
-// Core types for JKM Trading AI
-
 export interface User {
   user_id: string
   email: string
   name: string
   telegram_handle?: string
-  strategy_note?: string
-  is_admin?: boolean
   created_at?: number
 }
 
-export interface Metrics {
-  user_id: string
+export interface DashboardMetrics {
   wins: number
   losses: number
   pending: number
-  expired: number
   total: number
-  decided: number
   winrate: number
+  last_scan_time?: number
+  next_scan_time?: number
+  active_setups?: number
 }
 
-export interface SignalPayloadPublicV1 {
+export interface SetupMatch {
   signal_id: string
   created_at: number
   user_id: string
   symbol: string
+  market: "FX" | "Crypto"
   tf: string
-  status: "OK" | "NONE"
-  direction: "BUY" | "SELL" | "NA"
-  entry: number | null
-  sl: number | null
-  tp: number | null
-  rr: number | null
-  explain: Record<string, any>
+  setup_name: string
+  status: "FOUND" | "ACTIVE" | "CLOSED"
+  direction?: "BUY" | "SELL"
+  entry?: number
+  sl?: number
+  tp?: number
+  rr?: number
   evidence: Record<string, any>
-  chart_drawings: ChartDrawing[]
+  fail_reasons?: string[]
 }
 
-export interface ChartDrawing {
-  object_id: string
-  kind: "line" | "box" | "label"
-  type: string
-  label?: string
-  price?: number
-  price_from?: number
-  price_to?: number
+export interface SetupRule {
+  id: string
+  type: "SMA_CROSS" | "EMA_CROSS" | "RSI" | "BREAKOUT" | "VOLUME_SPIKE"
+  params: Record<string, any>
+  operator?: "AND" | "OR"
 }
 
-export interface Annotations {
-  symbol: string
-  has_setup: boolean
-  levels: any[]
-  zones: any[]
-  fiboZones: any[]
-  reasons: string[]
-}
-
-export interface Strategy {
+export interface Setup {
+  id: string
   name: string
-  description?: string
-  enabled?: boolean
-  parameters?: Record<string, any>
+  market: "FX" | "Crypto" | "Both"
+  symbols: string[]
+  timeframe: string
+  cadence: number // minutes
+  rules: SetupRule[]
+  risk_params?: {
+    max_risk_pct?: number
+    min_rr?: number
+  }
+  notifications?: {
+    telegram?: boolean
+    email?: boolean
+  }
+  status: "Active" | "Paused"
+  created_at: number
+  updated_at?: number
 }
 
 export interface StrategiesResponse {
   schema_version: number
   user_id: string
-  strategies: Strategy[]
+  strategies: Setup[]
 }
 
-export interface Profile {
-  user_id: string
-  name: string
-  email: string
-  telegram_handle?: string
-  strategy_note?: string
-  preferences?: Record<string, any>
+export interface BacktestResult {
+  setup_id: string
+  period: string
+  total_matches: number
+  wins: number
+  losses: number
+  winrate: number
+  avg_rr: number
 }
 
-// Client-side types
-export interface RiskSettings {
-  riskPerTrade: number // percentage
-  maxDailyLoss: number // percentage
-  maxOpenPositions: number
-  preferredRRMin: number
-}
-
-export interface JourneyProgress {
-  level: "Beginner" | "Intermediate" | "Pro"
-  xp: number
-  completedMissions: string[]
-  badges: string[]
-  streak: number
+export interface LogEntry {
+  timestamp: number
+  level: "INFO" | "WARN" | "ERROR"
+  message: string
+  details?: any
 }

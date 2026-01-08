@@ -5,36 +5,35 @@ export function HowItWorks() {
   const steps = [
     {
       number: "01",
-      title: "Арга барилаа оруулна",
-      description: "Setup-аа ямар үед гэж үздэгээ бичнэ: бүтэц, zone, invalidation, RR гэх мэт шалгуурууд.",
+      title: "Нөхцөлөө тодорхойлох",
+      description:
+        "Setup-аа ямар үед гэж үздэгээ бичнэ: бүтэц, zone, invalidation, RR гэх мэт шалгуурууд. Жишээ нь: 'EMA 9-20 cross болоод support зураглал дээр буцаж давхцсан байх'.",
       icon: FileEdit,
     },
     {
       number: "02",
-      title: "24/7 давтамжтай scan",
-      description: "Зах зээлийг (жишээ нь: 5 минут тутам) шалгаж, таны нөхцөл таарч байгаа эсэхийг хянана.",
+      title: "JKM Bot давтамжтай шалгана",
+      description: "Зах зээлийг (жишээ нь: 5 минут тутам) scan хийж, таны оруулсан нөхцөл таарч байгаа эсэхийг хянана.",
       icon: Radio,
     },
     {
       number: "03",
-      title: "Setup таарвал — боломж гэж гаргана",
+      title: "Setup таарвал SETUP FOUND гэж гаргана",
       description:
         "JKM нь BUY/SELL тулгахгүй. Setup-ийн зураглал, invalidation бүс, RR зэрэг шийдвэр гаргахад хэрэгтэй мэдээллийг цэгцэлж харуулна.",
       icon: Target,
-      example: "BTCUSDT • 5m • SETUP FOUND",
     },
     {
       number: "04",
-      title: "Why / Why-not (fail_reason + evidence)",
+      title: "Why / Why-not харуулна",
       description:
-        "Таарсан эсвэл таараагүй шалтгааныг товч, ойлгомжтой тэмдэглэнэ: юу нь дутуу байв (fail_reason), юугаар нотолж байна (evidence).",
+        "Setup таарсан эсвэл таараагүй шалтгааныг товч, ойлгомжтой тэмдэглэнэ: юу нь дутуу байв (fail_reason), юугаар нотолж байна (evidence).",
       icon: MessageSquare,
-      example: "fail_reason = 'confirmation дутуу' • evidence = 'zone байгаа ч close батлаагүй'",
     },
     {
       number: "05",
-      title: "Backtest + review",
-      description: "Арга барилаа өнгөрсөн өгөг дээр шалгаад, үр дүнгээ харан засварлаж сайжруулна.",
+      title: "Backtest болон Review",
+      description: "Арга барилаа өнгөрсөн өгөгдөл дээр шалгаад, үр дүнгээ харан засварлаж сайжруулна.",
       icon: LineChart,
     },
   ]
@@ -44,15 +43,18 @@ export function HowItWorks() {
       <div className="mb-12 text-center">
         <h2 className="mb-4 text-3xl font-bold md:text-4xl">Яаж ажилладаг вэ?</h2>
         <p className="text-lg text-muted-foreground">
-          Та нөхцлөө оруулна. JKM нь түүнийг 24/7 давтамжтай шалгаж, setup-ийг ойлгомжтой байдлаар харуулна.
+          5 алхамтай энгийн процесс — та нөхцлөө оруулна, JKM нь 24/7 шалгаад таарвал мэдэгдэнэ.
         </p>
       </div>
 
-      <div className="mb-8 grid gap-6 md:grid-cols-2">
+      <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {steps.map((step, idx) => {
           const Icon = step.icon
           return (
-            <Card key={idx} className="relative rounded-2xl border-border/50 bg-card/50 backdrop-blur">
+            <Card
+              key={idx}
+              className={`relative rounded-2xl border-border/50 bg-card/50 backdrop-blur ${idx === 4 ? "md:col-span-2 lg:col-span-1" : ""}`}
+            >
               <CardContent className="pt-6">
                 <div className="mb-4 flex items-start justify-between">
                   <div className="text-5xl font-bold text-primary/20">{step.number}</div>
@@ -62,7 +64,6 @@ export function HowItWorks() {
                 </div>
                 <h3 className="mb-2 text-xl font-bold">{step.title}</h3>
                 <p className="text-pretty text-sm text-muted-foreground">{step.description}</p>
-                {step.example && <p className="mt-2 text-xs text-muted-foreground/60">Жишээ: {step.example}</p>}
               </CardContent>
             </Card>
           )
