@@ -1,6 +1,7 @@
 import { getToken, clearToken } from "./auth"
+import { API_BASE_URL } from "./config"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+export { getToken, setToken, clearToken } from "./auth"
 
 export interface ApiError {
   message: string
@@ -29,8 +30,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
     if (response.status === 401) {
       clearToken()
-      if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-        window.location.href = "/login"
+      if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/login")) {
+        window.location.href = "/auth/login"
       }
       throw new Error("Unauthorized")
     }
@@ -95,6 +96,9 @@ export const authApi = {
 
   me: () => apiFetch<any>("/api/auth/me"),
 }
+
+// Backward-compatible alias for older imports
+export const auth = authApi
 
 export const api = {
   getMetrics: () => apiFetch<any>("/api/metrics"),

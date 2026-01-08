@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { authApi } from "@/lib/api"
+import { API_BASE_URL } from "@/lib/config"
 import { useToast } from "@/hooks/use-toast"
 import { User, Database, Trash2 } from "lucide-react"
 
@@ -73,7 +74,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>API Base URL</Label>
-              <Input value={process.env.NEXT_PUBLIC_API_BASE_URL || "Not set"} disabled />
+              <Input value={API_BASE_URL || "Not set"} disabled />
             </div>
             <p className="text-xs text-muted-foreground">
               Environment variable-аас уншсан. Өөрчлөх бол .env.local файлыг засна.

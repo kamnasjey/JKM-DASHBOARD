@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { API_BASE_URL } from "@/lib/config"
 
 export function Footer() {
   return (
@@ -49,7 +50,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"}/health`}
+                  href={`${API_BASE_URL}/health`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-foreground transition-colors"

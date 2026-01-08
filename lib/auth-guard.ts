@@ -2,16 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null
-  return localStorage.getItem("jkm_ai_session_v1")
-}
-
-export function clearToken(): void {
-  if (typeof window === "undefined") return
-  localStorage.removeItem("jkm_ai_session_v1")
-}
+import { getToken } from "@/lib/auth"
 
 export function useAuthGuard(requireAuth = true) {
   const router = useRouter()
