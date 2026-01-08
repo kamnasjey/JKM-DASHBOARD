@@ -6,8 +6,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardSidebar } from "./dashboard-sidebar"
 import { DashboardTopbar } from "./dashboard-topbar"
-import { useUser } from "@/hooks/use-user"
-import { getToken } from "@/lib/api"
+import { useSession } from "next-auth/react"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -15,17 +14,16 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter()
-  const { user, loading } = useUser()
+  const { data: session, status } = useSession()
   const [selectedSymbol, setSelectedSymbol] = useState("EURUSD")
 
   useEffect(() => {
-    const token = getToken()
-    if (!loading && !token) {
-      router.push("/auth/login")
+    if (status === "unauthenticated") {
+      router.push("/login")
     }
-  }, [loading, router])
+  }, [router, status])
 
-  if (loading) {
+  if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -35,15 +33,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     )
   }
 
-  if (!user) {
+  if (!session?.user) {
     return null
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <DashboardSidebar isAdmin={user.is_admin} />
+      <DashboardSidebar isAdmin={false} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardTopbar user={user} selectedSymbol={selectedSymbol} onSymbolChange={setSelectedSymbol} />
+        <DashboardTopbar user={session.user} selectedSymbol={selectedSymbol} onSymbolChange={setSelectedSymbol} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
       </div>
     </div>

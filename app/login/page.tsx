@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { authApi } from "@/lib/api"
-import { setToken } from "@/lib/auth"
 import { Loader2 } from "lucide-react"
+import { signIn } from "next-auth/react"
+import { useAuthGuard } from "@/lib/auth-guard"
 
 export default function LoginPage() {
+  useAuthGuard(false)
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -23,24 +25,22 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    toast({
+      title: "Одоогоор демо горим",
+      description: "Google-ээр нэвтэрч ашиглана уу.",
+    })
+  }
+
+  const handleGoogleLogin = async () => {
     setLoading(true)
-
     try {
-      const result = await authApi.login({ email, password })
-
-      setToken(result.token)
-      toast({
-        title: "Амжилттай нэвтэрлээ",
-        description: `Тавтай морил, ${result.user.name}!`,
-      })
-      router.push("/app")
+      await signIn("google", { callbackUrl: "/dashboard" })
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Нэвтрэх амжилтгүй",
-        description: error.message || "И-мэйл эсвэл нууц үг буруу байна",
+        title: "Google нэвтрэлт амжилтгүй",
+        description: error?.message || "Дахин оролдоно уу.",
       })
-    } finally {
       setLoading(false)
     }
   }
@@ -54,6 +54,18 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
+            <Button type="button" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Нэвтэрч байна...
+                </>
+              ) : (
+                "Google-ээр нэвтрэх"
+              )}
+            </Button>
+
+            <div className="text-xs text-muted-foreground">Эсвэл (демо) и-мэйл/нууц үг:</div>
             <div className="space-y-2">
               <Label htmlFor="email">И-мэйл</Label>
               <Input
@@ -79,14 +91,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Нэвтэрч байна...
-                </>
-              ) : (
-                "Нэвтрэх"
-              )}
+              "Нэвтрэх (демо)"
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Шинэ хэрэглэгч үү?{" "}

@@ -4,20 +4,25 @@ import type React from "react"
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { isAuthenticated } from "@/lib/auth"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppTopbar } from "@/components/app-topbar"
+import { useSession } from "next-auth/react"
 
 export function AppClientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const { status } = useSession()
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (status === "unauthenticated") {
       router.push("/login")
     }
-  }, [router])
+  }, [router, status])
 
-  if (!isAuthenticated()) {
+  if (status === "loading") {
+    return null
+  }
+
+  if (status === "unauthenticated") {
     return null
   }
 

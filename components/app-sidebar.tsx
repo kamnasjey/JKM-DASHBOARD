@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { clearToken } from "@/lib/auth"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 const navItems = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -20,9 +20,9 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
 
-  const handleLogout = () => {
-    clearToken()
-    router.push("/")
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" })
+    router.push("/login")
   }
 
   return (

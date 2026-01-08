@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Bell, LogOut, Menu, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,32 +14,33 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { clearToken } from "@/lib/api"
 import { useSymbols } from "@/hooks/use-symbols"
 import { useWebSocketCandle } from "@/hooks/use-websocket-candle"
 import { useToast } from "@/hooks/use-toast"
-import type { User } from "@/lib/types"
+import { signOut } from "next-auth/react"
 
 interface TopbarProps {
-  user: User | null
+  user: {
+    name?: string | null
+    email?: string | null
+    image?: string | null
+  } | null
   selectedSymbol: string
   onSymbolChange: (symbol: string) => void
 }
 
 export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: TopbarProps) {
-  const router = useRouter()
   const { toast } = useToast()
   const { symbols, error: symbolsError } = useSymbols()
   const { connected, lastUpdate } = useWebSocketCandle(selectedSymbol)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const handleLogout = () => {
-    clearToken()
+  const handleLogout = async () => {
     toast({
       title: "Гарлаа",
       description: "Амжилттай гарлаа",
     })
-    router.push("/auth/login")
+    await signOut({ callbackUrl: "/login" })
   }
 
   const getLatency = () => {

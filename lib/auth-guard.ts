@@ -2,24 +2,27 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getToken } from "@/lib/auth"
+import { useSession } from "next-auth/react"
 
 export function useAuthGuard(requireAuth = true) {
   const router = useRouter()
+  const { status } = useSession()
 
   useEffect(() => {
-    const token = getToken()
+    if (status === "loading") return
 
-    if (requireAuth && !token) {
-      router.push("/auth/login")
-    } else if (!requireAuth && token) {
-      // If on auth pages and already logged in, redirect to dashboard
+    if (requireAuth && status === "unauthenticated") {
+      router.push("/login")
+      return
+    }
+
+    if (!requireAuth && status === "authenticated") {
       const path = window.location.pathname
-      if (path.startsWith("/auth/")) {
+      if (path === "/login" || path === "/register" || path.startsWith("/auth/")) {
         router.push("/dashboard")
       }
     }
-  }, [requireAuth, router])
+  }, [requireAuth, router, status])
 
-  return { isAuthenticated: !!getToken() }
+  return { isAuthenticated: status === "authenticated", status }
 }
