@@ -3,22 +3,12 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { TrendingUp, TrendingDown, Activity, BarChart3, Play, Square, RefreshCw } from "lucide-react"
+import { Play, Square, RefreshCw, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DashboardLayout } from "@/components/dashboard-layout"
-import { JourneyStrip } from "@/components/journey-strip"
-import { MetricCard } from "@/components/metric-card"
-import { SignalsTable } from "@/components/signals-table"
-import { ExplainPanel } from "@/components/explain-panel"
-import { ChartPlaceholder } from "@/components/chart-placeholder"
-import { ApiStatusBanner } from "@/components/api-status-banner"
-import { useMetrics } from "@/hooks/use-metrics"
-import { useSignals } from "@/hooks/use-signals"
-import { useSymbols } from "@/hooks/use-symbols"
-import { api } from "@/lib/api"
-import type { Annotations } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
+import { SignalsDrawer } from "@/components/signals-drawer"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -31,58 +21,63 @@ export default function DashboardPage() {
     }
   }, [status, router])
 
-  const { metrics, error: metricsError, refresh: refreshMetrics } = useMetrics()
-  const { symbols, error: symbolsError } = useSymbols()
-  const defaultSymbol = symbols[0] || "EURUSD"
-  const { signals, error: signalsError, refresh: refreshSignals } = useSignals({ limit: 50, symbol: defaultSymbol })
-  const [annotations, setAnnotations] = useState<Annotations | null>(null)
-  const hasApiError = metricsError || symbolsError || signalsError
-
   const [engineStatus, setEngineStatus] = useState<any>(null)
-  const [actionLog, setActionLog] = useState<string>("")
+  const [backfillStatus, setBackfillStatus] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [signals, setSignals] = useState<any[]>([])
+  const [selectedSignal, setSelectedSignal] = useState<any>(null)
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchEngineStatus()
+      fetchBackfillStatus()
+      fetchSignals()
+      const interval = setInterval(() => {
+        fetchEngineStatus()
+        fetchBackfillStatus()
+      }, 5000)
+      return () => clearInterval(interval)
     }
   }, [status])
 
   const fetchEngineStatus = async () => {
     try {
-      const data = await api.engineStatus()
+      const res = await fetch("/api/proxy/engine/status")
+      const data = await res.json()
       setEngineStatus(data)
-    } catch (err: any) {
-      console.error("[v0] Failed to fetch engine status:", err)
+    } catch (err) {
+      console.error("Failed to fetch engine status:", err)
     }
   }
 
-  useEffect(() => {
-    if (defaultSymbol) {
-      api
-        .annotations(defaultSymbol)
-        .then(setAnnotations)
-        .catch((err) => console.error("[v0] Failed to fetch annotations:", err))
+  const fetchBackfillStatus = async () => {
+    try {
+      const res = await fetch("/api/proxy/backfill/status")
+      const data = await res.json()
+      setBackfillStatus(data)
+    } catch (err) {
+      console.error("Failed to fetch backfill status:", err)
     }
-  }, [defaultSymbol])
+  }
 
-  const latestSignal = signals[0] || null
-
-  const handleRetry = () => {
-    refreshMetrics()
-    refreshSignals()
-    window.location.reload()
+  const fetchSignals = async () => {
+    try {
+      const res = await fetch("/api/proxy/signals?limit=20")
+      const data = await res.json()
+      setSignals(data.signals || [])
+    } catch (err) {
+      console.error("Failed to fetch signals:", err)
+    }
   }
 
   const handleStartEngine = async () => {
     setIsLoading(true)
     try {
-      const result = await api.startScan()
-      setActionLog(`✓ Engine started: ${JSON.stringify(result)}`)
+      const res = await fetch("/api/proxy/engine/start", { method: "POST" })
+      const result = await res.json()
       toast({ title: "Амжилттай", description: "Engine эхэллээ" })
       await fetchEngineStatus()
     } catch (err: any) {
-      setActionLog(`✗ Error: ${err.message}`)
       toast({ title: "Алдаа", description: err.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
@@ -92,12 +87,11 @@ export default function DashboardPage() {
   const handleStopEngine = async () => {
     setIsLoading(true)
     try {
-      const result = await api.stopScan()
-      setActionLog(`✓ Engine stopped: ${JSON.stringify(result)}`)
+      const res = await fetch("/api/proxy/engine/stop", { method: "POST" })
+      const result = await res.json()
       toast({ title: "Амжилттай", description: "Engine зогслоо" })
       await fetchEngineStatus()
     } catch (err: any) {
-      setActionLog(`✗ Error: ${err.message}`)
       toast({ title: "Алдаа", description: err.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
@@ -107,12 +101,48 @@ export default function DashboardPage() {
   const handleManualScan = async () => {
     setIsLoading(true)
     try {
-      const result = await api.manualScan()
-      setActionLog(`✓ Manual scan triggered: ${JSON.stringify(result)}`)
+      const res = await fetch("/api/proxy/engine/manual-scan", { method: "POST" })
+      const result = await res.json()
       toast({ title: "Амжилттай", description: "Гарын авлага скан эхэллээ" })
       await fetchEngineStatus()
+      await fetchSignals()
     } catch (err: any) {
-      setActionLog(`✗ Error: ${err.message}`)
+      toast({ title: "Алдаа", description: err.message, variant: "destructive" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBackfillTest = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/proxy/backfill/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: "EURUSD", days: 7 }),
+      })
+      const result = await res.json()
+      toast({ title: "Амжилттай", description: "Backfill (test) эхэллээ" })
+      await fetchBackfillStatus()
+    } catch (err: any) {
+      toast({ title: "Алдаа", description: err.message, variant: "destructive" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBackfillFull = async () => {
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/proxy/backfill/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: "ALL", days: 730 }),
+      })
+      const result = await res.json()
+      toast({ title: "Амжилттай", description: "Backfill (full) эхэллээ" })
+      await fetchBackfillStatus()
+    } catch (err: any) {
       toast({ title: "Алдаа", description: err.message, variant: "destructive" })
     } finally {
       setIsLoading(false)
@@ -130,37 +160,37 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {hasApiError && <ApiStatusBanner onRetry={handleRetry} />}
-
+        {/* Engine Status Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Тавтай морил, {session.user?.name || session.user?.email}</CardTitle>
-            <CardDescription>Engine удирдлага ба статус</CardDescription>
+            <CardTitle>Engine Status</CardTitle>
+            <CardDescription>Scan системийн төлөв ба удирдлага</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Engine Status */}
             <div className="rounded-md border p-4">
-              <div className="mb-2 text-sm font-medium">Engine Status</div>
               {engineStatus ? (
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <div>
-                    Төлөв:{" "}
-                    <span className={engineStatus.running ? "text-green-500" : "text-red-500"}>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Төлөв:</span>
+                    <span className={`font-medium ${engineStatus.running ? "text-green-500" : "text-red-500"}`}>
                       {engineStatus.running ? "Ажиллаж байна" : "Зогссон"}
                     </span>
                   </div>
                   {engineStatus.last_scan_ts && (
-                    <div>Сүүлийн скан: {new Date(engineStatus.last_scan_ts).toLocaleString()}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Сүүлийн скан:</span>
+                      <span className="font-mono text-xs">
+                        {new Date(engineStatus.last_scan_ts).toLocaleString("mn-MN")}
+                      </span>
+                    </div>
                   )}
-                  {engineStatus.last_error && <div className="text-red-500">Алдаа: {engineStatus.last_error}</div>}
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">Статус уншиж байна...</div>
+                <div className="text-sm text-muted-foreground">Уншиж байна...</div>
               )}
             </div>
 
-            {/* Control Buttons */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button onClick={handleStartEngine} disabled={isLoading} size="sm">
                 <Play className="mr-2 h-4 w-4" />
                 Start
@@ -174,50 +204,109 @@ export default function DashboardPage() {
                 Manual Scan
               </Button>
             </div>
-
-            {/* Action Log */}
-            {actionLog && <div className="rounded-md border bg-muted/30 p-3 font-mono text-xs">{actionLog}</div>}
           </CardContent>
         </Card>
 
-        {/* Journey Strip */}
-        <JourneyStrip />
+        {/* Backfill Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Түүхэн өгөгдөл татах</CardTitle>
+            <CardDescription>Түүхэн price өгөгдөл болон setup шалгах</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleBackfillTest} disabled={isLoading} size="sm" variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                EURUSD 7 хоног татах (test)
+              </Button>
+              <Button onClick={handleBackfillFull} disabled={isLoading} size="sm" variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                15 хослол 2 жил татах
+              </Button>
+            </div>
 
-        {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            title="Winrate"
-            value={`${(metrics?.winrate || 0).toFixed(1)}%`}
-            subtitle="Сүүлийн 7 хоногт"
-            icon={TrendingUp}
-          />
-          <MetricCard
-            title="Wins / Losses"
-            value={`${metrics?.wins || 0} / ${metrics?.losses || 0}`}
-            subtitle="Нийт шийдэгдсэн"
-            icon={TrendingDown}
-          />
-          <MetricCard
-            title="Pending Signals"
-            value={metrics?.pending || 0}
-            subtitle="Хүлээгдэж байгаа"
-            icon={Activity}
-          />
-          <MetricCard title="Total Signals" value={metrics?.total || 0} subtitle="Нийт дохио" icon={BarChart3} />
-        </div>
+            {backfillStatus && (
+              <div className="space-y-2">
+                <div className="rounded-md border p-3">
+                  <div className="mb-1 text-sm font-medium">Backfill Status</div>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <span>Төлөв:</span>
+                      <span className={backfillStatus.running ? "text-yellow-500" : "text-muted-foreground"}>
+                        {backfillStatus.running ? "Ажиллаж байна" : "Зогссон"}
+                      </span>
+                    </div>
+                    {backfillStatus.progress !== undefined && (
+                      <div className="flex items-center justify-between">
+                        <span>Явц:</span>
+                        <span className="font-mono">{backfillStatus.progress}%</span>
+                      </div>
+                    )}
+                    {backfillStatus.current_symbol && (
+                      <div className="flex items-center justify-between">
+                        <span>Одоогийн хослол:</span>
+                        <span className="font-mono">{backfillStatus.current_symbol}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-        {/* Main Grid */}
-        <div className="grid gap-6 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-8">
-            <ChartPlaceholder symbol={defaultSymbol} />
-            <SignalsTable signals={signals} limit={10} />
-          </div>
+                {backfillStatus.log && backfillStatus.log.length > 0 && (
+                  <div className="rounded-md border bg-muted/30 p-3">
+                    <div className="mb-2 text-xs font-medium text-muted-foreground">Log Output:</div>
+                    <div className="max-h-32 overflow-y-auto font-mono text-xs">
+                      {backfillStatus.log.map((line: string, i: number) => (
+                        <div key={i} className="text-muted-foreground">
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          <div className="lg:col-span-4">
-            <ExplainPanel signal={latestSignal} annotations={annotations} />
-          </div>
-        </div>
+        {/* Signals List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>SETUP FOUND</CardTitle>
+            <CardDescription>Таны тохируулсан нөхцөлд тохирсон setup-ууд</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {signals.length === 0 ? (
+              <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+                Одоогоор олдсон setup байхгүй байна. Manual scan эсвэл engine-г асаагаад хүлээнэ үү.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {signals.map((signal: any) => (
+                  <button
+                    key={signal.id}
+                    onClick={() => setSelectedSignal(signal)}
+                    className="w-full rounded-md border p-3 text-left transition-colors hover:bg-muted/30"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{signal.symbol}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {signal.direction} · {signal.status}
+                        </div>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground">
+                        {new Date(signal.timestamp).toLocaleDateString("mn-MN")}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      <SignalsDrawer signal={selectedSignal} onClose={() => setSelectedSignal(null)} />
     </DashboardLayout>
   )
 }
