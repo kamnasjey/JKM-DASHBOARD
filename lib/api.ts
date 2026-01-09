@@ -143,18 +143,10 @@ export const api = {
 
   getLogs: () => apiFetch<string[]>("/api/log"),
 
-  getHealth: () => apiFetch<{ status: string }>("/health"),
+  getHealth: () => apiFetch<{ status: string }>("/api/proxy/health"),
+  health: () => apiFetch<{ status: string }>("/api/proxy/health"),
 
-  // Backward-compatible names used across the app
-  metrics: () => apiFetch<any>("/api/metrics"),
-  signals: (params?: { limit?: number; symbol?: string }) => api.getSignals(params),
-  symbols: () => api.getSymbols(),
-  strategies: () => api.getStrategies(),
-  logs: () => api.getLogs(),
-  health: () => api.getHealth(),
-
-  annotations: (symbol: string) =>
-    apiFetch<any>(`/api/annotations?symbol=${encodeURIComponent(symbol)}`),
+  annotations: (symbol: string) => apiFetch<any>(`/api/annotations?symbol=${encodeURIComponent(symbol)}`),
 
   profile: () => apiFetch<any>("/api/profile"),
   updateProfile: (payload: any) =>
@@ -163,7 +155,8 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  manualScan: () => apiFetch<any>("/api/admin/manual-scan", { method: "POST" }),
-  startScan: () => apiFetch<any>("/api/admin/start-scan", { method: "POST" }),
-  stopScan: () => apiFetch<any>("/api/admin/stop-scan", { method: "POST" }),
+  manualScan: () => apiFetch<any>("/api/proxy/engine/manual-scan", { method: "POST" }),
+  startScan: () => apiFetch<any>("/api/proxy/engine/start", { method: "POST" }),
+  stopScan: () => apiFetch<any>("/api/proxy/engine/stop", { method: "POST" }),
+  engineStatus: () => apiFetch<any>("/api/proxy/engine/status"),
 }

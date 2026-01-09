@@ -1,8 +1,9 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
+
+import type React from "react"
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,10 @@ export default function LoginPage() {
     setMessage(DEMO_MESSAGE)
   }
 
+  const handleGoogleLogin = () => {
+    signIn("google", { callbackUrl: "/dashboard" })
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -33,8 +38,8 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
-            <Button type="button" className="w-full" disabled>
-              Google-ээр нэвтрэх (удахгүй)
+            <Button type="button" className="w-full" onClick={handleGoogleLogin}>
+              Google-ээр нэвтрэх
             </Button>
 
             {message && <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">{message}</div>}
