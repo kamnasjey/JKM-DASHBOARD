@@ -3,22 +3,20 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { auth, setToken } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 
 export default function LoginPage() {
   useAuthGuard(false)
 
-  const router = useRouter()
-  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+
+  const DEMO_MESSAGE = "Одоогоор демо горим — Google-ээр нэвтрэхээр үргэлжлүүлнэ."
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,25 +24,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-
-    try {
-      const response = await auth.login(formData)
-      setToken(response.token)
-      toast({
-        title: "Амжилттай нэвтэрлээ",
-        description: "Таны систем рүү нэвтэрлээ",
-      })
-      router.push("/dashboard")
-    } catch (error: any) {
-      toast({
-        title: "Алдаа гарлаа",
-        description: error.message || "Нэвтрэх үед алдаа гарлаа",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    setMessage(DEMO_MESSAGE)
   }
 
   return (
@@ -56,6 +36,12 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            <Button type="button" className="w-full" disabled>
+              Google-ээр нэвтрэх (удахгүй)
+            </Button>
+
+            {message && <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">{message}</div>}
+
             <div className="space-y-2">
               <Label htmlFor="email">Имэйл хаяг</Label>
               <Input
@@ -79,8 +65,8 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
+            <Button type="button" className="w-full" disabled={loading} onClick={() => setMessage(DEMO_MESSAGE)}>
+              {loading ? "Нэвтэрч байна..." : "Нэвтрэх (демо)"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Бүртгэлгүй юу?{" "}

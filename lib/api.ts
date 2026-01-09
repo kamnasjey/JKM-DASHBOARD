@@ -60,6 +60,21 @@ function getMockData(path: string): any {
       winrate: 70.5,
     }
   }
+  if (path.includes("/api/symbols")) {
+    return ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"]
+  }
+  if (path.includes("/api/annotations")) {
+    return { notes: [], levels: [] }
+  }
+  if (path.includes("/api/profile")) {
+    return {
+      name: "Demo User",
+      email: "demo@example.com",
+      telegram_handle: "",
+      strategy_note: "",
+      is_admin: false,
+    }
+  }
   if (path.includes("/api/signals")) {
     return []
   }
@@ -68,6 +83,9 @@ function getMockData(path: string): any {
   }
   if (path.includes("/api/log")) {
     return []
+  }
+  if (path.includes("/api/admin")) {
+    return { ok: true }
   }
   if (path.includes("/health")) {
     return { status: "ok" }
@@ -101,12 +119,19 @@ export const authApi = {
 export const auth = authApi
 
 export const api = {
+  // "new" names
   getMetrics: () => apiFetch<any>("/api/metrics"),
 
-  getSignals: (params?: { limit?: number }) => {
-    const query = params?.limit ? `?limit=${params.limit}` : "?limit=50"
+  getSignals: (params?: { limit?: number; symbol?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.limit) qs.set("limit", String(params.limit))
+    else qs.set("limit", "50")
+    if (params?.symbol) qs.set("symbol", params.symbol)
+    const query = qs.toString() ? `?${qs.toString()}` : ""
     return apiFetch<any[]>(`/api/signals${query}`)
   },
+
+  getSymbols: () => apiFetch<string[]>("/api/symbols"),
 
   getStrategies: () => apiFetch<any>("/api/strategies"),
 
@@ -119,4 +144,26 @@ export const api = {
   getLogs: () => apiFetch<string[]>("/api/log"),
 
   getHealth: () => apiFetch<{ status: string }>("/health"),
+
+  // Backward-compatible names used across the app
+  metrics: () => apiFetch<any>("/api/metrics"),
+  signals: (params?: { limit?: number; symbol?: string }) => api.getSignals(params),
+  symbols: () => api.getSymbols(),
+  strategies: () => api.getStrategies(),
+  logs: () => api.getLogs(),
+  health: () => api.getHealth(),
+
+  annotations: (symbol: string) =>
+    apiFetch<any>(`/api/annotations?symbol=${encodeURIComponent(symbol)}`),
+
+  profile: () => apiFetch<any>("/api/profile"),
+  updateProfile: (payload: any) =>
+    apiFetch<any>("/api/profile", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  manualScan: () => apiFetch<any>("/api/admin/manual-scan", { method: "POST" }),
+  startScan: () => apiFetch<any>("/api/admin/start-scan", { method: "POST" }),
+  stopScan: () => apiFetch<any>("/api/admin/stop-scan", { method: "POST" }),
 }

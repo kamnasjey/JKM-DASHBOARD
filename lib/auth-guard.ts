@@ -2,27 +2,25 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { getToken } from "@/lib/auth"
 
 export function useAuthGuard(requireAuth = true) {
   const router = useRouter()
-  const { status } = useSession()
+  const isAuthed = !!getToken()
 
   useEffect(() => {
-    if (status === "loading") return
-
-    if (requireAuth && status === "unauthenticated") {
+    if (requireAuth && !isAuthed) {
       router.push("/login")
       return
     }
 
-    if (!requireAuth && status === "authenticated") {
+    if (!requireAuth && isAuthed) {
       const path = window.location.pathname
       if (path === "/login" || path === "/register" || path.startsWith("/auth/")) {
         router.push("/dashboard")
       }
     }
-  }, [requireAuth, router, status])
+  }, [requireAuth, router, isAuthed])
 
-  return { isAuthenticated: status === "authenticated", status }
+  return { isAuthenticated: isAuthed }
 }

@@ -16,6 +16,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# local next dev captures
+.next-dev*.log
+
 # env files
 .env*
 

@@ -3,22 +3,19 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { auth } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 
 export default function RegisterPage() {
   useAuthGuard(false)
-
-  const router = useRouter()
-  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+
+  const DEMO_MESSAGE = "Одоогоор демо горим — Google-ээр нэвтрэхээр үргэлжлүүлнэ."
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -29,24 +26,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-
-    try {
-      await auth.register(formData)
-      toast({
-        title: "Амжилттай бүртгэгдлээ",
-        description: "Имэйл хаягаа баталгаажуулна уу",
-      })
-      router.push(`/auth/verify?email=${encodeURIComponent(formData.email)}`)
-    } catch (error: any) {
-      toast({
-        title: "Алдаа гарлаа",
-        description: error.message || "Бүртгэх үед алдаа гарлаа",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+    setMessage(DEMO_MESSAGE)
   }
 
   return (
@@ -58,6 +38,12 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            <Button type="button" className="w-full" disabled>
+              Google-ээр нэвтрэх (удахгүй)
+            </Button>
+
+            {message && <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">{message}</div>}
+
             <div className="space-y-2">
               <Label htmlFor="name">Нэр</Label>
               <Input
@@ -112,8 +98,8 @@ export default function RegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Бүртгэж байна..." : "Бүртгүүлэх"}
+            <Button type="button" className="w-full" disabled={loading} onClick={() => setMessage(DEMO_MESSAGE)}>
+              {loading ? "Бүртгэж байна..." : "Бүртгүүлэх (демо)"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Бүртгэлтэй юу?{" "}

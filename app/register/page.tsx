@@ -8,9 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
-import { signIn } from "next-auth/react"
 import { useAuthGuard } from "@/lib/auth-guard"
 
 export default function RegisterPage() {
@@ -22,45 +19,23 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [telegramHandle, setTelegramHandle] = useState("")
   const [code, setCode] = useState("")
-  const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
+  const [message, setMessage] = useState<string | null>(null)
+
+  const DEMO_MESSAGE = "Одоогоор демо горим — Google-ээр нэвтрэхээр үргэлжлүүлнэ."
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast({
-      title: "Одоогоор демо горим",
-      description: "Google-ээр нэвтэрч ашиглана уу.",
-    })
+    setMessage(DEMO_MESSAGE)
     setStep("verify")
   }
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast({
-      title: "Одоогоор демо горим",
-      description: "Бүртгэл/код баталгаажуулалт идэвхгүй. Google-ээр нэвтэрнэ үү.",
-    })
+    setMessage(DEMO_MESSAGE)
   }
 
   const handleResendCode = async () => {
-    toast({
-      title: "Код дахин илгээх",
-      description: "Одоогоор демо горим",
-    })
-  }
-
-  const handleGoogleLogin = async () => {
-    setLoading(true)
-    try {
-      await signIn("google", { callbackUrl: "/dashboard" })
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Google нэвтрэлт амжилтгүй",
-        description: error?.message || "Дахин оролдоно уу.",
-      })
-      setLoading(false)
-    }
+    setMessage(DEMO_MESSAGE)
   }
 
   if (step === "verify") {
@@ -74,8 +49,9 @@ export default function RegisterPage() {
           <form onSubmit={handleVerify}>
             <CardContent className="space-y-4">
               <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-                Одоогоор демо горим — Google-ээр нэвтэрч ашиглана уу.
+                Одоогоор демо горим — Google-ээр нэвтрэхээр үргэлжлүүлнэ.
               </div>
+              {message && <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">{message}</div>}
               <div className="space-y-2">
                 <Label htmlFor="code">Баталгаажуулах код</Label>
                 <Input
@@ -90,17 +66,10 @@ export default function RegisterPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
-              <Button type="button" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Нэвтэрч байна...
-                  </>
-                ) : (
-                  "Google-ээр нэвтрэх"
-                )}
+              <Button type="button" className="w-full" disabled>
+                Google-ээр нэвтрэх (удахгүй)
               </Button>
-              <Button type="submit" className="w-full" disabled={loading || code.length !== 6}>
+              <Button type="button" className="w-full" disabled={code.length !== 6} onClick={() => setMessage(DEMO_MESSAGE)}>
                 "Баталгаажуулах (демо)"
               </Button>
               <Button type="button" variant="link" onClick={handleResendCode}>
@@ -123,18 +92,13 @@ export default function RegisterPage() {
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
             <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-              Одоогоор демо горим — Google-ээр нэвтэрч ашиглана уу.
+              Одоогоор демо горим — Google-ээр нэвтрэхээр үргэлжлүүлнэ.
             </div>
 
-            <Button type="button" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Нэвтэрч байна...
-                </>
-              ) : (
-                "Google-ээр нэвтрэх"
-              )}
+            {message && <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">{message}</div>}
+
+            <Button type="button" className="w-full" disabled>
+              Google-ээр нэвтрэх (удахгүй)
             </Button>
 
             <div className="text-xs text-muted-foreground">Эсвэл (демо) бүртгүүлэх:</div>
@@ -175,7 +139,7 @@ export default function RegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="button" className="w-full" onClick={() => setMessage(DEMO_MESSAGE)}>
               "Бүртгүүлэх (демо)"
             </Button>
             <p className="text-center text-sm text-muted-foreground">

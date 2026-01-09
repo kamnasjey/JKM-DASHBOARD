@@ -1,20 +1,22 @@
-import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
+function json(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json",
+    },
+  })
+}
 
-const handler = NextAuth({
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-    }),
-  ],
-  secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
-})
+export async function GET() {
+  return json(501, {
+    ok: false,
+    message: "Auth not enabled yet. Google login will be integrated later.",
+  })
+}
 
-export { handler as GET, handler as POST }
+export async function POST() {
+  return json(501, {
+    ok: false,
+    message: "Auth not enabled yet. Google login will be integrated later.",
+  })
+}
