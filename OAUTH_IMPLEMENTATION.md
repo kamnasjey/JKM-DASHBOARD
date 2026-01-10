@@ -20,16 +20,16 @@ This document describes the Google OAuth authentication implementation using Nex
 ### Secure Backend Proxy
 Browser requests NEVER call FastAPI backend directly. All backend calls go through Next.js Route Handlers:
 
-```
+\`\`\`
 Browser → Next.js API Route → FastAPI Backend
          (session check)      (server-to-server with secret header)
-```
+\`\`\`
 
 ## Environment Variables
 
 Required in `.env.local`:
 
-```bash
+\`\`\`bash
 # NextAuth Configuration
 AUTH_SECRET=<generate with: openssl rand -base64 32>
 AUTH_URL=http://localhost:3000
@@ -45,7 +45,7 @@ INTERNAL_API_KEY=<shared secret with backend>
 
 # Optional: Frontend API URL
 NEXT_PUBLIC_API_BASE_URL=https://api.jkmcopilot.com
-```
+\`\`\`
 
 ## Files Created/Modified
 
@@ -92,7 +92,7 @@ All proxy routes:
 ## Testing
 
 ### Local Development
-```bash
+\`\`\`bash
 # Install dependencies
 pnpm install
 
@@ -106,7 +106,7 @@ pnpm dev
 # Open http://localhost:3000
 # Click "Google-ээр нэвтрэх"
 # After login, you'll be redirected to /dashboard
-```
+\`\`\`
 
 ### Verify Implementation
 1. Visit `/login` - Google button should be active (not disabled)

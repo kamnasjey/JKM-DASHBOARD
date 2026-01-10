@@ -1,11 +1,11 @@
-import { getServerSession } from "next-auth"
+import { auth } from "@/lib/auth"
 
 export async function getSession() {
-  return await getServerSession()
+  return await auth()
 }
 
 export async function requireAuth() {
-  const session = await getSession()
+  const session = await auth()
   if (!session || !session.user) {
     return null
   }

@@ -1,12 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { auth } from "@/lib/auth"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY || ""
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }

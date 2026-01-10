@@ -1,28 +1,13 @@
-import NextAuth from "next-auth"
+import { handlers } from "@/lib/auth"
 import type { NextAuthOptions } from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
 
 export const authOptions: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID || "",
-      clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
-    }),
-  ],
-  secret: process.env.AUTH_SECRET,
+  providers: [],
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub
-      }
-      return session
-    },
+    error: "/login",
   },
 }
 
-const handler = NextAuth(authOptions)
-
-export { handler as GET, handler as POST }
+export const { GET, POST } = handlers
