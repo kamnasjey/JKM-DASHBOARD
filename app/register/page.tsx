@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { useState, useTransition } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +11,7 @@ import { useAuthGuard } from "@/lib/auth-guard"
 import { useI18n } from "@/lib/i18n"
 import { Mail, Phone, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { signInWithGoogle } from "@/app/actions/auth"
 
 type AuthMethod = "select" | "phone" | "email"
 
@@ -19,6 +19,8 @@ export default function RegisterPage() {
   useAuthGuard(false)
   const { t } = useI18n()
   const { toast } = useToast()
+
+  const [isPending, startTransition] = useTransition()
 
   const [method, setMethod] = useState<AuthMethod>("select")
   const [loading, setLoading] = useState(false)
@@ -33,8 +35,16 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
 
   const handleGoogleRegister = () => {
-    setLoading(true)
-    signIn("google", { callbackUrl: "/dashboard" })
+    startTransition(async () => {
+      const result = await signInWithGoogle()
+      if (result?.error) {
+        toast({
+          title: t.error,
+          description: result.error,
+          variant: "destructive",
+        })
+      }
+    })
   }
 
   const handlePhoneSendCode = async () => {
@@ -89,8 +99,8 @@ export default function RegisterPage() {
   const renderMethodSelect = () => (
     <div className="space-y-4">
       {/* Google */}
-      <Button type="button" className="w-full" size="lg" onClick={handleGoogleRegister} disabled={loading}>
-        {loading ? (
+      <Button type="button" className="w-full" size="lg" onClick={handleGoogleRegister} disabled={isPending || loading}>
+        {isPending || loading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
