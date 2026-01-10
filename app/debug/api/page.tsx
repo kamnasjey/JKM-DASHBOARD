@@ -1,9 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { API } from "@/lib/config"
 
 type CheckResult = {
   endpoint: string
@@ -14,10 +13,6 @@ type CheckResult = {
   bodyPreview: string
   error: string | null
   reason: string
-}
-
-function resolveBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? API
 }
 
 function trimText(text: string, max = 500) {
@@ -72,8 +67,6 @@ async function runCheck(endpoint: string, url: string): Promise<CheckResult> {
 }
 
 export default function DebugApiPage() {
-  const baseUrl = useMemo(() => resolveBaseUrl(), [])
-
   const [health, setHealth] = useState<CheckResult | null>(null)
   const [ping, setPing] = useState<CheckResult | null>(null)
   const [signals, setSignals] = useState<CheckResult | null>(null)
@@ -82,14 +75,10 @@ export default function DebugApiPage() {
   const run = useCallback(async () => {
     setLoading(true)
 
-    const base = String(baseUrl).replace(/\/$/, "")
-    const healthUrl = `${base}/health`
-    const pingUrl = `${base}/api/ping`
-    const signalsUrl = `${base}/api/signals?limit=3`
-
-    // Print resolved base URL in browser console for debugging
-    // eslint-disable-next-line no-console
-    console.info("[debug/api] resolved base url:", base)
+    // All calls go through proxy routes now
+    const healthUrl = "/api/proxy/health"
+    const pingUrl = "/api/proxy/ping"
+    const signalsUrl = "/api/proxy/signals?limit=3"
 
     const [healthResult, pingResult, signalsResult] = await Promise.all([
       runCheck("/health", healthUrl),
@@ -101,7 +90,7 @@ export default function DebugApiPage() {
     setPing(pingResult)
     setSignals(signalsResult)
     setLoading(false)
-  }, [baseUrl])
+  }, [])
 
   useEffect(() => {
     run()
@@ -112,14 +101,14 @@ export default function DebugApiPage() {
       <Card>
         <CardHeader>
           <CardTitle>API Connectivity Checks</CardTitle>
-          <CardDescription>Press “Run checks”. No login required.</CardDescription>
+          <CardDescription>Proxy routes (/api/proxy/*) руу шалгах. Health нь нээлттэй.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1">
-            <div className="text-sm font-medium">API Base URL (resolved)</div>
-            <div className="font-mono text-sm break-all">{String(baseUrl)}</div>
+            <div className="text-sm font-medium">Proxy Base</div>
+            <div className="font-mono text-sm break-all">/api/proxy</div>
             <div className="text-xs text-muted-foreground">
-              Uses <span className="font-mono">NEXT_PUBLIC_API_BASE_URL</span> or defaults to https://api.jkmcopilot.com
+              Client нь backend-руу шууд холбогдохгүй, бүх хүсэлт Next.js proxy-аар дамжина.
             </div>
           </div>
           <Button type="button" onClick={run} disabled={loading}>

@@ -6,19 +6,19 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppTopbar } from "@/components/app-topbar"
-import { getToken } from "@/lib/auth"
+import { useSession } from "next-auth/react"
 
 export function AppClientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const token = getToken()
+  const { status } = useSession()
 
   useEffect(() => {
-    if (!token) {
+    if (status === "unauthenticated") {
       router.push("/login")
     }
-  }, [router, token])
+  }, [router, status])
 
-  if (!token) return null
+  if (status !== "authenticated") return null
 
   return (
     <div className="flex h-screen">

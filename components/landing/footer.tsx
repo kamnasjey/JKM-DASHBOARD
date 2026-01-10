@@ -1,10 +1,9 @@
 import Link from "next/link"
-import { API_BASE_URL } from "@/lib/config"
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-background/50 py-12">
-      <div className="container mx-auto px-4">
+    <footer className="border-t border-border/40 bg-background/95">
+      <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
           <div>
@@ -17,17 +16,17 @@ export function Footer() {
             <div className="mb-4 text-sm font-semibold">Product</div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="#features" className="hover:text-foreground transition-colors">
+                <Link href="#features" className="transition-colors hover:text-foreground">
                   Онцлог
                 </Link>
               </li>
               <li>
-                <Link href="#journey" className="hover:text-foreground transition-colors">
+                <Link href="#journey" className="transition-colors hover:text-foreground">
                   Трейдэр замнал
                 </Link>
               </li>
               <li>
-                <Link href="#pricing" className="hover:text-foreground transition-colors">
+                <Link href="#pricing" className="transition-colors hover:text-foreground">
                   Үнэ
                 </Link>
               </li>
@@ -39,21 +38,16 @@ export function Footer() {
             <div className="mb-4 text-sm font-semibold">Resources</div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/auth/login" className="hover:text-foreground transition-colors">
+                <Link href="/login" className="transition-colors hover:text-foreground">
                   Нэвтрэх
                 </Link>
               </li>
               <li>
-                <Link href="/auth/register" className="hover:text-foreground transition-colors">
-                  Бүртгүүлэх
-                </Link>
-              </li>
-              <li>
                 <a
-                  href={`${API_BASE_URL}/health`}
+                  href="/api/proxy/health"
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-foreground transition-colors"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-foreground"
                 >
                   System Status
                 </a>

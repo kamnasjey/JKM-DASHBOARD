@@ -17,8 +17,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useSymbols } from "@/hooks/use-symbols"
 import { useWebSocketCandle } from "@/hooks/use-websocket-candle"
 import { useToast } from "@/hooks/use-toast"
-import { clearToken } from "@/lib/api"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 interface TopbarProps {
   user: {
@@ -38,11 +38,11 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
-    clearToken()
     toast({
       title: "Гарлаа",
       description: "Амжилттай гарлаа",
     })
+    await signOut({ callbackUrl: "/login" })
     router.push("/login")
   }
 

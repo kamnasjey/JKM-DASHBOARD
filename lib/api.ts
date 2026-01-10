@@ -1,162 +1,102 @@
-import { getToken, clearToken } from "./auth"
-import { API_BASE_URL } from "./config"
-
-export { getToken, setToken, clearToken } from "./auth"
+/**
+ * All protected API calls go through /api/proxy/* endpoints.
+ * The Next.js server verifies the NextAuth session and forwards
+ * requests to the backend with the internal API key.
+ */
 
 export interface ApiError {
   message: string
   status: number
 }
 
-// Fetch wrapper with auth and mock fallback
+// Fetch wrapper
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken()
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
   }
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`
-  }
-
-  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`
-
   try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    })
+    const response = await fetch(path, { ...options, headers })
 
     if (response.status === 401) {
-      clearToken()
-      if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/login")) {
-        window.location.href = "/auth/login"
+      if (typeof window !== "undefined") {
+        window.location.href = "/login"
       }
       throw new Error("Unauthorized")
     }
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`)
+      const text = await response.text()
+      throw new Error(text || `API Error: ${response.statusText}`)
     }
 
     return response.json()
   } catch (err: any) {
     if (err.message === "Failed to fetch" || err instanceof TypeError) {
-      console.warn("[v0] Network error, returning mock data for:", path)
-      return getMockData(path) as T
+      console.warn("[api] Network error:", path)
     }
     throw err
   }
 }
 
-function getMockData(path: string): any {
-  if (path.includes("/api/metrics")) {
-    return {
-      wins: 12,
-      losses: 5,
-      pending: 3,
-      total: 20,
-      winrate: 70.5,
-    }
-  }
-  if (path.includes("/api/symbols")) {
-    return ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"]
-  }
-  if (path.includes("/api/annotations")) {
-    return { notes: [], levels: [] }
-  }
-  if (path.includes("/api/profile")) {
-    return {
-      name: "Demo User",
-      email: "demo@example.com",
-      telegram_handle: "",
-      strategy_note: "",
-      is_admin: false,
-    }
-  }
-  if (path.includes("/api/signals")) {
-    return []
-  }
-  if (path.includes("/api/strategies")) {
-    return { schema_version: 1, user_id: "mock", strategies: [] }
-  }
-  if (path.includes("/api/log")) {
-    return []
-  }
-  if (path.includes("/api/admin")) {
-    return { ok: true }
-  }
-  if (path.includes("/health")) {
-    return { status: "ok" }
-  }
-  return {}
-}
-
-export const authApi = {
-  register: (data: { name: string; email: string; password: string; telegram_handle?: string }) =>
-    apiFetch<{ status: string }>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  verifyCode: (data: { email: string; code: string }) =>
-    apiFetch<{ token: string; user: any }>("/api/auth/verify-code", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  login: (data: { email: string; password: string }) =>
-    apiFetch<{ token: string; user: any }>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  me: () => apiFetch<any>("/api/auth/me"),
-}
-
-// Backward-compatible alias for older imports
-export const auth = authApi
-
 export const api = {
-  // "new" names
-  getMetrics: () => apiFetch<any>("/api/metrics"),
+  // Metrics
+  getMetrics: () => apiFetch<any>("/api/proxy/metrics"),
+  metrics: () => apiFetch<any>("/api/proxy/metrics"),
 
+  // Signals
   getSignals: (params?: { limit?: number; symbol?: string }) => {
     const qs = new URLSearchParams()
-    if (params?.limit) qs.set("limit", String(params.limit))
-    else qs.set("limit", "50")
+    qs.set("limit", String(params?.limit ?? 50))
     if (params?.symbol) qs.set("symbol", params.symbol)
-    const query = qs.toString() ? `?${qs.toString()}` : ""
-    return apiFetch<any[]>(`/api/signals${query}`)
+    return apiFetch<any[]>(`/api/proxy/signals?${qs.toString()}`)
   },
+  signals: (params?: { limit?: number; symbol?: string }) => api.getSignals(params),
 
-  getSymbols: () => apiFetch<string[]>("/api/symbols"),
+  // Symbols
+  getSymbols: () => apiFetch<string[]>("/api/proxy/symbols"),
+  symbols: () => api.getSymbols(),
 
-  getStrategies: () => apiFetch<any>("/api/strategies"),
-
+  // Strategies
+  getStrategies: () => apiFetch<any>("/api/proxy/strategies"),
+  strategies: () => api.getStrategies(),
   updateStrategies: (data: any) =>
-    apiFetch("/api/strategies", {
+    apiFetch("/api/proxy/strategies", {
       method: "PUT",
       body: JSON.stringify(data),
     }),
 
-  getLogs: () => apiFetch<string[]>("/api/log"),
+  // Logs
+  getLogs: () => apiFetch<string[]>("/api/proxy/log"),
+  logs: () => api.getLogs(),
 
+  // Health (public)
   getHealth: () => apiFetch<{ status: string }>("/api/proxy/health"),
-  health: () => apiFetch<{ status: string }>("/api/proxy/health"),
+  health: () => api.getHealth(),
 
-  annotations: (symbol: string) => apiFetch<any>(`/api/annotations?symbol=${encodeURIComponent(symbol)}`),
+  // Annotations
+  annotations: (symbol: string) =>
+    apiFetch<any>(`/api/proxy/annotations?symbol=${encodeURIComponent(symbol)}`),
 
-  profile: () => apiFetch<any>("/api/profile"),
+  // Profile
+  profile: () => apiFetch<any>("/api/proxy/profile"),
   updateProfile: (payload: any) =>
-    apiFetch<any>("/api/profile", {
+    apiFetch<any>("/api/proxy/profile", {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
 
+  // Engine controls
+  engineStatus: () => apiFetch<any>("/api/proxy/engine/status"),
   manualScan: () => apiFetch<any>("/api/proxy/engine/manual-scan", { method: "POST" }),
   startScan: () => apiFetch<any>("/api/proxy/engine/start", { method: "POST" }),
   stopScan: () => apiFetch<any>("/api/proxy/engine/stop", { method: "POST" }),
-  engineStatus: () => apiFetch<any>("/api/proxy/engine/status"),
+
+  // Admin backfill
+  backfill: (payload: any) =>
+    apiFetch<any>("/api/proxy/admin/backfill", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 }

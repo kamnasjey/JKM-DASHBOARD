@@ -1,35 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { authApi } from "@/lib/api"
-import { API_BASE_URL } from "@/lib/config"
-import { useToast } from "@/hooks/use-toast"
 import { User, Database, Trash2 } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 export default function SettingsPage() {
-  const [user, setUser] = useState<any>(null)
-  const { toast } = useToast()
-
-  useEffect(() => {
-    loadUser()
-  }, [])
-
-  const loadUser = async () => {
-    try {
-      const data = await authApi.me()
-      setUser(data)
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Алдаа гарлаа",
-        description: error.message,
-      })
-    }
-  }
+  const { data: session } = useSession()
+  const user = session?.user
 
   return (
     <div className="space-y-6 p-6">
@@ -58,7 +38,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>Telegram</Label>
-              <Input value={user?.telegram_handle || "—"} disabled />
+              <Input value={"—"} disabled />
             </div>
           </CardContent>
         </Card>
@@ -74,10 +54,10 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>API Base URL</Label>
-              <Input value={API_BASE_URL || "Not set"} disabled />
+              <Input value={"/api/proxy"} disabled />
             </div>
             <p className="text-xs text-muted-foreground">
-              Environment variable-аас уншсан. Өөрчлөх бол .env.local файлыг засна.
+              Backend руу client-ээс шууд холбогдохгүй. Бүх хүсэлт /api/proxy маршрутаар дамжина.
             </p>
           </CardContent>
         </Card>

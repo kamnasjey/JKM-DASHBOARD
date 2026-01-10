@@ -2,13 +2,16 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getToken } from "@/lib/auth"
+import { useSession } from "next-auth/react"
 
 export function useAuthGuard(requireAuth = true) {
   const router = useRouter()
-  const isAuthed = !!getToken()
+  const { status } = useSession()
+  const isAuthed = status === "authenticated"
 
   useEffect(() => {
+    if (status === "loading") return
+
     if (requireAuth && !isAuthed) {
       router.push("/login")
       return
@@ -20,7 +23,7 @@ export function useAuthGuard(requireAuth = true) {
         router.push("/dashboard")
       }
     }
-  }, [requireAuth, router, isAuthed])
+  }, [requireAuth, router, isAuthed, status])
 
   return { isAuthenticated: isAuthed }
 }

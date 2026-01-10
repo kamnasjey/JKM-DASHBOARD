@@ -1,24 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { getToken, clearToken } from "@/lib/auth"
-import { useRouter } from "next/navigation"
+import { signIn, signOut, useSession } from "next-auth/react"
 
 export function PublicNav() {
-  const [hasToken, setHasToken] = useState(false)
-  const router = useRouter()
-
-  useEffect(() => {
-    setHasToken(!!getToken())
-  }, [])
-
-  const handleLogout = () => {
-    clearToken()
-    setHasToken(false)
-    router.push("/")
-  }
+  const { status } = useSession()
+  const authed = status === "authenticated"
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id)
@@ -56,19 +44,19 @@ export function PublicNav() {
         </div>
 
         <div className="flex items-center gap-3">
-          {hasToken ? (
+          {authed ? (
             <>
               <Button asChild>
-                <Link href="/app">Dashboard</Link>
+                <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <Button variant="ghost" onClick={handleLogout}>
+              <Button variant="ghost" onClick={() => signOut({ callbackUrl: "/" })}>
                 Гарах
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" asChild>
-                <Link href="/login">Нэвтрэх</Link>
+              <Button variant="outline" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+                Нэвтрэх
               </Button>
             </>
           )}
