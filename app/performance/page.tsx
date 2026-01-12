@@ -9,6 +9,16 @@ import { Progress } from "@/components/ui/progress"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts"
 
 interface DayMetric {
   date: string
@@ -245,7 +255,7 @@ export default function PerformancePage() {
           </CardContent>
         </Card>
 
-        {/* Daily Chart */}
+        {/* Daily Chart with Recharts */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">Өдөр бүрийн гүйцэтгэл</CardTitle>
@@ -255,51 +265,49 @@ export default function PerformancePage() {
             {metrics.by_day.length === 0 ? (
               <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
             ) : (
-              <div className="space-y-2">
-                {/* Simple bar chart representation */}
-                <div className="flex items-end gap-1 h-32 overflow-x-auto pb-2">
-                  {metrics.by_day.map((day) => {
-                    const maxTotal = Math.max(...metrics.by_day.map((d) => d.total), 1)
-                    const heightPercent = (day.total / maxTotal) * 100
-                    const okPercent = day.total > 0 ? (day.ok / day.total) * 100 : 0
-                    return (
-                      <div
-                        key={day.date}
-                        className="flex-shrink-0 w-6 sm:w-8 flex flex-col items-center group relative"
-                      >
-                        <div
-                          className="w-full rounded-t bg-gradient-to-t from-primary to-primary/50 transition-all"
-                          style={{ height: `${heightPercent}%` }}
-                        >
-                          <div
-                            className="w-full bg-green-500 rounded-t"
-                            style={{ height: `${okPercent}%` }}
-                          />
-                        </div>
-                        {/* Tooltip on hover */}
-                        <div className="absolute bottom-full mb-2 hidden group-hover:block bg-popover text-popover-foreground text-xs p-2 rounded shadow-lg whitespace-nowrap z-10">
-                          <p className="font-medium">{day.date}</p>
-                          <p>OK: {day.ok} / Total: {day.total}</p>
-                          <p>Hit: {day.hit_rate !== null ? `${(day.hit_rate * 100).toFixed(0)}%` : "—"}</p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{metrics.by_day[0]?.date}</span>
-                  <span>{metrics.by_day[metrics.by_day.length - 1]?.date}</span>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-green-500" />
-                    <span>OK</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded bg-primary/50" />
-                    <span>NONE</span>
-                  </div>
-                </div>
+              <div className="w-full">
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart
+                    data={metrics.by_day.map(day => ({
+                      date: day.date.slice(5), // MM-DD format
+                      OK: day.ok,
+                      NONE: day.none,
+                      hitRate: day.hit_rate !== null ? Math.round(day.hit_rate * 100) : null,
+                    }))}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      formatter={(value: number, name: string) => [value, name]}
+                      labelFormatter={(label) => `Огноо: ${label}`}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+                    />
+                    <Bar dataKey="OK" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="NONE" stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>

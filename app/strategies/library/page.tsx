@@ -79,10 +79,10 @@ export default function StrategySharingPage() {
       const result = await api.importStrategy(shareId)
       if (result.ok) {
         toast({
-          title: "Амжилттай",
+          title: result.already_imported ? "⚠️ Анхааруулга" : "✅ Амжилттай",
           description: result.already_imported
             ? "Энэ стратеги аль хэдийн импортлогдсон байна"
-            : `"${result.strategy_id}" стратеги импортлогдлоо`,
+            : `"${result.strategy_id}" стратеги импортлогдлоо. Идэвхжүүлэхийн тулд Strategies хуудас руу орно уу.`,
         })
         await loadData()
       }

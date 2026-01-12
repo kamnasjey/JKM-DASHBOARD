@@ -31,8 +31,10 @@ export function useWebSocketSignals() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [totalCount, setTotalCount] = useState(0)
+  const [reconnectAttempts, setReconnectAttempts] = useState(0)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const maxReconnectAttempts = 10
 
   const connect = useCallback(() => {
     const envBase = process.env.NEXT_PUBLIC_WS_URL
@@ -58,6 +60,7 @@ export function useWebSocketSignals() {
       console.log("[signals-ws] Connected")
       setConnected(true)
       setError(null)
+      setReconnectAttempts(0) // Reset on successful connection
     }
 
     ws.onmessage = (event) => {
@@ -97,11 +100,21 @@ export function useWebSocketSignals() {
       console.log("[signals-ws] Closed")
       setConnected(false)
       
-      // Attempt reconnect after 5 seconds
-      reconnectTimeoutRef.current = setTimeout(() => {
-        console.log("[signals-ws] Attempting reconnect...")
-        connect()
-      }, 5000)
+      // Exponential backoff reconnect (5s, 10s, 20s, 40s... max 5min)
+      setReconnectAttempts(prev => {
+        const attempts = prev + 1
+        if (attempts <= maxReconnectAttempts) {
+          const delay = Math.min(5000 * Math.pow(2, attempts - 1), 300000)
+          console.log(`[signals-ws] Reconnect attempt ${attempts} in ${delay/1000}s...`)
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect()
+          }, delay)
+        } else {
+          console.log("[signals-ws] Max reconnect attempts reached")
+          setError("Холболт тасарсан. Хуудсыг дахин ачаална уу.")
+        }
+        return attempts
+      })
     }
   }, [])
 

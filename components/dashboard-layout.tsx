@@ -59,20 +59,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <DashboardSidebar isAdmin={isOwner} />
       
       {/* Mobile Sidebar Overlay */}
-      {mobileMenuOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={closeMobileMenu}
-            aria-hidden="true"
-          />
-          {/* Mobile Sidebar */}
-          <div className="fixed inset-y-0 left-0 z-50 w-64 lg:hidden">
-            <DashboardSidebar isAdmin={isOwner} isMobile onNavigate={closeMobileMenu} />
-          </div>
-        </>
-      )}
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/50 lg:hidden transition-opacity duration-300 ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        onClick={closeMobileMenu}
+        aria-hidden="true"
+      />
+      {/* Mobile Sidebar with slide animation */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 lg:hidden transition-transform duration-300 ease-in-out ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <DashboardSidebar isAdmin={isOwner} isMobile onNavigate={closeMobileMenu} />
+      </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardTopbar
