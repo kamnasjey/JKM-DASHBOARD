@@ -1,10 +1,12 @@
 import { PublicNav } from "@/components/public-nav"
 import { HeroSection } from "@/components/landing/hero-section"
+import { BrandStory } from "@/components/landing/brand-story"
 import { InfoBoard } from "@/components/landing/info-board"
 import { HowItWorks } from "@/components/landing/how-it-works"
 import { JourneySection } from "@/components/landing/journey-section"
 import { PricingSection } from "@/components/landing/pricing-section"
 import { TargetAudience } from "@/components/landing/target-audience"
+import { FaqSection } from "@/components/landing/faq-section"
 import { Footer } from "@/components/landing/footer"
 import { ComingSoonLanding } from "@/components/landing/coming-soon"
 
@@ -20,10 +22,12 @@ export default function LandingPage() {
     <main className="min-h-screen">
       <PublicNav />
       <HeroSection />
+      <BrandStory />
       <InfoBoard />
       <TargetAudience />
       <HowItWorks />
       <JourneySection />
+      <FaqSection />
       <PricingSection />
       <Footer />
     </main>

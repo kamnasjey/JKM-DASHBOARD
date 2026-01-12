@@ -7,8 +7,11 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-4">
           {/* Brand */}
           <div>
-            <div className="mb-4 text-xl font-bold">JKM Trading AI</div>
-            <p className="text-sm text-muted-foreground">AI-тай хамт трейдинг сурч, тогтвортой ашигт хүрэх замнал.</p>
+            <div className="mb-2 text-xl font-bold">JKMCOPILOT</div>
+            <p className="mb-3 text-sm text-muted-foreground">Just Keep Moving — 24/7 Setup Scanner 🔄</p>
+            <p className="text-sm text-muted-foreground">
+              Сигнал зардаг бот биш. Таны дүрмээр 24/7 скан хийж, setup олдвол илрүүлээд яагаад гэдгийг тайлбарлана.
+            </p>
           </div>
 
           {/* Product */}
@@ -66,7 +69,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} JKM Trading AI. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} JKMCOPILOT. All rights reserved.</p>
         </div>
       </div>
     </footer>

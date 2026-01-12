@@ -1,8 +1,17 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export function HeroSection() {
+  const scrollToHow = () => {
+    const element = document.getElementById("how")
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   return (
     <section className="container mx-auto px-4 py-20 md:py-32">
       <div className="mx-auto max-w-4xl text-center">
@@ -19,13 +28,23 @@ export function HeroSection() {
         </div>
 
         <h1 className="mb-6 text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-          Өөрийн дүрмээрээ зах зээлийг 24/7 шалга.
+          JKMCOPILOT — Таны арилжааны AI туслах 🤝📈
         </h1>
 
         <p className="mb-10 text-pretty text-lg text-muted-foreground md:text-xl">
-          JKM AI Trading Bot нь таны оруулсан нөхцлийг 5 минут тутам шалгаад, setup таарвал "SETUP FOUND" гэж мэдэгдэнэ.
-          BUY/SELL тулгадаггүй — зөвхөн setup-ийн evidence хартуулна.
+          “Just Keep Moving” философитойгоор зах зээл зогсолтгүй хөдөлдөг шиг бид ч зогсохгүй.
+          Таны өөрийн тогтоосон дүрэм, нөхцлөөр зах зээлийг тогтмол скан хийж, таарсан үед нь “SETUP FOUND” гэж илрүүлнэ.
+          BUY/SELL тулгахгүй — зөвхөн setup-аа нотолгоо, тайлбартайгаар ойлгомжтой болгоно. ✅🧠
         </p>
+
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/auth/register">Эхлэх</Link>
+          </Button>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={scrollToHow}>
+            Яаж ажилладаг вэ?
+          </Button>
+        </div>
       </div>
     </section>
   )
