@@ -2,25 +2,58 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
-import { Activity, BarChart3, Layers3, RefreshCw } from "lucide-react"
+import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { MetricCard } from "@/components/metric-card"
 import { SignalsTable } from "@/components/signals-table"
 import { useToast } from "@/hooks/use-toast"
+import { useWebSocketSignals } from "@/hooks/use-websocket-signals"
 import { api } from "@/lib/api"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
+  
+  // WebSocket real-time signals
+  const { 
+    signals: wsSignals, 
+    newSignals, 
+    connected: wsConnected, 
+    lastUpdate: wsLastUpdate,
+    clearNewSignals 
+  } = useWebSocketSignals()
 
   const [metrics, setMetrics] = useState<any>(null)
   const [activeStrategies, setActiveStrategies] = useState<number | null>(null)
   const [recentSignals, setRecentSignals] = useState<SignalPayloadPublicV1[]>([])
   const [engineStatus, setEngineStatus] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  
+  // Show toast when new signals arrive via WebSocket
+  useEffect(() => {
+    if (newSignals.length > 0) {
+      newSignals.forEach((signal) => {
+        toast({
+          title: `🔔 Шинэ дохио: ${signal.symbol}`,
+          description: `${signal.direction} @ ${signal.entry} | RR: ${signal.rr?.toFixed(2) || "N/A"}`,
+        })
+      })
+      clearNewSignals()
+    }
+  }, [newSignals, toast, clearNewSignals])
+  
+  // Use WS signals if available, otherwise HTTP
+  const displaySignals = useMemo(() => {
+    if (wsConnected && wsSignals.length > 0) {
+      // Return last 10 signals from WS
+      return wsSignals.slice(-10).reverse() as SignalPayloadPublicV1[]
+    }
+    return recentSignals
+  }, [wsConnected, wsSignals, recentSignals])
 
   const winRateText = useMemo(() => {
     const raw = metrics?.win_rate ?? metrics?.winrate
@@ -176,7 +209,26 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>System</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              System
+              {/* WebSocket Connection Status */}
+              <Badge 
+                variant={wsConnected ? "default" : "secondary"} 
+                className={`ml-auto flex items-center gap-1 text-xs ${wsConnected ? "bg-green-600" : ""}`}
+              >
+                {wsConnected ? (
+                  <>
+                    <Wifi className="h-3 w-3" />
+                    Live
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-3 w-3" />
+                    Polling
+                  </>
+                )}
+              </Badge>
+            </CardTitle>
             <CardDescription>Engine төлөв ба сүүлийн скан</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -198,11 +250,17 @@ export default function DashboardPage() {
                 "Уншиж байна…"
               )}
             </div>
-            <div className="text-xs text-muted-foreground">Signals auto refresh: 60s · Engine: 5s</div>
+            <div className="text-xs text-muted-foreground">
+              {wsConnected ? (
+                <span className="text-green-600">Real-time updates · {wsLastUpdate?.toLocaleTimeString() || ""}</span>
+              ) : (
+                "Signals auto refresh: 60s · Engine: 5s"
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        <SignalsTable signals={recentSignals} limit={10} />
+        <SignalsTable signals={displaySignals} limit={10} />
       </div>
     </DashboardLayout>
   )

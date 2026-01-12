@@ -1,22 +1,50 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Filter } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Filter, Wifi, WifiOff, Bell } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { SignalsTable } from "@/components/signals-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { useSignals } from "@/hooks/use-signals"
 import { useSymbols } from "@/hooks/use-symbols"
+import { useWebSocketSignals } from "@/hooks/use-websocket-signals"
 import { useAuthGuard } from "@/lib/auth-guard"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignalsPage() {
   useAuthGuard(true)
+  const { toast } = useToast()
 
   const { symbols } = useSymbols()
-  const { signals, loading } = useSignals({ limit: 50 })
+  const { signals: httpSignals, loading } = useSignals({ limit: 50 })
+  const { 
+    signals: wsSignals, 
+    newSignals, 
+    connected, 
+    lastUpdate,
+    clearNewSignals 
+  } = useWebSocketSignals()
+  
+  // Use WS signals if connected and available, otherwise fall back to HTTP
+  const signals = connected && wsSignals.length > 0 ? wsSignals : httpSignals
+  
+  // Show toast when new signals arrive
+  useEffect(() => {
+    if (newSignals.length > 0) {
+      newSignals.forEach((signal) => {
+        toast({
+          title: `🔔 Шинэ дохио: ${signal.symbol}`,
+          description: `${signal.direction} @ ${signal.entry} | RR: ${signal.rr?.toFixed(2) || "N/A"}`,
+        })
+      })
+      clearNewSignals()
+    }
+  }, [newSignals, toast, clearNewSignals])
+  
   const [filters, setFilters] = useState({
     symbol: "all",
     direction: "all",
@@ -39,15 +67,39 @@ export default function SignalsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">Signals</h1>
             <p className="text-muted-foreground">Таны trading дохионуудын жагсаалт</p>
           </div>
-          <Button onClick={() => window.location.reload()}>
-            <Filter className="mr-2 h-4 w-4" />
-            Шинэчлэх
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* WebSocket Connection Status */}
+            <Badge 
+              variant={connected ? "default" : "secondary"} 
+              className={`flex items-center gap-1.5 ${connected ? "bg-green-600" : ""}`}
+            >
+              {connected ? (
+                <>
+                  <Wifi className="h-3 w-3" />
+                  <span className="hidden sm:inline">Live</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3" />
+                  <span className="hidden sm:inline">Offline</span>
+                </>
+              )}
+            </Badge>
+            {lastUpdate && connected && (
+              <span className="text-xs text-muted-foreground hidden md:block">
+                {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
+            <Button onClick={() => window.location.reload()} size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Шинэчлэх</span>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
