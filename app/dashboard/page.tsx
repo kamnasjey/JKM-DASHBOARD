@@ -44,6 +44,21 @@ export default function DashboardPage() {
     return sum > 0 ? String(sum) : "—"
   }, [metrics])
 
+  const lastScanText = useMemo(() => {
+    const raw = (engineStatus as any)?.last_scan_ts
+    if (raw === null || raw === undefined) return null
+
+    const num = typeof raw === "string" ? Number(raw) : typeof raw === "number" ? raw : NaN
+    if (!Number.isFinite(num)) return null
+    if (num <= 0) return null
+
+    // Heuristic: if timestamp looks like seconds, convert to ms.
+    const ms = num < 1_000_000_000_000 ? num * 1000 : num
+    if (ms < 946_684_800_000) return null // < year 2000 => probably invalid
+
+    return new Date(ms).toLocaleString("mn-MN")
+  }, [engineStatus])
+
   const refreshDashboard = async () => {
     setLoading(true)
     try {
@@ -173,9 +188,9 @@ export default function DashboardPage() {
                       {engineStatus.running ? "Ажиллаж байна" : "Зогссон"}
                     </span>
                   </div>
-                  {engineStatus.last_scan_ts && (
+                  {lastScanText && (
                     <div>
-                      Сүүлийн скан: <span className="font-mono text-xs">{new Date(engineStatus.last_scan_ts).toLocaleString("mn-MN")}</span>
+                      Сүүлийн скан: <span className="font-mono text-xs">{lastScanText}</span>
                     </div>
                   )}
                 </div>

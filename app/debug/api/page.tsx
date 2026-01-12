@@ -70,6 +70,7 @@ export default function DebugApiPage() {
   const [health, setHealth] = useState<CheckResult | null>(null)
   const [ping, setPing] = useState<CheckResult | null>(null)
   const [signals, setSignals] = useState<CheckResult | null>(null)
+  const [symbols, setSymbols] = useState<CheckResult | null>(null)
   const [loading, setLoading] = useState(false)
 
   const run = useCallback(async () => {
@@ -79,16 +80,19 @@ export default function DebugApiPage() {
     const healthUrl = "/api/proxy/health"
     const pingUrl = "/api/proxy/ping"
     const signalsUrl = "/api/proxy/signals?limit=3"
+    const symbolsUrl = "/api/proxy/symbols"
 
-    const [healthResult, pingResult, signalsResult] = await Promise.all([
+    const [healthResult, pingResult, signalsResult, symbolsResult] = await Promise.all([
       runCheck("/health", healthUrl),
       runCheck("/api/ping", pingUrl),
       runCheck("/api/signals?limit=3", signalsUrl),
+      runCheck("/api/symbols", symbolsUrl),
     ])
 
     setHealth(healthResult)
     setPing(pingResult)
     setSignals(signalsResult)
+    setSymbols(symbolsResult)
     setLoading(false)
   }, [])
 
@@ -121,6 +125,7 @@ export default function DebugApiPage() {
         <CheckCard result={health} />
         <CheckCard result={ping} />
         <CheckCard result={signals} />
+        <CheckCard result={symbols} />
       </div>
     </div>
   )

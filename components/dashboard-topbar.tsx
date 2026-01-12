@@ -35,7 +35,7 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
   const { toast } = useToast()
   const router = useRouter()
   const { symbols, error: symbolsError } = useSymbols()
-  const { connected, lastUpdate } = useWebSocketCandle(selectedSymbol)
+  const { connected, lastUpdate, error: wsError } = useWebSocketCandle(selectedSymbol)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -78,6 +78,9 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
                         Төлбөр хийх
                       </Link>
                     )}
+                    <Link href="/debug/api" className="block text-xs underline">
+                      Debug хийх (/debug/api)
+                    </Link>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -105,9 +108,24 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge variant={connected ? "default" : "destructive"} className="hidden sm:inline-flex">
-          {connected ? "Холбогдсон" : "Холбогдоогүй"}
-        </Badge>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant={connected ? "default" : "destructive"} className="hidden sm:inline-flex">
+                {connected ? "Холбогдсон" : "Холбогдоогүй"}
+              </Badge>
+            </TooltipTrigger>
+            {!connected && (
+              <TooltipContent>
+                <div className="space-y-1">
+                  <p className="text-sm">Realtime (WebSocket) холбогдоогүй</p>
+                  {wsError && <p className="max-w-[280px] text-xs opacity-90">{wsError}</p>}
+                  <p className="max-w-[280px] text-xs opacity-80">Vercel дээр `NEXT_PUBLIC_WS_URL`-аа тохируул.</p>
+                </div>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         {connected && lastUpdate && (
           <span className="hidden text-xs text-muted-foreground md:inline">Сүүлд шинэчлэгдсэн: {getLatency()}</span>
         )}

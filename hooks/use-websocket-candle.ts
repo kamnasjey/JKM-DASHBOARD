@@ -6,12 +6,26 @@ export function useWebSocketCandle(symbol: string, tf = "5m") {
   const [latestCandle, setLatestCandle] = useState<any>(null)
   const [connected, setConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
     if (!symbol) return
 
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000"}/ws/markets/${symbol}?tf=${tf}`
+    const envBase = process.env.NEXT_PUBLIC_WS_URL
+    const isBrowser = typeof window !== "undefined"
+    const isLocalhost = isBrowser && window.location.hostname === "localhost"
+
+    // In production, defaulting to ws://localhost:8000 is almost always wrong.
+    // If NEXT_PUBLIC_WS_URL isn't set, skip connecting and surface a clear hint.
+    if (!envBase && !isLocalhost) {
+      setConnected(false)
+      setError("WebSocket URL тохируулаагүй байна (NEXT_PUBLIC_WS_URL)")
+      return
+    }
+
+    const base = envBase || "ws://localhost:8000"
+    const wsUrl = `${base}/ws/markets/${symbol}?tf=${tf}`
 
     console.log("[v0] Connecting to WebSocket:", wsUrl)
 
@@ -21,6 +35,7 @@ export function useWebSocketCandle(symbol: string, tf = "5m") {
     ws.onopen = () => {
       console.log("[v0] WebSocket connected")
       setConnected(true)
+      setError(null)
     }
 
     ws.onmessage = (event) => {
@@ -37,11 +52,13 @@ export function useWebSocketCandle(symbol: string, tf = "5m") {
     ws.onerror = (error) => {
       console.error("[v0] WebSocket error:", error)
       setConnected(false)
+      setError("WebSocket холболтын алдаа")
     }
 
     ws.onclose = () => {
       console.log("[v0] WebSocket closed")
       setConnected(false)
+      setError("WebSocket холболт хаагдлаа")
     }
 
     return () => {
@@ -49,5 +66,5 @@ export function useWebSocketCandle(symbol: string, tf = "5m") {
     }
   }, [symbol, tf])
 
-  return { latestCandle, connected, lastUpdate }
+  return { latestCandle, connected, lastUpdate, error }
 }
