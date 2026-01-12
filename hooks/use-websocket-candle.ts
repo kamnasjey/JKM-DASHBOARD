@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react"
 
 export function useWebSocketCandle(symbol: string, tf = "5m") {
   const [latestCandle, setLatestCandle] = useState<any>(null)
+  const [enabled, setEnabled] = useState(true)
   const [connected, setConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -19,10 +20,14 @@ export function useWebSocketCandle(symbol: string, tf = "5m") {
     // In production, defaulting to ws://localhost:8000 is almost always wrong.
     // If NEXT_PUBLIC_WS_URL isn't set, skip connecting and surface a clear hint.
     if (!envBase && !isLocalhost) {
+      // WS is optional in production; backend can handle realtime + caching.
+      setEnabled(false)
       setConnected(false)
-      setError("WebSocket URL тохируулаагүй байна (NEXT_PUBLIC_WS_URL)")
+      setError(null)
       return
     }
+
+    setEnabled(true)
 
     const base = envBase || "ws://localhost:8000"
     const wsUrl = `${base}/ws/markets/${symbol}?tf=${tf}`
@@ -66,5 +71,5 @@ export function useWebSocketCandle(symbol: string, tf = "5m") {
     }
   }, [symbol, tf])
 
-  return { latestCandle, connected, lastUpdate, error }
+  return { latestCandle, enabled, connected, lastUpdate, error }
 }

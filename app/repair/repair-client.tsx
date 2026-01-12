@@ -142,7 +142,10 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
               User: <span className="font-mono text-xs">{userEmail || "—"}</span>
             </div>
             <div>
-              WS URL: <span className="font-mono text-xs">{wsUrl ?? "(тохируулаагүй)"}</span>
+              WS URL: <span className="font-mono text-xs">{wsUrl ?? "(WS ашиглахгүй/тохируулаагүй)"}</span>
+            </div>
+            <div className="text-xs opacity-80 mt-1">
+              Backend realtime + cache хийдэг бол `NEXT_PUBLIC_WS_URL` хэрэггүй.
             </div>
           </div>
           <div className="flex gap-2">

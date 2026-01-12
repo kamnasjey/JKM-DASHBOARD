@@ -35,7 +35,7 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
   const { toast } = useToast()
   const router = useRouter()
   const { symbols, error: symbolsError } = useSymbols()
-  const { connected, lastUpdate, error: wsError } = useWebSocketCandle(selectedSymbol)
+  const { enabled: wsEnabled, connected, lastUpdate, error: wsError } = useWebSocketCandle(selectedSymbol)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -111,11 +111,23 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge variant={connected ? "default" : "destructive"} className="hidden sm:inline-flex">
-                {connected ? "Холбогдсон" : "Холбогдоогүй"}
+              <Badge
+                variant={!wsEnabled ? "secondary" : connected ? "default" : "destructive"}
+                className="hidden sm:inline-flex"
+              >
+                {!wsEnabled ? "Realtime: OFF" : connected ? "Холбогдсон" : "Холбогдоогүй"}
               </Badge>
             </TooltipTrigger>
-            {!connected && (
+            {!wsEnabled ? (
+              <TooltipContent>
+                <div className="space-y-1">
+                  <p className="text-sm">Realtime (WebSocket) ашиглахгүй</p>
+                  <p className="max-w-[280px] text-xs opacity-80">
+                    Backend нь massive/polygon-оос realtime авч cache хийдэг бол WS хэрэггүй.
+                  </p>
+                </div>
+              </TooltipContent>
+            ) : !connected ? (
               <TooltipContent>
                 <div className="space-y-1">
                   <p className="text-sm">Realtime (WebSocket) холбогдоогүй</p>
@@ -123,7 +135,7 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
                   <p className="max-w-[280px] text-xs opacity-80">Vercel дээр `NEXT_PUBLIC_WS_URL`-аа тохируул.</p>
                 </div>
               </TooltipContent>
-            )}
+            ) : null}
           </Tooltip>
         </TooltipProvider>
         {connected && lastUpdate && (
