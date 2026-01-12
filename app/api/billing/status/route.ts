@@ -13,25 +13,58 @@ export async function GET() {
     }
 
     const userId = (session.user as any).id as string | undefined
-    if (!userId) {
-      // For OAuth users without DB record, default to unpaid
-      return NextResponse.json({ ok: true, hasPaidAccess: false, paidAt: null })
-    }
+    const email = ((session.user as any).email as string | undefined)?.toLowerCase().trim()
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { hasPaidAccess: true, paidAt: true },
+      where: userId ? { id: userId } : email ? { email } : { id: "__missing__" },
+      select: {
+        hasPaidAccess: true,
+        paidAt: true,
+        manualPaymentStatus: true,
+        manualPaymentPlan: true,
+        manualPaymentPayerEmail: true,
+        manualPaymentTxnRef: true,
+        manualPaymentNote: true,
+        manualPaymentRequestedAt: true,
+        manualPaymentReviewedAt: true,
+        manualPaymentReviewedBy: true,
+      },
     })
 
     if (!user) {
       // User not in DB yet, default to unpaid
-      return NextResponse.json({ ok: true, hasPaidAccess: false, paidAt: null })
+      return NextResponse.json({
+        ok: true,
+        hasPaidAccess: false,
+        paidAt: null,
+        manualPaymentStatus: "none",
+        manualPaymentPlan: null,
+        manualPaymentPayerEmail: null,
+        manualPaymentTxnRef: null,
+        manualPaymentNote: null,
+        manualPaymentRequestedAt: null,
+        manualPaymentReviewedAt: null,
+        manualPaymentReviewedBy: null,
+      })
     }
 
     return NextResponse.json({ ok: true, ...user })
   } catch (err: any) {
     console.error("[billing/status] Error:", err)
     // Return safe default instead of 500
-    return NextResponse.json({ ok: true, hasPaidAccess: false, paidAt: null, error: "DB unavailable" })
+    return NextResponse.json({
+      ok: true,
+      hasPaidAccess: false,
+      paidAt: null,
+      manualPaymentStatus: "none",
+      manualPaymentPlan: null,
+      manualPaymentPayerEmail: null,
+      manualPaymentTxnRef: null,
+      manualPaymentNote: null,
+      manualPaymentRequestedAt: null,
+      manualPaymentReviewedAt: null,
+      manualPaymentReviewedBy: null,
+      error: "DB unavailable",
+    })
   }
 }

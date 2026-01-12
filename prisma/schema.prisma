@@ -26,6 +26,16 @@ model User {
   stripeCheckoutId     String?  @unique
   paidAt              DateTime?
 
+  // Manual billing (bank transfer/QPay) - admin approves
+  manualPaymentStatus      String   @default("none") // none | pending | approved | rejected
+  manualPaymentPlan        String?
+  manualPaymentPayerEmail  String?
+  manualPaymentTxnRef      String?
+  manualPaymentNote        String?
+  manualPaymentRequestedAt DateTime?
+  manualPaymentReviewedAt  DateTime?
+  manualPaymentReviewedBy  String?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
