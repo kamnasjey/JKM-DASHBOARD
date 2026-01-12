@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { signIn } from "next-auth/react"
+import { useEffect, useState } from "react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { status } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -23,6 +24,40 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("")
   const [otp, setOtp] = useState("")
   const [otpSent, setOtpSent] = useState(false)
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard")
+    }
+  }, [router, status])
+
+  useEffect(() => {
+    // Read query params on the client (avoids build-time Suspense requirements).
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get("error")
+    if (!code) return
+
+    switch (code) {
+      case "OAuthSignin":
+      case "OAuthCallback":
+      case "OAuthCreateAccount":
+      case "Callback":
+        setError("Google-ээр нэвтрэхэд алдаа гарлаа. Дахин оролдоно уу.")
+        return
+      case "OAuthAccountNotLinked":
+        setError("Энэ email өөр аргаар бүртгэгдсэн байна. Өөр аргаар нэвтэрнэ үү.")
+        return
+      case "CredentialsSignin":
+        setError("Нэвтрэх мэдээлэл буруу байна.")
+        return
+      case "SessionRequired":
+        setError("Нэвтэрсний дараа үргэлжлүүлнэ үү.")
+        return
+      default:
+        setError("Нэвтрэхэд алдаа гарлаа.")
+        return
+    }
+  }, [])
 
   const handleGoogleLogin = () => {
     setLoading(true)
