@@ -14,6 +14,7 @@ type CheckResult = {
   bodyPreview: string
   error: string | null
   reason: string
+  required?: boolean
 }
 
 function trimText(text: string, max = 800) {
@@ -74,20 +75,23 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
     setRunning(true)
     setCopied(false)
 
-    const checks: Array<[string, string]> = [
-      ["Proxy: /health", "/api/proxy/health"],
-      ["Proxy: /signals", "/api/proxy/signals?limit=1"],
-      ["Proxy: /engine/status", "/api/proxy/engine/status"],
-      ["Billing: /api/billing/status", "/api/billing/status"],
-      // These may not exist on backend - optional:
-      ["Proxy: /ping", "/api/proxy/ping"],
-      ["Proxy: /symbols", "/api/proxy/symbols"],
-      ["Proxy: /metrics", "/api/proxy/metrics"],
-      ["Proxy: /strategies", "/api/proxy/strategies"],
-      ["Proxy: /profile", "/api/proxy/profile"],
+    const checks: Array<[string, string, boolean]> = [
+      // Required endpoints
+      ["Proxy: /health", "/api/proxy/health", true],
+      ["Proxy: /signals", "/api/proxy/signals?limit=1", true],
+      ["Proxy: /engine/status", "/api/proxy/engine/status", true],
+      ["Billing: /api/billing/status", "/api/billing/status", true],
+      // Optional - backend may not implement these
+      ["Proxy: /ping (optional)", "/api/proxy/ping", false],
+      ["Proxy: /symbols (optional)", "/api/proxy/symbols", false],
+      ["Proxy: /metrics (optional)", "/api/proxy/metrics", false],
+      ["Proxy: /strategies (optional)", "/api/proxy/strategies", false],
+      ["Proxy: /profile (optional)", "/api/proxy/profile", false],
     ]
 
-    const out = await Promise.all(checks.map(([name, url]) => runCheck(name, url)))
+    const out = await Promise.all(checks.map(([name, url, required]) => 
+      runCheck(name, url).then(r => ({ ...r, required }))
+    ))
     setResults(out)
     setRunning(false)
   }, [])
@@ -96,7 +100,7 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
     run()
   }, [run])
 
-  const hasFailures = useMemo(() => results.some((r) => !r.ok), [results])
+  const hasFailures = useMemo(() => results.some((r) => r.required && !r.ok), [results])
 
   const reportText = useMemo(() => {
     const payload = {
@@ -161,7 +165,7 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
 
       <div className="grid gap-4 md:grid-cols-2">
         {results.map((r) => (
-          <Card key={r.name}>
+          <Card key={r.name} className={!r.required && !r.ok ? "opacity-60" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-2">
                 <span className="font-mono text-sm">{r.name}</span>
@@ -169,10 +173,12 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
                   className={
                     r.ok
                       ? "text-xs border rounded px-2 py-1 bg-emerald-500/10 text-emerald-700 border-emerald-500/20"
-                      : "text-xs border rounded px-2 py-1 bg-destructive/10 text-destructive border-destructive/20"
+                      : r.required
+                        ? "text-xs border rounded px-2 py-1 bg-destructive/10 text-destructive border-destructive/20"
+                        : "text-xs border rounded px-2 py-1 bg-muted text-muted-foreground"
                   }
                 >
-                  {r.ok ? "OK" : "FAIL"}
+                  {r.ok ? "OK" : r.required ? "FAIL" : "N/A"}
                 </span>
               </CardTitle>
               <CardDescription className="break-all">{r.url}</CardDescription>
