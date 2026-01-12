@@ -163,4 +163,25 @@ export const api = {
       method: "POST",
       body: JSON.stringify(params),
     }),
+
+  // Shared strategies (public library)
+  sharedStrategies: () => apiFetch<any>("/api/proxy/strategies/shared"),
+  
+  shareStrategy: (strategy: {
+    strategy_id: string
+    detectors: string[]
+    min_score?: number
+    min_rr?: number
+    allowed_regimes?: string[]
+    description?: string
+  }) =>
+    apiFetch<any>("/api/proxy/strategies/share", {
+      method: "POST",
+      body: JSON.stringify(strategy),
+    }),
+  
+  importStrategy: (shareId: string) =>
+    apiFetch<any>(`/api/proxy/strategies/import/${shareId}`, {
+      method: "POST",
+    }),
 }
