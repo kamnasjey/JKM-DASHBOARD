@@ -45,6 +45,7 @@ Set these in Vercel Dashboard → Settings → Environment Variables:
 | `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe webhook signing secret |
 | `BACKEND_INTERNAL_API_KEY` | ✅ | Internal API key for backend proxy |
 | `OWNER_ADMIN_EMAILS` | ⭕ | Comma-separated emails to bypass payment |
+| `NEXT_PUBLIC_LAUNCH_MODE` | ⭕ | `"live"` (default) or `"coming-soon"` |
 
 ### 3. Google OAuth Setup
 
