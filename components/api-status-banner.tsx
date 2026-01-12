@@ -14,11 +14,11 @@ export function ApiStatusBanner({ onRetry }: ApiStatusBannerProps) {
       <AlertCircle className="h-4 w-4" />
       <AlertTitle>API холбогдох боломжгүй байна</AlertTitle>
       <AlertDescription className="mt-2 space-y-2">
-        <p>Backend API-тай холбогдож чадсангүй. Дараах зүйлсийг шалгаарай:</p>
+        <p>API call амжилтгүй боллоо. Дараах зүйлсийг шалгаарай:</p>
         <ul className="ml-4 list-disc space-y-1 text-sm">
-          <li>Backend server ажиллаж байгаа эсэх</li>
-          <li>NEXT_PUBLIC_API_BASE_URL environment variable зөв тохируулсан эсэх</li>
-          <li>CORS тохиргоо зөв байгаа эсэх</li>
+          <li>Backend ажиллаж байгаа эсэх (proxy нь backend рүү forward хийдэг)</li>
+          <li>`BACKEND_INTERNAL_API_KEY` тохируулагдсан эсэх</li>
+          <li>Төлбөр шаардлагатай (payment gating) байж болох</li>
         </ul>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry} className="mt-2 bg-transparent">

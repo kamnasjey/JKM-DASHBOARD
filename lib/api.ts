@@ -9,6 +9,10 @@ export interface ApiError {
   status: number
 }
 
+function toMessage(text: string): string {
+  return text.replace(/^"|"$/g, "").trim()
+}
+
 // Fetch wrapper
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
@@ -30,12 +34,29 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       if (typeof window !== "undefined") {
         window.location.href = "/billing"
       }
-      throw new Error("Payment required")
+      throw new Error("Төлбөр шаардлагатай")
     }
 
     if (!response.ok) {
-      const text = await response.text()
-      throw new Error(text || `API Error: ${response.statusText}`)
+      const contentType = response.headers.get("content-type") ?? ""
+      const rawText = await response.text()
+
+      if (contentType.includes("application/json")) {
+        try {
+          const data = JSON.parse(rawText)
+          const msg =
+            data?.message ??
+            data?.error ??
+            data?.detail ??
+            (typeof data === "string" ? data : null)
+          throw new Error(msg ? String(msg) : `API Error (${response.status})`)
+        } catch {
+          // fall through to plain text
+        }
+      }
+
+      const msg = toMessage(rawText)
+      throw new Error(msg || `API Error (${response.status}) ${response.statusText}`)
     }
 
     return response.json()

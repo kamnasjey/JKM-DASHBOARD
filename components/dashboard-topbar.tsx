@@ -19,6 +19,7 @@ import { useWebSocketCandle } from "@/hooks/use-websocket-candle"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
+import Link from "next/link"
 
 interface TopbarProps {
   user: {
@@ -42,8 +43,8 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
       title: "Гарлаа",
       description: "Амжилттай гарлаа",
     })
-    await signOut({ callbackUrl: "/login" })
-    router.push("/login")
+    await signOut({ callbackUrl: "/auth/login" })
+    router.push("/auth/login")
   }
 
   const getLatency = () => {
@@ -69,7 +70,15 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Symbols ачаалж чадсангүй</p>
+                  <div className="space-y-1">
+                    <p>Symbols ачаалж чадсангүй</p>
+                    {symbolsError && <p className="max-w-[280px] text-xs opacity-90">{symbolsError}</p>}
+                    {symbolsError?.toLowerCase().includes("төлбөр") && (
+                      <Link href="/billing" className="text-xs underline">
+                        Төлбөр хийх
+                      </Link>
+                    )}
+                  </div>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

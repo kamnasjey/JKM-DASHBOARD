@@ -13,7 +13,7 @@ export function useAuthGuard(requireAuth = true) {
     if (status === "loading") return
 
     if (requireAuth && !isAuthed) {
-      router.push("/login")
+      router.push("/auth/login")
       return
     }
 

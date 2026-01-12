@@ -12,15 +12,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import type { Profile } from "@/lib/types"
+import { useSession } from "next-auth/react"
 
 export default function ProfilePage() {
   useAuthGuard(true)
 
+  const { data: session } = useSession()
+
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profile, setProfile] = useState<any | null>(null)
   const [commandText, setCommandText] = useState("")
 
   useEffect(() => {
@@ -33,6 +35,11 @@ export default function ProfilePage() {
       setProfile(data)
     } catch (err: any) {
       console.error("[v0] Failed to load profile:", err)
+      // Fall back to session info so Google users still see their name/email.
+      setProfile({
+        name: session?.user?.name ?? "",
+        email: session?.user?.email ?? "",
+      })
       toast({
         title: "Алдаа",
         description: "Profile ачаалж чадсангүй",
@@ -121,14 +128,20 @@ export default function ProfilePage() {
                   <Label htmlFor="name">Нэр</Label>
                   <Input
                     id="name"
-                    value={profile?.name || ""}
-                    onChange={(e) => setProfile({ ...profile!, name: e.target.value })}
+                    value={profile?.name || session?.user?.name || ""}
+                    onChange={(e) =>
+                      setProfile((prev: any) => ({
+                        ...(prev ?? {}),
+                        name: e.target.value,
+                        email: (prev?.email ?? session?.user?.email ?? "") as string,
+                      }))
+                    }
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Имэйл</Label>
-                  <Input id="email" value={profile?.email || ""} disabled />
+                  <Input id="email" value={profile?.email || session?.user?.email || ""} disabled />
                   <p className="text-xs text-muted-foreground">Имэйл солих боломжгүй</p>
                 </div>
 

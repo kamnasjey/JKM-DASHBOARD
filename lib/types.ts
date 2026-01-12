@@ -6,6 +6,14 @@ export interface User {
   created_at?: number
 }
 
+// Backend profile payload shape used by /api/profile endpoints
+export interface Profile {
+  name?: string | null
+  email?: string | null
+  telegram_handle?: string | null
+  strategy_note?: string | null
+}
+
 export interface DashboardMetrics {
   wins: number
   losses: number
