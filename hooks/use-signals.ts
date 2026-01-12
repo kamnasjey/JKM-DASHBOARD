@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { api } from "@/lib/api"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
 
@@ -9,10 +9,13 @@ export function useSignals(params?: { limit?: number; symbol?: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Memoize params to prevent infinite loop
+  const stableParams = useMemo(() => params, [params?.limit, params?.symbol])
+
   useEffect(() => {
     setLoading(true)
     api
-      .signals(params)
+      .signals(stableParams)
       .then((data) => {
         setSignals(data)
         setError(null)
@@ -24,12 +27,12 @@ export function useSignals(params?: { limit?: number; symbol?: string }) {
       .finally(() => {
         setLoading(false)
       })
-  }, [params]) // Updated to use the entire params object
+  }, [stableParams])
 
   const refresh = async () => {
     setLoading(true)
     try {
-      const data = await api.signals(params)
+      const data = await api.signals(stableParams)
       setSignals(data)
       setError(null)
     } catch (err: any) {

@@ -142,6 +142,24 @@ export const api = {
   // Signal detail
   signalDetail: (id: string) => apiFetch<any>(`/api/proxy/signals/${id}`),
 
+  // Signal AI explanation
+  explainSignal: (signalId: string) => 
+    apiFetch<{
+      ok: boolean
+      signal_id: string
+      explain_type: "ai" | "basic"
+      explanation: string
+      signal_summary?: {
+        symbol: string
+        direction: string
+        entry: number
+        sl: number
+        tp: number
+        rr: number
+      }
+      ai_error?: string
+    }>(`/api/proxy/signals/${signalId}/explain`, { method: "POST" }),
+
   // Candles for charting
   candles: (symbol: string, tf: string = "M5", limit: number = 200) =>
     apiFetch<any>(`/api/proxy/markets/${encodeURIComponent(symbol)}/candles?tf=${tf}&limit=${limit}`),

@@ -14,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useSymbols } from "@/hooks/use-symbols"
-import { useWebSocketCandle } from "@/hooks/use-websocket-candle"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -35,7 +34,6 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange, onMenuTo
   const { toast } = useToast()
   const router = useRouter()
   const { symbols, error: symbolsError } = useSymbols()
-  const { enabled: wsEnabled, connected, lastUpdate, error: wsError } = useWebSocketCandle(selectedSymbol)
 
   const handleLogout = async () => {
     toast({
@@ -44,12 +42,6 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange, onMenuTo
     })
     await signOut({ callbackUrl: "/auth/login" })
     router.push("/auth/login")
-  }
-
-  const getLatency = () => {
-    if (!lastUpdate) return "N/A"
-    const diff = Date.now() - lastUpdate.getTime()
-    return `${Math.round(diff / 1000)}s`
   }
 
   return (
@@ -107,39 +99,6 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange, onMenuTo
       </div>
 
       <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant={!wsEnabled ? "secondary" : connected ? "default" : "destructive"}
-                className="hidden sm:inline-flex"
-              >
-                {!wsEnabled ? "Realtime: OFF" : connected ? "Холбогдсон" : "Холбогдоогүй"}
-              </Badge>
-            </TooltipTrigger>
-            {!wsEnabled ? (
-              <TooltipContent>
-                <div className="space-y-1">
-                  <p className="text-sm">Realtime (WebSocket) ашиглахгүй</p>
-                  <p className="max-w-[280px] text-xs opacity-80">
-                    Backend нь massive/polygon-оос realtime авч cache хийдэг бол WS хэрэггүй.
-                  </p>
-                </div>
-              </TooltipContent>
-            ) : !connected ? (
-              <TooltipContent>
-                <div className="space-y-1">
-                  <p className="text-sm">Realtime (WebSocket) холбогдоогүй</p>
-                  {wsError && <p className="max-w-[280px] text-xs opacity-90">{wsError}</p>}
-                  <p className="max-w-[280px] text-xs opacity-80">Vercel дээр `NEXT_PUBLIC_WS_URL`-аа тохируул.</p>
-                </div>
-              </TooltipContent>
-            ) : null}
-          </Tooltip>
-        </TooltipProvider>
-        {connected && lastUpdate && (
-          <span className="hidden text-xs text-muted-foreground md:inline">Сүүлд шинэчлэгдсэн: {getLatency()}</span>
-        )}
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>

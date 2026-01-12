@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowUpRight, ArrowDownRight, Eye } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Eye, Sparkles } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AIExplainDialog } from "@/components/ai-explain-dialog"
 import { formatTimestamp } from "@/lib/utils-trading"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
 
@@ -107,11 +108,23 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                       <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Link href={`/signals/${signal.signal_id}`}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <AIExplainDialog 
+                          signalId={signal.signal_id} 
+                          symbol={signal.symbol}
+                          direction={signal.direction}
+                          trigger={
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Sparkles className="h-4 w-4 text-yellow-500" />
+                            </Button>
+                          }
+                        />
+                        <Link href={`/signals/${signal.signal_id}`}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -121,12 +134,14 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
         ) : (
           <div className="space-y-2 sm:space-y-3">
             {displaySignals.map((signal) => (
-              <Link
+              <div
                 key={signal.signal_id}
-                href={`/signals/${signal.signal_id}`}
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-3 sm:p-4 transition-colors hover:bg-accent active:bg-accent"
+                className="flex items-center justify-between rounded-lg border border-border bg-card p-3 sm:p-4 transition-colors hover:bg-accent"
               >
-                <div className="flex items-center gap-3 sm:gap-4">
+                <Link
+                  href={`/signals/${signal.signal_id}`}
+                  className="flex flex-1 items-center gap-3 sm:gap-4"
+                >
                   <div
                     className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full ${
                       signal.direction === "BUY" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
@@ -144,7 +159,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                     </p>
                     <p className="text-xs text-muted-foreground">{formatTimestamp(signal.created_at)}</p>
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center gap-2">
                   {signal.rr && (
                     <Badge variant="outline" className="hidden xs:inline-flex">
@@ -152,9 +167,21 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                     </Badge>
                   )}
                   <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <AIExplainDialog 
+                    signalId={signal.signal_id} 
+                    symbol={signal.symbol}
+                    direction={signal.direction}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Sparkles className="h-4 w-4 text-yellow-500" />
+                      </Button>
+                    }
+                  />
+                  <Link href={`/signals/${signal.signal_id}`}>
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </Link>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

@@ -132,6 +132,10 @@ export interface SignalPayloadPublicV1 {
   chart_drawings: ChartDrawing[]
   engine_annotations?: Record<string, any>
   fail_reasons?: string[]
+  // TP/SL hit tracking fields
+  outcome?: "win" | "loss" | "expired" | "pending"
+  resolved_at?: number  // epoch seconds
+  resolved_price?: number
 }
 
 // ============================================
