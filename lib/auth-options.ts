@@ -144,8 +144,13 @@ export const authOptions: NextAuthOptions = {
           })
           console.log(`[Auth] Google login upsert: ${maskEmail(email)}`)
         } catch (err) {
-          console.error(`[Auth] Google upsert error:`, err)
-          return false
+          // IMPORTANT:
+          // Returning false here causes NextAuth to redirect with ?error=AccessDenied,
+          // which looks like Google auth is broken. In production, this most commonly
+          // happens when DATABASE_URL is missing/invalid or SQLite is not writable.
+          // We allow OAuth login to proceed and treat DB persistence as best-effort.
+          console.error(`[Auth] Google upsert error (allowing sign-in to proceed):`, err)
+          return true
         }
       }
 
@@ -159,11 +164,15 @@ export const authOptions: NextAuthOptions = {
 
       // For Google auth, lookup DB user to get correct ID
       if (account?.provider === "google" && token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: (token.email as string).toLowerCase().trim() },
-        })
-        if (dbUser) {
-          token.id = dbUser.id
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: (token.email as string).toLowerCase().trim() },
+          })
+          if (dbUser) {
+            token.id = dbUser.id
+          }
+        } catch (err) {
+          console.error("[Auth] Google jwt DB lookup failed (continuing):", err)
         }
       }
 

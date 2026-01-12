@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [authErrorCode, setAuthErrorCode] = useState("")
 
   // Email register state
   const [name, setName] = useState("")
@@ -40,6 +41,8 @@ export default function RegisterPage() {
     const code = params.get("error")
     if (!code) return
 
+    setAuthErrorCode(code)
+
     switch (code) {
       case "OAuthSignin":
       case "OAuthCallback":
@@ -50,8 +53,14 @@ export default function RegisterPage() {
       case "OAuthAccountNotLinked":
         setError("Энэ email өөр аргаар бүртгэгдсэн байна. Өөр аргаар нэвтэрнэ үү.")
         return
+      case "AccessDenied":
+        setError("Бүртгүүлэх эрхгүй байна. (AccessDenied)")
+        return
+      case "Configuration":
+        setError("Auth тохиргоонд асуудал байна. (Configuration)")
+        return
       default:
-        setError("Бүртгэл хийхэд алдаа гарлаа.")
+        setError(`Бүртгэл хийхэд алдаа гарлаа. (${code})`)
         return
     }
   }, [])
@@ -191,6 +200,12 @@ export default function RegisterPage() {
           {success && (
             <div className="rounded-md bg-green-500/15 p-3 text-sm text-green-600">
               {success}
+            </div>
+          )}
+
+          {authErrorCode === "Configuration" && (
+            <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+              Production/Vercel дээр дараах env vars-ууд байгаа эсэхийг шалгаарай: NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
             </div>
           )}
 
