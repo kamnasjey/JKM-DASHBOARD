@@ -138,4 +138,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  // Signal detail
+  signalDetail: (id: string) => apiFetch<any>(`/api/proxy/signals/${id}`),
+
+  // Candles for charting
+  candles: (symbol: string, tf: string = "M5", limit: number = 200) =>
+    apiFetch<any>(`/api/proxy/markets/${encodeURIComponent(symbol)}/candles?tf=${tf}&limit=${limit}`),
+
+  // Detectors list
+  detectors: () => apiFetch<any>("/api/proxy/detectors"),
 }

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ExplainPanel } from "@/components/explain-panel"
 import { JsonViewer } from "@/components/json-viewer"
-import { ChartPlaceholder } from "@/components/chart-placeholder"
+import { CandleChart } from "@/components/candle-chart"
 import { api } from "@/lib/api"
 import { formatTimestamp } from "@/lib/utils-trading"
 import { useAuthGuard } from "@/lib/auth-guard"
@@ -87,7 +87,14 @@ export default function SignalDetailPage() {
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Left: Chart & Drawings */}
           <div className="space-y-6 lg:col-span-8">
-            <ChartPlaceholder symbol={signal.symbol} />
+            <CandleChart
+              symbol={signal.symbol}
+              tf={signal.timeframe || "M5"}
+              overlays={signal.chart_drawings}
+              entry={signal.entry}
+              sl={signal.sl}
+              tp={signal.tp}
+            />
 
             {/* Chart Drawings */}
             <Card>

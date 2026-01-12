@@ -10,9 +10,12 @@ export async function GET(request: Request) {
   const paid = await requirePaidSession()
   if (!paid) return json(402, { ok: false, message: "Payment required" })
 
+  const userId = (session.user as any)?.id
+  if (!userId) return json(400, { ok: false, message: "User ID not found" })
+
   return forwardInternalRequest(request, {
     method: "GET",
-    path: "/strategies",
+    path: `/api/user/${userId}/strategies`,
   })
 }
 
@@ -23,8 +26,12 @@ export async function PUT(request: Request) {
   const paid = await requirePaidSession()
   if (!paid) return json(402, { ok: false, message: "Payment required" })
 
+  const userId = (session.user as any)?.id
+  if (!userId) return json(400, { ok: false, message: "User ID not found" })
+
+  // Backend expects POST, but frontend uses PUT for update semantics
   return forwardInternalRequest(request, {
-    method: "PUT",
-    path: "/strategies",
+    method: "POST",
+    path: `/api/user/${userId}/strategies`,
   })
 }

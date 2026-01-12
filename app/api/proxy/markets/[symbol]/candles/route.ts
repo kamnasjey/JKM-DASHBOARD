@@ -1,17 +1,26 @@
 import { forwardInternalRequest } from "@/lib/backend-proxy"
 import { requirePaidSession, requireSession, json } from "@/lib/proxy-auth"
+import { NextRequest } from "next/server"
 
 export const runtime = "nodejs"
 
-export async function GET(request: Request) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ symbol: string }> }
+) {
   const session = await requireSession()
   if (!session) return json(401, { ok: false, message: "Unauthorized" })
 
   const paid = await requirePaidSession()
   if (!paid) return json(402, { ok: false, message: "Payment required" })
 
+  const { symbol } = await params
+  const { searchParams } = new URL(request.url)
+  const tf = searchParams.get("tf") || "M5"
+  const limit = searchParams.get("limit") || "200"
+
   return forwardInternalRequest(request, {
     method: "GET",
-    path: "/api/metrics",
+    path: `/api/markets/${symbol}/candles?tf=${tf}&limit=${limit}`,
   })
 }

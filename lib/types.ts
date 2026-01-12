@@ -93,3 +93,102 @@ export interface LogEntry {
   message: string
   details?: any
 }
+
+// ============================================
+// Signal Payload (Public V1) - matches backend
+// ============================================
+export interface ChartDrawing {
+  object_id: string
+  kind: "line" | "box" | "label"
+  type?: string
+  label?: string
+  x1?: number
+  y1?: number
+  x2?: number
+  y2?: number
+  price?: number
+  price_from?: number
+  price_to?: number
+  text?: string
+  time?: number
+  time_from?: number
+  time_to?: number
+}
+
+export interface SignalPayloadPublicV1 {
+  signal_id: string
+  user_id?: string
+  symbol: string
+  timeframe: string
+  created_at: number // epoch seconds
+  status: "OK" | "NONE" | "FOUND" | "ACTIVE" | "CLOSED"
+  direction: "BUY" | "SELL" | "NA"
+  entry?: number
+  sl?: number
+  tp?: number
+  rr?: number
+  explain: Record<string, any>
+  evidence: Record<string, any>
+  chart_drawings: ChartDrawing[]
+  engine_annotations?: Record<string, any>
+  fail_reasons?: string[]
+}
+
+// ============================================
+// Strategy types - matches backend
+// ============================================
+export interface StrategySpec {
+  strategy_id: string
+  name?: string
+  description?: string
+  enabled: boolean
+  detectors: string[]
+  min_score?: number
+  min_rr?: number
+  allowed_regimes?: string[]
+  parameters?: Record<string, any>
+}
+
+export interface StrategiesResponse {
+  ok?: boolean
+  schema_version?: number
+  user_id: string
+  strategies: StrategySpec[]
+  count?: number
+}
+
+// ============================================
+// Detector types
+// ============================================
+export interface DetectorInfo {
+  name: string
+  doc?: string
+  params_schema?: Record<string, any>
+  examples?: any[]
+}
+
+export interface DetectorsResponse {
+  ok: boolean
+  detectors: DetectorInfo[]
+  count: number
+}
+
+// ============================================
+// Candle types
+// ============================================
+export interface Candle {
+  time: number // epoch seconds
+  open: number
+  high: number
+  low: number
+  close: number
+  volume?: number
+}
+
+export interface CandlesResponse {
+  ok: boolean
+  symbol: string
+  tf: string
+  candles: Candle[]
+  count: number
+}

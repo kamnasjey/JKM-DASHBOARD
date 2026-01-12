@@ -1,17 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle } from "lucide-react"
+import { Layers, Save, AlertCircle, ChevronDown, Check } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import type { StrategiesResponse } from "@/lib/types"
+import type { StrategiesResponse, DetectorInfo } from "@/lib/types"
 
 export default function StrategiesPage() {
   useAuthGuard(true)
@@ -20,20 +21,27 @@ export default function StrategiesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [strategies, setStrategies] = useState<StrategiesResponse | null>(null)
+  const [detectors, setDetectors] = useState<DetectorInfo[]>([])
   const [jsonEdit, setJsonEdit] = useState("")
   const [editMode, setEditMode] = useState(false)
+  const [openDetectorDropdown, setOpenDetectorDropdown] = useState<number | null>(null)
 
   useEffect(() => {
-    loadStrategies()
+    loadData()
   }, [])
 
-  const loadStrategies = async () => {
+  const loadData = async () => {
     try {
-      const data = await api.strategies()
-      setStrategies(data)
-      setJsonEdit(JSON.stringify(data.strategies, null, 2))
+      const [strategiesData, detectorsData] = await Promise.all([
+        api.strategies(),
+        api.detectors().catch(() => ({ detectors: [] })),
+      ])
+
+      setStrategies(strategiesData)
+      setJsonEdit(JSON.stringify(strategiesData.strategies, null, 2))
+      setDetectors(detectorsData?.detectors || [])
     } catch (err: any) {
-      console.error("[v0] Failed to load strategies:", err)
+      console.error("[v0] Failed to load data:", err)
       toast({
         title: "Алдаа",
         description: "Стратегиуд ачаалж чадсангүй",
@@ -45,6 +53,21 @@ export default function StrategiesPage() {
   }
 
   const handleSave = async () => {
+    // Validate: enabled strategies must have at least 1 detector
+    if (!editMode && strategies?.strategies) {
+      const invalid = strategies.strategies.find(
+        (s) => s.enabled && (!s.detectors || s.detectors.length === 0)
+      )
+      if (invalid) {
+        toast({
+          title: "Анхааруулга",
+          description: `"${invalid.name || invalid.strategy_id}" стратеги идэвхтэй боловч detector сонгоогүй байна.`,
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
     setSaving(true)
     try {
       let dataToSave: any
@@ -59,7 +82,7 @@ export default function StrategiesPage() {
         title: "Амжилттай",
         description: "Стратегиуд хадгалагдлаа",
       })
-      await loadStrategies()
+      await loadData()
       setEditMode(false)
     } catch (err: any) {
       console.error("[v0] Failed to save strategies:", err)
@@ -80,6 +103,21 @@ export default function StrategiesPage() {
       ...newStrategies[index],
       enabled: !newStrategies[index].enabled,
     }
+    setStrategies({ ...strategies, strategies: newStrategies })
+  }
+
+  const toggleDetector = (strategyIndex: number, detectorName: string) => {
+    if (!strategies) return
+    const newStrategies = [...strategies.strategies]
+    const strategy = newStrategies[strategyIndex]
+    const currentDetectors = strategy.detectors || []
+
+    if (currentDetectors.includes(detectorName)) {
+      strategy.detectors = currentDetectors.filter((d) => d !== detectorName)
+    } else {
+      strategy.detectors = [...currentDetectors, detectorName]
+    }
+
     setStrategies({ ...strategies, strategies: newStrategies })
   }
 
@@ -110,9 +148,23 @@ export default function StrategiesPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Стратегиудаа сайн уншаад, тохируулга хийгээрэй. Advanced mode-д JSON засах боломжтой.
+            Стратеги бүрт detector сонгоод идэвхжүүлнэ үү. Detector сонгоогүй стратеги ажиллахгүй.
           </AlertDescription>
         </Alert>
+
+        {/* Detectors available info */}
+        {detectors.length > 0 && (
+          <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+            <p className="mb-2 text-sm font-medium">Боломжит Detectors ({detectors.length}):</p>
+            <div className="flex flex-wrap gap-2">
+              {detectors.map((d) => (
+                <Badge key={d.name} variant="outline" className="text-xs">
+                  {d.name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Strategy Cards */}
         {!editMode && strategies?.strategies && (
@@ -123,21 +175,102 @@ export default function StrategiesPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                       <Layers className="h-5 w-5" />
-                      {strategy.name}
+                      {strategy.name || strategy.strategy_id}
                     </CardTitle>
-                    {strategy.enabled !== undefined && (
-                      <Switch checked={strategy.enabled} onCheckedChange={() => toggleStrategyEnabled(idx)} />
+                    <Switch
+                      checked={strategy.enabled}
+                      onCheckedChange={() => toggleStrategyEnabled(idx)}
+                    />
+                  </div>
+                  {strategy.description && (
+                    <CardDescription>{strategy.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Detector selection */}
+                  <div>
+                    <p className="mb-2 text-sm font-medium">Detectors:</p>
+                    <div className="relative">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                        onClick={() =>
+                          setOpenDetectorDropdown(
+                            openDetectorDropdown === idx ? null : idx
+                          )
+                        }
+                      >
+                        <span className="truncate">
+                          {strategy.detectors && strategy.detectors.length > 0
+                            ? strategy.detectors.join(", ")
+                            : "Detector сонгох..."}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+
+                      {openDetectorDropdown === idx && (
+                        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
+                          {detectors.length === 0 ? (
+                            <p className="p-2 text-sm text-muted-foreground">
+                              Detector байхгүй
+                            </p>
+                          ) : (
+                            detectors.map((detector) => {
+                              const isSelected = strategy.detectors?.includes(
+                                detector.name
+                              )
+                              return (
+                                <div
+                                  key={detector.name}
+                                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                                  onClick={() => toggleDetector(idx, detector.name)}
+                                >
+                                  <div
+                                    className={`flex h-4 w-4 items-center justify-center rounded border ${
+                                      isSelected
+                                        ? "border-primary bg-primary"
+                                        : "border-muted-foreground"
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <Check className="h-3 w-3 text-primary-foreground" />
+                                    )}
+                                  </div>
+                                  <span>{detector.name}</span>
+                                </div>
+                              )
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selected detectors badges */}
+                    {strategy.detectors && strategy.detectors.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {strategy.detectors.map((d) => (
+                          <Badge
+                            key={d}
+                            variant="secondary"
+                            className="cursor-pointer text-xs"
+                            onClick={() => toggleDetector(idx, d)}
+                          >
+                            {d} ×
+                          </Badge>
+                        ))}
+                      </div>
                     )}
                   </div>
-                  {strategy.description && <CardDescription>{strategy.description}</CardDescription>}
-                </CardHeader>
-                <CardContent>
-                  {strategy.parameters && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Параметрүүд:</p>
-                      <div className="rounded-lg bg-muted/50 p-3">
-                        <pre className="text-xs">{JSON.stringify(strategy.parameters, null, 2)}</pre>
-                      </div>
+
+                  {/* Other params display */}
+                  {strategy.min_rr !== undefined && (
+                    <div className="text-sm text-muted-foreground">
+                      Min RR: {strategy.min_rr}
+                    </div>
+                  )}
+                  {strategy.min_score !== undefined && (
+                    <div className="text-sm text-muted-foreground">
+                      Min Score: {strategy.min_score}
                     </div>
                   )}
                 </CardContent>
