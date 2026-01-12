@@ -9,7 +9,7 @@ export async function GET(request: Request) {
 
   return forwardInternalRequest(request, {
     method: "GET",
-    path: "/api/profile",
+    path: "/profile",
   })
 }
 
@@ -19,6 +19,6 @@ export async function PUT(request: Request) {
 
   return forwardInternalRequest(request, {
     method: "PUT",
-    path: "/api/profile",
+    path: "/profile",
   })
 }

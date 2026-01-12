@@ -12,6 +12,6 @@ export async function GET(request: Request) {
 
   return forwardInternalRequest(request, {
     method: "GET",
-    path: "/api/ping",
+    path: "/ping",
   })
 }
