@@ -151,4 +151,16 @@ export const api = {
 
   // Detailed metrics for performance dashboard
   detailedMetrics: () => apiFetch<any>("/api/proxy/metrics/detailed"),
+
+  // Backtest
+  backtest: (params: {
+    strategy_id?: string
+    detectors?: string[]
+    symbol?: string
+    days?: number
+  }) =>
+    apiFetch<any>("/api/proxy/backtest", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
 }

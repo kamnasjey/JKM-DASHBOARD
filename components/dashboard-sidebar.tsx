@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, Wrench, X, BarChart3 } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, Wrench, X, BarChart3, FlaskConical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -27,6 +27,11 @@ const navItems = [
     label: "Performance",
     href: "/performance",
     icon: BarChart3,
+  },
+  {
+    label: "Backtest",
+    href: "/backtest",
+    icon: FlaskConical,
   },
   {
     label: "Journey",
