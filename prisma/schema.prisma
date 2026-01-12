@@ -1,12 +1,13 @@
 // Prisma schema for JKM Dashboard auth
-// Uses SQLite for MVP, can swap to Postgres later
+// Production: PostgreSQL (Vercel Postgres / Supabase / Neon)
+// Local dev: Can use SQLite by setting DATABASE_URL="file:./dev.db"
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
