@@ -1,7 +1,5 @@
 "use client"
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
 export function HeroSection() {
@@ -28,15 +26,6 @@ export function HeroSection() {
           JKM AI Trading Bot нь таны оруулсан нөхцлийг 5 минут тутам шалгаад, setup таарвал "SETUP FOUND" гэж мэдэгдэнэ.
           BUY/SELL тулгадаггүй — зөвхөн setup-ийн evidence хартуулна.
         </p>
-
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button size="lg" asChild>
-            <Link href="/auth/register">Үнэгүй эхлэх</Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/app">Demo үзэх</Link>
-          </Button>
-        </div>
       </div>
     </section>
   )
