@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, Wrench } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -72,6 +72,20 @@ export function DashboardSidebar({ isAdmin }: SidebarProps) {
               </Link>
             )
           })}
+          {isAdmin && (
+            <Link
+              href="/repair"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                pathname === "/repair"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+              )}
+            >
+              <Wrench className="h-5 w-5" />
+              <span>Засварын газар</span>
+            </Link>
+          )}
           {isAdmin && (
             <Link
               href="/admin"

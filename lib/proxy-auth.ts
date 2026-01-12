@@ -1,21 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { prisma } from "@/lib/db"
-
-function getOwnerEmails(): string[] {
-  const raw = process.env.OWNER_ADMIN_EMAILS ?? process.env.OWNER_EMAIL ?? ""
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean)
-}
-
-function isOwnerEmail(email: unknown): boolean {
-  if (!email || typeof email !== "string") return false
-  const normalized = email.trim().toLowerCase()
-  const owners = getOwnerEmails()
-  return owners.length > 0 && owners.includes(normalized)
-}
+import { isOwnerEmail } from "@/lib/owner"
 
 export async function requireSession() {
   const session = await getServerSession(authOptions)
