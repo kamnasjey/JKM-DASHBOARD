@@ -51,6 +51,50 @@ export async function forwardInternalRequest(
     )
 
     const bodyText = await response.text()
+
+    // If the backend returns an error without a helpful message (e.g. `{}`),
+    // wrap it so the UI can show something actionable.
+    if (!response.ok) {
+      const contentType = (response.headers.get("content-type") ?? "").toLowerCase()
+
+      const wrap = (message: string, detail?: unknown) => {
+        const payload: Record<string, unknown> = { ok: false, message }
+        if (detail !== undefined) payload.detail = detail
+        return new Response(JSON.stringify(payload), {
+          status: response.status,
+          headers: { "content-type": "application/json" },
+        })
+      }
+
+      if (!bodyText) {
+        return wrap(`Backend error (${response.status})`)
+      }
+
+      if (contentType.includes("application/json")) {
+        try {
+          const data = JSON.parse(bodyText)
+          const msg =
+            (data && typeof data === "object" &&
+              ((data as any).message ?? (data as any).error ?? (data as any).detail)) ||
+            (typeof data === "string" ? data : null)
+
+          if (msg) {
+            // Keep backend message intact.
+            return new Response(bodyText, {
+              status: response.status,
+              headers: responseHeaders,
+            })
+          }
+
+          return wrap(`Backend error (${response.status})`, data)
+        } catch {
+          return wrap(`Backend error (${response.status})`, bodyText)
+        }
+      }
+
+      return wrap(`Backend error (${response.status})`, bodyText)
+    }
+
     return new Response(bodyText, {
       status: response.status,
       headers: responseHeaders,
