@@ -81,6 +81,8 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
       ["Proxy: /signals", "/api/proxy/signals?limit=1", true],
       ["Proxy: /engine/status", "/api/proxy/engine/status", true],
       ["Billing: /api/billing/status", "/api/billing/status", true],
+      // Diagnostics
+      ["Backend OpenAPI (optional)", "/api/proxy/openapi", false],
       // Optional - backend may not implement these
       ["Proxy: /ping (optional)", "/api/proxy/ping", false],
       ["Proxy: /symbols (optional)", "/api/proxy/symbols", false],

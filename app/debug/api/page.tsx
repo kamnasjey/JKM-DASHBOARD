@@ -71,6 +71,7 @@ export default function DebugApiPage() {
   const [ping, setPing] = useState<CheckResult | null>(null)
   const [signals, setSignals] = useState<CheckResult | null>(null)
   const [symbols, setSymbols] = useState<CheckResult | null>(null)
+  const [openapi, setOpenapi] = useState<CheckResult | null>(null)
   const [loading, setLoading] = useState(false)
 
   const run = useCallback(async () => {
@@ -81,18 +82,21 @@ export default function DebugApiPage() {
     const pingUrl = "/api/proxy/ping"
     const signalsUrl = "/api/proxy/signals?limit=3"
     const symbolsUrl = "/api/proxy/symbols"
+    const openapiUrl = "/api/proxy/openapi"
 
-    const [healthResult, pingResult, signalsResult, symbolsResult] = await Promise.all([
+    const [healthResult, pingResult, signalsResult, symbolsResult, openapiResult] = await Promise.all([
       runCheck("/health", healthUrl),
       runCheck("/api/ping", pingUrl),
       runCheck("/api/signals?limit=3", signalsUrl),
       runCheck("/api/symbols", symbolsUrl),
+      runCheck("/openapi.json", openapiUrl),
     ])
 
     setHealth(healthResult)
     setPing(pingResult)
     setSignals(signalsResult)
     setSymbols(symbolsResult)
+    setOpenapi(openapiResult)
     setLoading(false)
   }, [])
 
@@ -126,6 +130,7 @@ export default function DebugApiPage() {
         <CheckCard result={ping} />
         <CheckCard result={signals} />
         <CheckCard result={symbols} />
+        <CheckCard result={openapi} />
       </div>
     </div>
   )
