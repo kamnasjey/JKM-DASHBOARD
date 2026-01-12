@@ -33,3 +33,6 @@ Continue building your app on:
 
 - `NEXT_PUBLIC_API_BASE_URL`: Backend API base URL (e.g. `https://api.jkmcopilot.com`).
   - If not set, the app falls back to `https://api.jkmcopilot.com`.
+
+- `OWNER_ADMIN_EMAILS`: Comma-separated email allowlist that bypasses payment gating (e.g. `dev@your.com,admin@your.com`).
+  - Useful for giving the owner full access while testing.
