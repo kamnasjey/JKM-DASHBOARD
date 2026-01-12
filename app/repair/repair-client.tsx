@@ -76,13 +76,15 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
 
     const checks: Array<[string, string]> = [
       ["Proxy: /health", "/api/proxy/health"],
+      ["Proxy: /signals", "/api/proxy/signals?limit=1"],
+      ["Proxy: /engine/status", "/api/proxy/engine/status"],
+      ["Billing: /api/billing/status", "/api/billing/status"],
+      // These may not exist on backend - optional:
       ["Proxy: /ping", "/api/proxy/ping"],
       ["Proxy: /symbols", "/api/proxy/symbols"],
       ["Proxy: /metrics", "/api/proxy/metrics"],
       ["Proxy: /strategies", "/api/proxy/strategies"],
-      ["Proxy: /engine/status", "/api/proxy/engine/status"],
       ["Proxy: /profile", "/api/proxy/profile"],
-      ["Billing: /api/billing/status", "/api/billing/status"],
     ]
 
     const out = await Promise.all(checks.map(([name, url]) => runCheck(name, url)))

@@ -3,6 +3,13 @@
 import { useState, useEffect } from "react"
 import { api } from "@/lib/api"
 
+// Fallback symbols if backend doesn't have /symbols endpoint
+const FALLBACK_SYMBOLS = [
+  "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
+  "USDCAD", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY",
+  "XAUUSD", "BTCUSD", "ETHUSD", "US30", "NAS100"
+]
+
 export function useSymbols() {
   const [symbols, setSymbols] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -12,12 +19,21 @@ export function useSymbols() {
     api
       .symbols()
       .then((data) => {
-        setSymbols(data)
-        setError(null)
+        if (Array.isArray(data) && data.length > 0) {
+          setSymbols(data)
+          setError(null)
+        } else {
+          // Empty array or invalid response - use fallback
+          console.warn("[useSymbols] Empty response, using fallback")
+          setSymbols(FALLBACK_SYMBOLS)
+          setError(null)
+        }
       })
       .catch((err) => {
-        console.error("[v0] Failed to fetch symbols:", err)
-        setError(err.message)
+        console.warn("[useSymbols] API failed, using fallback:", err.message)
+        // Use fallback instead of showing error
+        setSymbols(FALLBACK_SYMBOLS)
+        setError(null) // Don't show error since we have fallback
       })
       .finally(() => {
         setLoading(false)
