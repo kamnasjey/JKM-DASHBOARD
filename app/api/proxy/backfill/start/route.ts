@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth-options"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY || ""
