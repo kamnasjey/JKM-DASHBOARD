@@ -1,26 +1,17 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth-server"
+import { forwardInternalRequest } from "@/lib/backend-proxy"
+import { requirePaidSession, requireSession, json } from "@/lib/proxy-auth"
 
-export async function GET(req: NextRequest) {
-  const session = await requireAuth()
-  if (!session) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
-  }
+export const runtime = "nodejs"
 
-  const backendUrl = process.env.BACKEND_BASE_URL || "http://localhost:8000"
-  const apiKey = process.env.INTERNAL_API_KEY || ""
+export async function GET(request: Request) {
+  const session = await requireSession()
+  if (!session) return json(401, { ok: false, message: "Unauthorized" })
 
-  try {
-    const response = await fetch(`${backendUrl}/api/engine/status`, {
-      method: "GET",
-      headers: {
-        "x-internal-api-key": apiKey,
-      },
-    })
+  const paid = await requirePaidSession()
+  if (!paid) return json(402, { ok: false, message: "Payment required" })
 
-    const data = await response.json()
-    return NextResponse.json(data, { status: response.status })
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, message: error.message }, { status: 500 })
-  }
+  return forwardInternalRequest(request, {
+    method: "GET",
+    path: "/api/engine/status",
+  })
 }

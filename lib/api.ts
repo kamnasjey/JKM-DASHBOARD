@@ -21,9 +21,16 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
     if (response.status === 401) {
       if (typeof window !== "undefined") {
-        window.location.href = "/login"
+        window.location.href = "/auth/login"
       }
       throw new Error("Unauthorized")
+    }
+
+    if (response.status === 402) {
+      if (typeof window !== "undefined") {
+        window.location.href = "/billing"
+      }
+      throw new Error("Payment required")
     }
 
     if (!response.ok) {

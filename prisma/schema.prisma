@@ -18,6 +18,13 @@ model User {
   image        String?
   provider     String   @default("email") // "email" | "google" | "phone"
   passwordHash String?
+
+  // Billing / access control (MVP)
+  hasPaidAccess        Boolean  @default(false)
+  stripeCustomerId     String?  @unique
+  stripeCheckoutId     String?  @unique
+  paidAt              DateTime?
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
