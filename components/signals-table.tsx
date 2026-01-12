@@ -158,8 +158,6 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
             ))}
           </div>
         )}
-          </div>
-        )}
         {limit && signals.length > limit && (
           <div className="mt-4 text-center">
             <Link href="/signals">
