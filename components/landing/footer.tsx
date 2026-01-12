@@ -38,7 +38,7 @@ export function Footer() {
             <div className="mb-4 text-sm font-semibold">Resources</div>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/login" className="transition-colors hover:text-foreground">
+                <Link href="/auth/login" className="transition-colors hover:text-foreground">
                   Нэвтрэх
                 </Link>
               </li>

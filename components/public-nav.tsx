@@ -55,8 +55,11 @@ export function PublicNav() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
-                Нэвтрэх
+              <Button variant="outline" asChild>
+                <Link href="/auth/login">Нэвтрэх</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/auth/register">Бүртгүүлэх</Link>
               </Button>
             </>
           )}
