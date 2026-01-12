@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { ArrowUpRight, ArrowDownRight, Eye } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -16,8 +16,18 @@ interface SignalsTableProps {
 }
 
 export function SignalsTable({ signals, limit }: SignalsTableProps) {
-  const [view, setView] = useState<"table" | "timeline">("table")
+  // Default to timeline on mobile, table on desktop
+  const [view, setView] = useState<"table" | "timeline">("timeline")
   const displaySignals = limit ? signals.slice(0, limit) : signals
+
+  useEffect(() => {
+    // Switch default based on screen size
+    const checkSize = () => {
+      setView(window.innerWidth >= 768 ? "table" : "timeline")
+    }
+    checkSize()
+    // Only run once on mount
+  }, [])
 
   if (signals.length === 0) {
     return (
@@ -37,7 +47,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Сүүлийн дохио</CardTitle>
         <div className="flex items-center gap-2">
           <Button variant={view === "table" ? "secondary" : "ghost"} size="sm" onClick={() => setView("table")}>
@@ -48,20 +58,20 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 sm:px-6">
         {view === "table" ? (
-          <div className="overflow-x-auto">
+          <div className="-mx-2 overflow-x-auto sm:mx-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Цаг</TableHead>
+                  <TableHead className="whitespace-nowrap">Цаг</TableHead>
                   <TableHead>Symbol</TableHead>
-                  <TableHead>TF</TableHead>
+                  <TableHead className="hidden sm:table-cell">TF</TableHead>
                   <TableHead>Чиглэл</TableHead>
-                  <TableHead>Entry</TableHead>
-                  <TableHead>SL</TableHead>
-                  <TableHead>TP</TableHead>
-                  <TableHead>RR</TableHead>
+                  <TableHead className="hidden md:table-cell">Entry</TableHead>
+                  <TableHead className="hidden md:table-cell">SL</TableHead>
+                  <TableHead className="hidden md:table-cell">TP</TableHead>
+                  <TableHead className="hidden sm:table-cell">RR</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -69,11 +79,11 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
               <TableBody>
                 {displaySignals.map((signal) => (
                   <TableRow key={signal.signal_id}>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                       {formatTimestamp(signal.created_at)}
                     </TableCell>
                     <TableCell className="font-medium">{signal.symbol}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant="outline">{signal.tf}</Badge>
                     </TableCell>
                     <TableCell>
@@ -86,13 +96,13 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                         ) : (
                           <ArrowDownRight className="h-3 w-3" />
                         )}
-                        {signal.direction}
+                        <span className="hidden xs:inline">{signal.direction}</span>
                       </Badge>
                     </TableCell>
-                    <TableCell>{signal.entry?.toFixed(5) || "N/A"}</TableCell>
-                    <TableCell>{signal.sl?.toFixed(5) || "N/A"}</TableCell>
-                    <TableCell>{signal.tp?.toFixed(5) || "N/A"}</TableCell>
-                    <TableCell>{signal.rr?.toFixed(2) || "N/A"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{signal.entry?.toFixed(5) || "N/A"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{signal.sl?.toFixed(5) || "N/A"}</TableCell>
+                    <TableCell className="hidden md:table-cell">{signal.tp?.toFixed(5) || "N/A"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{signal.rr?.toFixed(2) || "N/A"}</TableCell>
                     <TableCell>
                       <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
                     </TableCell>
@@ -109,38 +119,45 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
             </Table>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {displaySignals.map((signal) => (
-              <div
+              <Link
                 key={signal.signal_id}
-                className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+                href={`/signals/${signal.signal_id}`}
+                className="flex items-center justify-between rounded-lg border border-border bg-card p-3 sm:p-4 transition-colors hover:bg-accent active:bg-accent"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full ${
                       signal.direction === "BUY" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
                     }`}
                   >
                     {signal.direction === "BUY" ? (
-                      <ArrowUpRight className="h-5 w-5" />
+                      <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5" />
                     ) : (
-                      <ArrowDownRight className="h-5 w-5" />
+                      <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5" />
                     )}
                   </div>
                   <div>
-                    <p className="font-medium">
-                      {signal.symbol} {signal.direction}
+                    <p className="font-medium text-sm sm:text-base">
+                      {signal.symbol} <span className="text-muted-foreground">{signal.direction}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">{formatTimestamp(signal.created_at)}</p>
                   </div>
                 </div>
-                <Link href={`/signals/${signal.signal_id}`}>
-                  <Button variant="ghost" size="sm">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+                <div className="flex items-center gap-2">
+                  {signal.rr && (
+                    <Badge variant="outline" className="hidden xs:inline-flex">
+                      RR {signal.rr.toFixed(1)}
+                    </Badge>
+                  )}
+                  <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Link>
             ))}
+          </div>
+        )}
           </div>
         )}
         {limit && signals.length > limit && (

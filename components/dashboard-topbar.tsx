@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { Bell, LogOut, Menu, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,14 +28,14 @@ interface TopbarProps {
   } | null
   selectedSymbol: string
   onSymbolChange: (symbol: string) => void
+  onMenuToggle?: () => void
 }
 
-export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: TopbarProps) {
+export function DashboardTopbar({ user, selectedSymbol, onSymbolChange, onMenuToggle }: TopbarProps) {
   const { toast } = useToast()
   const router = useRouter()
   const { symbols, error: symbolsError } = useSymbols()
   const { enabled: wsEnabled, connected, lastUpdate, error: wsError } = useWebSocketCandle(selectedSymbol)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     toast({
@@ -54,9 +53,9 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange }: Topbar
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+    <header className="flex h-14 sm:h-16 items-center justify-between border-b border-border bg-card px-3 sm:px-4 lg:px-6">
+      <div className="flex items-center gap-2 sm:gap-4">
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuToggle}>
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2">

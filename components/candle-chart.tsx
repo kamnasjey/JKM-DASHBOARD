@@ -76,7 +76,7 @@ export function CandleChart({
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 400,
+      height: window.innerWidth < 640 ? 280 : 400,
       layout: {
         background: { color: "transparent" },
         textColor: "#9ca3af",
@@ -193,18 +193,19 @@ export function CandleChart({
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
+      <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             {symbol} Chart
           </CardTitle>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {TIMEFRAMES.map((t) => (
               <Button
                 key={t}
                 variant={selectedTf === t ? "default" : "outline"}
                 size="sm"
+                className="h-7 px-2 text-xs sm:h-8 sm:px-3 sm:text-sm"
                 onClick={() => setSelectedTf(t)}
                 disabled={loading}
               >
@@ -214,24 +215,24 @@ export function CandleChart({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 sm:px-6">
         {loading ? (
-          <div className="flex h-[400px] items-center justify-center">
+          <div className="flex h-[280px] sm:h-[400px] items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
-          <div className="flex h-[400px] flex-col items-center justify-center gap-2">
+          <div className="flex h-[280px] sm:h-[400px] flex-col items-center justify-center gap-2">
             <p className="text-sm text-destructive">{error}</p>
             <Button variant="outline" size="sm" onClick={() => setSelectedTf(selectedTf)}>
               Дахин оролдох
             </Button>
           </div>
         ) : candles.length === 0 ? (
-          <div className="flex h-[400px] items-center justify-center">
+          <div className="flex h-[280px] sm:h-[400px] items-center justify-center">
             <p className="text-sm text-muted-foreground">Candle өгөгдөл байхгүй</p>
           </div>
         ) : (
-          <div ref={chartContainerRef} className="h-[400px] w-full" />
+          <div ref={chartContainerRef} className="h-[280px] sm:h-[400px] w-full" />
         )}
       </CardContent>
     </Card>

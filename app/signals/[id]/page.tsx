@@ -63,22 +63,22 @@ export default function SignalDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">
-                  {signal.symbol} {signal.direction}
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold">
+                  {signal.symbol}
                 </h1>
                 <Badge variant={signal.direction === "BUY" ? "default" : "destructive"}>{signal.direction}</Badge>
                 <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{formatTimestamp(signal.created_at)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{formatTimestamp(signal.created_at)}</p>
             </div>
           </div>
         </div>
