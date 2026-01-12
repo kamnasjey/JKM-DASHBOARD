@@ -1,17 +1,23 @@
-export default function LandingPage() {
-  const year = new Date().getFullYear()
+import { PublicNav } from "@/components/public-nav"
+import { HeroSection } from "@/components/landing/hero-section"
+import { InfoBoard } from "@/components/landing/info-board"
+import { HowItWorks } from "@/components/landing/how-it-works"
+import { JourneySection } from "@/components/landing/journey-section"
+import { PricingSection } from "@/components/landing/pricing-section"
+import { TargetAudience } from "@/components/landing/target-audience"
+import { Footer } from "@/components/landing/footer"
 
+export default function LandingPage() {
   return (
     <main className="min-h-screen">
-      <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center p-6 text-center">
-        <div className="space-y-3">
-          <h1 className="text-4xl font-bold tracking-tight">JKM Copilot</h1>
-          <p className="text-lg text-muted-foreground">Coming Soon</p>
-          <p className="text-sm text-muted-foreground">Бид удахгүй нээгдэнэ. Preview дээр тест хийгдэж байна.</p>
-        </div>
-
-        <footer className="mt-10 text-xs text-muted-foreground">© {year} JKM</footer>
-      </div>
+      <PublicNav />
+      <HeroSection />
+      <InfoBoard />
+      <TargetAudience />
+      <HowItWorks />
+      <JourneySection />
+      <PricingSection />
+      <Footer />
     </main>
   )
 }
