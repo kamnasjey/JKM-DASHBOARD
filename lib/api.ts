@@ -44,12 +44,23 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       if (contentType.includes("application/json")) {
         try {
           const data = JSON.parse(rawText)
-          const msg =
-            data?.message ??
-            data?.error ??
-            data?.detail ??
+
+          const candidate =
+            (data && typeof data === "object" &&
+              ((data as any).message ?? (data as any).error ?? (data as any).detail)) ||
             (typeof data === "string" ? data : null)
-          throw new Error(msg ? String(msg) : `API Error (${response.status})`)
+
+          if (candidate) {
+            if (typeof candidate === "string") throw new Error(candidate)
+            if (typeof candidate === "number" || typeof candidate === "boolean") {
+              throw new Error(String(candidate))
+            }
+            // Object/array detail
+            throw new Error(JSON.stringify(candidate))
+          }
+
+          // If backend returned JSON but no message fields, show something meaningful.
+          throw new Error(`API Error (${response.status}): ${rawText || "Unknown"}`)
         } catch {
           // fall through to plain text
         }
