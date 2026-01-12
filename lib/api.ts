@@ -148,4 +148,7 @@ export const api = {
 
   // Detectors list
   detectors: () => apiFetch<any>("/api/proxy/detectors"),
+
+  // Detailed metrics for performance dashboard
+  detailedMetrics: () => apiFetch<any>("/api/proxy/metrics/detailed"),
 }
