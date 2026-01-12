@@ -1,35 +1,21 @@
-import { PublicNav } from "@/components/public-nav"
-import { HeroSection } from "@/components/landing/hero-section"
-import { BrandStory } from "@/components/landing/brand-story"
-import { InfoBoard } from "@/components/landing/info-board"
-import { HowItWorks } from "@/components/landing/how-it-works"
-import { JourneySection } from "@/components/landing/journey-section"
-import { PricingSection } from "@/components/landing/pricing-section"
-import { TargetAudience } from "@/components/landing/target-audience"
-import { FaqSection } from "@/components/landing/faq-section"
-import { Footer } from "@/components/landing/footer"
-import { ComingSoonLanding } from "@/components/landing/coming-soon"
+import Link from "next/link"
 
-const LAUNCH_MODE = process.env.NEXT_PUBLIC_LAUNCH_MODE || "live"
+import { Button } from "@/components/ui/button"
 
 export default function LandingPage() {
-  // Feature flag: "coming-soon" shows teaser, "live" shows full product
-  if (LAUNCH_MODE === "coming-soon") {
-    return <ComingSoonLanding />
-  }
-
   return (
-    <main className="min-h-screen">
-      <PublicNav />
-      <HeroSection />
-      <BrandStory />
-      <InfoBoard />
-      <TargetAudience />
-      <HowItWorks />
-      <JourneySection />
-      <FaqSection />
-      <PricingSection />
-      <Footer />
+    <main className="min-h-screen grid place-items-center px-6">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold tracking-tight">JKM COPILOT</h1>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Button asChild>
+            <Link href="/login">Нэвтрэх</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/register">Бүртгүүлэх</Link>
+          </Button>
+        </div>
+      </div>
     </main>
   )
 }
