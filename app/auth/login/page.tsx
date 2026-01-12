@@ -15,6 +15,7 @@ export default function LoginPage() {
   const { status } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [authErrorCode, setAuthErrorCode] = useState("")
 
   // Email login state
   const [email, setEmail] = useState("")
@@ -37,6 +38,8 @@ export default function LoginPage() {
     const code = params.get("error")
     if (!code) return
 
+    setAuthErrorCode(code)
+
     switch (code) {
       case "OAuthSignin":
       case "OAuthCallback":
@@ -53,8 +56,14 @@ export default function LoginPage() {
       case "SessionRequired":
         setError("Нэвтэрсний дараа үргэлжлүүлнэ үү.")
         return
+      case "AccessDenied":
+        setError("Нэвтрэх эрхгүй байна. (AccessDenied)")
+        return
+      case "Configuration":
+        setError("Auth тохиргоонд асуудал байна. (Configuration)")
+        return
       default:
-        setError("Нэвтрэхэд алдаа гарлаа.")
+        setError(`Нэвтрэхэд алдаа гарлаа. (${code})`)
         return
     }
   }, [])
@@ -148,6 +157,12 @@ export default function LoginPage() {
           {error && (
             <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
               {error}
+            </div>
+          )}
+
+          {authErrorCode === "Configuration" && (
+            <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+              Production/Vercel дээр дараах env vars-ууд байгаа эсэхийг шалгаарай: NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
             </div>
           )}
 
