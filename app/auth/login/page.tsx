@@ -294,6 +294,10 @@ export default function LoginPage() {
               Бүртгүүлэх
             </Link>
           </p>
+
+          <p className="text-center text-[11px] text-muted-foreground">
+            Build: d52c579
+          </p>
         </CardContent>
       </Card>
     </div>
