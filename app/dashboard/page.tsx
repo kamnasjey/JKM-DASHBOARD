@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
-import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell } from "lucide-react"
+import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell, TrendingUp, TrendingDown, Minus, Check, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,25 @@ import { useToast } from "@/hooks/use-toast"
 import { useWebSocketSignals } from "@/hooks/use-websocket-signals"
 import { api } from "@/lib/api"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+interface SymbolInfo {
+  symbol: string
+  lastSignal?: SignalPayloadPublicV1
+}
+
+interface Strategy {
+  strategy_id: string
+  name: string
+  enabled: boolean
+  detectors: string[]
+}
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -32,6 +51,12 @@ export default function DashboardPage() {
   const [recentSignals, setRecentSignals] = useState<SignalPayloadPublicV1[]>([])
   const [engineStatus, setEngineStatus] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  
+  // New: symbols and strategies state
+  const [symbols, setSymbols] = useState<string[]>([])
+  const [strategies, setStrategies] = useState<Strategy[]>([])
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null)
+  const [savingStrategy, setSavingStrategy] = useState(false)
   
   // Show toast when new signals arrive via WebSocket
   useEffect(() => {
@@ -95,18 +120,30 @@ export default function DashboardPage() {
   const refreshDashboard = async () => {
     setLoading(true)
     try {
-      const [m, s, sigs, eng] = await Promise.all([
+      const [m, s, sigs, eng, syms] = await Promise.all([
         api.metrics(),
         api.strategies(),
         api.signals({ limit: 10 }),
         api.engineStatus(),
+        api.symbols().catch(() => ({ ok: true, symbols: [] })),
       ])
 
       setMetrics(m)
 
-      const strategies = (s as any)?.strategies
-      if (Array.isArray(strategies)) {
-        setActiveStrategies(strategies.filter((x) => x?.enabled).length)
+      // Parse symbols
+      const symbolList = (syms as any)?.symbols || syms || []
+      setSymbols(Array.isArray(symbolList) ? symbolList : [])
+
+      // Parse strategies
+      const strategiesList = (s as any)?.strategies || []
+      if (Array.isArray(strategiesList)) {
+        setStrategies(strategiesList)
+        setActiveStrategies(strategiesList.filter((x: any) => x?.enabled).length)
+        // Set selected to first enabled strategy
+        const enabled = strategiesList.find((x: any) => x?.enabled)
+        if (enabled && !selectedStrategyId) {
+          setSelectedStrategyId(enabled.strategy_id)
+        }
       } else {
         setActiveStrategies(null)
       }
@@ -125,6 +162,43 @@ export default function DashboardPage() {
       setLoading(false)
     }
   }
+
+  // Activate selected strategy and save
+  const handleActivateStrategy = useCallback(async () => {
+    if (!selectedStrategyId) {
+      toast({ title: "Алдаа", description: "Стратеги сонгоно уу", variant: "destructive" })
+      return
+    }
+
+    setSavingStrategy(true)
+    try {
+      // Enable selected strategy, disable others
+      const updatedStrategies = strategies.map((s) => ({
+        ...s,
+        enabled: s.strategy_id === selectedStrategyId,
+      }))
+
+      const result = await api.updateStrategies({ strategies: updatedStrategies })
+      if (!result.ok) {
+        throw new Error(result.error || "Хадгалж чадсангүй")
+      }
+
+      setStrategies(updatedStrategies)
+      setActiveStrategies(1)
+      
+      toast({ 
+        title: "Амжилттай", 
+        description: `"${strategies.find(s => s.strategy_id === selectedStrategyId)?.name || selectedStrategyId}" стратеги идэвхжлээ` 
+      })
+
+      // Trigger a scan with new strategy
+      await api.manualScan().catch(() => {})
+    } catch (err: any) {
+      toast({ title: "Алдаа", description: err.message, variant: "destructive" })
+    } finally {
+      setSavingStrategy(false)
+    }
+  }, [selectedStrategyId, strategies, toast])
 
   useEffect(() => {
     if (status !== "authenticated") return
@@ -206,6 +280,95 @@ export default function DashboardPage() {
             icon={Layers3}
           />
         </div>
+
+        {/* Strategy Selector & All Symbols */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layers3 className="h-5 w-5" />
+              Стратеги сонгох
+            </CardTitle>
+            <CardDescription>
+              Стратеги сонгоод "Идэвхжүүлэх" дарснаар бүх хослол дээр тэр стратегигаар scan хийнэ
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <Select 
+                  value={selectedStrategyId || ""} 
+                  onValueChange={(v) => setSelectedStrategyId(v)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Стратеги сонгох..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategies.map((s) => (
+                      <SelectItem key={s.strategy_id} value={s.strategy_id}>
+                        <div className="flex items-center gap-2">
+                          {s.enabled && <Check className="h-3 w-3 text-green-500" />}
+                          <span>{s.name || s.strategy_id}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {s.detectors?.length || 0} detector
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={handleActivateStrategy} 
+                disabled={savingStrategy || !selectedStrategyId}
+              >
+                {savingStrategy ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Хадгалж байна...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Идэвхжүүлэх
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* All Symbols Grid */}
+            <div className="mt-6">
+              <h4 className="text-sm font-medium mb-3">Бүх хослолууд ({symbols.length})</h4>
+              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                {symbols.map((symbol) => {
+                  // Find last signal for this symbol
+                  const lastSig = displaySignals.find((s) => s.symbol === symbol)
+                  return (
+                    <div
+                      key={symbol}
+                      className="rounded-lg border p-2 text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                      title={lastSig ? `${lastSig.direction} @ ${lastSig.entry}` : "Дохиогүй"}
+                    >
+                      <div className="font-mono text-xs font-medium">{symbol}</div>
+                      <div className="mt-1 flex justify-center">
+                        {lastSig ? (
+                          lastSig.direction === "BUY" ? (
+                            <TrendingUp className="h-3 w-3 text-green-500" />
+                          ) : lastSig.direction === "SELL" ? (
+                            <TrendingDown className="h-3 w-3 text-red-500" />
+                          ) : (
+                            <Minus className="h-3 w-3 text-muted-foreground" />
+                          )
+                        ) : (
+                          <Minus className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
