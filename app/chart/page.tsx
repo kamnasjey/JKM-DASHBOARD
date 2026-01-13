@@ -2,23 +2,25 @@
 
 import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
-import { TradingChart } from "@/components/trading-chart"
+import { TradingViewWidget } from "@/components/tradingview-widget"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChevronRight, TrendingUp, TrendingDown, Clock, Target } from "lucide-react"
+import { Clock, Target, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { useSymbols } from "@/hooks/use-symbols"
 import { useSignals } from "@/hooks/use-signals"
 import { useAuthGuard } from "@/lib/auth-guard"
-import { format } from "date-fns"
+import { formatTimestamp } from "@/lib/utils-trading"
+import Link from "next/link"
 
 export default function ChartPage() {
   useAuthGuard(true)
 
   const { symbols } = useSymbols()
-  const { signals } = useSignals({ limit: 20 })
+  const { signals } = useSignals({ limit: 50 })
   const [selectedSymbol, setSelectedSymbol] = useState("XAUUSD")
+  const [timeframe, setTimeframe] = useState("60")
 
   // Set default symbol when loaded
   useEffect(() => {
@@ -27,141 +29,140 @@ export default function ChartPage() {
     }
   }, [symbols, selectedSymbol])
 
-  // Filter signals for selected symbol
-  const symbolSignals = signals.filter(
-    (s) => s.symbol?.toUpperCase() === selectedSymbol.toUpperCase()
-  )
+  // Filter and sort signals for selected symbol
+  const symbolSignals = signals
+    .filter((s) => s.symbol?.toUpperCase() === selectedSymbol.toUpperCase())
+    .sort((a, b) => b.created_at - a.created_at)
+
+  const timeframes = [
+    { value: "5", label: "5m" },
+    { value: "15", label: "15m" },
+    { value: "30", label: "30m" },
+    { value: "60", label: "1H" },
+    { value: "240", label: "4H" },
+    { value: "D", label: "1D" },
+  ]
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Chart</h1>
-            <p className="text-muted-foreground">TradingView маягийн график</p>
-          </div>
-          <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {symbols.map((symbol) => (
-                <SelectItem key={symbol} value={symbol}>
-                  {symbol}
-                </SelectItem>
+      <div className="space-y-4">
+        {/* Header with controls */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {symbols.map((symbol) => (
+                  <SelectItem key={symbol} value={symbol}>
+                    {symbol}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1">
+              {timeframes.map((tf) => (
+                <Button
+                  key={tf.value}
+                  variant={timeframe === tf.value ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setTimeframe(tf.value)}
+                  className="h-8 px-3"
+                >
+                  {tf.label}
+                </Button>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {symbols.slice(0, 6).map((symbol) => (
+              <Button
+                key={symbol}
+                variant={selectedSymbol === symbol ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedSymbol(symbol)}
+                className="h-8"
+              >
+                {symbol}
+              </Button>
+            ))}
+          </div>
         </div>
 
-        {/* Main Chart */}
-        <TradingChart symbol={selectedSymbol} signals={signals} />
+        {/* TradingView Chart */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <TradingViewWidget
+              symbol={selectedSymbol}
+              interval={timeframe}
+              height={600}
+              theme="dark"
+              showToolbar={true}
+            />
+          </CardContent>
+        </Card>
 
-        {/* Signals panel */}
+        {/* Recent Signals for this symbol */}
         {symbolSignals.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                {selectedSymbol} дохионууд
-                <Badge variant="secondary">{symbolSignals.length}</Badge>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Target className="h-4 w-4" />
+                {selectedSymbol} сүүлийн дохионууд
+                <Badge variant="secondary" className="ml-2">{symbolSignals.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {symbolSignals.slice(0, 5).map((signal, idx) => (
-                  <div
-                    key={signal.signal_id || idx}
+              <div className="space-y-2">
+                {symbolSignals.slice(0, 5).map((signal) => (
+                  <Link
+                    key={signal.signal_id}
+                    href={`/signals/${signal.signal_id}`}
                     className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                        className={`flex h-9 w-9 items-center justify-center rounded-full ${
                           signal.direction === "BUY"
                             ? "bg-green-500/20 text-green-500"
                             : "bg-red-500/20 text-red-500"
                         }`}
                       >
                         {signal.direction === "BUY" ? (
-                          <TrendingUp className="h-4 w-4" />
+                          <ArrowUpRight className="h-4 w-4" />
                         ) : (
-                          <TrendingDown className="h-4 w-4" />
+                          <ArrowDownRight className="h-4 w-4" />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{signal.direction}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {signal.status || "PENDING"}
-                          </Badge>
+                          <span className="text-sm text-muted-foreground">@ {signal.entry?.toFixed(signal.symbol?.includes("JPY") ? 3 : 5)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {signal.created_at
-                            ? format(new Date(signal.created_at * 1000), "MMM dd, HH:mm")
-                            : "N/A"}
+                          {formatTimestamp(signal.created_at)}
                         </div>
                       </div>
                     </div>
-
-                    <div className="text-right text-sm">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <span className="text-xs text-muted-foreground">Entry:</span>
-                          <span className="ml-1 font-mono">{signal.entry?.toFixed(5)}</span>
-                        </div>
-                        {signal.sl && (
-                          <div>
-                            <span className="text-xs text-orange-500">SL:</span>
-                            <span className="ml-1 font-mono">{signal.sl.toFixed(5)}</span>
-                          </div>
-                        )}
-                        {signal.tp && (
-                          <div>
-                            <span className="text-xs text-blue-500">TP:</span>
-                            <span className="ml-1 font-mono">{signal.tp.toFixed(5)}</span>
-                          </div>
-                        )}
-                        {signal.rr && (
-                          <Badge
-                            variant={signal.rr >= 2 ? "default" : "secondary"}
-                            className="ml-2"
-                          >
-                            RR: {signal.rr.toFixed(2)}
-                          </Badge>
-                        )}
+                    <div className="flex items-center gap-3">
+                      <div className="text-right text-xs">
+                        <div className="text-orange-500">SL: {signal.sl?.toFixed(signal.symbol?.includes("JPY") ? 3 : 5)}</div>
+                        <div className="text-blue-500">TP: {signal.tp?.toFixed(signal.symbol?.includes("JPY") ? 3 : 5)}</div>
                       </div>
+                      {signal.rr && (
+                        <Badge variant={signal.rr >= 2 ? "default" : "secondary"}>
+                          {signal.rr.toFixed(1)}R
+                        </Badge>
+                      )}
                     </div>
-
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>
           </Card>
         )}
-
-        {/* Quick symbol switch */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Түргэн сонголт</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {symbols.slice(0, 15).map((symbol) => (
-                <Button
-                  key={symbol}
-                  variant={selectedSymbol === symbol ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedSymbol(symbol)}
-                >
-                  {symbol}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   )

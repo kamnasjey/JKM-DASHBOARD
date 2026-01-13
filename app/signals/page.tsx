@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Filter, Wifi, WifiOff, Bell } from "lucide-react"
+import { Filter, Wifi } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { SignalsTable } from "@/components/signals-table"
 import { Button } from "@/components/ui/button"
@@ -73,29 +73,19 @@ export default function SignalsPage() {
             <p className="text-muted-foreground">Таны trading дохионуудын жагсаалт</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* WebSocket Connection Status */}
-            <Badge 
-              variant={connected ? "default" : "secondary"} 
-              className={`flex items-center gap-1.5 ${connected ? "bg-green-600" : ""}`}
-            >
-              {connected ? (
-                <>
-                  <Wifi className="h-3 w-3" />
-                  <span className="hidden sm:inline">Live</span>
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-3 w-3" />
-                  <span className="hidden sm:inline">Offline</span>
-                </>
-              )}
-            </Badge>
+            {/* Connection Status - only show when connected */}
+            {connected && (
+              <Badge variant="default" className="flex items-center gap-1.5 bg-green-600">
+                <Wifi className="h-3 w-3" />
+                <span className="hidden sm:inline">Live</span>
+              </Badge>
+            )}
             {lastUpdate && connected && (
               <span className="text-xs text-muted-foreground hidden md:block">
                 {lastUpdate.toLocaleTimeString()}
               </span>
             )}
-            <Button onClick={() => window.location.reload()} size="sm">
+            <Button onClick={() => window.location.reload()} size="sm" variant="outline">
               <Filter className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Шинэчлэх</span>
             </Button>

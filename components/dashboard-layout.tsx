@@ -12,7 +12,6 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [selectedSymbol, setSelectedSymbol] = useState("EURUSD")
   const { data: session } = useSession()
   const [isOwner, setIsOwner] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -75,8 +74,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardTopbar
           user={session?.user ?? null}
-          selectedSymbol={selectedSymbol}
-          onSymbolChange={setSelectedSymbol}
           onMenuToggle={toggleMobileMenu}
         />
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">{children}</main>

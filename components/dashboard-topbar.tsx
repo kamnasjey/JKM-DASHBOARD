@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, LogOut, Menu, AlertCircle } from "lucide-react"
+import { Bell, LogOut, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -10,14 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useSymbols } from "@/hooks/use-symbols"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
-import Link from "next/link"
 
 interface TopbarProps {
   user: {
@@ -25,15 +20,12 @@ interface TopbarProps {
     email?: string | null
     image?: string | null
   } | null
-  selectedSymbol: string
-  onSymbolChange: (symbol: string) => void
   onMenuToggle?: () => void
 }
 
-export function DashboardTopbar({ user, selectedSymbol, onSymbolChange, onMenuToggle }: TopbarProps) {
+export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
   const { toast } = useToast()
   const router = useRouter()
-  const { symbols, error: symbolsError } = useSymbols()
 
   const handleLogout = async () => {
     toast({
@@ -50,52 +42,6 @@ export function DashboardTopbar({ user, selectedSymbol, onSymbolChange, onMenuTo
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuToggle}>
           <Menu className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2">
-          {symbolsError ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2">
-                    <AlertCircle className="h-4 w-4 text-destructive" />
-                    <span className="text-sm">API алдаа</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="space-y-1">
-                    <p>Symbols ачаалж чадсангүй</p>
-                    {symbolsError && <p className="max-w-[280px] text-xs opacity-90">{symbolsError}</p>}
-                    {symbolsError?.toLowerCase().includes("төлбөр") && (
-                      <Link href="/billing" className="text-xs underline">
-                        Төлбөр хийх
-                      </Link>
-                    )}
-                    <Link href="/debug/api" className="block text-xs underline">
-                      Debug хийх (/debug/api)
-                    </Link>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <>
-              <Select value={selectedSymbol} onValueChange={onSymbolChange}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {symbols.map((symbol) => (
-                    <SelectItem key={symbol} value={symbol}>
-                      {symbol}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Badge variant="secondary" className="hidden sm:inline-flex">
-                5m
-              </Badge>
-            </>
-          )}
-        </div>
       </div>
 
       <div className="flex items-center gap-2">

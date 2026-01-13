@@ -1,8 +1,52 @@
 // Trading-specific utility functions
 import type { SignalPayloadPublicV1 } from "./types"
 
+// Ulaanbaatar timezone (UTC+8)
+const UB_TIMEZONE = "Asia/Ulaanbaatar"
+
 export function formatTimestamp(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleString("en-US", {
+  return new Date(timestamp * 1000).toLocaleString("mn-MN", {
+    timeZone: UB_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+export function formatTimestampFull(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleString("mn-MN", {
+    timeZone: UB_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+}
+
+export function formatTime(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleString("mn-MN", {
+    timeZone: UB_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+export function formatDate(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleString("mn-MN", {
+    timeZone: UB_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+}
+
+export function formatISOToUB(isoString: string): string {
+  return new Date(isoString).toLocaleString("mn-MN", {
+    timeZone: UB_TIMEZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

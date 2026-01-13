@@ -19,7 +19,10 @@ interface SignalsTableProps {
 export function SignalsTable({ signals, limit }: SignalsTableProps) {
   // Default to timeline on mobile, table on desktop
   const [view, setView] = useState<"table" | "timeline">("timeline")
-  const displaySignals = limit ? signals.slice(0, limit) : signals
+  
+  // Sort signals by created_at (newest first)
+  const sortedSignals = [...signals].sort((a, b) => b.created_at - a.created_at)
+  const displaySignals = limit ? sortedSignals.slice(0, limit) : sortedSignals
 
   useEffect(() => {
     // Switch default based on screen size
