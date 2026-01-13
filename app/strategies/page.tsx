@@ -60,9 +60,13 @@ export default function StrategiesPage() {
     try {
       const [strategiesData, detectorsData] = await Promise.all([
         api.strategies(),
-        api.detectors().catch(() => ({ detectors: [] })),
+        api.detectors().catch((err) => {
+          console.error("[strategies] detectors load error:", err)
+          return { detectors: [] }
+        }),
       ])
 
+      console.log("[strategies] loaded detectors:", detectorsData?.detectors?.length || 0)
       setStrategies(strategiesData.strategies || [])
       setDetectors(detectorsData?.detectors || [])
     } catch (err: any) {
