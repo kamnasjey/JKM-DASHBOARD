@@ -127,9 +127,17 @@ export default function BacktestPage() {
 
     try {
       const params: any = { days }
+      
+      // If strategy selected, use strategy_id (backend will use strategy's detectors)
+      if (selectedStrategy && selectedStrategy !== "none") {
+        params.strategy_id = selectedStrategy
+      }
+      
+      // If additional detectors selected (override or supplement strategy detectors)
       if (selectedDetectors.length > 0) {
         params.detectors = selectedDetectors
       }
+      
       if (selectedSymbol && selectedSymbol !== "all") {
         params.symbol = selectedSymbol
       }
