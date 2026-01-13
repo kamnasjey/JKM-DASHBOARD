@@ -164,18 +164,20 @@ export default function StrategiesPage() {
   }
 
   const handleFormDetectorToggle = (detectorName: string) => {
-    const currentDetectors = Array.isArray(editForm.detectors) ? editForm.detectors : []
-    console.log("[strategies] toggle detector:", detectorName, "current:", currentDetectors)
-    
-    let newDetectors: string[]
-    if (currentDetectors.includes(detectorName)) {
-      newDetectors = currentDetectors.filter(d => d !== detectorName)
-    } else {
-      newDetectors = [...currentDetectors, detectorName]
-    }
-    
-    console.log("[strategies] new detectors:", newDetectors)
-    setEditForm({ ...editForm, detectors: newDetectors })
+    setEditForm(prev => {
+      const currentDetectors = Array.isArray(prev.detectors) ? prev.detectors : []
+      console.log("[strategies] toggle detector:", detectorName, "current:", currentDetectors)
+      
+      let newDetectors: string[]
+      if (currentDetectors.includes(detectorName)) {
+        newDetectors = currentDetectors.filter(d => d !== detectorName)
+      } else {
+        newDetectors = [...currentDetectors, detectorName]
+      }
+      
+      console.log("[strategies] new detectors:", newDetectors)
+      return { ...prev, detectors: newDetectors }
+    })
   }
 
   const handleSaveStrategy = async () => {
