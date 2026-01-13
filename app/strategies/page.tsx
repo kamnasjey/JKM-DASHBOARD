@@ -1,18 +1,41 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, ChevronDown, Check } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Slider } from "@/components/ui/slider"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import type { StrategiesResponse, DetectorInfo } from "@/lib/types"
+import type { DetectorInfo } from "@/lib/types"
+
+const MAX_STRATEGIES = 30
+
+interface Strategy {
+  strategy_id: string
+  name: string
+  enabled: boolean
+  detectors: string[]
+  min_score?: number
+  min_rr?: number
+  description?: string
+}
+
+const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
+  name: "",
+  enabled: true,
+  detectors: [],
+  min_score: 1.0,
+  min_rr: 2.0,
+}
 
 export default function StrategiesPage() {
   useAuthGuard(true)
@@ -20,11 +43,14 @@ export default function StrategiesPage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [strategies, setStrategies] = useState<StrategiesResponse | null>(null)
+  const [strategies, setStrategies] = useState<Strategy[]>([])
   const [detectors, setDetectors] = useState<DetectorInfo[]>([])
-  const [jsonEdit, setJsonEdit] = useState("")
-  const [editMode, setEditMode] = useState(false)
-  const [openDetectorDropdown, setOpenDetectorDropdown] = useState<number | null>(null)
+  
+  // Dialog states
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<Omit<Strategy, 'strategy_id'> & { strategy_id?: string }>(defaultStrategy)
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
 
   useEffect(() => {
     loadData()
@@ -37,8 +63,7 @@ export default function StrategiesPage() {
         api.detectors().catch(() => ({ detectors: [] })),
       ])
 
-      setStrategies(strategiesData)
-      setJsonEdit(JSON.stringify(strategiesData.strategies, null, 2))
+      setStrategies(strategiesData.strategies || [])
       setDetectors(detectorsData?.detectors || [])
     } catch (err: any) {
       console.error("[v0] Failed to load data:", err)
@@ -52,38 +77,36 @@ export default function StrategiesPage() {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (newStrategies?: Strategy[]) => {
+    const toSave = newStrategies || strategies
+    
     // Validate: enabled strategies must have at least 1 detector
-    if (!editMode && strategies?.strategies) {
-      const invalid = strategies.strategies.find(
-        (s) => s.enabled && (!s.detectors || s.detectors.length === 0)
-      )
-      if (invalid) {
-        toast({
-          title: "Анхааруулга",
-          description: `"${invalid.name || invalid.strategy_id}" стратеги идэвхтэй боловч detector сонгоогүй байна.`,
-          variant: "destructive",
-        })
-        return
-      }
+    const invalid = toSave.find(
+      (s) => s.enabled && (!s.detectors || s.detectors.length === 0)
+    )
+    if (invalid) {
+      toast({
+        title: "Анхааруулга",
+        description: `"${invalid.name || invalid.strategy_id}" стратеги идэвхтэй боловч detector сонгоогүй байна.`,
+        variant: "destructive",
+      })
+      return false
     }
 
     setSaving(true)
     try {
-      let dataToSave: any
-      if (editMode) {
-        dataToSave = { strategies: JSON.parse(jsonEdit) }
-      } else {
-        dataToSave = { strategies: strategies?.strategies }
+      const result = await api.updateStrategies({ strategies: toSave })
+      
+      if (!result.ok) {
+        throw new Error(result.error || "Failed to save")
       }
-
-      await api.updateStrategies(dataToSave)
+      
       toast({
         title: "Амжилттай",
         description: "Стратегиуд хадгалагдлаа",
       })
       await loadData()
-      setEditMode(false)
+      return true
     } catch (err: any) {
       console.error("[v0] Failed to save strategies:", err)
       toast({
@@ -91,34 +114,119 @@ export default function StrategiesPage() {
         description: err.message || "Хадгалах үед алдаа гарлаа",
         variant: "destructive",
       })
+      return false
     } finally {
       setSaving(false)
     }
   }
 
-  const toggleStrategyEnabled = (index: number) => {
-    if (!strategies) return
-    const newStrategies = [...strategies.strategies]
+  const toggleStrategyEnabled = async (index: number) => {
+    const newStrategies = [...strategies]
     newStrategies[index] = {
       ...newStrategies[index],
       enabled: !newStrategies[index].enabled,
     }
-    setStrategies({ ...strategies, strategies: newStrategies })
+    setStrategies(newStrategies)
   }
 
-  const toggleDetector = (strategyIndex: number, detectorName: string) => {
-    if (!strategies) return
-    const newStrategies = [...strategies.strategies]
-    const strategy = newStrategies[strategyIndex]
-    const currentDetectors = strategy.detectors || []
+  const openCreateDialog = () => {
+    if (strategies.length >= MAX_STRATEGIES) {
+      toast({
+        title: "Хязгаарлалт",
+        description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+        variant: "destructive",
+      })
+      return
+    }
+    setEditForm({ ...defaultStrategy })
+    setEditingIndex(null)
+    setShowCreateDialog(true)
+  }
 
+  const openEditDialog = (index: number) => {
+    const strategy = strategies[index]
+    setEditForm({
+      strategy_id: strategy.strategy_id,
+      name: strategy.name,
+      enabled: strategy.enabled,
+      detectors: [...strategy.detectors],
+      min_score: strategy.min_score || 1.0,
+      min_rr: strategy.min_rr || 2.0,
+      description: strategy.description,
+    })
+    setEditingIndex(index)
+    setShowCreateDialog(true)
+  }
+
+  const handleFormDetectorToggle = (detectorName: string) => {
+    const currentDetectors = editForm.detectors || []
     if (currentDetectors.includes(detectorName)) {
-      strategy.detectors = currentDetectors.filter((d) => d !== detectorName)
+      setEditForm({ ...editForm, detectors: currentDetectors.filter(d => d !== detectorName) })
     } else {
-      strategy.detectors = [...currentDetectors, detectorName]
+      setEditForm({ ...editForm, detectors: [...currentDetectors, detectorName] })
+    }
+  }
+
+  const handleSaveStrategy = async () => {
+    if (!editForm.name.trim()) {
+      toast({
+        title: "Алдаа",
+        description: "Стратегийн нэр оруулна уу",
+        variant: "destructive",
+      })
+      return
     }
 
-    setStrategies({ ...strategies, strategies: newStrategies })
+    if (editForm.detectors.length === 0) {
+      toast({
+        title: "Алдаа",
+        description: "Хамгийн багадаа 1 detector сонгоно уу",
+        variant: "destructive",
+      })
+      return
+    }
+
+    let newStrategies: Strategy[]
+    
+    if (editingIndex !== null) {
+      // Update existing
+      newStrategies = [...strategies]
+      newStrategies[editingIndex] = {
+        strategy_id: editForm.strategy_id || strategies[editingIndex].strategy_id,
+        name: editForm.name,
+        enabled: editForm.enabled,
+        detectors: editForm.detectors,
+        min_score: editForm.min_score,
+        min_rr: editForm.min_rr,
+        description: editForm.description,
+      }
+    } else {
+      // Create new
+      const strategyId = editForm.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now().toString(36)
+      newStrategies = [...strategies, {
+        strategy_id: strategyId,
+        name: editForm.name,
+        enabled: editForm.enabled,
+        detectors: editForm.detectors,
+        min_score: editForm.min_score,
+        min_rr: editForm.min_rr,
+        description: editForm.description,
+      }]
+    }
+
+    const success = await handleSave(newStrategies)
+    if (success) {
+      setShowCreateDialog(false)
+      setEditingIndex(null)
+    }
+  }
+
+  const handleDeleteStrategy = async (index: number) => {
+    const newStrategies = strategies.filter((_, i) => i !== index)
+    const success = await handleSave(newStrategies)
+    if (success) {
+      setDeleteConfirmIndex(null)
+    }
   }
 
   if (loading) {
@@ -137,172 +245,283 @@ export default function StrategiesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Strategies</h1>
-            <p className="text-muted-foreground">Таны trading стратегиудын тохиргоо</p>
+            <p className="text-muted-foreground">
+              Таны trading стратегиуд ({strategies.length}/{MAX_STRATEGIES})
+            </p>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? "Хадгалж байна..." : "Хадгалах"}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={openCreateDialog} variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Шинэ Strategy
+            </Button>
+            <Button onClick={() => handleSave()} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? "Хадгалж байна..." : "Хадгалах"}
+            </Button>
+          </div>
         </div>
 
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Стратеги бүрт detector сонгоод идэвхжүүлнэ үү. Detector сонгоогүй стратеги ажиллахгүй.
+            Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү. Хамгийн ихдээ {MAX_STRATEGIES} стратеги үүсгэх боломжтой.
           </AlertDescription>
         </Alert>
 
-        {/* Detectors available info */}
-        {detectors.length > 0 && (
-          <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-            <p className="mb-2 text-sm font-medium">Боломжит Detectors ({detectors.length}):</p>
-            <div className="flex flex-wrap gap-2">
-              {detectors.map((d) => (
-                <Badge key={d.name} variant="outline" className="text-xs">
-                  {d.name}
-                </Badge>
-              ))}
-            </div>
-          </div>
+        {/* Empty state */}
+        {strategies.length === 0 && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Стратеги байхгүй</h3>
+              <p className="text-muted-foreground text-center mb-4">
+                Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү
+              </p>
+              <Button onClick={openCreateDialog}>
+                <Plus className="mr-2 h-4 w-4" />
+                Эхний Strategy үүсгэх
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {/* Strategy Cards */}
-        {!editMode && strategies?.strategies && (
-          <div className="grid gap-4 md:grid-cols-2">
-            {strategies.strategies.map((strategy, idx) => (
-              <Card key={idx}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Layers className="h-5 w-5" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {strategies.map((strategy, idx) => (
+            <Card key={strategy.strategy_id || idx} className={!strategy.enabled ? "opacity-60" : ""}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Layers className="h-4 w-4" />
                       {strategy.name || strategy.strategy_id}
                     </CardTitle>
+                    {strategy.description && (
+                      <CardDescription className="mt-1">{strategy.description}</CardDescription>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Switch
                       checked={strategy.enabled}
                       onCheckedChange={() => toggleStrategyEnabled(idx)}
                     />
                   </div>
-                  {strategy.description && (
-                    <CardDescription>{strategy.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Detector selection */}
-                  <div>
-                    <p className="mb-2 text-sm font-medium">Detectors:</p>
-                    <div className="relative">
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                        onClick={() =>
-                          setOpenDetectorDropdown(
-                            openDetectorDropdown === idx ? null : idx
-                          )
-                        }
-                      >
-                        <span className="truncate">
-                          {strategy.detectors && strategy.detectors.length > 0
-                            ? strategy.detectors.join(", ")
-                            : "Detector сонгох..."}
-                        </span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-
-                      {openDetectorDropdown === idx && (
-                        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover p-1 shadow-md">
-                          {detectors.length === 0 ? (
-                            <p className="p-2 text-sm text-muted-foreground">
-                              Detector байхгүй
-                            </p>
-                          ) : (
-                            detectors.map((detector) => {
-                              const isSelected = strategy.detectors?.includes(
-                                detector.name
-                              )
-                              return (
-                                <div
-                                  key={detector.name}
-                                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                                  onClick={() => toggleDetector(idx, detector.name)}
-                                >
-                                  <div
-                                    className={`flex h-4 w-4 items-center justify-center rounded border ${
-                                      isSelected
-                                        ? "border-primary bg-primary"
-                                        : "border-muted-foreground"
-                                    }`}
-                                  >
-                                    {isSelected && (
-                                      <Check className="h-3 w-3 text-primary-foreground" />
-                                    )}
-                                  </div>
-                                  <span>{detector.name}</span>
-                                </div>
-                              )
-                            })
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Selected detectors badges */}
-                    {strategy.detectors && strategy.detectors.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {strategy.detectors.map((d) => (
-                          <Badge
-                            key={d}
-                            variant="secondary"
-                            className="cursor-pointer text-xs"
-                            onClick={() => toggleDetector(idx, d)}
-                          >
-                            {d} ×
-                          </Badge>
-                        ))}
-                      </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Detectors */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Detectors ({strategy.detectors?.length || 0})
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {strategy.detectors?.slice(0, 6).map((d) => (
+                      <Badge key={d} variant="secondary" className="text-xs">
+                        {d}
+                      </Badge>
+                    ))}
+                    {strategy.detectors?.length > 6 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{strategy.detectors.length - 6} more
+                      </Badge>
                     )}
                   </div>
+                </div>
 
-                  {/* Other params display */}
-                  {strategy.min_rr !== undefined && (
-                    <div className="text-sm text-muted-foreground">
-                      Min RR: {strategy.min_rr}
-                    </div>
-                  )}
-                  {strategy.min_score !== undefined && (
-                    <div className="text-sm text-muted-foreground">
-                      Min Score: {strategy.min_score}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                {/* Params */}
+                <div className="flex gap-4 text-xs text-muted-foreground">
+                  <span>Min RR: {strategy.min_rr || 2.0}</span>
+                  <span>Min Score: {strategy.min_score || 1.0}</span>
+                </div>
 
-        {/* JSON Edit Mode */}
-        {editMode && (
-          <Card>
-            <CardHeader>
-              <CardTitle>JSON Editor</CardTitle>
-              <CardDescription>Advanced: JSON форматаар стратегиудаа засах</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={jsonEdit}
-                onChange={(e) => setJsonEdit(e.target.value)}
-                className="font-mono text-xs"
-                rows={20}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Toggle Edit Mode */}
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={() => setEditMode(!editMode)}>
-            {editMode ? "Basic Mode" : "Advanced JSON Mode"}
-          </Button>
+                {/* Actions */}
+                <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => openEditDialog(idx)}
+                  >
+                    <Edit2 className="h-3 w-3 mr-1" />
+                    Засах
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => setDeleteConfirmIndex(idx)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
+
+        {/* Create/Edit Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingIndex !== null ? "Стратеги засах" : "Шинэ Strategy үүсгэх"}
+              </DialogTitle>
+              <DialogDescription>
+                Detector-уудыг сонгож combine хийнэ үү
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Стратегийн нэр *</Label>
+                <Input
+                  id="name"
+                  placeholder="Жишээ: My Trend Strategy"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Тайлбар (optional)</Label>
+                <Input
+                  id="description"
+                  placeholder="Энэ стратегийн тухай товч тайлбар"
+                  value={editForm.description || ""}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                />
+              </div>
+
+              {/* Enabled */}
+              <div className="flex items-center justify-between">
+                <Label>Идэвхтэй</Label>
+                <Switch
+                  checked={editForm.enabled}
+                  onCheckedChange={(checked) => setEditForm({ ...editForm, enabled: checked })}
+                />
+              </div>
+
+              {/* Min RR */}
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <Label>Minimum Risk/Reward</Label>
+                  <span className="text-sm font-medium">{editForm.min_rr?.toFixed(1)}</span>
+                </div>
+                <Slider
+                  value={[editForm.min_rr || 2.0]}
+                  onValueChange={([value]) => setEditForm({ ...editForm, min_rr: value })}
+                  min={1}
+                  max={5}
+                  step={0.5}
+                />
+              </div>
+
+              {/* Min Score */}
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <Label>Minimum Score</Label>
+                  <span className="text-sm font-medium">{editForm.min_score?.toFixed(1)}</span>
+                </div>
+                <Slider
+                  value={[editForm.min_score || 1.0]}
+                  onValueChange={([value]) => setEditForm({ ...editForm, min_score: value })}
+                  min={0.5}
+                  max={3}
+                  step={0.1}
+                />
+              </div>
+
+              {/* Detectors */}
+              <div className="space-y-3">
+                <Label>
+                  Detectors * ({editForm.detectors.length} сонгосон)
+                </Label>
+                <div className="border rounded-lg p-3 max-h-60 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2">
+                    {detectors.map((detector) => {
+                      const isSelected = editForm.detectors.includes(detector.name)
+                      return (
+                        <div
+                          key={detector.name}
+                          className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                            isSelected
+                              ? "bg-primary/10 border border-primary"
+                              : "hover:bg-muted border border-transparent"
+                          }`}
+                          onClick={() => handleFormDetectorToggle(detector.name)}
+                        >
+                          <div
+                            className={`flex h-4 w-4 items-center justify-center rounded border ${
+                              isSelected
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground"
+                            }`}
+                          >
+                            {isSelected && (
+                              <Check className="h-3 w-3 text-primary-foreground" />
+                            )}
+                          </div>
+                          <span className="text-sm">{detector.name}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                
+                {/* Selected detectors */}
+                {editForm.detectors.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {editForm.detectors.map((d) => (
+                      <Badge
+                        key={d}
+                        variant="secondary"
+                        className="cursor-pointer"
+                        onClick={() => handleFormDetectorToggle(d)}
+                      >
+                        {d} <X className="h-3 w-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Болих
+              </Button>
+              <Button onClick={handleSaveStrategy} disabled={saving}>
+                {saving ? "Хадгалж байна..." : editingIndex !== null ? "Хадгалах" : "Үүсгэх"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteConfirmIndex !== null} onOpenChange={() => setDeleteConfirmIndex(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Стратеги устгах</DialogTitle>
+              <DialogDescription>
+                &quot;{deleteConfirmIndex !== null ? strategies[deleteConfirmIndex]?.name : ""}&quot; стратегийг устгахдаа итгэлтэй байна уу?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteConfirmIndex(null)}>
+                Болих
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteConfirmIndex !== null && handleDeleteStrategy(deleteConfirmIndex)}
+                disabled={saving}
+              >
+                {saving ? "Устгаж байна..." : "Устгах"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )

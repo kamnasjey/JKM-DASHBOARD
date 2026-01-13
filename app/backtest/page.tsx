@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Play, Loader2, BarChart3, TrendingUp, AlertCircle } from "lucide-react"
+import { Play, Loader2, BarChart3, TrendingUp, AlertCircle, Layers } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,13 @@ import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import type { DetectorInfo } from "@/lib/types"
+
+interface Strategy {
+  strategy_id: string
+  name: string
+  enabled: boolean
+  detectors: string[]
+}
 
 interface BacktestResult {
   ok: boolean
@@ -65,8 +72,10 @@ export default function BacktestPage() {
   const [loading, setLoading] = useState(false)
   const [detectors, setDetectors] = useState<DetectorInfo[]>([])
   const [symbols, setSymbols] = useState<string[]>([])
+  const [strategies, setStrategies] = useState<Strategy[]>([])
   
   // Form state
+  const [selectedStrategy, setSelectedStrategy] = useState<string>("none")
   const [selectedDetectors, setSelectedDetectors] = useState<string[]>([])
   const [selectedSymbol, setSelectedSymbol] = useState<string>("all")
   const [days, setDays] = useState(30)
@@ -80,14 +89,29 @@ export default function BacktestPage() {
 
   const loadInitialData = async () => {
     try {
-      const [detectorsData, symbolsData] = await Promise.all([
+      const [detectorsData, symbolsData, strategiesData] = await Promise.all([
         api.detectors().catch(() => ({ detectors: [] })),
         api.symbols().catch(() => ({ symbols: [] })),
+        api.strategies().catch(() => ({ strategies: [] })),
       ])
       setDetectors(detectorsData?.detectors || [])
       setSymbols(Array.isArray(symbolsData) ? symbolsData : symbolsData?.symbols || [])
+      setStrategies(strategiesData?.strategies || [])
     } catch (err) {
       console.error("Failed to load initial data:", err)
+    }
+  }
+
+  // When strategy is selected, auto-select its detectors
+  const handleStrategyChange = (strategyId: string) => {
+    setSelectedStrategy(strategyId)
+    if (strategyId && strategyId !== "none") {
+      const strategy = strategies.find(s => s.strategy_id === strategyId)
+      if (strategy) {
+        setSelectedDetectors(strategy.detectors || [])
+      }
+    } else {
+      setSelectedDetectors([])
     }
   }
 
@@ -148,6 +172,32 @@ export default function BacktestPage() {
               <CardDescription>Backtest параметрүүд</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Strategy Selection */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  Strategy
+                </Label>
+                <Select value={selectedStrategy} onValueChange={handleStrategyChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Strategy сонгох" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">-- Гараар detector сонгох --</SelectItem>
+                    {strategies.map((s) => (
+                      <SelectItem key={s.strategy_id} value={s.strategy_id}>
+                        {s.name} ({s.detectors?.length || 0} detectors)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedStrategy !== "none" && (
+                  <p className="text-xs text-muted-foreground">
+                    Strategy-ийн detectors автоматаар сонгогдсон
+                  </p>
+                )}
+              </div>
+
               {/* Days */}
               <div className="space-y-2">
                 <Label htmlFor="days">Хугацаа (өдөр)</Label>
