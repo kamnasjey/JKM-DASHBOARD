@@ -60,15 +60,19 @@ export default function StrategiesPage() {
   const loadData = async () => {
     try {
       const [strategiesData, detectorsData] = await Promise.all([
-        api.strategies(),
+        api.strategies().catch((err) => {
+          console.error("[strategies] strategies load error:", err)
+          return { strategies: [] }
+        }),
         api.detectors().catch((err) => {
           console.error("[strategies] detectors load error:", err)
           return { detectors: [] }
         }),
       ])
 
+      console.log("[strategies] loaded strategies:", strategiesData?.strategies?.length || 0)
       console.log("[strategies] loaded detectors:", detectorsData?.detectors?.length || 0)
-      setStrategies(strategiesData.strategies || [])
+      setStrategies(strategiesData?.strategies || [])
       setDetectors(detectorsData?.detectors || [])
     } catch (err: any) {
       console.error("[v0] Failed to load data:", err)
