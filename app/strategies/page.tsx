@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Slider } from "@/components/ui/slider"
+import { Checkbox } from "@/components/ui/checkbox"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
@@ -163,12 +164,18 @@ export default function StrategiesPage() {
   }
 
   const handleFormDetectorToggle = (detectorName: string) => {
-    const currentDetectors = editForm.detectors || []
+    const currentDetectors = Array.isArray(editForm.detectors) ? editForm.detectors : []
+    console.log("[strategies] toggle detector:", detectorName, "current:", currentDetectors)
+    
+    let newDetectors: string[]
     if (currentDetectors.includes(detectorName)) {
-      setEditForm({ ...editForm, detectors: currentDetectors.filter(d => d !== detectorName) })
+      newDetectors = currentDetectors.filter(d => d !== detectorName)
     } else {
-      setEditForm({ ...editForm, detectors: [...currentDetectors, detectorName] })
+      newDetectors = [...currentDetectors, detectorName]
     }
+    
+    console.log("[strategies] new detectors:", newDetectors)
+    setEditForm({ ...editForm, detectors: newDetectors })
   }
 
   const handleSaveStrategy = async () => {
@@ -445,29 +452,23 @@ export default function StrategiesPage() {
                 <div className="border rounded-lg p-3 max-h-60 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-2">
                     {detectors.map((detector) => {
-                      const isSelected = editForm.detectors.includes(detector.name)
+                      const isSelected = (editForm.detectors || []).includes(detector.name)
                       return (
                         <div
                           key={detector.name}
-                          className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
-                            isSelected
-                              ? "bg-primary/10 border border-primary"
-                              : "hover:bg-muted border border-transparent"
-                          }`}
-                          onClick={() => handleFormDetectorToggle(detector.name)}
+                          className="flex items-center gap-2 p-2 rounded hover:bg-muted"
                         >
-                          <div
-                            className={`flex h-4 w-4 items-center justify-center rounded border ${
-                              isSelected
-                                ? "border-primary bg-primary"
-                                : "border-muted-foreground"
-                            }`}
+                          <Checkbox
+                            id={`detector-${detector.name}`}
+                            checked={isSelected}
+                            onCheckedChange={() => handleFormDetectorToggle(detector.name)}
+                          />
+                          <label
+                            htmlFor={`detector-${detector.name}`}
+                            className="text-sm cursor-pointer flex-1"
                           >
-                            {isSelected && (
-                              <Check className="h-3 w-3 text-primary-foreground" />
-                            )}
-                          </div>
-                          <span className="text-sm">{detector.name}</span>
+                            {detector.name}
+                          </label>
                         </div>
                       )
                     })}
