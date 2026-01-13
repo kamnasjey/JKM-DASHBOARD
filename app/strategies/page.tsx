@@ -53,6 +53,11 @@ export default function StrategiesPage() {
   const [editForm, setEditForm] = useState<Omit<Strategy, 'strategy_id'> & { strategy_id?: string }>(defaultStrategy)
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
 
+  // Debug: log editForm.detectors changes
+  useEffect(() => {
+    console.log("[strategies] editForm.detectors changed:", editForm.detectors)
+  }, [editForm.detectors])
+
   useEffect(() => {
     loadData()
   }, [])
@@ -458,11 +463,11 @@ export default function StrategiesPage() {
                 <div className="border rounded-lg p-3 max-h-60 overflow-y-auto">
                   <div className="grid grid-cols-2 gap-2">
                     {detectors.map((detector) => {
-                      const isSelected = (editForm.detectors || []).includes(detector.name)
+                      const isSelected = editForm.detectors.includes(detector.name)
                       return (
                         <div
                           key={detector.name}
-                          className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                          className={`flex items-center gap-2 p-2 rounded cursor-pointer ${isSelected ? 'bg-primary/20 border border-primary' : 'hover:bg-muted'}`}
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
