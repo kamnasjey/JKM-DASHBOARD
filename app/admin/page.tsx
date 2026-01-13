@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Play, Square, Zap, Activity, FileText } from "lucide-react"
+import { Play, Square, Zap, Activity, FileText, Users, Check, X } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +37,16 @@ type ManualPaymentRequest = {
   manualPaymentRequestedAt: string | null
 }
 
+type UserInfo = {
+  id: string
+  email: string | null
+  name: string | null
+  image: string | null
+  provider: string
+  hasPaidAccess: boolean
+  createdAt: string
+}
+
 export default function AdminPage() {
   useAuthGuard(true)
 
@@ -51,6 +63,10 @@ export default function AdminPage() {
   const [manualGrantEmail, setManualGrantEmail] = useState("")
   const [manualGrantPlan, setManualGrantPlan] = useState<string>("pro")
   const [manualGrantNote, setManualGrantNote] = useState("")
+  
+  // Users list
+  const [users, setUsers] = useState<UserInfo[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -84,7 +100,47 @@ export default function AdminPage() {
     loadHealth()
     loadLogs()
     loadManualRequests()
+    loadUsers()
   }, [])
+
+  const loadUsers = async () => {
+    setUsersLoading(true)
+    try {
+      const res = await fetch("/api/admin/users", { cache: "no-store" })
+      if (!res.ok) return
+      const data = await res.json()
+      setUsers(data?.users ?? [])
+    } catch (err) {
+      console.error("[admin] loadUsers failed:", err)
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
+  const toggleUserAccess = async (userId: string, currentAccess: boolean) => {
+    setLoadingAction(`toggle-${userId}`)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId, hasAccess: !currentAccess }),
+      })
+      if (!res.ok) throw new Error("Failed to update access")
+      toast({
+        title: "Амжилттай",
+        description: currentAccess ? "Access хаагдлаа" : "Access нээгдлээ",
+      })
+      await loadUsers()
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Access шинэчлэхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingAction(null)
+    }
+  }
 
   const loadManualRequests = async () => {
     try {
@@ -374,6 +430,88 @@ export default function AdminPage() {
                 <p className="text-sm text-muted-foreground">Log олдсонгүй</p>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Users Access Control */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Хэрэглэгчдийн хандалт
+            </CardTitle>
+            <CardDescription>
+              Бүртгэлтэй хэрэглэгчид - Access зөвшөөрөх/хаах
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" size="sm" onClick={loadUsers} disabled={usersLoading}>
+                {usersLoading ? "Ачааллаж байна..." : "Шинэчлэх"}
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                Нийт: {users.length} | Access-тэй: {users.filter(u => u.hasPaidAccess).length}
+              </div>
+            </div>
+
+            {users.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Хэрэглэгч байхгүй</p>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {users.map((user) => (
+                  <div 
+                    key={user.id} 
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      user.hasPaidAccess ? "bg-green-500/5 border-green-500/20" : "bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={user.image || undefined} />
+                        <AvatarFallback>
+                          {user.name?.charAt(0) || user.email?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{user.name || "—"}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {user.provider}
+                          </Badge>
+                          {user.hasPaidAccess && (
+                            <Badge className="bg-green-500 text-xs">Access</Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{user.email}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Бүртгүүлсэн: {new Date(user.createdAt).toLocaleDateString("mn-MN")}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant={user.hasPaidAccess ? "destructive" : "default"}
+                      size="sm"
+                      onClick={() => toggleUserAccess(user.id, user.hasPaidAccess)}
+                      disabled={loadingAction === `toggle-${user.id}`}
+                    >
+                      {loadingAction === `toggle-${user.id}` ? (
+                        "..."
+                      ) : user.hasPaidAccess ? (
+                        <>
+                          <X className="h-3 w-3 mr-1" />
+                          Хаах
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-3 w-3 mr-1" />
+                          Нээх
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

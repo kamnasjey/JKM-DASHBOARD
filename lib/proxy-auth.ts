@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { isAllowedEmail } from "@/lib/access-control"
+import { isOwnerEmail } from "@/lib/owner"
+import { prisma } from "@/lib/db"
 
 export async function requireSession() {
   const session = await getServerSession(authOptions)
@@ -15,8 +16,20 @@ export async function requireAllowedSession() {
   if (!session?.user) return null
 
   const email = (session.user as any).email
-  if (!isAllowedEmail(email)) return null
+  
+  // Owner/admin always has access
+  if (isOwnerEmail(email)) return session
 
+  // Check database for user access
+  const userId = (session.user as any).id as string | undefined
+  if (!userId) return null
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { hasPaidAccess: true },
+  })
+
+  if (!user?.hasPaidAccess) return null
   return session
 }
 
