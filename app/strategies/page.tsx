@@ -462,19 +462,20 @@ export default function StrategiesPage() {
                       return (
                         <div
                           key={detector.name}
-                          className="flex items-center gap-2 p-2 rounded hover:bg-muted"
+                          className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleFormDetectorToggle(detector.name)
+                          }}
                         >
                           <Checkbox
-                            id={`detector-${detector.name}`}
                             checked={isSelected}
-                            onCheckedChange={() => handleFormDetectorToggle(detector.name)}
+                            onCheckedChange={() => {}}
                           />
-                          <label
-                            htmlFor={`detector-${detector.name}`}
-                            className="text-sm cursor-pointer flex-1"
-                          >
+                          <span className="text-sm flex-1">
                             {detector.name}
-                          </label>
+                          </span>
                         </div>
                       )
                     })}
