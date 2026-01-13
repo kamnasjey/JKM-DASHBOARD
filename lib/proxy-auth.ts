@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/db"
-import { isOwnerEmail } from "@/lib/owner"
+import { isAllowedEmail } from "@/lib/access-control"
 
 export async function requireSession() {
   const session = await getServerSession(authOptions)
@@ -11,23 +10,19 @@ export async function requireSession() {
   return session
 }
 
-export async function requirePaidSession() {
+export async function requireAllowedSession() {
   const session = await getServerSession(authOptions)
   if (!session?.user) return null
 
-  // Owner/admin bypass: allow full access without payment.
-  if (isOwnerEmail((session.user as any).email)) return session
+  const email = (session.user as any).email
+  if (!isAllowedEmail(email)) return null
 
-  const userId = (session.user as any).id as string | undefined
-  if (!userId) return null
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { hasPaidAccess: true },
-  })
-
-  if (!user?.hasPaidAccess) return null
   return session
+}
+
+// Legacy alias - now just checks allowed access instead of paid
+export async function requirePaidSession() {
+  return requireAllowedSession()
 }
 
 export function json(status: number, body: unknown) {

@@ -30,11 +30,9 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
       throw new Error("Unauthorized")
     }
 
-    if (response.status === 402) {
-      if (typeof window !== "undefined") {
-        window.location.href = "/billing"
-      }
-      throw new Error("Төлбөр шаардлагатай")
+    // 402/403 - Access denied (will be handled by AccessDeniedGuard)
+    if (response.status === 402 || response.status === 403) {
+      throw new Error("Хандах эрхгүй")
     }
 
     if (!response.ok) {
