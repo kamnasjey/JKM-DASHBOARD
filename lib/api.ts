@@ -217,4 +217,47 @@ export const api = {
     apiFetch<any>(`/api/proxy/strategies/import/${shareId}`, {
       method: "POST",
     }),
+  
+  // Strategy Tester API
+  strategyTester: {
+    run: (params: {
+      symbol: string
+      detectors: string[]
+      entry_tf?: string
+      trend_tf?: string
+      start_date?: string
+      end_date?: string
+      spread_pips?: number
+      slippage_pips?: number
+      commission_per_trade?: number
+      initial_capital?: number
+      risk_per_trade_pct?: number
+      intrabar_policy?: "sl_first" | "tp_first" | "bar_magnifier" | "random"
+      min_rr?: number
+      min_score?: number
+      max_trades_per_day?: number
+      max_bars_in_trade?: number
+    }) =>
+      apiFetch<any>("/api/proxy/strategy-tester/run", {
+        method: "POST",
+        body: JSON.stringify(params),
+      }),
+    
+    listRuns: (limit = 50, offset = 0) =>
+      apiFetch<any>(`/api/proxy/strategy-tester/runs?limit=${limit}&offset=${offset}`),
+    
+    getRun: (runId: string) =>
+      apiFetch<any>(`/api/proxy/strategy-tester/runs/${runId}`),
+    
+    getTrades: (runId: string) =>
+      apiFetch<any>(`/api/proxy/strategy-tester/runs/${runId}/trades`),
+    
+    getEquityCurve: (runId: string) =>
+      apiFetch<any>(`/api/proxy/strategy-tester/runs/${runId}/equity`),
+    
+    deleteRun: (runId: string) =>
+      apiFetch<any>(`/api/proxy/strategy-tester/runs/${runId}`, {
+        method: "DELETE",
+      }),
+  },
 }

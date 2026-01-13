@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, Wrench, X, BarChart3, FlaskConical, Library, LineChart } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, Wrench, X, BarChart3, FlaskConical, Library, LineChart, TestTube2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -37,6 +37,11 @@ const navItems = [
     label: "Backtest",
     href: "/backtest",
     icon: FlaskConical,
+  },
+  {
+    label: "Strategy Tester",
+    href: "/tester",
+    icon: TestTube2,
   },
   {
     label: "Journey",
