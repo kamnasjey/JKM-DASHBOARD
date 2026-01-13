@@ -83,27 +83,40 @@ function MarketSessions() {
   }, [])
   
   return (
-    <div className="hidden md:flex items-center gap-3 text-xs">
+    <div className="hidden md:flex items-center gap-2 text-xs">
       {SESSIONS.map((session) => {
         const { isOpen, timeLeft } = getSessionStatus(session.openUTC, session.closeUTC)
         return (
           <div
             key={session.name}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
-              isOpen ? "bg-green-500/10 border border-green-500/30" : "bg-muted/50"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${
+              isOpen 
+                ? "bg-green-500/15 border border-green-500/40" 
+                : "bg-zinc-800/50 border border-zinc-700/50"
             }`}
-            title={`${session.name}: ${utcToUB(session.openUTC)} - ${utcToUB(session.closeUTC)} (UB)`}
+            title={`${session.name}: ${utcToUB(session.openUTC)} - ${utcToUB(session.closeUTC)} (Улаанбаатар)`}
           >
-            <span>{session.emoji}</span>
-            <span className={`font-medium ${isOpen ? "text-green-400" : "text-muted-foreground"}`}>
-              {session.name.slice(0, 3)}
-            </span>
-            <span className={`${isOpen ? "text-green-300" : "text-muted-foreground"}`}>
-              {isOpen ? "●" : "○"}
-            </span>
-            <span className="text-muted-foreground">
-              {isOpen ? `${timeLeft}` : utcToUB(session.openUTC)}
-            </span>
+            <span className="text-sm">{session.emoji}</span>
+            <div className="flex flex-col leading-tight">
+              <span className={`font-semibold ${isOpen ? "text-green-400" : "text-zinc-400"}`}>
+                {session.name}
+              </span>
+              <span className={`text-[10px] ${isOpen ? "text-green-300" : "text-zinc-500"}`}>
+                {isOpen ? (
+                  <>
+                    <span className="text-green-400">OPEN</span>
+                    <span className="mx-1">•</span>
+                    <span>хаах {timeLeft}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-zinc-500">CLOSED</span>
+                    <span className="mx-1">•</span>
+                    <span>нээх {utcToUB(session.openUTC)}</span>
+                  </>
+                )}
+              </span>
+            </div>
           </div>
         )
       })}
