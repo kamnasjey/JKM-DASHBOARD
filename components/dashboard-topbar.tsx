@@ -1,6 +1,7 @@
 "use client"
 
-import { Bell, LogOut, Menu } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Bell, LogOut, Menu, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,6 +14,102 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
+
+// Market sessions in UTC hours
+const SESSIONS = [
+  { name: "Sydney", emoji: "🇦🇺", openUTC: 22, closeUTC: 7, color: "text-purple-400" },
+  { name: "Tokyo", emoji: "🇯🇵", openUTC: 0, closeUTC: 9, color: "text-red-400" },
+  { name: "London", emoji: "🇬🇧", openUTC: 8, closeUTC: 17, color: "text-blue-400" },
+  { name: "New York", emoji: "🇺🇸", openUTC: 13, closeUTC: 22, color: "text-green-400" },
+]
+
+// Convert UTC hour to Ulaanbaatar time (UTC+8)
+function utcToUB(utcHour: number): string {
+  const ubHour = (utcHour + 8) % 24
+  return `${ubHour.toString().padStart(2, "0")}:00`
+}
+
+// Check if session is currently open
+function isSessionOpen(openUTC: number, closeUTC: number): boolean {
+  const now = new Date()
+  const utcHour = now.getUTCHours()
+  
+  if (openUTC < closeUTC) {
+    // Normal case: e.g., 8-17
+    return utcHour >= openUTC && utcHour < closeUTC
+  } else {
+    // Overnight case: e.g., 22-7 (Sydney)
+    return utcHour >= openUTC || utcHour < closeUTC
+  }
+}
+
+// Get time until session opens/closes
+function getSessionStatus(openUTC: number, closeUTC: number): { isOpen: boolean; timeLeft: string } {
+  const now = new Date()
+  const utcHour = now.getUTCHours()
+  const utcMin = now.getUTCMinutes()
+  const isOpen = isSessionOpen(openUTC, closeUTC)
+  
+  let targetHour: number
+  if (isOpen) {
+    // Time until close
+    targetHour = closeUTC
+  } else {
+    // Time until open
+    targetHour = openUTC
+  }
+  
+  let hoursLeft = targetHour - utcHour
+  if (hoursLeft <= 0) hoursLeft += 24
+  if (hoursLeft === 24 && utcMin > 0) hoursLeft = 0
+  
+  const minsLeft = 60 - utcMin
+  if (minsLeft < 60) hoursLeft -= 1
+  
+  if (hoursLeft < 0) hoursLeft += 24
+  
+  const timeLeft = hoursLeft > 0 ? `${hoursLeft}ц` : `${minsLeft}м`
+  
+  return { isOpen, timeLeft }
+}
+
+function MarketSessions() {
+  const [, setTick] = useState(0)
+  
+  useEffect(() => {
+    // Update every minute
+    const interval = setInterval(() => setTick(t => t + 1), 60000)
+    return () => clearInterval(interval)
+  }, [])
+  
+  return (
+    <div className="hidden md:flex items-center gap-3 text-xs">
+      {SESSIONS.map((session) => {
+        const { isOpen, timeLeft } = getSessionStatus(session.openUTC, session.closeUTC)
+        return (
+          <div
+            key={session.name}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
+              isOpen ? "bg-green-500/10 border border-green-500/30" : "bg-muted/50"
+            }`}
+            title={`${session.name}: ${utcToUB(session.openUTC)} - ${utcToUB(session.closeUTC)} (UB)`}
+          >
+            <span>{session.emoji}</span>
+            <span className={`font-medium ${isOpen ? "text-green-400" : "text-muted-foreground"}`}>
+              {session.name.slice(0, 3)}
+            </span>
+            <span className={`${isOpen ? "text-green-300" : "text-muted-foreground"}`}>
+              {isOpen ? "●" : "○"}
+            </span>
+            <span className="text-muted-foreground">
+              {isOpen ? `${timeLeft}` : utcToUB(session.openUTC)}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 interface TopbarProps {
   user: {
@@ -42,6 +139,7 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuToggle}>
           <Menu className="h-5 w-5" />
         </Button>
+        <MarketSessions />
       </div>
 
       <div className="flex items-center gap-2">
