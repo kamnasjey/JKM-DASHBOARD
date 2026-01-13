@@ -21,30 +21,53 @@ interface Strategy {
   name: string
   enabled: boolean
   detectors: string[]
+  min_rr?: number
 }
 
 interface BacktestResult {
   ok: boolean
-  total_matched: number
-  ok_count: number
-  none_count: number
-  hit_rate: number | null
+  mode?: string  // "simulation" or undefined (historical)
+  total_entries?: number  // simulation mode
+  total_matched?: number  // historical mode
+  ok_count?: number
+  none_count?: number
+  hit_rate?: number | null
   // Real outcome stats (SL/TP hits)
   wins: number
   losses: number
   pending: number
-  real_win_rate: number | null
+  win_rate?: number | null  // simulation mode
+  real_win_rate?: number | null  // historical mode
   by_symbol: Record<string, { 
-    ok: number
-    none: number
-    total: number
-    hit_rate: number | null
+    entries?: number
+    ok?: number
+    none?: number
+    total?: number
+    hit_rate?: number | null
     wins?: number
     losses?: number
     pending?: number
+    win_rate?: number | null
     real_win_rate?: number | null
   }>
-  signals_sample: Array<{
+  by_detector?: Record<string, {
+    entries: number
+    wins: number
+    losses: number
+    win_rate: number | null
+  }>
+  sample_entries?: Array<{
+    symbol: string
+    detector: string
+    direction: string
+    entry: number
+    sl: number
+    tp: number
+    rr: number | null
+    outcome: string
+    time: number
+  }>
+  signals_sample?: Array<{
     signal_id: string
     symbol: string
     tf: string
@@ -62,6 +85,7 @@ interface BacktestResult {
     detectors: string[]
     symbol: string | null
     days: number
+    min_rr?: number
   }
 }
 
@@ -78,6 +102,7 @@ export default function BacktestPage() {
   const [selectedStrategy, setSelectedStrategy] = useState<string>("none")
   const [selectedDetectors, setSelectedDetectors] = useState<string[]>([])
   const [selectedSymbol, setSelectedSymbol] = useState<string>("all")
+  const [minRR, setMinRR] = useState<number>(2.0)
   const [days, setDays] = useState(30)
   
   // Result
@@ -102,13 +127,16 @@ export default function BacktestPage() {
     }
   }
 
-  // When strategy is selected, auto-select its detectors
+  // When strategy is selected, auto-select its detectors and min_rr
   const handleStrategyChange = (strategyId: string) => {
     setSelectedStrategy(strategyId)
     if (strategyId && strategyId !== "none") {
       const strategy = strategies.find(s => s.strategy_id === strategyId)
       if (strategy) {
         setSelectedDetectors(strategy.detectors || [])
+        if (strategy.min_rr) {
+          setMinRR(strategy.min_rr)
+        }
       }
     } else {
       setSelectedDetectors([])
@@ -126,14 +154,17 @@ export default function BacktestPage() {
     setResult(null)
 
     try {
-      const params: any = { days }
+      const params: any = { 
+        days,
+        min_rr: minRR,
+      }
       
-      // If strategy selected, use strategy_id (backend will use strategy's detectors)
+      // If strategy selected, use strategy_id
       if (selectedStrategy && selectedStrategy !== "none") {
         params.strategy_id = selectedStrategy
       }
       
-      // If additional detectors selected (override or supplement strategy detectors)
+      // If detectors selected (from strategy or manually)
       if (selectedDetectors.length > 0) {
         params.detectors = selectedDetectors
       }
@@ -142,13 +173,15 @@ export default function BacktestPage() {
         params.symbol = selectedSymbol
       }
 
-      const data = await api.backtest(params)
+      // Use simulation backtest API
+      const data = await api.backtestSimulate(params)
       setResult(data)
 
-      if (data.total_matched === 0) {
+      const totalEntries = data.total_entries || 0
+      if (totalEntries === 0) {
         toast({
           title: "Үр дүн",
-          description: "Тохирох дохио олдсонгүй",
+          description: data.error || "Тохирох entry олдсонгүй. Cache дата байгаа эсэхийг шалгана уу.",
         })
       }
     } catch (err: any) {
@@ -216,6 +249,20 @@ export default function BacktestPage() {
                   onChange={(e) => setDays(parseInt(e.target.value) || 30)}
                   min={1}
                   max={365}
+                />
+              </div>
+
+              {/* Min RR */}
+              <div className="space-y-2">
+                <Label htmlFor="minRR">Min Risk/Reward</Label>
+                <Input
+                  id="minRR"
+                  type="number"
+                  value={minRR}
+                  onChange={(e) => setMinRR(parseFloat(e.target.value) || 2.0)}
+                  min={1}
+                  max={10}
+                  step={0.5}
                 />
               </div>
 
@@ -289,13 +336,13 @@ export default function BacktestPage() {
             {result ? (
               <>
                 {/* Summary Cards */}
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-6">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Нийт дохио</CardDescription>
+                      <CardDescription className="text-xs">Нийт Entry</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-xl font-bold">{result.total_matched}</span>
+                      <span className="text-xl font-bold">{result.total_entries || result.total_matched || 0}</span>
                     </CardContent>
                   </Card>
                   <Card className="border-green-500/30">
@@ -328,27 +375,55 @@ export default function BacktestPage() {
                     </CardHeader>
                     <CardContent>
                       <span className="text-xl font-bold text-blue-400">
-                        {result.real_win_rate !== null ? `${(result.real_win_rate * 100).toFixed(1)}%` : "—"}
+                        {(result.win_rate ?? result.real_win_rate) !== null 
+                          ? `${((result.win_rate ?? result.real_win_rate ?? 0) * 100).toFixed(1)}%` 
+                          : "—"}
                       </span>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">OK Status</CardDescription>
+                      <CardDescription className="text-xs">Min RR</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <span className="text-xl font-bold text-green-500">{result.ok_count}</span>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">NONE Status</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <span className="text-xl font-bold text-red-500">{result.none_count}</span>
+                      <span className="text-xl font-bold">{result.filters?.min_rr || minRR}</span>
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* By Detector */}
+                {result.by_detector && Object.keys(result.by_detector).length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Detector-аар</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {Object.entries(result.by_detector)
+                          .sort((a, b) => b[1].entries - a[1].entries)
+                          .map(([detector, stats]) => (
+                            <div key={detector} className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{detector}</span>
+                                <div className="flex gap-3 text-xs">
+                                  <span>Entry: {stats.entries}</span>
+                                  <span className="text-green-500">Win: {stats.wins}</span>
+                                  <span className="text-red-500">Loss: {stats.losses}</span>
+                                  <span className="text-blue-400">
+                                    WR: {stats.win_rate !== null ? `${(stats.win_rate * 100).toFixed(0)}%` : "—"}
+                                  </span>
+                                </div>
+                              </div>
+                              <Progress 
+                                value={stats.entries > 0 ? (stats.wins / stats.entries) * 100 : 0} 
+                                className="h-1.5"
+                              />
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* By Symbol */}
                 {Object.keys(result.by_symbol).length > 0 && (
@@ -359,7 +434,7 @@ export default function BacktestPage() {
                     <CardContent>
                       <div className="space-y-3">
                         {Object.entries(result.by_symbol)
-                          .sort((a, b) => b[1].total - a[1].total)
+                          .sort((a, b) => (b[1].entries || b[1].total || 0) - (a[1].entries || a[1].total || 0))
                           .map(([symbol, stats]) => (
                             <div key={symbol} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">

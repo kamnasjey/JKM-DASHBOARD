@@ -172,7 +172,7 @@ export const api = {
   // Detailed metrics for performance dashboard
   detailedMetrics: () => apiFetch<any>("/api/proxy/metrics/detailed"),
 
-  // Backtest
+  // Backtest - historical signals
   backtest: (params: {
     strategy_id?: string
     detectors?: string[]
@@ -180,6 +180,19 @@ export const api = {
     days?: number
   }) =>
     apiFetch<any>("/api/proxy/backtest", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
+  // Backtest Simulation - run detectors on historical candle data
+  backtestSimulate: (params: {
+    strategy_id?: string
+    detectors?: string[]
+    symbol?: string
+    days?: number
+    min_rr?: number
+  }) =>
+    apiFetch<any>("/api/proxy/backtest/simulate", {
       method: "POST",
       body: JSON.stringify(params),
     }),
