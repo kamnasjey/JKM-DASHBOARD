@@ -18,3 +18,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Backend unreachable" }, { status: 502 })
   }
 }
+

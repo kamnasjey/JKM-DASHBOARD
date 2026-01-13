@@ -1,5 +1,5 @@
 import { forwardInternalRequest } from "@/lib/backend-proxy"
-import { requirePaidSession, requireSession, json } from "@/lib/proxy-auth"
+import { requireAllowedSession, requireSession, json } from "@/lib/proxy-auth"
 
 export const runtime = "nodejs"
 
@@ -9,11 +9,12 @@ export async function POST(request: Request) {
     return json(401, { ok: false, message: "Unauthorized" })
   }
 
-  const paid = await requirePaidSession()
-  if (!paid) return json(402, { ok: false, message: "Payment required" })
+  const paid = await requireAllowedSession()
+  if (!paid) return json(403, { ok: false, message: "Access denied" })
 
   return forwardInternalRequest(request, {
     method: "POST",
     path: "/api/admin/backfill",
   })
 }
+

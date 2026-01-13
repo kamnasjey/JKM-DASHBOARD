@@ -1,5 +1,5 @@
 import { forwardInternalRequest } from "@/lib/backend-proxy"
-import { requirePaidSession, requireSession, json } from "@/lib/proxy-auth"
+import { requireAllowedSession, requireSession, json } from "@/lib/proxy-auth"
 import { NextRequest } from "next/server"
 
 export const runtime = "nodejs"
@@ -11,8 +11,8 @@ export async function GET(
   const session = await requireSession()
   if (!session) return json(401, { ok: false, message: "Unauthorized" })
 
-  const paid = await requirePaidSession()
-  if (!paid) return json(402, { ok: false, message: "Payment required" })
+  const paid = await requireAllowedSession()
+  if (!paid) return json(403, { ok: false, message: "Access denied" })
 
   const { symbol } = await params
   const { searchParams } = new URL(request.url)
