@@ -22,7 +22,21 @@ interface BacktestResult {
   ok_count: number
   none_count: number
   hit_rate: number | null
-  by_symbol: Record<string, { ok: number; none: number; total: number; hit_rate: number | null }>
+  // Real outcome stats (SL/TP hits)
+  wins: number
+  losses: number
+  pending: number
+  real_win_rate: number | null
+  by_symbol: Record<string, { 
+    ok: number
+    none: number
+    total: number
+    hit_rate: number | null
+    wins?: number
+    losses?: number
+    pending?: number
+    real_win_rate?: number | null
+  }>
   signals_sample: Array<{
     signal_id: string
     symbol: string
@@ -31,6 +45,10 @@ interface BacktestResult {
     status: string
     rr: number | null
     created_at: number
+    outcome?: string
+    entry?: number
+    sl?: number
+    tp?: number
   }>
   filters: {
     strategy_id: string | null
@@ -213,18 +231,52 @@ export default function BacktestPage() {
             {result ? (
               <>
                 {/* Summary Cards */}
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Нийт тохирсон</CardDescription>
+                      <CardDescription className="text-xs">Нийт дохио</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <span className="text-xl font-bold">{result.total_matched}</span>
                     </CardContent>
                   </Card>
+                  <Card className="border-green-500/30">
+                    <CardHeader className="pb-2">
+                      <CardDescription className="text-xs text-green-400">🏆 TP Hit (Win)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <span className="text-xl font-bold text-green-500">{result.wins || 0}</span>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-red-500/30">
+                    <CardHeader className="pb-2">
+                      <CardDescription className="text-xs text-red-400">❌ SL Hit (Loss)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <span className="text-xl font-bold text-red-500">{result.losses || 0}</span>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-yellow-500/30">
+                    <CardHeader className="pb-2">
+                      <CardDescription className="text-xs text-yellow-400">⏳ Pending</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <span className="text-xl font-bold text-yellow-500">{result.pending || 0}</span>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-blue-500/30">
+                    <CardHeader className="pb-2">
+                      <CardDescription className="text-xs text-blue-400">📊 Win Rate</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <span className="text-xl font-bold text-blue-400">
+                        {result.real_win_rate !== null ? `${(result.real_win_rate * 100).toFixed(1)}%` : "—"}
+                      </span>
+                    </CardContent>
+                  </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">OK</CardDescription>
+                      <CardDescription className="text-xs">OK Status</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <span className="text-xl font-bold text-green-500">{result.ok_count}</span>
@@ -232,20 +284,10 @@ export default function BacktestPage() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">NONE</CardDescription>
+                      <CardDescription className="text-xs">NONE Status</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <span className="text-xl font-bold text-red-500">{result.none_count}</span>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Hit Rate</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <span className="text-xl font-bold">
-                        {result.hit_rate !== null ? `${(result.hit_rate * 100).toFixed(1)}%` : "—"}
-                      </span>
                     </CardContent>
                   </Card>
                 </div>
@@ -288,14 +330,20 @@ export default function BacktestPage() {
                 {result.signals_sample.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">Жишээ дохио (эхний 20)</CardTitle>
+                      <CardTitle className="text-base">Дохионууд (эхний 20)</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
                         {result.signals_sample.map((sig) => (
                           <div
                             key={sig.signal_id}
-                            className="flex items-center justify-between rounded-lg border p-2 text-sm"
+                            className={`flex items-center justify-between rounded-lg border p-3 text-sm ${
+                              sig.outcome === "WIN" 
+                                ? "border-green-500/30 bg-green-500/5" 
+                                : sig.outcome === "LOSS"
+                                ? "border-red-500/30 bg-red-500/5"
+                                : ""
+                            }`}
                           >
                             <div className="flex items-center gap-2">
                               <Badge variant={sig.direction === "BUY" ? "default" : "destructive"}>
@@ -304,13 +352,20 @@ export default function BacktestPage() {
                               <span className="font-medium">{sig.symbol}</span>
                               <span className="text-muted-foreground">{sig.tf}</span>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
+                              <div className="text-xs text-muted-foreground hidden sm:block">
+                                Entry: {sig.entry?.toFixed(5)} | SL: {sig.sl?.toFixed(5)} | TP: {sig.tp?.toFixed(5)}
+                              </div>
                               {sig.rr && (
-                                <span className="text-xs text-muted-foreground">RR {sig.rr.toFixed(1)}</span>
+                                <Badge variant="outline" className="text-xs">RR {sig.rr.toFixed(1)}</Badge>
                               )}
-                              <Badge variant={sig.status === "OK" ? "default" : "secondary"}>
-                                {sig.status}
-                              </Badge>
+                              {sig.outcome === "WIN" ? (
+                                <Badge className="bg-green-500 hover:bg-green-600">🏆 TP Hit</Badge>
+                              ) : sig.outcome === "LOSS" ? (
+                                <Badge variant="destructive">❌ SL Hit</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-yellow-500 border-yellow-500/50">⏳ Pending</Badge>
+                              )}
                             </div>
                           </div>
                         ))}
