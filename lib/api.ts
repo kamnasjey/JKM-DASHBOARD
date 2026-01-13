@@ -106,6 +106,10 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // Outcomes (SL/TP hit tracking)
+  outcomes: (days: number = 30) =>
+    apiFetch<any>(`/api/proxy/outcomes?days=${days}`),
+
   // Logs
   getLogs: () => apiFetch<string[]>("/api/proxy/log"),
   logs: () => api.getLogs(),

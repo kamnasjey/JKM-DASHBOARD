@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowUpRight, ArrowDownRight, Eye, Sparkles } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, Eye, Sparkles, Trophy, XCircle, Clock } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,34 @@ import type { SignalPayloadPublicV1 } from "@/lib/types"
 interface SignalsTableProps {
   signals: SignalPayloadPublicV1[]
   limit?: number
+}
+
+function OutcomeBadge({ outcome }: { outcome?: string }) {
+  if (!outcome || outcome === "PENDING") {
+    return (
+      <Badge variant="outline" className="text-yellow-500 border-yellow-500/50">
+        <Clock className="h-3 w-3 mr-1" />
+        Pending
+      </Badge>
+    )
+  }
+  if (outcome === "WIN") {
+    return (
+      <Badge className="bg-green-500 hover:bg-green-600">
+        <Trophy className="h-3 w-3 mr-1" />
+        TP Hit
+      </Badge>
+    )
+  }
+  if (outcome === "LOSS") {
+    return (
+      <Badge variant="destructive">
+        <XCircle className="h-3 w-3 mr-1" />
+        SL Hit
+      </Badge>
+    )
+  }
+  return <Badge variant="secondary">{outcome}</Badge>
 }
 
 export function SignalsTable({ signals, limit }: SignalsTableProps) {
@@ -76,7 +104,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                   <TableHead className="hidden md:table-cell">SL</TableHead>
                   <TableHead className="hidden md:table-cell">TP</TableHead>
                   <TableHead className="hidden sm:table-cell">RR</TableHead>
-                  <TableHead>Статус</TableHead>
+                  <TableHead>Үр дүн</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -108,7 +136,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                     <TableCell className="hidden md:table-cell">{signal.tp?.toFixed(5) || "N/A"}</TableCell>
                     <TableCell className="hidden sm:table-cell">{signal.rr?.toFixed(2) || "N/A"}</TableCell>
                     <TableCell>
-                      <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
+                      <OutcomeBadge outcome={(signal as any).outcome} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -169,7 +197,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                       RR {signal.rr.toFixed(1)}
                     </Badge>
                   )}
-                  <Badge variant={signal.status === "OK" ? "default" : "secondary"}>{signal.status}</Badge>
+                  <OutcomeBadge outcome={(signal as any).outcome} />
                   <AIExplainDialog 
                     signalId={signal.signal_id} 
                     symbol={signal.symbol}
