@@ -39,8 +39,8 @@ const navItems = [
     icon: FlaskConical,
   },
   {
-    label: "Strategy Tester",
-    href: "/tester",
+    label: "Simulator",
+    href: "/simulator",
     icon: TestTube2,
   },
   {
