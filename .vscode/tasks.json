@@ -1,0 +1,483 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "ssh backend ls",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"\"pwd; ls -la; ls -la /root | head\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "ssh backend find compose",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"find /root -maxdepth 3 -name 'docker-compose.yml' -o -name 'compose.yml' -o -name 'Dockerfile' | head -n 50"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "ssh backend git status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"cd /root/ganbayar_trading_bot; git rev-parse --is-inside-work-tree; git status -sb; git log -1 --oneline"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "ssh docker compose version",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"docker compose version || docker-compose version"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify deployed files",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"ls -la /root/ganbayar_trading_bot/scanner_service.py /root/ganbayar_trading_bot/user_db.py /root/ganbayar_trading_bot/core/user_strategies_store.py /root/ganbayar_trading_bot/core/default_strategies.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify deployed core files",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"ls -la /root/ganbayar_trading_bot/core/user_strategies_store.py /root/ganbayar_trading_bot/core/default_strategies.py; python3 -m py_compile /root/ganbayar_trading_bot/core/user_strategies_store.py /root/ganbayar_trading_bot/core/default_strategies.py /root/ganbayar_trading_bot/user_db.py /root/ganbayar_trading_bot/scanner_service.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show server docker-compose backend service",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"cd /root/ganbayar_trading_bot; sed -n '1,200p' docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "inspect docker-compose.yml",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"cd /root/ganbayar_trading_bot; wc -l docker-compose.yml; nl -ba docker-compose.yml | head -n 220"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose head",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"cd /root/ganbayar_trading_bot; sed -n '1,60p' docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "inspect /root/docker-compose.yml",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"cd /root; sed -n '1,220p' docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "head /root/docker-compose.yml",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"head -n 80 /root/docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show compose numbered",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"-o",
+				"BatchMode=yes",
+				"-o",
+				"ConnectTimeout=10",
+				"root@159.65.11.255",
+				"cd /root; wc -l docker-compose.yml; awk 'NR<=60{print NR\":\"$0}' docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show compose numbered no opts",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root; wc -l docker-compose.yml; sed -n '1,120p' docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker restart jkm_bot_backend; docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E 'jkm_bot_backend|NAMES'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker restart backend",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker restart jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 80 jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs 300",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 300 jkm_bot_backend | egrep 'SCAN_START|STRATEGIES_LOADED|STRATEGY_VALIDATION_REPORT|WATCH|pairs=' | tail -n 60"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "backend logs full tail",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 200 jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "backend logs since 20m",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --since 20m jkm_bot_backend | tail -n 120"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "backend logs since 30m tail 260",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --since 30m jkm_bot_backend | tail -n 260"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify default strategy inside container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python3 -c \"from core.user_strategies_store import load_user_strategies; import os; os.environ['USER_STRATEGIES_PROVIDER']='dashboard'; os.environ['JKM_PRIVACY_MODE']='1'; s=load_user_strategies('any_user'); print('count',len(s)); print('first_id', (s[0].get('strategy_id') if s else None))\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "inspect backend image name",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker inspect jkm_bot_backend --format {{.Config.Image}}"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rebuild and recreate backend via compose",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root; docker compose up -d --build"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check env files on server",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ls -la /root/.env /root/ganbayar_trading_bot/.env /root/ganbayar_trading_bot/.env.prod 2>/dev/null || true; ls -la /root/ganbayar_trading_bot | head"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy env and compose up",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cp -n /root/ganbayar_trading_bot/.env /root/.env || true; cd /root; docker compose up -d --build"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show /root/docker-compose.yml top",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"python3 -c \"from pathlib import Path; p=Path('/root/docker-compose.yml'); s=p.read_text(encoding='utf-8', errors='replace').splitlines(); print('LINES',len(s));\nprint('\\\\n'.join([f'{i+1}: {s[i]}' for i in range(min(80,len(s))) ]))\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show compose top no single quotes",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"python3 -c \"from pathlib import Path; s=Path(\\\"/root/docker-compose.yml\\\").read_text(encoding=\\\"utf-8\\\", errors=\\\"replace\\\").splitlines(); print(\\\"LINES\\\",len(s)); print(\\\"\\\\n\\\".join([f\\\"{i+1}: {s[i]}\\\" for i in range(min(80,len(s))) ]))\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "nl head docker-compose",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"nl -ba /root/docker-compose.yml | head -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose first 7 lines",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"nl -ba /root/docker-compose.yml | head -n 7"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show /root/docker-compose.yml top 40",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"nl -ba /root/docker-compose.yml | head -n 60"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show compose first 18",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"nl -ba /root/docker-compose.yml | head -n 18"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix compose build context",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i \"s|^\\s*build:\\s*\\.$|      build: ./ganbayar_trading_bot|\" /root/docker-compose.yml; nl -ba /root/docker-compose.yml | head -n 12"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix compose build context (posix)",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i \"s|^[[:space:]]*build:[[:space:]]*\\.$|      build: ./ganbayar_trading_bot|\" /root/docker-compose.yml; nl -ba /root/docker-compose.yml | head -n 12"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "replace first build line",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i \"0,/build: \\./s|build: \\.|build: ./ganbayar_trading_bot|\" /root/docker-compose.yml; nl -ba /root/docker-compose.yml | head -n 12"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "inspect build line bytes",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n '5p' /root/docker-compose.yml | od -An -t x1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix build line no quotes",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i s/build:\\ \\./build:\\ .\\/ganbayar_trading_bot/ /root/docker-compose.yml; nl -ba /root/docker-compose.yml | head -n 7"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix build line with @ delimiter",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i \"s@build: \\.@build: ./ganbayar_trading_bot@\" /root/docker-compose.yml; nl -ba /root/docker-compose.yml | head -n 7"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose up build after fix",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root; docker compose up -d --build"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check backend after rebuild",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps --filter name=jkm_bot_backend --format \"{{.Names}} {{.Status}} {{.Ports}}\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker ps filter backend",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps --filter name=jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose up build tail errors",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root; docker compose up -d --build 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose build tail",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root; docker compose build 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose up force recreate",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root; docker compose up -d --build --force-recreate 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		}
+	]
+}

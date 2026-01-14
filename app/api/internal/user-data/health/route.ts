@@ -5,12 +5,24 @@ import { prisma } from "@/lib/db"
 
 export const runtime = "nodejs"
 
+/**
+ * GET /api/internal/user-data/health
+ * 
+ * Health check for Firestore and Prisma connectivity.
+ * 
+ * Query params:
+ *   - skip_prisma: "true" to skip Prisma check (useful if Prisma is not required)
+ */
 export async function GET(request: NextRequest) {
   const auth = requireInternalApiKey(request)
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
+  const { searchParams } = new URL(request.url)
+  const skipPrisma = searchParams.get("skip_prisma") === "true"
+
   const startedAt = Date.now()
 
+  // Check Firestore (canonical user store)
   let firestoreOk = false
   let firestoreError: string | null = null
   try {
@@ -18,27 +30,39 @@ export async function GET(request: NextRequest) {
     // Minimal Firestore connectivity check
     await db.collection("users").limit(1).get()
     firestoreOk = true
-  } catch (err: any) {
+  } catch (err: unknown) {
     firestoreOk = false
-    firestoreError = err?.message || String(err)
+    firestoreError = err instanceof Error ? err.message : String(err)
   }
 
+  // Check Prisma (optional, for auth/billing)
   let prismaOk = false
   let prismaError: string | null = null
-  try {
-    await prisma.user.count()
-    prismaOk = true
-  } catch (err: any) {
-    prismaOk = false
-    prismaError = err?.message || String(err)
+  let prismaSkipped = false
+
+  if (skipPrisma) {
+    prismaSkipped = true
+    prismaOk = true // Treat as OK if skipped
+  } else {
+    try {
+      await prisma.user.count()
+      prismaOk = true
+    } catch (err: unknown) {
+      prismaOk = false
+      prismaError = err instanceof Error ? err.message : String(err)
+    }
   }
 
+  // Overall health: Firestore is required, Prisma is optional if skipped
+  const overallOk = firestoreOk && (prismaSkipped || prismaOk)
+
   return NextResponse.json({
-    ok: firestoreOk && prismaOk,
+    ok: overallOk,
     checks: {
-      firestore: { ok: firestoreOk, error: firestoreError },
-      prisma: { ok: prismaOk, error: prismaError },
+      firestore: { ok: firestoreOk, error: firestoreError, required: true },
+      prisma: { ok: prismaOk, error: prismaError, skipped: prismaSkipped, required: !skipPrisma },
     },
     ms: Date.now() - startedAt,
+    note: "Firestore is the canonical user data store. Prisma is used for auth/billing only.",
   })
 }

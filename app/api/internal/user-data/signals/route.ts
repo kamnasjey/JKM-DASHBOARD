@@ -1,9 +1,65 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
-import { upsertUserSignal } from "@/lib/user-data/signals-store"
+import { upsertUserSignal, listUserSignals } from "@/lib/user-data/signals-store"
 
 export const runtime = "nodejs"
 
+/**
+ * GET /api/internal/user-data/signals
+ * 
+ * List signals for a user from Firestore.
+ * 
+ * Query params:
+ *   - user_id (required): User ID to list signals for
+ *   - limit (optional): Max signals to return (default 50, max 500)
+ *   - symbol (optional): Filter by symbol/pair
+ *   - status (optional): Filter by status (pending, hit_tp, hit_sl, expired)
+ */
+export async function GET(request: NextRequest) {
+  const auth = requireInternalApiKey(request)
+  if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
+
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get("user_id")?.trim()
+  const limitStr = searchParams.get("limit")
+  const symbol = searchParams.get("symbol")?.trim()
+  const status = searchParams.get("status")?.trim()
+
+  if (!userId) {
+    return NextResponse.json({ ok: false, message: "user_id query param required" }, { status: 400 })
+  }
+
+  let limit = limitStr ? parseInt(limitStr, 10) : 50
+  if (isNaN(limit) || limit < 1) limit = 50
+  if (limit > 500) limit = 500
+
+  try {
+    const signals = await listUserSignals(userId, { limit, symbol, status })
+    return NextResponse.json({
+      ok: true,
+      user_id: userId,
+      signals,
+      count: signals.length,
+      filters: { limit, symbol: symbol || null, status: status || null },
+    })
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { ok: false, message: `Failed to list signals: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 },
+    )
+  }
+}
+
+/**
+ * POST /api/internal/user-data/signals
+ * 
+ * Upsert a signal for a user in Firestore.
+ * 
+ * Body:
+ *   - user_id (required)
+ *   - signal_key (required)
+ *   - signal (required): Signal object with symbol, direction, timeframe, entry, sl, tp, rr, etc.
+ */
 export async function POST(request: NextRequest) {
   const auth = requireInternalApiKey(request)
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })

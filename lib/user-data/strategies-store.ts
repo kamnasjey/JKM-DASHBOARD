@@ -11,11 +11,15 @@ export type Strategy = {
 }
 
 type UserDoc = {
+  user_id?: string
   strategies?: Strategy[]
   updatedAt?: string
 }
 
 const USERS_COLLECTION = "users"
+
+/** Maximum strategies per user (same as Python backend) */
+export const MAX_STRATEGIES_PER_USER = 30
 
 export async function getUserStrategiesFromFirestore(userId: string): Promise<Strategy[]> {
   const db = getFirebaseAdminDb()
@@ -41,6 +45,12 @@ export async function getUserStrategiesFromFirestore(userId: string): Promise<St
     }))
 }
 
+/**
+ * Set user strategies in Firestore.
+ * Enforces MAX_STRATEGIES_PER_USER limit.
+ * 
+ * @throws Error if strategies exceed limit
+ */
 export async function setUserStrategiesInFirestore(userId: string, strategies: Strategy[]): Promise<void> {
   const db = getFirebaseAdminDb()
   const ref = db.collection(USERS_COLLECTION).doc(userId)
@@ -55,8 +65,14 @@ export async function setUserStrategiesInFirestore(userId: string, strategies: S
     description: s.description !== undefined ? String(s.description) : undefined,
   }))
 
+  // Enforce max strategies limit
+  if (cleaned.length > MAX_STRATEGIES_PER_USER) {
+    throw new Error(`Maximum ${MAX_STRATEGIES_PER_USER} strategies allowed per user. You have ${cleaned.length}.`)
+  }
+
   await ref.set(
     {
+      user_id: userId,
       strategies: cleaned,
       updatedAt: new Date().toISOString(),
     },

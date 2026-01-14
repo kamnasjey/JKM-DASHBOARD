@@ -11,6 +11,69 @@ Full-featured trading dashboard with:
 - 💳 Stripe billing / paid access gating
 - 📊 Real-time signals from backend API
 - 🛡️ Secure server-side proxy (no API keys exposed to client)
+- 🔥 **Firebase Firestore as canonical user database**
+
+---
+
+## 🔥 Firebase is the Canonical User Database
+
+**Firebase Firestore is the single source of truth** for all user-related data:
+- User identity (email, name, has_paid_access)
+- User preferences (telegram_chat_id, scan_enabled, etc.)
+- User strategies (stored in user doc)
+- User signal history (subcollection)
+
+### Data Architecture
+
+```
+Firestore Database: jkmdatabase
+└── Collection: users/{userId}
+    ├── user_id (string)
+    ├── email (string|null)
+    ├── name (string|null)
+    ├── has_paid_access (boolean)
+    ├── plan (string|null)
+    ├── plan_status (string|null)
+    ├── telegram_chat_id (string|null)
+    ├── telegram_enabled (boolean|null)
+    ├── telegram_connected_ts (number|null)
+    ├── scan_enabled (boolean|null)
+    ├── strategies (array)
+    ├── updatedAt (string ISO)
+    └── Subcollection: signals/{signalKey}
+        ├── signal_key, user_id, symbol, direction, timeframe
+        ├── entry, sl, tp, rr
+        ├── strategy_name, generated_at, status
+        └── createdAt, updatedAt
+```
+
+### Internal API Endpoints
+
+The Python backend accesses user data via these internal endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/internal/user-data/users` | GET | List paid users (with Firestore prefs) |
+| `/api/internal/user-data/users/{userId}` | GET | Get user identity + prefs |
+| `/api/internal/user-data/users/{userId}` | PUT | Update identity and/or prefs |
+| `/api/internal/user-data/strategies/{userId}` | GET/PUT | Get/set user strategies |
+| `/api/internal/user-data/signals` | GET | List signals for user |
+| `/api/internal/user-data/signals` | POST | Upsert a signal |
+| `/api/internal/user-data/health` | GET | Health check |
+
+All endpoints require `x-internal-api-key` header matching `DASHBOARD_INTERNAL_API_KEY`.
+
+### Migration from Prisma/Local
+
+Run the migration script to sync Prisma users to Firestore:
+
+```bash
+# Preview changes
+npx tsx scripts/migrate_legacy_users_to_firestore.ts --dry-run
+
+# Run migration
+npx tsx scripts/migrate_legacy_users_to_firestore.ts
+```
 
 ---
 
@@ -44,6 +107,8 @@ Set these in Vercel Dashboard → Settings → Environment Variables:
 | `STRIPE_SECRET_KEY` | ✅ | Stripe secret key (sk_live_...) |
 | `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe webhook signing secret |
 | `BACKEND_INTERNAL_API_KEY` | ✅ | Internal API key for backend proxy |
+| `DASHBOARD_INTERNAL_API_KEY` | ✅ | Internal API key for Python backend |
+| `FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON` | ✅ | Firebase service account JSON |
 | `OWNER_ADMIN_EMAILS` | ⭕ | Comma-separated emails to bypass payment |
 | `NEXT_PUBLIC_LAUNCH_MODE` | ⭕ | `"live"` (default) or `"coming-soon"` |
 
