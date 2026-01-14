@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 // Dynamic runtime config check - prevents build-time Firebase init
 export const dynamic = 'force-dynamic'
-export const runtime = 'edge'
 
 type EnvKey =
   | "NEXT_PUBLIC_FIREBASE_API_KEY"
