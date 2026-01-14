@@ -1,8 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
-import app, { auth, db } from "@/lib/firebase"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
+// Dynamic runtime config check - prevents build-time Firebase init
+export const dynamic = 'force-dynamic'
+export const runtime = 'edge'
 
 type EnvKey =
   | "NEXT_PUBLIC_FIREBASE_API_KEY"
@@ -30,8 +33,23 @@ function mask(value: string | undefined) {
 }
 
 export default function DebugFirebasePage() {
-  const envStatus = useMemo(() => {
-    return ENV_KEYS.map((key) => {
+  const [firebaseStatus, setFirebaseStatus] = useState<{
+    appName?: string
+    projectId?: string
+    authOk?: boolean
+    dbOk?: boolean
+    error?: string
+  } | null>(null)
+
+  const [envStatus, setEnvStatus] = useState<Array<{
+    key: string
+    present: boolean
+    preview: string
+  }>>([])
+
+  useEffect(() => {
+    // Check env vars (client-side only)
+    const envCheck = ENV_KEYS.map((key) => {
       const value = process.env[key]
       return {
         key,
@@ -39,7 +57,47 @@ export default function DebugFirebasePage() {
         preview: key === "NEXT_PUBLIC_FIREBASE_API_KEY" ? mask(value) : value || "(missing)",
       }
     })
+    setEnvStatus(envCheck)
+
+    // Dynamically import firebase to avoid build-time init
+    import("@/lib/firebase")
+      .then(({ default: app, auth, db }) => {
+        setFirebaseStatus({
+          appName: app.name,
+          projectId: (app.options as Record<string, unknown>)?.projectId as string || "(missing)",
+          authOk: Boolean(auth),
+          dbOk: Boolean(db),
+        })
+      })
+      .catch((err) => {
+        setFirebaseStatus({ error: err.message })
+      })
   }, [])
+
+  if (!firebaseStatus) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="p-6">Loading Firebase status...</CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (firebaseStatus.error) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Firebase Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-sm text-destructive">{firebaseStatus.error}</pre>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -52,10 +110,10 @@ export default function DebugFirebasePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <Info label="App name" value={app.name} />
-            <Info label="Project ID" value={(app.options as any)?.projectId || "(missing)"} />
-            <Info label="Auth" value={auth ? "initialized" : "missing"} />
-            <Info label="Firestore" value={db ? "initialized" : "missing"} />
+            <Info label="App name" value={firebaseStatus.appName || "(missing)"} />
+            <Info label="Project ID" value={firebaseStatus.projectId || "(missing)"} />
+            <Info label="Auth" value={firebaseStatus.authOk ? "initialized" : "missing"} />
+            <Info label="Firestore" value={firebaseStatus.dbOk ? "initialized" : "missing"} />
           </div>
 
           <div className="rounded-md border p-3">
