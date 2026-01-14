@@ -82,6 +82,7 @@ export function getFirebaseAdminApp(): App {
 export function getFirebaseAdminDb(): Firestore {
   if (cachedDb) return cachedDb
   const app = getFirebaseAdminApp()
-  cachedDb = getFirestore(app)
+  // Use named database "jkmdatabase" instead of default
+  cachedDb = getFirestore(app, "jkmdatabase")
   return cachedDb
 }
