@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { prisma } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 
 // Mask email for logs: a***@domain.com
 function maskEmail(email: string): string {
@@ -168,6 +169,35 @@ export const authOptions: NextAuthOptions = {
           const dbUser = await prisma.user.findUnique({
             where: { email: (token.email as string).toLowerCase().trim() },
           })
+
+          // Best-effort Firebase user doc upsert (non-blocking).
+          // This keeps user-related domain data centralized in Firestore while keeping
+          // existing Prisma auth/billing intact.
+          const userDataProvider = (process.env.USER_DATA_PROVIDER || "").toLowerCase()
+          const shouldSync = userDataProvider === "firebase"
+          if (shouldSync && token.id && !(token as any).firebaseSynced) {
+            try {
+              const db = getFirebaseAdminDb()
+              const id = String(token.id)
+              await db
+                .collection("users")
+                .doc(id)
+                .set(
+                  {
+                    user_id: id,
+                    email: token.email ? String(token.email).toLowerCase().trim() : null,
+                    name: token.name ? String(token.name) : null,
+                    image: (token as any).picture ? String((token as any).picture) : null,
+                    provider: account?.provider ? String(account.provider) : null,
+                    lastLoginAt: new Date().toISOString(),
+                  },
+                  { merge: true },
+                )
+              ;(token as any).firebaseSynced = true
+            } catch (err) {
+              console.error("[Auth] Firestore user upsert failed (continuing):", err)
+            }
+          }
           if (dbUser) {
             token.id = dbUser.id
           }
