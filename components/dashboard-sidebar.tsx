@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, Wrench, X, BarChart3, FlaskConical, Library, LineChart, TestTube2 } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Target, Settings, User, Shield, Layers, X, BarChart3, LineChart, TestTube2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -34,11 +34,6 @@ const navItems = [
     icon: BarChart3,
   },
   {
-    label: "Backtest",
-    href: "/backtest",
-    icon: FlaskConical,
-  },
-  {
     label: "Simulator",
     href: "/simulator",
     icon: TestTube2,
@@ -52,11 +47,6 @@ const navItems = [
     label: "Strategies",
     href: "/strategies",
     icon: Layers,
-  },
-  {
-    label: "Strategy Library",
-    href: "/strategies/library",
-    icon: Library,
   },
   {
     label: "Risk",
