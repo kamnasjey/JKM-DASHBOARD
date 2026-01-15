@@ -2,7 +2,7 @@ import type { NextAuthOptions, User as NextAuthUser } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
-import { prisma, isPrismaAvailable } from "@/lib/db"
+import { getPrisma, prismaAvailable } from "@/lib/db"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 
 // Mask email for logs: a***@domain.com
@@ -29,7 +29,8 @@ function buildProviders() {
   ]
 
   // Email/Password and Phone/OTP require Prisma for user lookup
-  if (isPrismaAvailable() && prisma) {
+  // Only add these providers if Prisma is configured (DATABASE_URL present)
+  if (prismaAvailable()) {
     providers.push(
       // Email + Password credentials
       CredentialsProvider({
@@ -40,12 +41,17 @@ function buildProviders() {
           password: { label: "Password", type: "password" },
         },
         async authorize(credentials) {
+          const prisma = getPrisma()
+          if (!prisma) {
+            throw new Error("Email нэвтрэлт идэвхгүй байна. Google-ээр нэвтэрнэ үү.")
+          }
+
           if (!credentials?.email || !credentials?.password) {
             throw new Error("Email болон нууц үг оруулна уу")
           }
 
           const email = credentials.email.toLowerCase().trim()
-          const user = await prisma!.user.findUnique({ where: { email } })
+          const user = await prisma.user.findUnique({ where: { email } })
 
           if (!user || !user.passwordHash) {
             console.log(`[Auth] Email login failed - not found: ${maskEmail(email)}`)
@@ -77,6 +83,11 @@ function buildProviders() {
           otp: { label: "OTP", type: "text" },
         },
         async authorize(credentials) {
+          const prisma = getPrisma()
+          if (!prisma) {
+            throw new Error("Утасны нэвтрэлт идэвхгүй байна. Google-ээр нэвтэрнэ үү.")
+          }
+
           if (!credentials?.phone || !credentials?.otp) {
             throw new Error("Утасны дугаар болон OTP код оруулна уу")
           }
@@ -92,10 +103,10 @@ function buildProviders() {
           }
 
           // Find or create user by phone
-          let user = await prisma!.user.findUnique({ where: { phone } })
+          let user = await prisma.user.findUnique({ where: { phone } })
 
           if (!user) {
-            user = await prisma!.user.create({
+            user = await prisma.user.create({
               data: {
                 phone,
                 provider: "phone",
@@ -141,7 +152,8 @@ export const authOptions: NextAuthOptions = {
         const email = user.email.toLowerCase().trim()
 
         // Only attempt Prisma upsert if Prisma is available
-        if (isPrismaAvailable() && prisma) {
+        const prisma = getPrisma()
+        if (prisma) {
           try {
             await prisma.user.upsert({
               where: { email },
@@ -181,7 +193,8 @@ export const authOptions: NextAuthOptions = {
 
       // For Google auth, lookup DB user to get correct ID (if Prisma available)
       if (account?.provider === "google" && token.email) {
-        if (isPrismaAvailable() && prisma) {
+        const prisma = getPrisma()
+        if (prisma) {
           try {
             const dbUser = await prisma.user.findUnique({
               where: { email: (token.email as string).toLowerCase().trim() },

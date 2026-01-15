@@ -1,10 +1,28 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { getPrisma, prismaAvailable } from "@/lib/db"
+
+export const runtime = "nodejs"
 
 // MVP: Accept "123456" as valid OTP
 // TODO: Compare against stored otpHash for production
 
 export async function POST(request: Request) {
+  // Check if Prisma is available (required for OTP)
+  if (!prismaAvailable()) {
+    return NextResponse.json(
+      { error: "Утасны нэвтрэлт идэвхгүй байна. Google-ээр нэвтэрнэ үү." },
+      { status: 503 }
+    )
+  }
+
+  const prisma = getPrisma()
+  if (!prisma) {
+    return NextResponse.json(
+      { error: "Database unavailable" },
+      { status: 503 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { phone, otp, name } = body

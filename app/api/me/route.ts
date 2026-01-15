@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+
+export const runtime = "nodejs"
 
 export async function GET() {
   try {
@@ -15,27 +18,67 @@ export async function GET() {
     }
 
     const userId = (session.user as any).id
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        phone: true,
-        name: true,
-        image: true,
-        provider: true,
-        createdAt: true,
-      },
-    })
+    const sessionEmail = (session.user as any).email
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Хэрэглэгч олдсонгүй" },
-        { status: 404 }
-      )
+    // Try Prisma first if available
+    const prisma = getPrisma()
+    if (prisma && userId) {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            name: true,
+            image: true,
+            provider: true,
+            createdAt: true,
+          },
+        })
+
+        if (user) {
+          return NextResponse.json({ user, source: "prisma" })
+        }
+      } catch (err) {
+        console.error("[API] /api/me Prisma error (falling back to Firestore):", err)
+      }
     }
 
-    return NextResponse.json({ user })
+    // Fallback to Firestore
+    if (userId) {
+      try {
+        const db = getFirebaseAdminDb()
+        const doc = await db.collection("users").doc(userId).get()
+        if (doc.exists) {
+          const data = doc.data()
+          return NextResponse.json({
+            user: {
+              id: userId,
+              email: data?.email || sessionEmail,
+              name: data?.name || session.user.name,
+              image: data?.image || session.user.image,
+              provider: data?.provider || "google",
+            },
+            source: "firestore"
+          })
+        }
+      } catch (err) {
+        console.error("[API] /api/me Firestore error:", err)
+      }
+    }
+
+    // Return session data as fallback
+    return NextResponse.json({
+      user: {
+        id: userId || "unknown",
+        email: sessionEmail,
+        name: session.user.name,
+        image: session.user.image,
+        provider: "session",
+      },
+      source: "session"
+    })
   } catch (error) {
     console.error("[API] /api/me error:", error)
     return NextResponse.json(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
-import { prisma } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { getUserDoc, upsertUserIdentity, updateUserPrefs } from "@/lib/user-data/user-store"
 
 export const runtime = "nodejs"
@@ -65,13 +65,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   // Optional: include Prisma user record if present (for compatibility)
   let prismaUser: { id: string; email: string | null; name: string | null; hasPaidAccess: boolean } | null = null
-  try {
-    prismaUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true, hasPaidAccess: true },
-    })
-  } catch {
-    prismaUser = null
+  const prisma = getPrisma()
+  if (prisma) {
+    try {
+      prismaUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, name: true, hasPaidAccess: true },
+      })
+    } catch {
+      prismaUser = null
+    }
   }
 
   // If Firestore doc doesn't exist but Prisma user does, return Prisma data as prefs

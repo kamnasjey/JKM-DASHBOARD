@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/db"
+import { getPrisma, prismaAvailable } from "@/lib/db"
 import { getStripe } from "@/lib/stripe"
 
 export const runtime = "nodejs"
 
-export async function POST(request: Request) {
+// Helper to check if billing is disabled
+function isBillingDisabled(): boolean {
+  return process.env.BILLING_DISABLED === "1" || !prismaAvailable()
+}
+
+export async function POST() {
+  // Check if billing is disabled
+  if (isBillingDisabled()) {
+    return NextResponse.json(
+      { ok: false, message: "Billing disabled. Contact admin for access." },
+      { status: 503 }
+    )
+  }
+
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
@@ -30,6 +43,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, message: "NEXTAUTH_URL is required" },
       { status: 500 }
+    )
+  }
+
+  const prisma = getPrisma()
+  if (!prisma) {
+    return NextResponse.json(
+      { ok: false, message: "Database unavailable" },
+      { status: 503 }
     )
   }
 

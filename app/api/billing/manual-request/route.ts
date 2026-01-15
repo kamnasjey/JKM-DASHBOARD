@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { prisma } from "@/lib/db"
+import { getPrisma, prismaAvailable } from "@/lib/db"
 
 export const runtime = "nodejs"
+
+// Helper to check if billing is disabled
+function isBillingDisabled(): boolean {
+  return process.env.BILLING_DISABLED === "1" || !prismaAvailable()
+}
 
 type ManualRequestBody = {
   payerEmail?: string
@@ -25,9 +30,25 @@ function normalizePlan(value: unknown): "pro" | "pro_plus" | null {
 }
 
 export async function POST(request: Request) {
+  // Check if billing is disabled
+  if (isBillingDisabled()) {
+    return NextResponse.json(
+      { ok: false, message: "Billing disabled. Contact admin for access." },
+      { status: 503 }
+    )
+  }
+
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
+  }
+
+  const prisma = getPrisma()
+  if (!prisma) {
+    return NextResponse.json(
+      { ok: false, message: "Database unavailable" },
+      { status: 503 }
+    )
   }
 
   const body = (await request.json().catch(() => null)) as ManualRequestBody | null
@@ -82,7 +103,7 @@ export async function POST(request: Request) {
   }
 
   // Email fallback (e.g., OAuth session without DB id)
-  const user = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: sessionEmail },
     update: {
       manualPaymentStatus: "pending",
@@ -105,5 +126,5 @@ export async function POST(request: Request) {
     },
   })
 
-  return NextResponse.json({ ok: true, status: "pending", userId: user.id })
+  return NextResponse.json({ ok: true, status: "pending" })
 }

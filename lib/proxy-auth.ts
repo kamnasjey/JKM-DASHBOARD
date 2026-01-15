@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { isOwnerEmail } from "@/lib/owner"
-import { prisma, isPrismaAvailable } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 
 export async function requireSession() {
   const session = await getServerSession(authOptions)
@@ -20,24 +20,24 @@ export async function requireAllowedSession() {
   // Owner/admin always has access
   if (isOwnerEmail(email)) return session
 
-  // Check database for user access (if Prisma available)
+  // Check Firestore for user access (canonical source)
   const userId = (session.user as any).id as string | undefined
   if (!userId) return null
 
-  // If Prisma is not available, allow access by default (Firestore-only mode)
-  // In production with full features, you should have Prisma enabled
-  if (!isPrismaAvailable() || !prisma) {
-    console.warn("[proxy-auth] Prisma disabled - allowing session without paid access check")
+  try {
+    const db = getFirebaseAdminDb()
+    const userDoc = await db.collection("users").doc(userId).get()
+    
+    const data = userDoc.data()
+    const hasAccess = data?.hasPaidAccess === true || data?.has_paid_access === true
+    
+    if (!hasAccess) return null
     return session
+  } catch (err) {
+    console.error("[proxy-auth] Firestore error:", err)
+    // On Firestore error, deny access for safety
+    return null
   }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { hasPaidAccess: true },
-  })
-
-  if (!user?.hasPaidAccess) return null
-  return session
 }
 
 // Legacy alias - now just checks allowed access instead of paid

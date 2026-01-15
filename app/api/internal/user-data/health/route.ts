@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
-import { prisma, isPrismaAvailable, getPrismaInitError } from "@/lib/db"
+import { getPrisma, prismaAvailable, getPrismaInitError } from "@/lib/db"
 
 export const runtime = "nodejs"
 
@@ -11,14 +11,15 @@ export const runtime = "nodejs"
  * Health check for Firestore and Prisma connectivity.
  * 
  * Query params:
- *   - skip_prisma: "true" to skip Prisma check (useful if Prisma is not required)
+ *   - skip_prisma: "false" to explicitly check Prisma (default is TRUE for Path-2 mode)
  */
 export async function GET(request: NextRequest) {
   const auth = requireInternalApiKey(request)
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
   const { searchParams } = new URL(request.url)
-  const skipPrisma = searchParams.get("skip_prisma") === "true"
+  // Default: skip_prisma=true (Path-2 mode: Firestore-only)
+  const skipPrisma = searchParams.get("skip_prisma") !== "false"
 
   const startedAt = Date.now()
 
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
   let prismaSkipped = false
   let prismaDisabled = false
 
-  if (!isPrismaAvailable()) {
+  if (!prismaAvailable()) {
     // Prisma not initialized (DATABASE_URL missing or init failed)
     prismaDisabled = true
     prismaSkipped = true
@@ -52,12 +53,18 @@ export async function GET(request: NextRequest) {
     prismaSkipped = true
     prismaOk = true // Treat as OK if skipped
   } else {
-    try {
-      await prisma!.user.count()
-      prismaOk = true
-    } catch (err: unknown) {
+    const prisma = getPrisma()
+    if (!prisma) {
       prismaOk = false
-      prismaError = err instanceof Error ? err.message : String(err)
+      prismaError = "Prisma client not available"
+    } else {
+      try {
+        await prisma.user.count()
+        prismaOk = true
+      } catch (err: unknown) {
+        prismaOk = false
+        prismaError = err instanceof Error ? err.message : String(err)
+      }
     }
   }
 
@@ -77,8 +84,9 @@ export async function GET(request: NextRequest) {
       },
     },
     ms: Date.now() - startedAt,
+    mode: prismaDisabled ? "firestore-only" : "full",
     note: prismaDisabled 
-      ? "Running in Firestore-only mode (DATABASE_URL not set). Auth/billing features may be limited."
-      : "Firestore is the canonical user data store. Prisma is used for auth/billing only.",
+      ? "Running in Firestore-only mode (DATABASE_URL not set). Auth uses Google OAuth only."
+      : "Firestore is the canonical user data store. Prisma is used for auth/billing.",
   })
 }

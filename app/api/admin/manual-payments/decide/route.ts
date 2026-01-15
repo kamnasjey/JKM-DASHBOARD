@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { isOwnerEmail } from "@/lib/owner"
-import { prisma } from "@/lib/db"
+import { getPrisma, prismaAvailable } from "@/lib/db"
 import { json } from "@/lib/proxy-auth"
 
 export const runtime = "nodejs"
@@ -32,6 +32,16 @@ export async function POST(request: Request) {
 
   const adminEmail = (session.user as any).email as string | undefined
   if (!isOwnerEmail(adminEmail)) return json(403, { ok: false, message: "Forbidden" })
+
+  // Check if billing/Prisma is available
+  if (!prismaAvailable()) {
+    return json(503, { ok: false, message: "Billing disabled (no DATABASE_URL)" })
+  }
+
+  const prisma = getPrisma()
+  if (!prisma) {
+    return json(503, { ok: false, message: "Database unavailable" })
+  }
 
   const body = (await request.json().catch(() => null)) as DecideBody | null
   const decision = body?.decision

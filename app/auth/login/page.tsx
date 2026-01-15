@@ -13,12 +13,21 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BackButton } from "@/components/back-button"
 
+type AuthMode = {
+  google: boolean
+  email: boolean
+  phone: boolean
+  mode: "full" | "google-only"
+  message: string
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const { status } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [authErrorCode, setAuthErrorCode] = useState("")
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null)
 
   // Email login state
   const [email, setEmail] = useState("")
@@ -28,6 +37,14 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("")
   const [otp, setOtp] = useState("")
   const [otpSent, setOtpSent] = useState(false)
+
+  // Fetch auth mode on mount
+  useEffect(() => {
+    fetch("/api/auth/mode")
+      .then(res => res.json())
+      .then(data => setAuthMode(data))
+      .catch(() => setAuthMode({ google: true, email: false, phone: false, mode: "google-only", message: "Could not determine auth mode" }))
+  }, [])
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -219,80 +236,98 @@ export default function LoginPage() {
             </TabsList>
 
             <TabsContent value="email">
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+              {authMode && !authMode.email ? (
+                <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
+                  <p className="font-medium">Email нэвтрэлт идэвхгүй байна</p>
+                  <p className="mt-1 text-xs">
+                    Production орчинд Google-ээр нэвтэрнэ үү.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Нууц үг</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
-                </Button>
-              </form>
+              ) : (
+                <form onSubmit={handleEmailLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Нууц үг</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="phone">
-              <form onSubmit={handlePhoneLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Утасны дугаар</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="99001234"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleRequestOtp}
-                      disabled={loading || !phone}
-                    >
-                      OTP авах
-                    </Button>
-                  </div>
+              {authMode && !authMode.phone ? (
+                <div className="rounded-md bg-muted p-4 text-sm text-muted-foreground">
+                  <p className="font-medium">Утасны нэвтрэлт идэвхгүй байна</p>
+                  <p className="mt-1 text-xs">
+                    Production орчинд Google-ээр нэвтэрнэ үү.
+                  </p>
                 </div>
-                {otpSent && (
+              ) : (
+                <form onSubmit={handlePhoneLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="otp">OTP код</Label>
-                    <Input
-                      id="otp"
-                      type="text"
-                      placeholder="123456"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      maxLength={6}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      MVP: Тест код нь 123456
-                    </p>
+                    <Label htmlFor="phone">Утасны дугаар</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="99001234"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleRequestOtp}
+                        disabled={loading || !phone}
+                      >
+                        OTP авах
+                      </Button>
+                    </div>
                   </div>
-                )}
-                <Button type="submit" className="w-full" disabled={loading || !otpSent}>
-                  {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
-                </Button>
-              </form>
+                  {otpSent && (
+                    <div className="space-y-2">
+                      <Label htmlFor="otp">OTP код</Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="123456"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        maxLength={6}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        MVP: Тест код нь 123456
+                      </p>
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full" disabled={loading || !otpSent}>
+                    {loading ? "Нэвтэрч байна..." : "Нэвтрэх"}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
 

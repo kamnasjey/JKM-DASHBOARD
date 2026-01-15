@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
-import { prisma } from "@/lib/db"
+import { getPrisma, prismaAvailable } from "@/lib/db"
 import { ensureUserInFirestore, getUserDoc, listUsersFromFirestore } from "@/lib/user-data/user-store"
 
 export const runtime = "nodejs"
@@ -11,27 +11,28 @@ export const runtime = "nodejs"
  * Lists paid users for backend scanning.
  * 
  * Query params:
- *   - source: "prisma" (default) | "firestore" - where to list users from
+ *   - source: "firestore" (default for Path-2) | "prisma" - where to list users from
  *   - sync: "true" (default) | "false" - whether to sync Prisma users to Firestore
  * 
- * When source=prisma (default):
- *   1. Query Prisma for hasPaidAccess=true
- *   2. For each user, ensure they exist in Firestore with identity fields
- *   3. Return enriched user list with Firestore prefs
- * 
- * When source=firestore:
+ * When source=firestore (default in Path-2 mode):
  *   1. Query Firestore directly for has_paid_access=true
  *   2. Return users (no Prisma dependency)
+ * 
+ * When source=prisma:
+ *   1. Query Prisma for hasPaidAccess=true (requires DATABASE_URL)
+ *   2. For each user, ensure they exist in Firestore with identity fields
+ *   3. Return enriched user list with Firestore prefs
  */
 export async function GET(request: NextRequest) {
   const auth = requireInternalApiKey(request)
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
   const { searchParams } = new URL(request.url)
-  const source = searchParams.get("source") || "prisma"
+  // Default to "firestore" for Path-2 mode
+  const source = searchParams.get("source") || "firestore"
   const shouldSync = searchParams.get("sync") !== "false"
 
-  // Firestore-only mode (no Prisma dependency)
+  // Firestore mode (default for Path-2)
   if (source === "firestore") {
     try {
       const users = await listUsersFromFirestore({ onlyPaid: true })
@@ -59,7 +60,23 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Default: Prisma as source, sync to Firestore
+  // Prisma mode: check if available
+  if (!prismaAvailable()) {
+    return NextResponse.json(
+      { ok: false, message: "Prisma not available (DATABASE_URL not set). Use source=firestore instead." },
+      { status: 501 },
+    )
+  }
+
+  const prisma = getPrisma()
+  if (!prisma) {
+    return NextResponse.json(
+      { ok: false, message: "Database unavailable" },
+      { status: 503 },
+    )
+  }
+
+  // Prisma as source, sync to Firestore
   const users = await prisma.user.findMany({
     where: { hasPaidAccess: true },
     select: { id: true, email: true, name: true, hasPaidAccess: true },
