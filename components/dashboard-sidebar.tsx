@@ -50,7 +50,7 @@ const navItems = [
   },
   {
     label: "Strategy Maker",
-    href: "/strategy-maker",
+    href: "/strategies/maker",
     icon: Sparkles,
   },
   {

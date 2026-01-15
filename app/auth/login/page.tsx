@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BackButton } from "@/components/back-button"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -74,6 +75,8 @@ export default function LoginPage() {
     setLoading(true)
     signIn("google", { callbackUrl: "/dashboard" })
   }
+
+  // UI renders later; keep back button visible on all auth screens.
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -149,7 +152,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="relative flex min-h-screen items-center justify-center p-4">
+      <div className="absolute left-4 top-4">
+        <BackButton fallbackHref="/" />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>JKM Copilot</CardTitle>

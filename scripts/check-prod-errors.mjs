@@ -39,10 +39,10 @@ try {
   // Give hydration/runtime a moment.
   await page.waitForTimeout(5_000);
 
-  // Try navigating to strategy-maker as well.
-  const smUrl = url.replace(/\/$/, "") + "/strategy-maker";
+  // Try navigating to Strategy Maker (now nested under Strategies) as well.
+  const smUrl = url.replace(/\/$/, "") + "/strategies/maker";
   const resp2 = await page.goto(smUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
-  console.log("[goto] strategy-maker status=", resp2?.status());
+  console.log("[goto] strategies/maker status=", resp2?.status());
   await page.waitForTimeout(5_000);
 
   const hasPageErrors = messages.some((m) => m.kind === "pageerror");

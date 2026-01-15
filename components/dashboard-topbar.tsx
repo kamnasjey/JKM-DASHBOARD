@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
+import { BackButton } from "@/components/back-button"
 
 // Market sessions in UTC hours
 const SESSIONS = [
@@ -152,6 +153,7 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuToggle}>
           <Menu className="h-5 w-5" />
         </Button>
+        <BackButton fallbackHref="/dashboard" />
         <MarketSessions />
       </div>
 

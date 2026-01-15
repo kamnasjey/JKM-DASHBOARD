@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles } from "lucide-react"
+import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -272,6 +273,12 @@ export default function StrategiesPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link href="/strategies/maker">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Strategy Maker
+              </Link>
+            </Button>
             <Button onClick={openCreateDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
               Шинэ Strategy
