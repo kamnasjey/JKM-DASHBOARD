@@ -18,26 +18,30 @@ function validateDetectors(detectors: unknown): { ok: boolean; message?: string 
 
   // Minimum trigger/confluence checks (best-effort based on known set)
   const triggerSet = new Set([
-    "pinbar",
-    "engulfing",
     "sr_bounce",
-    "sr_breakout",
+    "sr_break_close",
+    "break_retest",
+    "breakout_retest_entry",
     "compression_expansion",
     "momentum_continuation",
     "mean_reversion_snapback",
+    "triangle_breakout_close",
   ])
 
   const confluenceSet = new Set([
     "doji",
     "pinbar_at_level",
-    "fibo_retracement",
+    "engulf_at_level",
     "fibo_extension",
     "fibo_retrace_confluence",
-    "structure_trend",
-    "swing_failure",
-    "range_box_edge",
     "fakeout_trap",
     "sr_role_reversal",
+    "rectangle_range_edge",
+    "price_momentum_weakening",
+    "trend_fibo",
+    "double_top_bottom",
+    "head_shoulders",
+    "flag_pennant",
   ])
 
   const triggers = cleaned.filter((d) => triggerSet.has(d)).length

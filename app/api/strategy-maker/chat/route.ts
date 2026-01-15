@@ -11,9 +11,9 @@ function getOpenAIClient(): OpenAI {
   return new OpenAI({ apiKey })
 }
 
-// All 20 detectors with detailed info for AI context
+// 24 detectors with detailed info for AI context
 const DETECTORS_CONTEXT = `
-# JKM Trading Bot - 20 Detectors
+# JKM Trading Bot - 24 Detectors
 
 ## GATES (Шүүлт - Зах зээлийг шүүнэ)
 Заавал 1+ Gate сонгосон байх ёстой.
@@ -36,22 +36,22 @@ const DETECTORS_CONTEXT = `
 ## TRIGGERS (Entry сигнал)
 Заавал 1+ Trigger сонгосон байх ёстой.
 
-4. **pinbar** - Long wick rejection candle
-   - Хамгийн classic reversal pattern
-   - Key level дээр маш хүчтэй
-   
-5. **engulfing** - Candle that fully engulfs previous
-   - Strong reversal signal
-   - Works well at S/R levels
-   
-6. **sr_bounce** - Bounce from Support/Resistance
+4. **sr_bounce** - Bounce from Support/Resistance
    - Тодорхойлсон S/R түвшингээс эргэлт
    - Лимит ордер арга барилд тохиромжтой
    
-7. **sr_breakout** - Break through S/R level
+5. **sr_break_close** - Clean close through S/R level
    - Breakout traders-д зориулсан
-   - Volume confirmation needed ideally
+   - Close confirmation ашиглана (false break багасгана)
    
+6. **break_retest** - Break → Retest → Continue
+   - Түвшин эвдээд буцаад retest хийж баталгаажуулна
+   - Trend following entry-д түгээмэл
+
+7. **breakout_retest_entry** - Breakout → Retest → Confirmation (strict)
+   - Breakout entry-г илүү шалгууртай болгоно
+   - Signal quality өснө, signal count багасна
+
 8. **compression_expansion** - Volatility squeeze breakout
    - Bollinger Bands narrowing → expansion
    - Good for breakout strategies
@@ -64,75 +64,86 @@ const DETECTORS_CONTEXT = `
     - Counter-trend арга барил
     - Range market-д тохиромжтой
 
+11. **triangle_breakout_close** - Triangle breakout close
+  - Triangle-ийн хязгаарыг close-оор эвдсэнийг шалгана
+
 ## CONFLUENCE (Баталгаа)
 Заавал 1+ Confluence сонгосон байх ёстой.
 
-11. **doji** - Indecision candle (open ≈ close)
+12. **doji** - Indecision candle (open ≈ close)
     - Эргэлтийн дохио
     - Дангаар биш, бусадтай хамт хэрэглэх
     
-12. **pinbar_at_level** - Pinbar at key level
+13. **pinbar_at_level** - Pinbar at key level
     - Pinbar + S/R = stronger signal
     - High probability setup
     
-13. **fibo_retracement** - Fibo 38.2%, 50%, 61.8% levels
-    - Pullback entry zones
-    - Trend following-д заавал хэрэгтэй
-    
-14. **fibo_extension** - Fibo 127.2%, 161.8% targets
+14. **engulf_at_level** - Engulfing at key level
+  - Key level дээр гарсан engulfing
+  - Reversal confirmation-д тохиромжтой
+
+15. **fibo_extension** - Fibo extension targets
     - Take profit levels
     - Swing trades-д тохиромжтой
     
-15. **fibo_retrace_confluence** - Multiple Fibo levels overlap
-    - Very strong zone
-    - High probability reversal area
+16. **fibo_retrace_confluence** - Fibo retrace confluence zone
+  - Олон retrace түвшнээс хамгийн ойрыг сонгож баталгаажуулна
+  - Pullback/reversal setup-д хүчтэй zone
     
-16. **structure_trend** - HH/HL or LH/LL structure
-    - Trend confirmation
-    - Trend following арга барилд заавал хэрэгтэй
-    
-17. **swing_failure** - Swing Failure Pattern (SFP)
-    - Sweep high/low then reverse
-    - Liquidity grab pattern
-    
-18. **range_box_edge** - Reaction at range boundary
-    - Range trading арга барил
-    - Buy low, sell high
-    
-19. **fakeout_trap** - False breakout trap
+17. **fakeout_trap** - False breakout trap
     - Breakout fails, reverses
     - Counter-trend setup
     
-20. **sr_role_reversal** - Support becomes Resistance (vice versa)
+18. **sr_role_reversal** - Support becomes Resistance (vice versa)
     - Classic S/R principle
     - Strong confluence signal
+
+19. **rectangle_range_edge** - Reaction at rectangle/range boundary
+  - Range trading fade setups
+  - Buy low, sell high
+
+20. **price_momentum_weakening** - Momentum weakening
+  - Trend ядарч байгааг илтгэнэ
+  - Reversal / pullback timing-д тусална
+
+21. **trend_fibo** - Trend + fib retracement confluence
+  - Trend + fib zone таарах үед signal quality өснө
+
+22. **double_top_bottom** - Double top / bottom
+  - Classic reversal pattern
+
+23. **head_shoulders** - Head & Shoulders
+  - Classic reversal pattern
+
+24. **flag_pennant** - Flag / pennant
+  - Continuation pattern
 
 # Strategy Presets
 
 ## Trend Following
 - Gates: gate_regime, gate_volatility
-- Triggers: momentum_continuation, sr_breakout
-- Confluence: structure_trend, fibo_retracement, sr_role_reversal
+- Triggers: momentum_continuation, break_retest, sr_break_close
+- Confluence: trend_fibo, fibo_retrace_confluence, sr_role_reversal
 
 ## Mean Reversion / Range Trading
 - Gates: gate_regime
 - Triggers: mean_reversion_snapback, sr_bounce
-- Confluence: range_box_edge, fakeout_trap, doji
+- Confluence: rectangle_range_edge, fakeout_trap, doji
 
 ## Scalping (Low timeframe)
 - Gates: gate_regime, gate_volatility
-- Triggers: pinbar, engulfing
-- Confluence: pinbar_at_level, fibo_retracement
+- Triggers: breakout_retest_entry, sr_break_close
+- Confluence: pinbar_at_level, engulf_at_level, fibo_retrace_confluence
 
 ## Swing Trading (High timeframe)
 - Gates: gate_regime, gate_volatility
-- Triggers: sr_breakout, compression_expansion
-- Confluence: structure_trend, fibo_extension, swing_failure
+- Triggers: triangle_breakout_close, compression_expansion
+- Confluence: fibo_extension, flag_pennant, double_top_bottom
 
 ## Conservative (Low risk)
 - Gates: gate_regime, gate_volatility, gate_drift_sentinel
-- Triggers: sr_bounce, pinbar
-- Confluence: pinbar_at_level, fibo_retrace_confluence, sr_role_reversal
+- Triggers: sr_bounce, break_retest
+- Confluence: fibo_retrace_confluence, sr_role_reversal, price_momentum_weakening
 `;
 
 const SYSTEM_PROMPT = `Та JKM Trading Bot-ийн Strategy Maker AI туслах юм. Таны зорилго нь хэрэглэгчийн trading арга барилыг ойлгоод хамгийн тохиромжтой detector combination сонгоход нь тусалах.
