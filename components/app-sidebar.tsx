@@ -3,13 +3,14 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut } from "lucide-react"
+import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
 
 const navItems = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/strategy-maker", label: "Strategy Maker", icon: Sparkles },
   { href: "/app/setups", label: "Setup-ууд", icon: Target },
   { href: "/app/signals", label: "Илэрцүүд", icon: ListFilter },
   { href: "/app/logs", label: "Logs", icon: FileText },
