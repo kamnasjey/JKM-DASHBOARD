@@ -3,9 +3,13 @@ import OpenAI from "openai";
 
 export const runtime = "nodejs";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient(): OpenAI {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error("Missing OPENAI_API_KEY")
+  }
+  return new OpenAI({ apiKey })
+}
 
 // All 20 detectors with detailed info for AI context
 const DETECTORS_CONTEXT = `
@@ -160,6 +164,8 @@ JSON хариу формат (заавал):
 export async function POST(request: NextRequest) {
   try {
     const { messages, current_detectors } = await request.json();
+
+    const openai = getOpenAIClient()
 
     // Build conversation history
     const conversationHistory = messages.map((msg: { role: string; content: string }) => ({
