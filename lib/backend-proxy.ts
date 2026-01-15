@@ -1,4 +1,5 @@
-const BACKEND_ORIGIN = "https://api.jkmcopilot.com"
+// Backend origin can be overridden via env for staging/dev environments
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com"
 
 function missingEnvResponse(name: string): Response {
   return new Response(

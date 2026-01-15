@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles } from "lucide-react"
-import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +43,7 @@ export default function StrategiesPage() {
   useAuthGuard(true)
 
   const { toast } = useToast()
+  const [view, setView] = useState<"list" | "maker">("list")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [strategies, setStrategies] = useState<Strategy[]>([])
@@ -273,11 +274,12 @@ export default function StrategiesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href="/strategies/maker">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Strategy Maker
-              </Link>
+            <Button
+              variant={view === "maker" ? "default" : "outline"}
+              onClick={() => setView((v) => (v === "maker" ? "list" : "maker"))}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {view === "maker" ? "Жагсаалт" : "Strategy Maker"}
             </Button>
             <Button onClick={openCreateDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
@@ -290,34 +292,45 @@ export default function StrategiesPage() {
           </div>
         </div>
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү. Хамгийн ихдээ {MAX_STRATEGIES} стратеги үүсгэх боломжтой.
-          </AlertDescription>
-        </Alert>
+        {view === "maker" ? (
+          <StrategyMakerPanel
+            embedded
+            onCancel={() => setView("list")}
+            onSaved={async () => {
+              await loadData()
+              setView("list")
+            }}
+          />
+        ) : (
+          <>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү. Хамгийн ихдээ {MAX_STRATEGIES} стратеги үүсгэх боломжтой.
+              </AlertDescription>
+            </Alert>
 
-        {/* Empty state */}
-        {strategies.length === 0 && (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Стратеги байхгүй</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү
-              </p>
-              <Button onClick={openCreateDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                Эхний Strategy үүсгэх
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+            {/* Empty state */}
+            {strategies.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Layers className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Стратеги байхгүй</h3>
+                  <p className="text-muted-foreground text-center mb-4">
+                    Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү
+                  </p>
+                  <Button onClick={openCreateDialog}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Эхний Strategy үүсгэх
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-        {/* Strategy Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {strategies.map((strategy, idx) => (
-            <Card key={strategy.strategy_id || idx} className={!strategy.enabled ? "opacity-60" : ""}>
+            {/* Strategy Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {strategies.map((strategy, idx) => (
+                <Card key={strategy.strategy_id || idx} className={!strategy.enabled ? "opacity-60" : ""}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -384,12 +397,12 @@ export default function StrategiesPage() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
-          ))}
-        </div>
+                </Card>
+              ))}
+            </div>
 
-        {/* Create/Edit Dialog */}
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          {/* Create/Edit Dialog */}
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -521,10 +534,10 @@ export default function StrategiesPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
 
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={deleteConfirmIndex !== null} onOpenChange={() => setDeleteConfirmIndex(null)}>
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={deleteConfirmIndex !== null} onOpenChange={() => setDeleteConfirmIndex(null)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Стратеги устгах</DialogTitle>
@@ -545,7 +558,9 @@ export default function StrategiesPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+            </Dialog>
+          </>
+        )}
       </div>
     </DashboardLayout>
   )

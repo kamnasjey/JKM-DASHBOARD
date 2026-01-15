@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
-import { prisma } from "@/lib/db"
+import { prisma, isPrismaAvailable, getPrismaInitError } from "@/lib/db"
 
 export const runtime = "nodejs"
 
@@ -39,13 +39,21 @@ export async function GET(request: NextRequest) {
   let prismaOk = false
   let prismaError: string | null = null
   let prismaSkipped = false
+  let prismaDisabled = false
 
-  if (skipPrisma) {
+  if (!isPrismaAvailable()) {
+    // Prisma not initialized (DATABASE_URL missing or init failed)
+    prismaDisabled = true
+    prismaSkipped = true
+    prismaOk = true // Treat as OK since it's intentionally disabled
+    const initErr = getPrismaInitError()
+    prismaError = initErr ? initErr.message : "Prisma not initialized (DATABASE_URL missing)"
+  } else if (skipPrisma) {
     prismaSkipped = true
     prismaOk = true // Treat as OK if skipped
   } else {
     try {
-      await prisma.user.count()
+      await prisma!.user.count()
       prismaOk = true
     } catch (err: unknown) {
       prismaOk = false
@@ -53,16 +61,24 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Overall health: Firestore is required, Prisma is optional if skipped
+  // Overall health: Firestore is required, Prisma is optional if skipped/disabled
   const overallOk = firestoreOk && (prismaSkipped || prismaOk)
 
   return NextResponse.json({
     ok: overallOk,
     checks: {
       firestore: { ok: firestoreOk, error: firestoreError, required: true },
-      prisma: { ok: prismaOk, error: prismaError, skipped: prismaSkipped, required: !skipPrisma },
+      prisma: { 
+        ok: prismaOk, 
+        error: prismaError, 
+        skipped: prismaSkipped, 
+        disabled: prismaDisabled,
+        required: !skipPrisma && !prismaDisabled,
+      },
     },
     ms: Date.now() - startedAt,
-    note: "Firestore is the canonical user data store. Prisma is used for auth/billing only.",
+    note: prismaDisabled 
+      ? "Running in Firestore-only mode (DATABASE_URL not set). Auth/billing features may be limited."
+      : "Firestore is the canonical user data store. Prisma is used for auth/billing only.",
   })
 }
