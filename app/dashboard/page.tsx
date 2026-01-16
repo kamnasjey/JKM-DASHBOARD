@@ -314,6 +314,34 @@ export default function DashboardPage() {
     return `${secs}s ago`
   }, [candleAgeSec])
 
+  // Next M5 candle expected time (candles close at :00, :05, :10, :15, :20, :25, :30, :35, :40, :45, :50, :55)
+  const nextCandleIn = useMemo(() => {
+    if (!lastCandleTime) return null
+    // M5 candle closes every 5 minutes, next one = lastCandleTime + 300 seconds
+    const nextCandleTs = lastCandleTime + 300
+    const remaining = nextCandleTs - nowTs
+    // If remaining < 0, means candle should have arrived but data provider is delayed
+    return remaining
+  }, [lastCandleTime, nowTs])
+
+  const nextCandleText = useMemo(() => {
+    if (nextCandleIn === null) return "—"
+    if (nextCandleIn <= 0) {
+      // Data provider is delayed
+      const delayedBy = Math.abs(nextCandleIn)
+      const mins = Math.floor(delayedBy / 60)
+      const secs = delayedBy % 60
+      return `delayed ${mins}m ${secs}s`
+    }
+    const mins = Math.floor(nextCandleIn / 60)
+    const secs = nextCandleIn % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }, [nextCandleIn])
+
+  const candleIsDelayed = useMemo(() => {
+    return nextCandleIn !== null && nextCandleIn < -30 // delayed more than 30 seconds
+  }, [nextCandleIn])
+
   const scanCadenceSec = useMemo(() => {
     return (engineStatus as any)?.cadence_sec || 300
   }, [engineStatus])
@@ -433,11 +461,24 @@ export default function DashboardPage() {
                 {candleError ? (
                   <p className="text-xs text-destructive">{candleError}</p>
                 ) : (
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">Last M5 candle: </span>
-                    <span className={`font-mono ${candleAgeSec && candleAgeSec < 60 ? "text-green-600" : ""}`}>
-                      {candleAgeText}
-                    </span>
+                  <div className="space-y-1">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Last M5: </span>
+                      <span className={`font-mono ${candleAgeSec && candleAgeSec < 60 ? "text-green-600" : ""}`}>
+                        {candleAgeText}
+                      </span>
+                    </div>
+                    <div className="text-sm flex items-center gap-2">
+                      <span className="text-muted-foreground">Next in: </span>
+                      <span className={`font-mono ${candleIsDelayed ? "text-amber-500" : "text-muted-foreground"}`}>
+                        {nextCandleText}
+                      </span>
+                      {candleIsDelayed && (
+                        <Badge variant="outline" className="text-xs text-amber-500 border-amber-500">
+                          Provider lag
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
