@@ -22,13 +22,17 @@ import type { DetectorInfo } from "@/lib/types"
 const MAX_STRATEGIES = 30
 
 interface Strategy {
-  strategy_id: string
+  id: string // Changed from strategy_id
+  strategy_id?: string // Keep for backward compat
   name: string
   enabled: boolean
   detectors: string[]
   min_score?: number
   min_rr?: number
   description?: string
+  config?: Record<string, any>
+  createdAt?: string
+  updatedAt?: string
 }
 
 const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
@@ -67,9 +71,10 @@ export default function StrategiesPage() {
   const loadData = async () => {
     try {
       const [strategiesData, detectorsData] = await Promise.all([
-        api.strategies().catch((err) => {
+        // Use v2 Firestore-based API
+        api.strategiesV2.list({ limit: 50 }).catch((err) => {
           console.error("[strategies] strategies load error:", err)
-          return { strategies: [] }
+          return { ok: false, strategies: [] }
         }),
         api.detectors().catch((err) => {
           console.error("[strategies] detectors load error:", err)
@@ -79,7 +84,16 @@ export default function StrategiesPage() {
 
       console.log("[strategies] loaded strategies:", strategiesData?.strategies?.length || 0)
       console.log("[strategies] loaded detectors:", detectorsData?.detectors?.length || 0)
-      setStrategies(strategiesData?.strategies || [])
+      
+      // Map v2 format (id) to UI format (strategy_id for backward compat)
+      const mappedStrategies = (strategiesData?.strategies || []).map((s: any) => ({
+        ...s,
+        strategy_id: s.id, // Backward compat
+        min_score: s.config?.min_score ?? 1.0,
+        min_rr: s.config?.min_rr ?? 2.0,
+      }))
+      
+      setStrategies(mappedStrategies)
       setDetectors(detectorsData?.detectors || [])
     } catch (err: any) {
       console.error("[v0] Failed to load data:", err)
@@ -93,56 +107,34 @@ export default function StrategiesPage() {
     }
   }
 
-  const handleSave = async (newStrategies?: Strategy[]) => {
-    const toSave = newStrategies || strategies
-    
-    // Validate: enabled strategies must have at least 1 detector
-    const invalid = toSave.find(
-      (s) => s.enabled && (!s.detectors || s.detectors.length === 0)
-    )
-    if (invalid) {
-      toast({
-        title: "Анхааруулга",
-        description: `"${invalid.name || invalid.strategy_id}" стратеги идэвхтэй боловч detector сонгоогүй байна.`,
-        variant: "destructive",
-      })
-      return false
-    }
-
-    setSaving(true)
-    try {
-      const result = await api.updateStrategies({ strategies: toSave })
-      
-      if (!result.ok) {
-        throw new Error(result.error || "Failed to save")
-      }
-      
-      toast({
-        title: "Амжилттай",
-        description: "Стратегиуд хадгалагдлаа",
-      })
-      await loadData()
-      return true
-    } catch (err: any) {
-      console.error("[v0] Failed to save strategies:", err)
-      toast({
-        title: "Алдаа",
-        description: err.message || "Хадгалах үед алдаа гарлаа",
-        variant: "destructive",
-      })
-      return false
-    } finally {
-      setSaving(false)
-    }
-  }
+  // Note: Individual save operations are now handled in handleSaveStrategy, 
+  // toggleStrategyEnabled, and handleDeleteStrategy using v2 API
 
   const toggleStrategyEnabled = async (index: number) => {
+    const strategy = strategies[index]
+    const strategyId = strategy.id || strategy.strategy_id
+    
+    if (!strategyId) return
+    
+    const newEnabled = !strategy.enabled
+    
+    // Optimistic update
     const newStrategies = [...strategies]
-    newStrategies[index] = {
-      ...newStrategies[index],
-      enabled: !newStrategies[index].enabled,
-    }
+    newStrategies[index] = { ...newStrategies[index], enabled: newEnabled }
     setStrategies(newStrategies)
+    
+    try {
+      await api.strategiesV2.update(strategyId, { enabled: newEnabled })
+    } catch (err: any) {
+      // Revert on error
+      newStrategies[index] = { ...newStrategies[index], enabled: !newEnabled }
+      setStrategies([...newStrategies])
+      toast({
+        title: "Алдаа",
+        description: "Төлөв өөрчлөх үед алдаа гарлаа",
+        variant: "destructive",
+      })
+    }
   }
 
   const openCreateDialog = () => {
@@ -162,12 +154,12 @@ export default function StrategiesPage() {
   const openEditDialog = (index: number) => {
     const strategy = strategies[index]
     setEditForm({
-      strategy_id: strategy.strategy_id,
+      strategy_id: strategy.id || strategy.strategy_id, // Use id from v2 API
       name: strategy.name,
       enabled: strategy.enabled,
       detectors: [...strategy.detectors],
-      min_score: strategy.min_score || 1.0,
-      min_rr: strategy.min_rr || 2.0,
+      min_score: strategy.min_score || strategy.config?.min_score || 1.0,
+      min_rr: strategy.min_rr || strategy.config?.min_rr || 2.0,
       description: strategy.description,
     })
     setEditingIndex(index)
@@ -210,46 +202,105 @@ export default function StrategiesPage() {
       return
     }
 
-    let newStrategies: Strategy[]
-    
-    if (editingIndex !== null) {
-      // Update existing
-      newStrategies = [...strategies]
-      newStrategies[editingIndex] = {
-        strategy_id: editForm.strategy_id || strategies[editingIndex].strategy_id,
-        name: editForm.name,
-        enabled: editForm.enabled,
-        detectors: editForm.detectors,
-        min_score: editForm.min_score,
-        min_rr: editForm.min_rr,
-        description: editForm.description,
+    setSaving(true)
+    try {
+      if (editingIndex !== null && editForm.strategy_id) {
+        // Update existing via v2 API
+        const strategyId = editForm.strategy_id
+        const result = await api.strategiesV2.update(strategyId, {
+          name: editForm.name,
+          enabled: editForm.enabled,
+          detectors: editForm.detectors,
+          description: editForm.description,
+          config: {
+            min_score: editForm.min_score,
+            min_rr: editForm.min_rr,
+          },
+        })
+        
+        if (!result.ok) {
+          throw new Error("Failed to update")
+        }
+        
+        toast({
+          title: "Амжилттай",
+          description: "Стратеги шинэчлэгдлээ",
+        })
+      } else {
+        // Create new via v2 API
+        const result = await api.strategiesV2.create({
+          name: editForm.name,
+          enabled: editForm.enabled,
+          detectors: editForm.detectors,
+          description: editForm.description,
+          config: {
+            min_score: editForm.min_score,
+            min_rr: editForm.min_rr,
+          },
+        })
+        
+        if (!result.ok) {
+          throw new Error("Failed to create")
+        }
+        
+        toast({
+          title: "Амжилттай",
+          description: "Шинэ стратеги үүсгэлээ",
+        })
       }
-    } else {
-      // Create new
-      const strategyId = editForm.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now().toString(36)
-      newStrategies = [...strategies, {
-        strategy_id: strategyId,
-        name: editForm.name,
-        enabled: editForm.enabled,
-        detectors: editForm.detectors,
-        min_score: editForm.min_score,
-        min_rr: editForm.min_rr,
-        description: editForm.description,
-      }]
-    }
-
-    const success = await handleSave(newStrategies)
-    if (success) {
+      
+      await loadData()
       setShowCreateDialog(false)
       setEditingIndex(null)
+    } catch (err: any) {
+      console.error("[strategies] save error:", err)
+      toast({
+        title: "Алдаа",
+        description: err.message || "Хадгалах үед алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
   }
 
   const handleDeleteStrategy = async (index: number) => {
-    const newStrategies = strategies.filter((_, i) => i !== index)
-    const success = await handleSave(newStrategies)
-    if (success) {
+    const strategy = strategies[index]
+    const strategyId = strategy.id || strategy.strategy_id
+    
+    if (!strategyId) {
+      toast({
+        title: "Алдаа",
+        description: "Strategy ID олдсонгүй",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSaving(true)
+    try {
+      const result = await api.strategiesV2.delete(strategyId)
+      
+      if (!result.ok) {
+        throw new Error("Failed to delete")
+      }
+      
+      toast({
+        title: "Амжилттай",
+        description: "Стратеги устгагдлаа",
+      })
+      
+      await loadData()
       setDeleteConfirmIndex(null)
+    } catch (err: any) {
+      console.error("[strategies] delete error:", err)
+      toast({
+        title: "Алдаа",
+        description: err.message || "Устгах үед алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -285,9 +336,8 @@ export default function StrategiesPage() {
               <Plus className="mr-2 h-4 w-4" />
               Шинэ Strategy
             </Button>
-            <Button onClick={() => handleSave()} disabled={saving}>
-              <Save className="mr-2 h-4 w-4" />
-              {saving ? "Хадгалж байна..." : "Хадгалах"}
+            <Button onClick={() => loadData()} disabled={loading} variant="outline">
+              {loading ? "Ачаалж байна..." : "Шинэчлэх"}
             </Button>
           </div>
         </div>

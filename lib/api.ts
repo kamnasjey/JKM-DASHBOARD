@@ -95,7 +95,7 @@ export const api = {
   getSymbols: () => apiFetch<string[]>("/api/proxy/symbols"),
   symbols: () => api.getSymbols(),
 
-  // Strategies
+  // Strategies (legacy - proxies to backend)
   getStrategies: () => apiFetch<any>("/api/proxy/strategies"),
   strategies: () => api.getStrategies(),
   updateStrategies: (data: any) =>
@@ -103,6 +103,55 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+
+  // Strategies v2 (Firestore-based, no backend needed)
+  strategiesV2: {
+    list: (params?: { limit?: number; cursor?: string }) => {
+      const qs = new URLSearchParams()
+      if (params?.limit) qs.set("limit", String(params.limit))
+      if (params?.cursor) qs.set("cursor", params.cursor)
+      const query = qs.toString()
+      return apiFetch<{
+        ok: boolean
+        strategies: any[]
+        count: number
+        nextCursor: string | null
+        maxAllowed: number
+      }>(`/api/strategies/v2${query ? `?${query}` : ""}`)
+    },
+    get: (id: string) =>
+      apiFetch<{ ok: boolean; strategy: any }>(`/api/strategies/v2/${id}`),
+    create: (data: {
+      name: string
+      description?: string
+      enabled?: boolean
+      detectors: string[]
+      symbols?: string[]
+      timeframe?: string
+      config?: Record<string, any>
+    }) =>
+      apiFetch<{ ok: boolean; strategy: any }>("/api/strategies/v2", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: {
+      name?: string
+      description?: string | null
+      enabled?: boolean
+      detectors?: string[]
+      symbols?: string[] | null
+      timeframe?: string | null
+      config?: Record<string, any>
+    }) =>
+      apiFetch<{ ok: boolean; strategy: any }>(`/api/strategies/v2/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }),
+    delete: (id: string) =>
+      apiFetch<{ ok: boolean; deleted: boolean }>(`/api/strategies/v2/${id}`, {
+        method: "DELETE",
+      }),
+  },
 
   // Outcomes (SL/TP hit tracking)
   outcomes: (days: number = 30) =>
@@ -323,5 +372,178 @@ export const api = {
 
     symbols: () =>
       apiFetch<{ ok: boolean; symbols: string[] }>("/api/proxy/strategy-sim/symbols"),
+  },
+
+  // Strategy Simulator V2 - MVP (dashboard-only calls)
+  simulatorV2: {
+    run: (params: {
+      strategyId: string
+      symbols: string[]
+      from: string  // YYYY-MM-DD
+      to: string    // YYYY-MM-DD
+      timeframe?: "auto" | "5m" | "15m" | "1h" | "4h" | "1d"
+      mode?: "winrate" | "detailed"
+      demoMode?: boolean  // Force demo mode
+    }) =>
+      apiFetch<{
+        ok: boolean
+        summary?: {
+          entries: number
+          tp: number
+          sl: number
+          open: number
+          timeExit: number
+          winrate: number
+        }
+        byHorizon?: {
+          intraday: { entries: number; tp: number; sl: number; open: number; timeExit: number; winrate: number }
+          swing: { entries: number; tp: number; sl: number; open: number; timeExit: number; winrate: number }
+        }
+        insights?: {
+          winrateBySession: Record<string, number>
+          winrateByVolatility: Record<string, number>
+          winrateByTrendAligned: Record<string, number>
+          tagsAny?: {
+            mode: "any" | "primary"
+            minTradesPerTag: number
+            shareType: "tag_frequency" | "trade_share"
+            overall: { trades: number; tp: number; sl: number; winrate: number }
+            byTag: Array<{
+              tag: string
+              trades: number
+              tp: number
+              sl: number
+              winrate: number
+              open: number
+              timeExit: number
+              share: number
+              shareType: "tag_frequency" | "trade_share"
+              lift: number
+              stderr: number
+              liftZ: number
+              significant: boolean
+              priorityScore: number
+            }>
+            topPositive: Array<{
+              tag: string
+              trades: number
+              tp: number
+              sl: number
+              winrate: number
+              open: number
+              timeExit: number
+              share: number
+              shareType: "tag_frequency" | "trade_share"
+              lift: number
+              stderr: number
+              liftZ: number
+              significant: boolean
+              priorityScore: number
+            }>
+            topNegative: Array<{
+              tag: string
+              trades: number
+              tp: number
+              sl: number
+              winrate: number
+              open: number
+              timeExit: number
+              share: number
+              shareType: "tag_frequency" | "trade_share"
+              lift: number
+              stderr: number
+              liftZ: number
+              significant: boolean
+              priorityScore: number
+            }>
+          }
+          tagsPrimary?: {
+            mode: "any" | "primary"
+            minTradesPerTag: number
+            shareType: "tag_frequency" | "trade_share"
+            overall: { trades: number; tp: number; sl: number; winrate: number }
+            byTag: Array<{
+              tag: string
+              trades: number
+              tp: number
+              sl: number
+              winrate: number
+              open: number
+              timeExit: number
+              share: number
+              shareType: "tag_frequency" | "trade_share"
+              lift: number
+              stderr: number
+              liftZ: number
+              significant: boolean
+              priorityScore: number
+            }>
+            topPositive: Array<{
+              tag: string
+              trades: number
+              tp: number
+              sl: number
+              winrate: number
+              open: number
+              timeExit: number
+              share: number
+              shareType: "tag_frequency" | "trade_share"
+              lift: number
+              stderr: number
+              liftZ: number
+              significant: boolean
+              priorityScore: number
+            }>
+            topNegative: Array<{
+              tag: string
+              trades: number
+              tp: number
+              sl: number
+              winrate: number
+              open: number
+              timeExit: number
+              share: number
+              shareType: "tag_frequency" | "trade_share"
+              lift: number
+              stderr: number
+              liftZ: number
+              significant: boolean
+              priorityScore: number
+            }>
+          }
+        }
+        suggestions?: Array<{
+          // Base suggestions
+          title?: string
+          why: string
+          how?: string
+          // Data-driven suggestions
+          type?: string
+          priority?: "high" | "medium" | "low"
+          suggestion?: string
+        }>
+        meta?: {
+          baseTimeframe: string
+          range: { from: string; to: string }
+          demoMode: boolean
+          symbols: string[]
+          confidenceScore: number
+          dataTier: "green" | "yellow" | "red"
+          warnings: string[]
+        }
+        demoMode?: boolean
+        demoMessage?: string
+        error?: {
+          code: string
+          message: string
+          gapRatio?: number
+          confidenceScore?: number
+          suggestedActions?: string[]
+          details?: any
+        }
+      }>("/api/simulator/run", {
+        method: "POST",
+        body: JSON.stringify(params),
+      }),
   },
 }

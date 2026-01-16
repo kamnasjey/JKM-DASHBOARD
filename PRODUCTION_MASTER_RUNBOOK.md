@@ -25,6 +25,10 @@ FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."
 # Method 2: Base64 encoded
 FIREBASE_SERVICE_ACCOUNT=<base64-encoded-json>
 
+# Backend Proxy (for simulator and other APIs)
+BACKEND_ORIGIN=https://api.jkmcopilot.com
+BACKEND_INTERNAL_API_KEY=<shared-secret-key>
+
 # Internal API (must match backend)
 INTERNAL_API_KEY=<shared-secret-key>
 
@@ -145,7 +149,194 @@ docker logs jkm_bot_backend 2>&1 | grep -i privacy
 
 ---
 
-## D) Troubleshooting Matrix
+## D) Strategy API (v2)
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/strategies/v2` | List strategies (paginated) |
+| POST | `/api/strategies/v2` | Create new strategy |
+| GET | `/api/strategies/v2/[id]` | Get single strategy |
+| PATCH | `/api/strategies/v2/[id]` | Update strategy |
+| DELETE | `/api/strategies/v2/[id]` | Delete strategy |
+
+### Data Model
+
+```
+Firestore: users/{uid}/strategies/{strategyId}
+```
+
+**Strategy Document Fields:**
+- `name` (string, required) - Strategy name
+- `enabled` (boolean) - Active status
+- `detectors` (string[]) - List of detector IDs
+- `symbols` (string[]) - Trading symbols
+- `timeframe` (string) - Chart timeframe
+- `config` (object) - Strategy-specific configuration
+- `createdAt` (timestamp) - Auto-set on create
+- `updatedAt` (timestamp) - Auto-updated on changes
+
+### Verification Commands
+
+```bash
+# 1. List strategies (requires auth session)
+curl -s -b "next-auth.session-token=<SESSION>" \
+  "https://jkmcopilot.com/api/strategies/v2?limit=10" | jq
+
+# Expected: {"ok":true,"strategies":[...],"count":N}
+
+# 2. Create strategy (requires auth session)
+curl -s -X POST -b "next-auth.session-token=<SESSION>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Strategy","detectors":["EQ_BREAK"],"enabled":false}' \
+  "https://jkmcopilot.com/api/strategies/v2" | jq
+
+# Expected: {"ok":true,"strategy":{...},"created":true}
+
+# 3. Update strategy 
+curl -s -X PATCH -b "next-auth.session-token=<SESSION>" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled":true}' \
+  "https://jkmcopilot.com/api/strategies/v2/STRATEGY_ID" | jq
+
+# Expected: {"ok":true,"strategy":{...}}
+
+# 4. Delete strategy
+curl -s -X DELETE -b "next-auth.session-token=<SESSION>" \
+  "https://jkmcopilot.com/api/strategies/v2/STRATEGY_ID" | jq
+
+# Expected: {"ok":true,"deleted":true}
+```
+
+### Error Codes
+
+| Code | Error | Meaning |
+|------|-------|---------|
+| 401 | `UNAUTHENTICATED` | No valid session |
+| 401 | `INVALID_SESSION` | Session missing user ID |
+| 404 | `NOT_FOUND` | Strategy doesn't exist |
+| 409 | `MAX_STRATEGIES_EXCEEDED` | User has 30+ strategies |
+| 422 | `VALIDATION_ERROR` | Invalid input data |
+| 500 | `INTERNAL_ERROR` | Server error |
+
+---
+
+## E) Strategy Simulator (MVP)
+
+### Architecture
+
+```
+Browser → POST /api/simulator/run (Dashboard)
+           ↓
+Dashboard Server:
+  1. getServerSession() → uid
+  2. Load hasPaidAccess from Firestore
+  3. Load strategy from Firestore subcollection
+  4. Proxy to backend with BACKEND_INTERNAL_API_KEY
+           ↓
+Backend (VPS):
+  - Fetch historical OHLCV
+  - Auto-select timeframe based on date range
+  - Run detectors (intraday + swing)
+  - Evaluate TP/SL outcomes
+  - Generate suggestions
+           ↓
+Response → Browser
+```
+
+### API Endpoint
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/simulator/run` | Run strategy simulation |
+
+### Request Format
+
+```json
+{
+  "strategyId": "abc123",
+  "symbols": ["XAUUSD", "EURUSD"],
+  "from": "2026-01-01",
+  "to": "2026-01-15",
+  "timeframe": "auto",
+  "mode": "winrate"
+}
+```
+
+### Response Format (MVP)
+
+```json
+{
+  "ok": true,
+  "summary": {
+    "entries": 50,
+    "tp": 30,
+    "sl": 15,
+    "open": 5,
+    "winrate": 66.7
+  },
+  "byHorizon": {
+    "intraday": { "entries": 40, "tp": 25, "sl": 10, "open": 5, "winrate": 71.4 },
+    "swing": { "entries": 10, "tp": 5, "sl": 5, "open": 0, "winrate": 50.0 }
+  },
+  "suggestions": [
+    { "title": "Add trend filter", "why": "...", "how": "..." }
+  ],
+  "meta": {
+    "baseTimeframe": "15m",
+    "range": { "from": "...", "to": "..." },
+    "demoMode": false
+  }
+}
+```
+
+### Auto Timeframe Selection
+
+| Date Range | Base TF | Higher TF |
+|------------|---------|-----------|
+| ≤ 7 days | 5m | 1h |
+| ≤ 45 days | 15m | 4h |
+| ≤ 180 days | 1h | 4h |
+| > 180 days | 4h | 1d |
+
+### Demo Mode (No Paid Access)
+
+- Limited to 1 symbol
+- Limited to 7 day date range
+- Response includes `demoMode: true` and `demoMessage`
+
+### Verification Commands
+
+```bash
+# 1. Via dashboard (requires session cookie)
+curl -s -X POST -b "next-auth.session-token=<SESSION>" \
+  -H "Content-Type: application/json" \
+  -d '{"strategyId":"STRATEGY_ID","symbols":["XAUUSD"],"from":"2026-01-08","to":"2026-01-15"}' \
+  "https://jkmcopilot.com/api/simulator/run" | jq
+
+# 2. Direct backend test (from VPS)
+ssh root@159.65.11.255 'source /opt/JKM-AI-BOT/.env && \
+  curl -s -X POST -H "x-internal-api-key: $INTERNAL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"uid\":\"test\",\"symbols\":[\"XAUUSD\"],\"from\":\"2026-01-08\",\"to\":\"2026-01-15\",\"timeframe\":\"auto\",\"strategy\":{\"detectors\":[\"BOS\"]}}" \
+  http://localhost:8000/api/simulator/run | python3 -m json.tool'
+```
+
+### Simulator Error Codes
+
+| Code | Error | Meaning |
+|------|-------|---------|
+| 401 | `UNAUTHENTICATED` | No valid session |
+| 404 | `STRATEGY_NOT_FOUND` | Strategy doesn't exist |
+| 422 | `VALIDATION_ERROR` | Invalid request data |
+| 422 | `BARS_LIMIT_EXCEEDED` | Date range too large (>200k bars) |
+| 502 | `BACKEND_KEY_MISMATCH` | `BACKEND_INTERNAL_API_KEY` doesn't match |
+| 502 | `BACKEND_UNAVAILABLE` | Backend not reachable |
+
+---
+
+## F) Troubleshooting Matrix
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
