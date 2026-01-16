@@ -1,4 +1,4 @@
-import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
 
 export type Strategy = {
   strategy_id: string
@@ -71,11 +71,11 @@ export async function setUserStrategiesInFirestore(userId: string, strategies: S
   }
 
   await ref.set(
-    {
+    stripUndefinedDeep({
       user_id: userId,
       strategies: cleaned,
       updatedAt: new Date().toISOString(),
-    },
+    }),
     { merge: true },
   )
 }

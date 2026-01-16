@@ -17,28 +17,35 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const auth = requireInternalApiKey(_request)
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
+  let userId: string | undefined
   try {
-    const userId = (await params).userId
+    userId = (await params).userId
+    
+    if (!userId || userId === "undefined" || userId === "null") {
+      return NextResponse.json({ ok: false, message: "Invalid userId" }, { status: 400 })
+    }
+    
     const strategies = await getUserStrategiesFromFirestore(userId)
     return NextResponse.json({ ok: true, user_id: userId, strategies, count: strategies.length })
-  } catch (err) {
-    const userId = (() => {
-      try {
-        return (err as any)?.userId ?? undefined
-      } catch {
-        return undefined
-      }
-    })()
+  } catch (err: any) {
+    // Graceful handling for NOT_FOUND or first-time users
+    const errCode = err?.code || ""
+    const errMsg = (err?.message || "").toLowerCase()
+    
+    if (errCode === "NOT_FOUND" || errMsg.includes("not found") || errMsg.includes("no document")) {
+      console.log(`[internal strategies GET] Creating default for new user: ${userId}`)
+      return NextResponse.json({
+        ok: true,
+        user_id: userId,
+        strategies: [],
+        count: 0,
+        meta: { createdDefault: true },
+      })
+    }
 
     console.error("[internal strategies GET] failed", {
-      routeUserId: (() => {
-        try {
-          return (params as any)?.userId
-        } catch {
-          return undefined
-        }
-      })(),
       userId,
+      errorCode: errCode,
       errorMessage: toSafeErrorMessage(err),
       error: err,
     })

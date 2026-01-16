@@ -19,6 +19,8 @@ export async function forwardInternalRequest(
   opts: {
     method: "GET" | "POST" | "PUT" | "DELETE"
     path: string
+    /** Pre-read body - if provided, skips reading from request (avoids "body already read" error) */
+    body?: string
   },
 ): Promise<Response> {
   const key = process.env.BACKEND_INTERNAL_API_KEY
@@ -39,8 +41,17 @@ export async function forwardInternalRequest(
   }
 
   if (opts.method !== "GET") {
-    const text = await request.text()
-    if (text) init.body = text
+    // Use pre-read body if provided, otherwise read from request
+    if (opts.body !== undefined) {
+      init.body = opts.body
+      // Ensure content-type is set for JSON body
+      if (!contentType) {
+        headers.set("content-type", "application/json")
+      }
+    } else {
+      const text = await request.text()
+      if (text) init.body = text
+    }
   }
 
   try {

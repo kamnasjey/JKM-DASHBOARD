@@ -94,5 +94,29 @@ export function getFirebaseAdminDb(): Firestore {
     cachedDb = getFirestore(app)
   }
   
+  // Firestore throws on undefined fields - ignore them instead
+  cachedDb.settings({ ignoreUndefinedProperties: true })
+  
   return cachedDb
+}
+
+/**
+ * Recursively strip undefined values from an object before writing to Firestore.
+ * While ignoreUndefinedProperties helps, explicit cleanup is safer for nested objects.
+ */
+export function stripUndefinedDeep<T>(obj: T): T {
+  if (obj === null || obj === undefined) return obj
+  if (Array.isArray(obj)) {
+    return obj.map(stripUndefinedDeep) as T
+  }
+  if (typeof obj === "object") {
+    const result: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      if (value !== undefined) {
+        result[key] = stripUndefinedDeep(value)
+      }
+    }
+    return result as T
+  }
+  return obj
 }
