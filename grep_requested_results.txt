@@ -1,0 +1,5 @@
+README.md:59:| `/api/internal/user-data/strategies/{userId}` | GET/PUT | Get/set user strategies |
+TROUBLESHOOTING_INTERNAL_SYNC.md:6:- `GET /api/internal/user-data/strategies/{userId}`
+TROUBLESHOOTING_INTERNAL_SYNC.md:7:- or `PUT /api/internal/user-data/strategies/{userId}`
+TROUBLESHOOTING_INTERNAL_SYNC.md:14:File: [app/api/internal/user-data/strategies/[userId]/route.ts](app/api/internal/user-data/strategies/[userId]/route.ts)
+TROUBLESHOOTING_INTERNAL_SYNC.md:30:  - `GET https://<dashboard-domain>/api/internal/user-data/strategies/<userId>`

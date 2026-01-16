@@ -2,7 +2,12 @@
  * All protected API calls go through /api/proxy/* endpoints.
  * The Next.js server verifies the NextAuth session and forwards
  * requests to the backend with the internal API key.
+ * 
+ * IMPORTANT: All browser-side calls use RELATIVE URLs only.
+ * Never use absolute URLs (https://...) for internal API endpoints.
  */
+
+import { assertRelativeInternalUrl } from "./urls"
 
 export interface ApiError {
   message: string
@@ -15,6 +20,9 @@ function toMessage(text: string): string {
 
 // Fetch wrapper
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  // Guard: ensure internal API calls use relative URLs
+  assertRelativeInternalUrl(path)
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
