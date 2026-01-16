@@ -7,7 +7,7 @@
  * Never use absolute URLs (https://...) for internal API endpoints.
  */
 
-import { assertRelativeInternalUrl } from "./urls"
+import { normalizeLocalApiPath } from "./urls"
 
 export interface ApiError {
   message: string
@@ -20,8 +20,9 @@ function toMessage(text: string): string {
 
 // Fetch wrapper
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  // Guard: ensure internal API calls use relative URLs
-  assertRelativeInternalUrl(path)
+  // Normalize to same-origin relative URL.
+  // This prevents accidental hardcoded/ENV absolute domains (e.g. *.vercel.app) from being used in browser fetch.
+  const normalizedPath = normalizeLocalApiPath(path)
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -29,7 +30,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   }
 
   try {
-    const response = await fetch(path, { ...options, headers })
+    const response = await fetch(normalizedPath, { ...options, headers })
 
     if (response.status === 401) {
       if (typeof window !== "undefined") {
@@ -79,7 +80,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     return response.json()
   } catch (err: any) {
     if (err.message === "Failed to fetch" || err instanceof TypeError) {
-      console.warn("[api] Network error:", path)
+      console.warn("[api] Network error:", normalizedPath)
     }
     throw err
   }

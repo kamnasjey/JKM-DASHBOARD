@@ -64,6 +64,27 @@ export async function GET(request: NextRequest) {
     })
     
   } catch (error: any) {
+    // Graceful handling for Firestore NOT_FOUND (new user, no doc yet)
+    const errCode = error?.code || ""
+    const errMsg = (error?.message || "").toLowerCase()
+    
+    if (
+      errCode === 5 || 
+      errCode === "NOT_FOUND" || 
+      errMsg.includes("not_found") || 
+      errMsg.includes("not found") || 
+      errMsg.includes("no document")
+    ) {
+      console.log(`[${requestId}] First-time user, returning empty strategies`)
+      return NextResponse.json({
+        ok: true,
+        strategies: [],
+        count: 0,
+        nextCursor: null,
+        maxAllowed: MAX_STRATEGIES_PER_USER,
+      })
+    }
+
     console.error(`[${requestId}] GET /api/strategies error:`, error?.message || error)
     return NextResponse.json(
       { ok: false, error: "INTERNAL_ERROR", message: error?.message },
@@ -151,6 +172,20 @@ export async function POST(request: NextRequest) {
         { ok: false, error: "LIMIT_EXCEEDED", message: error.message },
         { status: 400 }
       )
+    }
+    
+    // Graceful handling for Firestore NOT_FOUND (new user, first strategy)
+    const errCode = error?.code || ""
+    const errMsg = (error?.message || "").toLowerCase()
+    
+    if (
+      errCode === 5 || 
+      errCode === "NOT_FOUND" || 
+      errMsg.includes("not_found") || 
+      errMsg.includes("not found")
+    ) {
+      // Try again - the createStrategy should handle this, but just in case
+      console.log(`[${requestId}] NOT_FOUND during create - this shouldn't happen with merge:true`)
     }
     
     return NextResponse.json(

@@ -1,4 +1,4 @@
-import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
 import { FieldValue } from "firebase-admin/firestore"
 import type { StrategyDoc, CreateStrategyInput, UpdateStrategyInput } from "@/lib/schemas/strategy"
 
@@ -96,7 +96,7 @@ export async function createStrategy(
   const newRef = ref.doc()
   const now = FieldValue.serverTimestamp()
   
-  const data = {
+  const data = stripUndefinedDeep({
     name: input.name,
     description: input.description || null,
     enabled: input.enabled ?? true,
@@ -108,9 +108,9 @@ export async function createStrategy(
     createdAt: now,
     updatedAt: now,
     lastRunAt: null,
-  }
+  })
   
-  await newRef.set(data)
+  await newRef.set(data, { merge: true })
   
   // Fetch back to get actual timestamps
   const created = await newRef.get()
@@ -151,7 +151,7 @@ export async function updateStrategy(
   // Increment version
   updateData.version = FieldValue.increment(1)
   
-  await ref.update(updateData)
+  await ref.update(stripUndefinedDeep(updateData))
   
   // Fetch back
   const updated = await ref.get()

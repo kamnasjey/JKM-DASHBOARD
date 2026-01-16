@@ -4,6 +4,13 @@ import { getUserStrategiesFromFirestore, setUserStrategiesInFirestore } from "@/
 
 export const runtime = "nodejs"
 
+function validateUserId(userId: string | undefined) {
+  if (!userId || userId === "undefined" || userId === "null") {
+    return { ok: false as const, status: 401 as const, message: "Missing or invalid userId" }
+  }
+  return { ok: true as const }
+}
+
 function toSafeErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message
   try {
@@ -20,10 +27,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   let userId: string | undefined
   try {
     userId = (await params).userId
-    
-    if (!userId || userId === "undefined" || userId === "null") {
-      return NextResponse.json({ ok: false, message: "Invalid userId" }, { status: 400 })
-    }
+
+    const v = validateUserId(userId)
+    if (!v.ok) return NextResponse.json({ ok: false, message: v.message }, { status: v.status })
     
     const strategies = await getUserStrategiesFromFirestore(userId)
     return NextResponse.json({ ok: true, user_id: userId, strategies, count: strategies.length })
@@ -65,8 +71,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const auth = requireInternalApiKey(request)
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
+  let userId: string | undefined
   try {
-    const userId = (await params).userId
+    userId = (await params).userId
+    const v = validateUserId(userId)
+    if (!v.ok) return NextResponse.json({ ok: false, message: v.message }, { status: v.status })
+
     const body = await request.json().catch(() => null)
     const strategies = body?.strategies
 
@@ -76,8 +86,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     await setUserStrategiesInFirestore(userId, strategies)
     return NextResponse.json({ ok: true })
-  } catch (err) {
+  } catch (err: any) {
+    // Graceful handling for NOT_FOUND - use set with merge:true which creates doc if missing
+    const errCode = err?.code || ""
+    const errMsg = (err?.message || "").toLowerCase()
+    
+    if (
+      errCode === 5 || 
+      errCode === "NOT_FOUND" || 
+      errMsg.includes("not_found") || 
+      errMsg.includes("not found")
+    ) {
+      console.log(`[internal strategies PUT] NOT_FOUND for ${userId}, but set(merge:true) should handle this`)
+    }
+
     console.error("[internal strategies PUT] failed", {
+      userId,
+      errorCode: errCode,
       errorMessage: toSafeErrorMessage(err),
       error: err,
     })

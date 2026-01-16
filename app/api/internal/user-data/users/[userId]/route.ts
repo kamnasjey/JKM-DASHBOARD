@@ -5,6 +5,13 @@ import { getUserDoc, upsertUserIdentity, updateUserPrefs } from "@/lib/user-data
 
 export const runtime = "nodejs"
 
+function validateUserId(userId: string | undefined) {
+  if (!userId || userId === "undefined" || userId === "null") {
+    return { ok: false as const, status: 401 as const, message: "Missing or invalid userId" }
+  }
+  return { ok: true as const }
+}
+
 /**
  * Allowed fields for preferences (non-identity).
  */
@@ -59,6 +66,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
   const userId = (await params).userId
+  const v = validateUserId(userId)
+  if (!v.ok) return NextResponse.json({ ok: false, message: v.message }, { status: v.status })
 
   // Get user doc from Firestore (canonical)
   const firestoreDoc = await getUserDoc(userId)
@@ -106,6 +115,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
 
   const userId = (await params).userId
+  const v = validateUserId(userId)
+  if (!v.ok) return NextResponse.json({ ok: false, message: v.message }, { status: v.status })
   const body = await request.json().catch(() => null)
 
   if (!body || typeof body !== "object") {
