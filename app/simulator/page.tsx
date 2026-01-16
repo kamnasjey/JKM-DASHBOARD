@@ -78,6 +78,16 @@ interface MultiTFResult {
     explanation: string
     severity?: string
     suggestions?: string[]
+    debug?: {
+      barsScanned?: number
+      hitsPerDetector?: Record<string, number>
+      gateBlocks?: Record<string, number>
+      detectorsRequested?: string[]
+      detectorsNormalized?: string[]
+      detectorsImplemented?: string[]
+      detectorsNotImplemented?: string[]
+      detectorsUnknown?: string[]
+    }
     debugInfo?: {
       detectorsRequested?: string[]
       detectorsImplemented?: string[]
@@ -88,6 +98,7 @@ interface MultiTFResult {
     }
   }
   meta?: {
+    simVersion?: string
     timeframesRan: string[]
     dataSource: string
     range: { from: string; to: string }
@@ -95,6 +106,7 @@ interface MultiTFResult {
     warnings: string[]
     // Detector classification for UI transparency
     detectorsRequested?: string[]
+    detectorsNormalized?: string[]
     detectorsRecognized?: string[]
     detectorsImplemented?: string[]
     detectorsNotImplemented?: string[]
@@ -827,14 +839,75 @@ export default function SimulatorPage() {
                   </h4>
                   {result.explainability ? (
                     <>
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Root Cause:</strong> {result.explainability.rootCause || "Unknown"}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs ${
+                            result.explainability.severity === "high" 
+                              ? "border-red-500/50 text-red-600" 
+                              : "border-yellow-500/50 text-yellow-600"
+                          }`}
+                        >
+                          {result.explainability.rootCause || "Unknown"}
+                        </Badge>
+                        {result.explainability.debug?.barsScanned !== undefined && (
+                          <span className="text-xs text-muted-foreground">
+                            ({result.explainability.debug.barsScanned.toLocaleString()} bars scanned)
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {result.explainability.explanation || "No explanation available. Check detector configuration."}
                       </p>
+                      
+                      {/* Per-detector hit counts */}
+                      {result.explainability.debug?.hitsPerDetector && 
+                       Object.keys(result.explainability.debug.hitsPerDetector).length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Detector Hits
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(result.explainability.debug.hitsPerDetector).map(([det, count]) => (
+                              <Badge 
+                                key={det} 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  (count as number) > 0 
+                                    ? "border-green-500/50 text-green-600" 
+                                    : "border-muted text-muted-foreground"
+                                }`}
+                              >
+                                {det}: {count as number}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Gate blocks */}
+                      {result.explainability.debug?.gateBlocks && 
+                       Object.keys(result.explainability.debug.gateBlocks).length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            Gate Blocks
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(result.explainability.debug.gateBlocks).map(([gate, count]) => (
+                              <Badge 
+                                key={gate} 
+                                variant="outline" 
+                                className="text-xs border-red-500/50 text-red-600"
+                              >
+                                {gate}: {count as number} blocked
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
                       {result.explainability.suggestions && result.explainability.suggestions.length > 0 && (
-                        <div className="space-y-1">
+                        <div className="space-y-1 pt-2 border-t border-orange-500/20">
                           <p className="text-sm font-medium text-muted-foreground">Suggestions:</p>
                           <ul className="text-sm text-muted-foreground list-disc list-inside">
                             {result.explainability.suggestions.map((s, i) => (
@@ -866,11 +939,21 @@ export default function SimulatorPage() {
                     </span>
                   </div>
                   
+                  {/* Show normalized detector names with status */}
                   <div className="flex flex-wrap gap-1">
-                    {result.meta.detectorsRequested.map((d) => {
-                      const isImplemented = result.meta?.detectorsImplemented?.includes(d)
-                      const isNotImplemented = result.meta?.detectorsNotImplemented?.includes(d)
-                      const isUnknown = result.meta?.detectorsUnknown?.includes(d)
+                    {(result.meta.detectorsNormalized || result.meta.detectorsRequested).map((d, idx) => {
+                      // Use normalized if available, otherwise try to match from implemented list
+                      const normalizedD = d.toUpperCase().replace(/-/g, "_")
+                      const isImplemented = result.meta?.detectorsImplemented?.some(
+                        impl => impl.toUpperCase() === normalizedD
+                      )
+                      const isNotImplemented = result.meta?.detectorsNotImplemented?.some(
+                        ni => ni.toUpperCase() === normalizedD
+                      )
+                      const isUnknown = result.meta?.detectorsUnknown?.some(
+                        unk => unk.toLowerCase() === d.toLowerCase()
+                      )
+                      const originalName = result.meta?.detectorsRequested?.[idx] || d
                       return (
                         <Badge 
                           key={d} 
@@ -879,16 +962,16 @@ export default function SimulatorPage() {
                             isImplemented ? "border-green-500/50 text-green-600" :
                             isNotImplemented ? "border-yellow-500/50 text-yellow-600" :
                             isUnknown ? "border-red-500/50 text-red-600" :
-                            ""
+                            "border-green-500/50 text-green-600"  // Default to implemented for new system
                           }`}
                           title={
-                            isImplemented ? "✓ Supported by simulator" :
-                            isNotImplemented ? "⚠ Known but not implemented" :
-                            isUnknown ? "✗ Unknown detector" :
-                            "Pending classification"
+                            isImplemented ? `✓ ${d} → Supported` :
+                            isNotImplemented ? `⚠ ${d} → Known but not implemented` :
+                            isUnknown ? `✗ ${originalName} → Unknown detector` :
+                            `✓ ${d} → Supported`
                           }
                         >
-                          {isImplemented && "✓ "}{isNotImplemented && "⚠ "}{isUnknown && "✗ "}{d}
+                          {isImplemented || (!isNotImplemented && !isUnknown) ? "✓ " : ""}{isNotImplemented && "⚠ "}{isUnknown && "✗ "}{d}
                         </Badge>
                       )
                     })}

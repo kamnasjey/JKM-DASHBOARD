@@ -300,6 +300,7 @@ export async function POST(request: NextRequest) {
             simVersion: backendJson.meta.simVersion,
             baseTimeframe: backendJson.meta.baseTimeframe,
             detectorsRequested: backendJson.meta.detectorsRequested,
+            detectorsNormalized: backendJson.meta.detectorsNormalized,  // NEW
             detectorsRecognized: backendJson.meta.detectorsRecognized,
             detectorsImplemented: backendJson.meta.detectorsImplemented,
             detectorsNotImplemented: backendJson.meta.detectorsNotImplemented,
@@ -311,6 +312,11 @@ export async function POST(request: NextRequest) {
             explanation: backendJson.explainability.explanation,
             severity: backendJson.explainability.severity,
             suggestions: backendJson.explainability.suggestions?.slice(0, 3),
+            debug: backendJson.explainability.debug ? {
+              barsScanned: backendJson.explainability.debug.barsScanned,
+              hitsPerDetector: backendJson.explainability.debug.hitsPerDetector,
+              gateBlocks: backendJson.explainability.debug.gateBlocks,
+            } : undefined,
           } : undefined,
         },
       }

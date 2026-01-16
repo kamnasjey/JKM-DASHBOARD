@@ -267,6 +267,50 @@ Backend (VPS):
 Response → Browser
 ```
 
+### Verification Commands
+
+```bash
+# A) Check diagnostics endpoint (no auth needed)
+curl -s "https://jkmcopilot.com/api/diagnostics/simulator" | jq
+
+# Expected output (after running a simulation):
+# {
+#   "ok": true,
+#   "lastRun": {
+#     "response": {
+#       "backendVersion": "2026-01-16-v4-explainability",
+#       "detectorClassification": {
+#         "requested": 7,
+#         "normalized": 7,
+#         "implemented": 7,
+#         "notImplemented": 0,
+#         "unknown": 0
+#       },
+#       "explainability": { ... }  // if 0 trades
+#     }
+#   }
+# }
+
+# B) Check backend simulator version directly (from VPS)
+ssh root@159.65.11.255 'docker exec jkm_bot_backend python -c "from core.simulator_v2 import SIM_VERSION; print(SIM_VERSION)"'
+
+# Expected: 2026-01-16-v4-explainability
+
+# C) Check registered detectors count (from VPS)
+ssh root@159.65.11.255 'docker exec jkm_bot_backend python -c "from core.detectors import DETECTOR_REGISTRY; print(len(DETECTOR_REGISTRY.list_all()))"'
+
+# Expected: 32 (all detectors registered)
+
+# D) Test simulator directly on VPS (internal API)
+ssh root@159.65.11.255 'curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-internal-api-key: lg8Nok080Yc2wXsnTYnLLItT4xpvQY9Lnd8-GhiHPp8" \
+  -d '"'"'{"uid":"test","symbols":["EURUSD"],"from":"2026-01-10","to":"2026-01-15","timeframe":"multi","strategy":{"detectors":["BOS","FVG","GATE_REGIME"]}}'"'"' \
+  http://127.0.0.1:8000/api/simulator/run | python3 -m json.tool | head -50'
+
+# Expected: {"ok": true, "combined": {...}, "meta": {"simVersion": "2026-01-16-v4-explainability", ...}}
+```
+
 ### API Endpoint
 
 | Method | Endpoint | Description |

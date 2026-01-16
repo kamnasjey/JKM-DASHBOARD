@@ -30,6 +30,7 @@ export interface SimulatorDiagnostics {
       simVersion?: string
       baseTimeframe?: string
       detectorsRequested?: string[]
+      detectorsNormalized?: string[]  // NEW: canonical IDs
       detectorsRecognized?: string[]
       detectorsImplemented?: string[]
       detectorsNotImplemented?: string[]
@@ -41,6 +42,11 @@ export interface SimulatorDiagnostics {
       explanation?: string
       severity?: string
       suggestions?: string[]
+      debug?: {
+        barsScanned?: number
+        hitsPerDetector?: Record<string, number>
+        gateBlocks?: Record<string, number>
+      }
     }
     errorCode?: string
     errorMessage?: string
