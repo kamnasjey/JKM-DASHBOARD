@@ -107,9 +107,12 @@ interface MultiTFResult {
 }
 
 interface Strategy {
-  strategy_id: string
+  id: string  // Changed from strategy_id for Firestore v2 API
   name?: string
   detectors: string[]
+  symbols?: string[]
+  timeframe?: string
+  config?: Record<string, any>
 }
 
 // ============================================
@@ -310,8 +313,8 @@ export default function SimulatorPage() {
   const [activeTab, setActiveTab] = useState("combined")
 
   // Computed
-  const selectedStrategy = strategies.find((s) => s.strategy_id === strategyId)
-  const activeDetectors = selectedStrategy?.detectors || []
+  const selectedStrategy = strategies.find((s) => s.id === strategyId)
+  const requestedDetectors = selectedStrategy?.detectors || []
   const rangeDates = useMemo(() => getRangeDates(rangePreset), [rangePreset])
 
   // Load data on mount
@@ -326,7 +329,7 @@ export default function SimulatorPage() {
     try {
       const [symbolsRes, strategiesRes] = await Promise.all([
         api.simulator.symbols().catch(() => ({ ok: false, symbols: [] })),
-        api.strategies().catch(() => ({ strategies: [] })),
+        api.strategiesV2.list().catch(() => ({ ok: false, strategies: [] })),  // Use Firestore v2 API
       ])
 
       if (symbolsRes.ok && symbolsRes.symbols) {
@@ -339,7 +342,7 @@ export default function SimulatorPage() {
       if (strategiesRes.strategies) {
         setStrategies(strategiesRes.strategies)
         if (strategiesRes.strategies.length > 0 && !strategyId) {
-          setStrategyId(strategiesRes.strategies[0].strategy_id)
+          setStrategyId(strategiesRes.strategies[0].id)  // Use 'id' for Firestore v2
         }
       }
     } catch (err: any) {
@@ -361,20 +364,15 @@ export default function SimulatorPage() {
     setActiveTab("combined")
 
     try {
-      // Call multi-timeframe endpoint
-      const res = await api.simulator.run({
+      // Call v2 API which loads strategy from Firestore and proxies to backend
+      const res = await api.simulatorV2.run({
+        strategyId,
         symbols: [symbol],
         from: rangeDates.from,
         to: rangeDates.to,
-        timeframe: "multi", // Multi-TF mode
-        timeframes: TIMEFRAMES,
-        strategy_id: strategyId,
+        timeframe: "auto",  // Let backend decide TF based on range
         mode: "winrate",
-        strategy: {
-          id: strategyId,
-          detectors: activeDetectors,
-          timeframes: TIMEFRAMES,
-        },
+        demoMode: false,
       })
 
       setResult(res as MultiTFResult)
@@ -452,8 +450,8 @@ export default function SimulatorPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {strategies.map((s) => (
-                      <SelectItem key={s.strategy_id} value={s.strategy_id}>
-                        {s.name || s.strategy_id}
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name || s.id}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -481,14 +479,14 @@ export default function SimulatorPage() {
               </div>
             </div>
 
-            {/* Active Detectors */}
-            {activeDetectors.length > 0 && (
+            {/* Requested Detectors - show ALL detectors from strategy */}
+            {requestedDetectors.length > 0 && (
               <div className="pt-4 border-t border-border">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Active Detectors
+                  Requested Detectors ({requestedDetectors.length})
                 </label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {activeDetectors.map((d) => (
+                  {requestedDetectors.map((d) => (
                     <Badge key={d} variant="secondary">
                       {d}
                     </Badge>
@@ -819,22 +817,39 @@ export default function SimulatorPage() {
             )}
 
             {/* Explainability Panel - 0 Trades */}
-            {result.combined?.summary?.entries === 0 && result.explainability && (
+            {/* Explainability Panel - 0 Trades */}
+            {result.combined?.summary?.entries === 0 && (
               <Card className="border-orange-500/30 bg-orange-500/10">
                 <CardContent className="pt-6 space-y-4">
                   <h4 className="text-sm font-medium text-orange-600 dark:text-orange-500 flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
                     Why 0 Trades?
                   </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {result.explainability.explanation}
-                  </p>
-                  {result.explainability.suggestions && result.explainability.suggestions.length > 0 && (
-                    <ul className="text-sm text-muted-foreground list-disc list-inside">
-                      {result.explainability.suggestions.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ul>
+                  {result.explainability ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Root Cause:</strong> {result.explainability.rootCause || "Unknown"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {result.explainability.explanation || "No explanation available. Check detector configuration."}
+                      </p>
+                      {result.explainability.suggestions && result.explainability.suggestions.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-muted-foreground">Suggestions:</p>
+                          <ul className="text-sm text-muted-foreground list-disc list-inside">
+                            {result.explainability.suggestions.map((s, i) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No trades found. This may be due to: (1) No detectors are implemented in the simulator, 
+                      (2) No matching setups in the date range, or (3) Gates filtered all candidates.
+                      Check the Detector Analysis panel below for details.
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -899,7 +914,7 @@ export default function SimulatorPage() {
             )}
 
             {/* Data Source Info */}
-            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
               <span>Data: {result.meta?.dataSource || "unknown"}</span>
               <span>•</span>
               <span>
@@ -909,6 +924,12 @@ export default function SimulatorPage() {
               <span>
                 Timeframes: {result.meta?.timeframesRan?.join(", ") || "—"}
               </span>
+              {result.meta?.simVersion && (
+                <>
+                  <span>•</span>
+                  <span className="text-green-600">v{result.meta.simVersion}</span>
+                </>
+              )}
             </div>
           </div>
         )}

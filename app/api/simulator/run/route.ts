@@ -27,6 +27,7 @@ import {
   limitDateRange,
 } from "@/lib/schemas/simulator"
 import { getStrategy } from "@/lib/user-data/strategies-firestore-store"
+import { storeSimulatorDiagnostics, maskUserId, SimulatorDiagnostics } from "@/lib/simulator-diagnostics"
 
 export const runtime = "nodejs"
 
@@ -37,7 +38,6 @@ const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY
 // Demo mode limits
 const DEMO_MAX_SYMBOLS = 1
 const DEMO_MAX_DAYS = 7
-
 /**
  * Check if user has paid access from Firestore
  */
@@ -171,7 +171,8 @@ export async function POST(request: NextRequest) {
     demoMode,
   }
   
-  console.log(`[${requestId}] Proxying simulator request for user ${userId}, strategy ${strategyId}`)
+  // Log detector count for debugging
+  console.log(`[${requestId}] Simulator request: userId=${userId}, strategyId=${strategyId}, detectorsCount=${strategy.detectors?.length || 0}, detectors=[${(strategy.detectors || []).join(", ")}]`)
   
   // --- 7. Proxy to backend ---
   const backendUrl = `${BACKEND_ORIGIN}/api/simulator/run`
@@ -272,6 +273,50 @@ export async function POST(request: NextRequest) {
       if (backendJson.meta) {
         backendJson.meta.demoMode = true
       }
+    }
+    
+    // --- 10. Store diagnostics for debugging endpoint ---
+    try {
+      const diagnosticsEntry: SimulatorDiagnostics = {
+        timestamp: new Date().toISOString(),
+        requestId,
+        payload: {
+          userId: maskUserId(userId),
+          strategyId,
+          strategyName: strategy.name || strategyId,
+          detectorsCount: strategy.detectors?.length || 0,
+          detectorsList: strategy.detectors || [],
+          symbols: effectiveSymbols,
+          from: effectiveFrom,
+          to: effectiveTo,
+          timeframe: timeframe || "auto",
+          demoMode,
+        },
+        response: {
+          ok: backendJson.ok,
+          entriesTotal: backendJson.summary?.entries ?? backendJson.combined?.summary?.entries,
+          winrate: backendJson.summary?.winrate ?? backendJson.combined?.summary?.winrate,
+          meta: backendJson.meta ? {
+            simVersion: backendJson.meta.simVersion,
+            baseTimeframe: backendJson.meta.baseTimeframe,
+            detectorsRequested: backendJson.meta.detectorsRequested,
+            detectorsRecognized: backendJson.meta.detectorsRecognized,
+            detectorsImplemented: backendJson.meta.detectorsImplemented,
+            detectorsNotImplemented: backendJson.meta.detectorsNotImplemented,
+            detectorsUnknown: backendJson.meta.detectorsUnknown,
+            warnings: backendJson.meta.warnings?.slice(0, 5),
+          } : undefined,
+          explainability: backendJson.explainability ? {
+            rootCause: backendJson.explainability.rootCause,
+            explanation: backendJson.explainability.explanation,
+            severity: backendJson.explainability.severity,
+            suggestions: backendJson.explainability.suggestions?.slice(0, 3),
+          } : undefined,
+        },
+      }
+      storeSimulatorDiagnostics(diagnosticsEntry)
+    } catch (diagErr) {
+      console.error(`[${requestId}] Failed to store diagnostics:`, diagErr)
     }
     
     return NextResponse.json(backendJson)
