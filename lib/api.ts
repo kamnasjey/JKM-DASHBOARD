@@ -310,13 +310,14 @@ export const api = {
       }),
   },
 
-  // Strategy Simulator API (new, replaces strategyTester)
+  // Strategy Simulator API (supports both single-TF and multi-TF modes)
   simulator: {
     run: (params: {
-      symbol: string
-      timeframe: string
-      strategy_id: string
-      range: {
+      // Single TF mode
+      symbol?: string
+      timeframe?: string
+      strategy_id?: string
+      range?: {
         mode: "PRESET" | "CUSTOM"
         preset?: "7D" | "30D" | "90D" | "6M" | "1Y"
         from_ts?: number
@@ -329,43 +330,15 @@ export const api = {
         commission?: number
         max_trades?: number
       }
+      // Multi-TF mode (v2)
+      symbols?: string[]
+      from?: string
+      to?: string
+      timeframes?: string[]
+      mode?: string
+      strategy?: any
     }) =>
-      apiFetch<{
-        ok: boolean
-        symbol?: string
-        timeframe?: string
-        from_ts?: number
-        to_ts?: number
-        strategy_id?: string
-        summary?: {
-          entries: number
-          tp_hits: number
-          sl_hits: number
-          winrate: number
-          avg_r: number
-          profit_factor: number | null
-          avg_duration_bars: number
-          total_r: number
-        }
-        trades?: Array<{
-          entry_ts: number
-          exit_ts: number
-          direction: "BUY" | "SELL"
-          entry: number
-          sl: number
-          tp: number
-          outcome: "TP" | "SL"
-          r: number
-          duration_bars: number
-          detector: string
-        }>
-        warnings?: string[]
-        error?: {
-          code: string
-          message: string
-          details?: any
-        }
-      }>("/api/proxy/strategy-sim/run", {
+      apiFetch<any>("/api/proxy/strategy-sim/run", {
         method: "POST",
         body: JSON.stringify(params),
       }),
