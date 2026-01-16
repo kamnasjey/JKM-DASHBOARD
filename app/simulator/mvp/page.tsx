@@ -102,6 +102,23 @@ interface SimulatorResult {
     priority?: "high" | "medium" | "low"
     suggestion?: string
   }>
+  explainability?: {
+    rootCause: string
+    explanation: string
+    debugInfo: {
+      unknownDetectorsDropped?: string[]
+      detectorHitCounts?: Record<string, number>
+      gateBlockCounts?: Record<string, number>
+      reasonCounts?: Record<string, number>
+      entriesBeforeMerge?: Record<string, number>
+      entriesAfterMerge?: Record<string, number>
+    }
+    entriesBeforeMerge?: {
+      intraday: number
+      swing: number
+      total: number
+    }
+  }
   meta?: {
     baseTimeframe: string
     range: { from: string; to: string }
@@ -546,6 +563,52 @@ export default function SimulatorMVPPage() {
                 <AlertTitle className="text-blue-500">Demo Mode Active</AlertTitle>
                 <AlertDescription className="text-blue-500/80">
                   Results may be less accurate due to data gaps.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Explainability Callout - 0 Trades */}
+            {result.summary.entries === 0 && result.explainability && (
+              <Alert variant="default" className="border-orange-500/50 bg-orange-500/10">
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
+                <AlertTitle className="text-orange-500">Why 0 Trades?</AlertTitle>
+                <AlertDescription className="text-orange-500/80 space-y-2">
+                  <p>{result.explainability.explanation}</p>
+                  
+                  {/* Unknown detectors */}
+                  {result.explainability.debugInfo?.unknownDetectorsDropped && 
+                   result.explainability.debugInfo.unknownDetectorsDropped.length > 0 && (
+                    <div className="mt-2 text-sm">
+                      <span className="font-medium">Unknown detectors: </span>
+                      <code className="bg-orange-500/20 px-1 rounded">
+                        {result.explainability.debugInfo.unknownDetectorsDropped.join(", ")}
+                      </code>
+                    </div>
+                  )}
+                  
+                  {/* Gate blocking stats */}
+                  {result.explainability.debugInfo?.gateBlockCounts && 
+                   Object.keys(result.explainability.debugInfo.gateBlockCounts).length > 0 && (
+                    <div className="mt-2 text-sm">
+                      <span className="font-medium">Filtering gates: </span>
+                      {Object.entries(result.explainability.debugInfo.gateBlockCounts).map(([gate, count], i) => (
+                        <span key={gate}>
+                          {i > 0 && ", "}
+                          {gate}: {count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Entries before merge info */}
+                  {result.explainability.entriesBeforeMerge && 
+                   result.explainability.entriesBeforeMerge.total > 0 && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Note: {result.explainability.entriesBeforeMerge.total} candidate(s) detected before filtering 
+                      (intraday: {result.explainability.entriesBeforeMerge.intraday}, 
+                      swing: {result.explainability.entriesBeforeMerge.swing})
+                    </div>
+                  )}
                 </AlertDescription>
               </Alert>
             )}

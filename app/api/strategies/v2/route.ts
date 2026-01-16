@@ -198,10 +198,15 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error(`[${requestId}] POST /api/strategies error:`, error?.message || error)
     
-    // Handle limit exceeded
-    if (error?.message?.includes("Maximum")) {
+    // Handle limit exceeded - use LIMIT_REACHED for consistency
+    if (error?.message?.includes("Maximum") || error?.message?.includes("limit")) {
       return NextResponse.json(
-        { ok: false, error: "LIMIT_EXCEEDED", message: error.message },
+        { 
+          ok: false, 
+          error: "LIMIT_REACHED", 
+          message: error.message,
+          limit: MAX_STRATEGIES_PER_USER,
+        },
         { status: 400 }
       )
     }

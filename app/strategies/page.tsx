@@ -254,11 +254,20 @@ export default function StrategiesPage() {
       setEditingIndex(null)
     } catch (err: any) {
       console.error("[strategies] save error:", err)
-      toast({
-        title: "Алдаа",
-        description: err.message || "Хадгалах үед алдаа гарлаа",
-        variant: "destructive",
-      })
+      // Check for limit reached error
+      if (err.message?.includes("LIMIT") || err.message?.includes("Maximum")) {
+        toast({
+          title: "Хязгаарлалт",
+          description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Алдаа",
+          description: err.message || "Хадгалах үед алдаа гарлаа",
+          variant: "destructive",
+        })
+      }
     } finally {
       setSaving(false)
     }

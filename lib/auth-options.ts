@@ -191,9 +191,11 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
       }
 
-      // For Google auth, lookup DB user to get correct ID (if Prisma available)
+      // For Google auth, ensure we have a stable userId
       if (account?.provider === "google" && token.email) {
         const prisma = getPrisma()
+        
+        // If Prisma is available, use the DB user ID
         if (prisma) {
           try {
             const dbUser = await prisma.user.findUnique({
@@ -205,14 +207,21 @@ export const authOptions: NextAuthOptions = {
           } catch (err) {
             console.error("[Auth] Google jwt DB lookup failed (continuing):", err)
           }
+        } else {
+          // Prisma not available - use providerAccountId as stable userId
+          // This ensures consistent userId across sessions for the same Google account
+          if (account.providerAccountId && !token.id) {
+            token.id = `google_${account.providerAccountId}`
+            console.log(`[Auth] Using providerAccountId for userId: ${String(token.id).slice(0, 20)}...`)
+          }
         }
 
         // Best-effort Firebase user doc upsert (non-blocking).
         // This keeps user-related domain data centralized in Firestore while keeping
         // existing Prisma auth/billing intact.
-        const userDataProvider = (process.env.USER_DATA_PROVIDER || "").toLowerCase()
-        const shouldSync = userDataProvider === "firebase"
-        if (shouldSync && token.id && !(token as any).firebaseSynced) {
+        // IMPORTANT: Always sync to Firestore regardless of USER_DATA_PROVIDER setting
+        // because strategies are stored in Firestore
+        if (token.id && !(token as any).firebaseSynced) {
           try {
             const db = getFirebaseAdminDb()
             const id = String(token.id)
@@ -227,6 +236,7 @@ export const authOptions: NextAuthOptions = {
                   image: (token as any).picture ? String((token as any).picture) : null,
                   provider: account?.provider ? String(account.provider) : null,
                   lastLoginAt: new Date().toISOString(),
+                  createdAt: new Date().toISOString(), // Will only be set on first create due to merge
                 },
                 { merge: true },
               )

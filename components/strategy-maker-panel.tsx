@@ -211,10 +211,38 @@ export function StrategyMakerPanel(props: {
 
     setIsSaving(true)
     try {
-      const current = await api.strategies().catch(() => ({ strategies: [] }))
-      const existing = Array.isArray((current as any)?.strategies) ? ((current as any).strategies as any[]) : []
+      // Use v2 API (Firestore-based) - single source of truth
+      const result = await api.strategiesV2.create({
+        name,
+        enabled: true,
+        detectors: selectedDetectors,
+        config: {
+          min_score: 1.0,
+          min_rr: 2.0,
+          gate_regime_enabled: selectedDetectors.includes("gate_regime"),
+        },
+      })
 
-      if (existing.length >= MAX_STRATEGIES) {
+      if (!result.ok) {
+        // Handle specific error codes
+        const errorData = result as any
+        if (errorData.error === "LIMIT_REACHED" || errorData.error === "LIMIT_EXCEEDED") {
+          toast({
+            title: "Хязгаарлалт",
+            description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+            variant: "destructive",
+          })
+          return
+        }
+        throw new Error(errorData.error || "Failed to save")
+      }
+
+      toast({ title: "Амжилттай", description: "Хадгалагдлаа" })
+      setStrategyName("")
+      props.onSaved?.()
+    } catch (err: any) {
+      // Check for limit error in exception message
+      if (err?.message?.includes("Maximum") || err?.message?.includes("LIMIT")) {
         toast({
           title: "Хязгаарлалт",
           description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
@@ -222,40 +250,6 @@ export function StrategyMakerPanel(props: {
         })
         return
       }
-
-      const nameLower = name.toLowerCase()
-      const existingIndex = existing.findIndex((s) => String(s?.name || "").trim().toLowerCase() === nameLower)
-
-      const newStrategy =
-        existingIndex >= 0
-          ? {
-              ...existing[existingIndex],
-              name,
-              enabled: true,
-              detectors: selectedDetectors,
-            }
-          : {
-              strategy_id: makeStrategyId(name),
-              name,
-              enabled: true,
-              detectors: selectedDetectors,
-              min_score: 1.0,
-              min_rr: 2.0,
-            }
-
-      const newStrategies = [...existing]
-      if (existingIndex >= 0) newStrategies[existingIndex] = newStrategy
-      else newStrategies.push(newStrategy)
-
-      const result = await api.updateStrategies({ strategies: newStrategies })
-      if (!(result as any)?.ok) {
-        throw new Error((result as any)?.error || "Failed to save")
-      }
-
-      toast({ title: "Амжилттай", description: "Хадгалагдлаа" })
-      setStrategyName("")
-      props.onSaved?.()
-    } catch (err: any) {
       toast({
         title: "Алдаа",
         description: err?.message || "Хадгалахад алдаа гарлаа",
