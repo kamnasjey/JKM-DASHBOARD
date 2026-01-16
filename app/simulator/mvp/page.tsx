@@ -127,6 +127,12 @@ interface SimulatorResult {
     confidenceScore?: number
     dataTier?: "green" | "yellow" | "red"
     warnings: string[]
+    // Detector classification for UI transparency
+    detectorsRequested?: string[]
+    detectorsRecognized?: string[]
+    detectorsImplemented?: string[]
+    detectorsNotImplemented?: string[]
+    detectorsUnknown?: string[]
   }
   demoMode?: boolean
   demoMessage?: string
@@ -554,6 +560,67 @@ export default function SimulatorMVPPage() {
                   </ul>
                 </AlertDescription>
               </Alert>
+            )}
+
+            {/* Detector Classification Panel */}
+            {result.meta?.detectorsRequested && result.meta.detectorsRequested.length > 0 && (
+              <div className="p-4 rounded-lg border bg-muted/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Detector Analysis</span>
+                  <span className="text-xs text-muted-foreground">
+                    {result.meta.detectorsImplemented?.length || 0}/{result.meta.detectorsRequested.length} supported
+                  </span>
+                </div>
+                
+                {/* Requested Detectors */}
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground">Requested ({result.meta.detectorsRequested.length})</div>
+                  <div className="flex flex-wrap gap-1">
+                    {result.meta.detectorsRequested.map((d) => {
+                      const isImplemented = result.meta?.detectorsImplemented?.includes(d)
+                      const isNotImplemented = result.meta?.detectorsNotImplemented?.includes(d)
+                      const isUnknown = result.meta?.detectorsUnknown?.includes(d)
+                      return (
+                        <Badge 
+                          key={d} 
+                          variant="outline" 
+                          className={`text-xs ${
+                            isImplemented ? "border-green-500/50 text-green-600" :
+                            isNotImplemented ? "border-yellow-500/50 text-yellow-600" :
+                            isUnknown ? "border-red-500/50 text-red-600" :
+                            ""
+                          }`}
+                          title={
+                            isImplemented ? "✓ Supported by simulator" :
+                            isNotImplemented ? "⚠ Known but not implemented" :
+                            isUnknown ? "✗ Unknown detector" :
+                            "Pending classification"
+                          }
+                        >
+                          {isImplemented && "✓ "}{isNotImplemented && "⚠ "}{isUnknown && "✗ "}{d}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+                
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
+                  <span className="flex items-center gap-1">
+                    <span className="text-green-600">✓</span> Supported
+                  </span>
+                  {result.meta.detectorsNotImplemented && result.meta.detectorsNotImplemented.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="text-yellow-600">⚠</span> Not implemented ({result.meta.detectorsNotImplemented.length})
+                    </span>
+                  )}
+                  {result.meta.detectorsUnknown && result.meta.detectorsUnknown.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="text-red-600">✗</span> Unknown ({result.meta.detectorsUnknown.length})
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
 
             {/* Demo Mode Banner */}

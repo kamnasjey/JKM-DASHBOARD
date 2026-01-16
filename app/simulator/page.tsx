@@ -73,12 +73,32 @@ interface MultiTFResult {
     bestWinrate?: number
   }
   byTimeframe?: Record<string, TFResult>
+  explainability?: {
+    rootCause: string
+    explanation: string
+    severity?: string
+    suggestions?: string[]
+    debugInfo?: {
+      detectorsRequested?: string[]
+      detectorsImplemented?: string[]
+      detectorsNotImplemented?: string[]
+      detectorsUnknown?: string[]
+      timeframesRan?: string[]
+      tfExplainability?: any[]
+    }
+  }
   meta?: {
     timeframesRan: string[]
     dataSource: string
     range: { from: string; to: string }
     symbols: string[]
     warnings: string[]
+    // Detector classification for UI transparency
+    detectorsRequested?: string[]
+    detectorsRecognized?: string[]
+    detectorsImplemented?: string[]
+    detectorsNotImplemented?: string[]
+    detectorsUnknown?: string[]
   }
   error?: {
     code: string
@@ -794,6 +814,86 @@ export default function SimulatorPage() {
                       <li key={i}>{w}</li>
                     ))}
                   </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Explainability Panel - 0 Trades */}
+            {result.combined?.summary?.entries === 0 && result.explainability && (
+              <Card className="border-orange-500/30 bg-orange-500/10">
+                <CardContent className="pt-6 space-y-4">
+                  <h4 className="text-sm font-medium text-orange-600 dark:text-orange-500 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Why 0 Trades?
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {result.explainability.explanation}
+                  </p>
+                  {result.explainability.suggestions && result.explainability.suggestions.length > 0 && (
+                    <ul className="text-sm text-muted-foreground list-disc list-inside">
+                      {result.explainability.suggestions.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Detector Classification Panel */}
+            {result.meta?.detectorsRequested && result.meta.detectorsRequested.length > 0 && (
+              <Card className="border-muted">
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Detector Analysis</h4>
+                    <span className="text-xs text-muted-foreground">
+                      {result.meta.detectorsImplemented?.length || 0}/{result.meta.detectorsRequested.length} supported
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1">
+                    {result.meta.detectorsRequested.map((d) => {
+                      const isImplemented = result.meta?.detectorsImplemented?.includes(d)
+                      const isNotImplemented = result.meta?.detectorsNotImplemented?.includes(d)
+                      const isUnknown = result.meta?.detectorsUnknown?.includes(d)
+                      return (
+                        <Badge 
+                          key={d} 
+                          variant="outline" 
+                          className={`text-xs ${
+                            isImplemented ? "border-green-500/50 text-green-600" :
+                            isNotImplemented ? "border-yellow-500/50 text-yellow-600" :
+                            isUnknown ? "border-red-500/50 text-red-600" :
+                            ""
+                          }`}
+                          title={
+                            isImplemented ? "✓ Supported by simulator" :
+                            isNotImplemented ? "⚠ Known but not implemented" :
+                            isUnknown ? "✗ Unknown detector" :
+                            "Pending classification"
+                          }
+                        >
+                          {isImplemented && "✓ "}{isNotImplemented && "⚠ "}{isUnknown && "✗ "}{d}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
+                    <span className="flex items-center gap-1">
+                      <span className="text-green-600">✓</span> Supported
+                    </span>
+                    {result.meta.detectorsNotImplemented && result.meta.detectorsNotImplemented.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <span className="text-yellow-600">⚠</span> Not implemented ({result.meta.detectorsNotImplemented.length})
+                      </span>
+                    )}
+                    {result.meta.detectorsUnknown && result.meta.detectorsUnknown.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <span className="text-red-600">✗</span> Unknown ({result.meta.detectorsUnknown.length})
+                      </span>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
