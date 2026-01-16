@@ -5,8 +5,8 @@ import { getUserStrategiesFromFirestore, setUserStrategiesInFirestore } from "@/
 export const runtime = "nodejs"
 
 function validateUserId(userId: string | undefined) {
-  if (!userId || userId === "undefined" || userId === "null") {
-    return { ok: false as const, status: 401 as const, message: "Missing or invalid userId" }
+  if (!userId || userId === "undefined" || userId === "null" || userId.trim() === "") {
+    return { ok: false as const, status: 400 as const, message: "Missing or invalid userId" }
   }
   return { ok: true as const }
 }

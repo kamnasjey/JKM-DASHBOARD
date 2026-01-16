@@ -488,6 +488,109 @@
 				"docker exec jkm_bot_backend sh -lc 'printenv | grep -E \"DASHBOARD|NEXTAUTH_URL|APP_URL|BASE_URL|FRONTEND\" | sort || true'"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "curl strategies v2 (prod)",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-i",
+				"https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "curl strategies v2 status code",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-s",
+				"-o",
+				"NUL",
+				"-w",
+				"HTTP_CODE=%{http_code}\\n",
+				"https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "curl.exe strategies v2 (prod)",
+			"type": "shell",
+			"command": "curl.exe",
+			"args": [
+				"-i",
+				"https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "curl.exe strategies v2 status code",
+			"type": "shell",
+			"command": "curl.exe",
+			"args": [
+				"-s",
+				"-o",
+				"NUL",
+				"-w",
+				"HTTP_CODE:%{http_code}\\n",
+				"https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check curl.exe resolution",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-Command curl, curl.exe | Format-List Name,CommandType,Source,Definition"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "curl.exe status via explicit call",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"& $env:SystemRoot\\System32\\curl.exe -s -o NUL -w \"HTTP_CODE:%{http_code}`n\" https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "cmd curl status code",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"curl -s -o NUL -w \"HTTP_CODE:%%{http_code}\\n\" https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "cmd curl version",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"curl -V"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "cmd curl status code (fixed)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"curl -s -o NUL -w \"HTTP_CODE:%{http_code}\\n\" https://www.jkmcopilot.com/api/strategies/v2"
+			],
+			"isBackground": false
 		}
 	]
 }

@@ -29,11 +29,33 @@ FIREBASE_SERVICE_ACCOUNT=<base64-encoded-json>
 BACKEND_ORIGIN=https://api.jkmcopilot.com
 BACKEND_INTERNAL_API_KEY=<shared-secret-key>
 
-# Internal API (must match backend)
-INTERNAL_API_KEY=<shared-secret-key>
+# Internal API Key (REQUIRED - must match DO backend DASHBOARD_INTERNAL_API_KEY)
+# Used for service-to-service calls from backend to dashboard
+DASHBOARD_INTERNAL_API_KEY=<shared-secret-key>
 
 # Billing (disabled for now)
 BILLING_DISABLED=1
+```
+
+### Auth Modes for API Routes
+
+| Route Pattern | Browser (Session) | Backend (Internal Key) |
+|---------------|-------------------|------------------------|
+| `/api/strategies/v2` | ✅ NextAuth cookie | ✅ x-internal-api-key + ?user_id= |
+| `/api/internal/user-data/*` | ❌ | ✅ x-internal-api-key only |
+| `/api/proxy/*` | ✅ NextAuth cookie | ❌ |
+
+**For backend service calls:**
+```bash
+# GET strategies for user
+curl -H "x-internal-api-key: YOUR_KEY" \
+  "https://www.jkmcopilot.com/api/strategies/v2?user_id=USER_ID"
+
+# POST new strategy for user
+curl -X POST -H "x-internal-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","detectors":["EQ_BREAK"]}' \
+  "https://www.jkmcopilot.com/api/strategies/v2?user_id=USER_ID"
 ```
 
 ### Optional Environment Variables

@@ -11,39 +11,73 @@ import {
   validateCreateStrategy,
   formatZodErrors,
 } from "@/lib/schemas/strategy"
+import { isValidInternalKey } from "@/lib/internal-api-auth"
 
 export const runtime = "nodejs"
 
 /**
- * GET /api/strategies
+ * Dual-auth helper: returns userId if authenticated via session OR internal key.
+ * 
+ * Priority:
+ * 1. NextAuth session (browser users)
+ * 2. Internal API key + query param user_id (service calls)
+ * 
+ * @returns { ok: true, userId, mode } or { ok: false, status, error }
+ */
+async function resolveAuth(request: NextRequest): Promise<
+  | { ok: true; userId: string; mode: "session" | "internal" }
+  | { ok: false; status: number; error: string }
+> {
+  // Try NextAuth session first (browser users)
+  const session = await getServerSession(authOptions)
+  if (session?.user) {
+    const userId = (session.user as any).id
+    if (userId) {
+      return { ok: true, userId, mode: "session" }
+    }
+  }
+
+  // Try internal API key (service-to-service)
+  if (isValidInternalKey(request)) {
+    // For internal calls, user_id must be provided as query param
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get("user_id")
+    if (userId && userId !== "undefined" && userId !== "null") {
+      return { ok: true, userId, mode: "internal" }
+    }
+    // Internal key valid but no user_id - still allow if just checking auth
+    return { ok: false, status: 400, error: "MISSING_USER_ID" }
+  }
+
+  return { ok: false, status: 401, error: "UNAUTHENTICATED" }
+}
+
+/**
+ * GET /api/strategies/v2
  * 
  * List user's strategies (newest first, max 50)
+ * 
+ * Auth: NextAuth session OR x-internal-api-key header
  * 
  * Query params:
  *   - limit: number (default 50, max 100)
  *   - cursor: string (for pagination)
+ *   - user_id: string (required for internal key auth)
  */
 export async function GET(request: NextRequest) {
   const requestId = randomUUID()
   
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await resolveAuth(request)
     
-    if (!session?.user) {
+    if (!auth.ok) {
       return NextResponse.json(
-        { ok: false, error: "UNAUTHENTICATED" },
-        { status: 401 }
+        { ok: false, error: auth.error },
+        { status: auth.status }
       )
     }
     
-    const userId = (session.user as any).id
-    if (!userId) {
-      console.error(`[${requestId}] No user ID in session`)
-      return NextResponse.json(
-        { ok: false, error: "INVALID_SESSION" },
-        { status: 401 }
-      )
-    }
+    const userId = auth.userId
     
     // Parse query params
     const { searchParams } = new URL(request.url)
@@ -94,9 +128,11 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/strategies
+ * POST /api/strategies/v2
  * 
  * Create a new strategy
+ * 
+ * Auth: NextAuth session OR x-internal-api-key header
  * 
  * Body:
  *   - name: string (required)
@@ -106,28 +142,24 @@ export async function GET(request: NextRequest) {
  *   - symbols?: string[]
  *   - timeframe?: string
  *   - config?: object
+ * 
+ * Query params (for internal key auth):
+ *   - user_id: string (required)
  */
 export async function POST(request: NextRequest) {
   const requestId = randomUUID()
   
   try {
-    const session = await getServerSession(authOptions)
+    const auth = await resolveAuth(request)
     
-    if (!session?.user) {
+    if (!auth.ok) {
       return NextResponse.json(
-        { ok: false, error: "UNAUTHENTICATED" },
-        { status: 401 }
+        { ok: false, error: auth.error },
+        { status: auth.status }
       )
     }
     
-    const userId = (session.user as any).id
-    if (!userId) {
-      console.error(`[${requestId}] No user ID in session`)
-      return NextResponse.json(
-        { ok: false, error: "INVALID_SESSION" },
-        { status: 401 }
-      )
-    }
+    const userId = auth.userId
     
     // Parse body
     let body: unknown
