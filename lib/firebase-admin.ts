@@ -82,7 +82,17 @@ export function getFirebaseAdminApp(): App {
 export function getFirebaseAdminDb(): Firestore {
   if (cachedDb) return cachedDb
   const app = getFirebaseAdminApp()
-  // Use named database "jkmdatabase" instead of default
-  cachedDb = getFirestore(app, "jkmdatabase")
+  
+  // Use configurable database ID via env, default to standard Firebase default database
+  const dbId = (process.env.FIRESTORE_DATABASE_ID || "").trim()
+  
+  if (dbId && dbId !== "(default)") {
+    console.log(`[firebase-admin] Using named Firestore database: ${dbId}`)
+    cachedDb = getFirestore(app, dbId)
+  } else {
+    console.log(`[firebase-admin] Using default Firestore database`)
+    cachedDb = getFirestore(app)
+  }
+  
   return cachedDb
 }

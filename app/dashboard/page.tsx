@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
-import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell, TrendingUp, TrendingDown, Minus, Check, ChevronDown } from "lucide-react"
+import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell, TrendingUp, TrendingDown, Minus, Check, ChevronDown, Radio, Zap, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -57,6 +57,14 @@ export default function DashboardPage() {
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null)
   const [savingStrategy, setSavingStrategy] = useState(false)
+  
+  // Live Ops: Market data heartbeat
+  const [liveOpsSymbol, setLiveOpsSymbol] = useState<string>("XAUUSD")
+  const [lastCandleTime, setLastCandleTime] = useState<number | null>(null)
+  const [prevCandleTime, setPrevCandleTime] = useState<number | null>(null)
+  const [candlePulse, setCandlePulse] = useState(false)
+  const [candleError, setCandleError] = useState<string | null>(null)
+  const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000))
   
   // Show toast when new signals arrive via WebSocket
   useEffect(() => {
@@ -215,11 +223,62 @@ export default function DashboardPage() {
         .catch(() => {})
     }, 60_000)
 
+    // Live Ops: Poll candles every 12 seconds
+    const candleInterval = setInterval(() => {
+      if (!liveOpsSymbol) return
+      api.candles(liveOpsSymbol, "M5", 1)
+        .then((res: any) => {
+          const candles = res?.candles || res || []
+          if (candles.length > 0) {
+            const candleTs = candles[0].time || candles[0].t || 0
+            const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+            
+            setPrevCandleTime((prev) => {
+              if (prev !== null && ts > prev) {
+                setCandlePulse(true)
+                setTimeout(() => setCandlePulse(false), 2000)
+              }
+              return lastCandleTime
+            })
+            setLastCandleTime(ts)
+            setCandleError(null)
+          }
+        })
+        .catch((err: any) => {
+          if (err?.message?.includes("403") || err?.message?.includes("Access")) {
+            setCandleError("Access required")
+          } else {
+            setCandleError(err?.message || "Error")
+          }
+        })
+    }, 12_000)
+    
+    // Live Ops: Update nowTs every second for countdown
+    const tickInterval = setInterval(() => {
+      setNowTs(Math.floor(Date.now() / 1000))
+    }, 1000)
+
+    // Initial candle fetch
+    if (liveOpsSymbol) {
+      api.candles(liveOpsSymbol, "M5", 1)
+        .then((res: any) => {
+          const candles = res?.candles || res || []
+          if (candles.length > 0) {
+            const candleTs = candles[0].time || candles[0].t || 0
+            const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+            setLastCandleTime(ts)
+          }
+        })
+        .catch(() => {})
+    }
+
     return () => {
       clearInterval(engineInterval)
       clearInterval(signalsInterval)
+      clearInterval(candleInterval)
+      clearInterval(tickInterval)
     }
-  }, [status])
+  }, [status, liveOpsSymbol])
 
   const handleManualScan = async () => {
     setLoading(true)
@@ -240,6 +299,55 @@ export default function DashboardPage() {
       setLoading(false)
     }
   }
+
+  // Live Ops computed values
+  const candleAgeSec = useMemo(() => {
+    if (!lastCandleTime) return null
+    return Math.max(0, nowTs - lastCandleTime)
+  }, [lastCandleTime, nowTs])
+
+  const candleAgeText = useMemo(() => {
+    if (candleAgeSec === null) return "—"
+    const mins = Math.floor(candleAgeSec / 60)
+    const secs = candleAgeSec % 60
+    if (mins > 0) return `${mins}m ${secs}s ago`
+    return `${secs}s ago`
+  }, [candleAgeSec])
+
+  const scanCadenceSec = useMemo(() => {
+    return (engineStatus as any)?.cadence_sec || 300
+  }, [engineStatus])
+
+  const lastScanTs = useMemo(() => {
+    const raw = (engineStatus as any)?.last_scan_ts
+    if (!raw) return 0
+    const num = typeof raw === "number" ? raw : Number(raw)
+    if (!Number.isFinite(num)) return 0
+    // If in ms, convert to seconds
+    return num > 1_000_000_000_000 ? Math.floor(num / 1000) : num
+  }, [engineStatus])
+
+  const nextScanIn = useMemo(() => {
+    if (!lastScanTs) return scanCadenceSec
+    const elapsed = nowTs - lastScanTs
+    return Math.max(0, scanCadenceSec - elapsed)
+  }, [lastScanTs, nowTs, scanCadenceSec])
+
+  const scanProgress = useMemo(() => {
+    if (!scanCadenceSec) return 0
+    return Math.min(1, 1 - nextScanIn / scanCadenceSec)
+  }, [nextScanIn, scanCadenceSec])
+
+  const justScanned = useMemo(() => {
+    if (!lastScanTs) return false
+    return nowTs - lastScanTs < 20
+  }, [lastScanTs, nowTs])
+
+  const nextScanText = useMemo(() => {
+    const mins = Math.floor(nextScanIn / 60)
+    const secs = nextScanIn % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }, [nextScanIn])
 
   if (status === "loading") {
     return <div className="flex min-h-screen items-center justify-center">Ачааллаж байна...</div>
@@ -280,6 +388,105 @@ export default function DashboardPage() {
             icon={Layers3}
           />
         </div>
+
+        {/* Live Ops Status Card */}
+        <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Radio className={`h-5 w-5 ${justScanned ? "text-green-500 animate-pulse" : "text-primary"}`} />
+              Live Ops
+              {engineStatus?.running && (
+                <Badge className="ml-auto bg-green-600 text-xs">Running</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Market Data Feed */}
+              <div className="space-y-3 rounded-lg border p-4 bg-card/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Zap className={`h-4 w-4 ${candlePulse ? "text-yellow-500 animate-pulse" : "text-muted-foreground"}`} />
+                    Market Data Feed
+                  </h4>
+                  {candlePulse && (
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-600 animate-pulse">
+                      New candle ✅
+                    </Badge>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Select value={liveOpsSymbol} onValueChange={setLiveOpsSymbol}>
+                    <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(symbols.length > 0 ? symbols : ["XAUUSD", "EURUSD", "GBPUSD"]).map((s) => (
+                        <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-xs text-muted-foreground">M5</span>
+                </div>
+
+                {candleError ? (
+                  <p className="text-xs text-destructive">{candleError}</p>
+                ) : (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Last M5 candle: </span>
+                    <span className={`font-mono ${candleAgeSec && candleAgeSec < 60 ? "text-green-600" : ""}`}>
+                      {candleAgeText}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Scan Heartbeat */}
+              <div className="space-y-3 rounded-lg border p-4 bg-card/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Clock className={`h-4 w-4 ${justScanned ? "text-green-500 animate-spin" : "text-muted-foreground"}`} />
+                    Scan Heartbeat
+                  </h4>
+                  {justScanned && (
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                      Just scanned
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Next scan in:</span>
+                    <span className="font-mono font-medium">{nextScanText}</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all duration-1000 ease-linear"
+                      style={{ width: `${scanProgress * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Cadence: {Math.floor(scanCadenceSec / 60)}m</span>
+                    {lastScanText && <span>Last: {lastScanText}</span>}
+                  </div>
+                </div>
+
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full mt-2"
+                  onClick={handleManualScan}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`mr-2 h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                  Manual Scan
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Strategy Selector & All Symbols */}
         <Card>
