@@ -35,11 +35,20 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ ok: true, user_id: userId, strategies, count: strategies.length })
   } catch (err: any) {
     // Graceful handling for NOT_FOUND or first-time users
-    const errCode = err?.code || ""
+    // Firestore NOT_FOUND error code is 5 (number) or "NOT_FOUND" (string)
+    const errCode = err?.code
     const errMsg = (err?.message || "").toLowerCase()
     
-    if (errCode === "NOT_FOUND" || errMsg.includes("not found") || errMsg.includes("no document")) {
-      console.log(`[internal strategies GET] Creating default for new user: ${userId}`)
+    const isNotFound = 
+      errCode === 5 || 
+      errCode === "5" ||
+      errCode === "NOT_FOUND" || 
+      errMsg.includes("not_found") ||
+      errMsg.includes("not found") || 
+      errMsg.includes("no document")
+    
+    if (isNotFound) {
+      console.log(`[internal strategies GET] New user (no doc): ${userId}`)
       return NextResponse.json({
         ok: true,
         user_id: userId,
@@ -53,7 +62,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       userId,
       errorCode: errCode,
       errorMessage: toSafeErrorMessage(err),
-      error: err,
     })
 
     return NextResponse.json(
