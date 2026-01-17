@@ -71,20 +71,18 @@ export async function GET(
         foundUserId = userId
       }
     } else {
-      // Search across all users (collection group query)
-      // Note: This requires a composite index on strategies collection
-      const strategiesQuery = db.collectionGroup("strategies")
-        .where("__name__", "==", strategyId)
-        .limit(1)
+      // Without user_id, we need to search across all users
+      // Since collectionGroup with __name__ filter requires full path,
+      // we iterate through users and check their strategies
+      const usersSnapshot = await db.collection("users").listDocuments()
       
-      const snapshot = await strategiesQuery.get()
-      
-      if (!snapshot.empty) {
-        strategyDoc = snapshot.docs[0]
-        // Extract userId from path: users/{userId}/strategies/{strategyId}
-        const pathParts = strategyDoc.ref.path.split("/")
-        if (pathParts.length >= 2) {
-          foundUserId = pathParts[1]
+      for (const userRef of usersSnapshot) {
+        const stratRef = userRef.collection("strategies").doc(strategyId)
+        const doc = await stratRef.get()
+        if (doc.exists) {
+          strategyDoc = doc
+          foundUserId = userRef.id
+          break
         }
       }
     }
