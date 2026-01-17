@@ -7,7 +7,7 @@
  * DO NOT duplicate detector lists elsewhere!
  * 
  * Canonical IDs: UPPERCASE_SNAKE_CASE (stable, used by backend)
- * UI displays: Mongolian labels + descriptions
+ * UI displays: English (primary) + Mongolian (secondary)
  */
 
 // ============================================================
@@ -21,11 +21,15 @@ export type DetectorCost = "light" | "medium" | "heavy"
 export interface DetectorMeta {
   /** Canonical ID - UPPERCASE_SNAKE_CASE, used by backend */
   id: string
-  /** Mongolian label for UI display */
+  /** English label (PRIMARY - shown in UI) */
+  labelEn: string
+  /** Mongolian label (SECONDARY - optional subtitle) */
   labelMn: string
-  /** Short Mongolian label (without ID in parens) */
+  /** Short label for badges/compact views */
   labelShort: string
-  /** Mongolian description */
+  /** English description (PRIMARY) */
+  descEn: string
+  /** Mongolian description (SECONDARY/legacy) */
   descriptionMn: string
   /** Category: gate, trigger, or confluence */
   category: DetectorCategory
@@ -50,8 +54,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   // ============================================================
   {
     id: "GATE_REGIME",
+    labelEn: "Regime Filter",
     labelMn: "Regime шүүлтүүр",
     labelShort: "Regime",
+    descEn: "Checks if market is trending. Blocks trades during choppy conditions. Required for all strategies.",
     descriptionMn: "Зах зээл trend эсэхийг шалгаж, choppy үед trade-г блоклоно. Заавал сонгосон байх ёстой.",
     category: "gate",
     impact: "high",
@@ -61,8 +67,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "GATE_VOLATILITY",
+    labelEn: "Volatility Filter",
     labelMn: "Volatility шүүлтүүр",
     labelShort: "Volatility",
+    descEn: "Measures volatility via ATR. Blocks trades during extremely low or high volatility.",
     descriptionMn: "ATR-ээр volatility хэмжиж, хэт бага/өндөр volatility үед trade блоклоно.",
     category: "gate",
     impact: "medium",
@@ -71,8 +79,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "GATE_DRIFT_SENTINEL",
+    labelEn: "Drift Sentinel",
     labelMn: "Drift Sentinel",
     labelShort: "Drift",
+    descEn: "Prevents counter-trend trades during strong momentum drift.",
     descriptionMn: "Хүчтэй momentum drift үед counter-trend trade хийхээс сэргийлнэ.",
     category: "gate",
     impact: "medium",
@@ -86,8 +96,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   // ============================================================
   {
     id: "BOS",
+    labelEn: "Break of Structure",
     labelMn: "Бүтэц эвдрэлт (BOS)",
     labelShort: "BOS",
+    descEn: "Break of Structure - trend continuation signal when swing high/low is broken.",
     descriptionMn: "Break of Structure - swing high/low эвдрэхэд тренд үргэлжлэх сигнал.",
     category: "trigger",
     impact: "high",
@@ -96,8 +108,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "FVG",
+    labelEn: "Fair Value Gap",
     labelMn: "Fair Value Gap",
     labelShort: "FVG",
+    descEn: "3-candle gap pattern indicating institutional movement.",
     descriptionMn: "3 candlestick-ийн дунд gap - институционал хөдөлгөөн илэрнэ.",
     category: "trigger",
     impact: "high",
@@ -106,8 +120,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "OB",
+    labelEn: "Order Block",
     labelMn: "Order Block",
     labelShort: "OB",
+    descEn: "Institutional order zone - the opposing candle before a large move.",
     descriptionMn: "Институционал захиалгын бүс - том move-ийн өмнөх эсрэг candle.",
     category: "trigger",
     impact: "high",
@@ -116,8 +132,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "CHOCH",
+    labelEn: "Change of Character",
     labelMn: "Trend өөрчлөлт (CHoCH)",
     labelShort: "CHoCH",
+    descEn: "Change of Character - the first sign of trend reversal.",
     descriptionMn: "Change of Character - тренд эргэлтийн анхны дохио.",
     category: "trigger",
     impact: "high",
@@ -126,8 +144,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "EQ_BREAK",
+    labelEn: "Equilibrium Break",
     labelMn: "Equilibrium эвдрэлт",
     labelShort: "EQ Break",
+    descEn: "Strong continuation signal when price breaks the 50% retracement level.",
     descriptionMn: "50% retrace түвшинг эвдрэхэд тренд үргэлжлэх хүчтэй сигнал.",
     category: "trigger",
     impact: "medium",
@@ -136,8 +156,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "SWEEP",
+    labelEn: "Liquidity Sweep",
     labelMn: "Liquidity Sweep",
     labelShort: "Sweep",
+    descEn: "Stop hunting pattern - temporarily breaks old high/low then reverses.",
     descriptionMn: "Хуучин high/low түр эвдээд буцах - stop hunting pattern.",
     category: "trigger",
     impact: "high",
@@ -146,8 +168,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "IMBALANCE",
+    labelEn: "Price Imbalance",
     labelMn: "Үнийн тэнцвэргүй байдал",
     labelShort: "Imbalance",
+    descEn: "Buy/Sell force imbalance. Similar to FVG.",
     descriptionMn: "Buy/Sell хүчний тэнцвэргүй байдал. FVG-тай төстэй.",
     category: "trigger",
     impact: "medium",
@@ -156,8 +180,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "SFP",
+    labelEn: "Swing Failure Pattern",
     labelMn: "Swing Failure Pattern",
     labelShort: "SFP",
+    descEn: "Reversal signal when price breaks swing high/low but closes back inside.",
     descriptionMn: "Swing high/low эвдээд буцаж хаагдах - reversal сигнал.",
     category: "trigger",
     impact: "high",
@@ -166,8 +192,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "BREAK_RETEST",
+    labelEn: "Break & Retest",
     labelMn: "Break & Retest",
     labelShort: "Break Retest",
+    descEn: "Classic pattern - break level, retest it, then continue in trend direction.",
     descriptionMn: "Түвшин эвдэж, retest хийгээд trend руу үргэлжлэх. Классик pattern.",
     category: "trigger",
     impact: "high",
@@ -176,8 +204,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "COMPRESSION_EXPANSION",
+    labelEn: "Compression → Expansion",
     labelMn: "Compression → Expansion",
     labelShort: "Compression",
+    descEn: "Strong breakout from a tight range. Volatility expansion.",
     descriptionMn: "Нарийн range-ээс хүчтэй breakout. Volatility expansion.",
     category: "trigger",
     impact: "medium",
@@ -186,8 +216,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "MOMENTUM_CONTINUATION",
+    labelEn: "Momentum Continuation",
     labelMn: "Momentum үргэлжлэл",
     labelShort: "Momentum",
+    descEn: "Continuation signal after a strong trend move.",
     descriptionMn: "Хүчтэй trend-ийн дараа momentum үргэлжлэх дохио.",
     category: "trigger",
     impact: "medium",
@@ -196,8 +228,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "MEAN_REVERSION_SNAPBACK",
+    labelEn: "Mean Reversion Snapback",
     labelMn: "Mean Reversion",
     labelShort: "Snapback",
+    descEn: "Counter-trend entry when price snaps back to the mean from overextended levels.",
     descriptionMn: "Үнэ дундаж руугаа буцах. Overextended үед counter-trend.",
     category: "trigger",
     impact: "medium",
@@ -206,8 +240,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "SR_BOUNCE",
+    labelEn: "S/R Bounce",
     labelMn: "S/R Bounce",
     labelShort: "SR Bounce",
+    descEn: "Bounce entry from Support/Resistance level.",
     descriptionMn: "Support/Resistance түвшнээс bounce. Key level entry.",
     category: "trigger",
     impact: "high",
@@ -216,8 +252,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "SR_BREAK_CLOSE",
+    labelEn: "S/R Break & Close",
     labelMn: "S/R Break & Close",
     labelShort: "SR Break",
+    descEn: "Confirmation breakout - break S/R level and close beyond it.",
     descriptionMn: "S/R түвшинг эвдэж, цаана хаагдах. Confirmation breakout.",
     category: "trigger",
     impact: "high",
@@ -226,8 +264,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "TRIANGLE_BREAKOUT_CLOSE",
+    labelEn: "Triangle Breakout",
     labelMn: "Triangle Breakout",
     labelShort: "Triangle",
+    descEn: "Breakout from triangle pattern. Move after consolidation.",
     descriptionMn: "Triangle pattern-ээс breakout. Consolidation дараах move.",
     category: "trigger",
     impact: "medium",
@@ -241,8 +281,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   // ============================================================
   {
     id: "DOJI",
+    labelEn: "Doji Candle",
     labelMn: "Doji Candle",
     labelShort: "Doji",
+    descEn: "Indecision candle (open ≈ close). Reversal signal at S/R levels.",
     descriptionMn: "Тэнцвэртэй candle - шийдвэргүй байдал. S/R дээр reversal.",
     category: "confluence",
     impact: "low",
@@ -251,8 +293,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "DOUBLE_TOP_BOTTOM",
+    labelEn: "Double Top/Bottom",
     labelMn: "Double Top/Bottom",
     labelShort: "Double TB",
+    descEn: "Classic reversal pattern - double peak or double trough.",
     descriptionMn: "Давхар оргил/ёроол - классик reversal pattern.",
     category: "confluence",
     impact: "medium",
@@ -261,8 +305,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "ENGULF_AT_LEVEL",
+    labelEn: "Engulfing at Level",
     labelMn: "Engulfing at Level",
     labelShort: "Engulfing",
+    descEn: "Engulfing candle at a key level. Strong reversal signal.",
     descriptionMn: "Key түвшин дээр engulfing candle. Хүчтэй reversal.",
     category: "confluence",
     impact: "medium",
@@ -271,8 +317,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "FAKEOUT_TRAP",
+    labelEn: "Fakeout Trap",
     labelMn: "Fakeout Trap",
     labelShort: "Fakeout",
+    descEn: "False breakout - breaks level but reverses back. Stop hunt entry.",
     descriptionMn: "Хуурамч breakout - түвшин эвдээд буцах. Stop hunt entry.",
     category: "confluence",
     impact: "medium",
@@ -281,8 +329,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "FIBO_EXTENSION",
+    labelEn: "Fibonacci Extension",
     labelMn: "Fibonacci Extension",
     labelShort: "Fibo Ext",
+    descEn: "Fibonacci extension levels (127.2%, 161.8%) for TP targets.",
     descriptionMn: "Fibo extension түвшин (127.2%, 161.8%). TP target.",
     category: "confluence",
     impact: "low",
@@ -291,8 +341,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "FIBO_RETRACE_CONFLUENCE",
+    labelEn: "Fibo Retracement Zone",
     labelMn: "Fibo Retracement",
     labelShort: "Fibo Ret",
+    descEn: "38.2%, 50%, 61.8% retracement levels for entry zones.",
     descriptionMn: "38.2%, 50%, 61.8% retracement түвшин. Entry zone.",
     category: "confluence",
     impact: "medium",
@@ -301,8 +353,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "FLAG_PENNANT",
+    labelEn: "Flag / Pennant",
     labelMn: "Flag/Pennant",
     labelShort: "Flag",
+    descEn: "Continuation pattern - consolidation after a strong move.",
     descriptionMn: "Continuation pattern - хүчтэй move дараа consolidation.",
     category: "confluence",
     impact: "medium",
@@ -311,8 +365,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "HEAD_SHOULDERS",
+    labelEn: "Head & Shoulders",
     labelMn: "Head & Shoulders",
     labelShort: "H&S",
+    descEn: "Classic reversal pattern - entry on neckline break.",
     descriptionMn: "Толгой мөр pattern - neckline break-ээр reversal entry.",
     category: "confluence",
     impact: "high",
@@ -321,8 +377,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "PINBAR_AT_LEVEL",
+    labelEn: "Pinbar at Level",
     labelMn: "Pinbar at Level",
     labelShort: "Pinbar",
+    descEn: "Pinbar/hammer at a key level. Rejection signal.",
     descriptionMn: "Key түвшин дээр pinbar/hammer. Rejection сигнал.",
     category: "confluence",
     impact: "medium",
@@ -331,8 +389,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "PRICE_MOMENTUM_WEAKENING",
+    labelEn: "Momentum Weakening",
     labelMn: "Momentum суларч байна",
     labelShort: "Weak Momentum",
+    descEn: "Indicates trend strength is weakening. Divergence signal.",
     descriptionMn: "Trend хүч суларч байгааг илтгэнэ. Divergence signal.",
     category: "confluence",
     impact: "medium",
@@ -341,8 +401,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "RECTANGLE_RANGE_EDGE",
+    labelEn: "Rectangle/Range Edge",
     labelMn: "Rectangle/Range Edge",
     labelShort: "Range Edge",
+    descEn: "Top/bottom of a range. Bounce or breakout setup.",
     descriptionMn: "Range-ийн дээд/доод хил. Bounce эсвэл breakout.",
     category: "confluence",
     impact: "medium",
@@ -351,8 +413,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "SR_ROLE_REVERSAL",
+    labelEn: "S/R Role Reversal",
     labelMn: "S/R Role Reversal",
     labelShort: "SR Flip",
+    descEn: "Support becomes Resistance (or vice versa). Polarity shift.",
     descriptionMn: "Support → Resistance болох эсвэл эсрэгээр. Polarity shift.",
     category: "confluence",
     impact: "high",
@@ -361,8 +425,10 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
   },
   {
     id: "TREND_FIBO",
+    labelEn: "Trend + Fibo Confluence",
     labelMn: "Trend + Fibo",
     labelShort: "Trend Fibo",
+    descEn: "Trend direction aligns with Fibo level. Strong confluence.",
     descriptionMn: "Trend чиглэл + Fibo түвшин давхцах. Strong confluence.",
     category: "confluence",
     impact: "medium",
@@ -409,7 +475,9 @@ export const REQUIRED_DETECTORS = DETECTOR_CATALOG
 
 export interface DetectorPreset {
   id: string
+  nameEn: string
   nameMn: string
+  descEn: string
   descriptionMn: string
   detectors: string[]
   icon: string
@@ -418,35 +486,45 @@ export interface DetectorPreset {
 export const DETECTOR_PRESETS: DetectorPreset[] = [
   {
     id: "trend_continuation",
+    nameEn: "Trend Continuation",
     nameMn: "Trend Continuation",
+    descEn: "Follow the trend - BOS + FVG + Flag pattern",
     descriptionMn: "Тренд үргэлжлэх стратеги - BOS + FVG + Flag pattern",
     detectors: ["GATE_REGIME", "BOS", "FVG", "FLAG_PENNANT", "TREND_FIBO"],
     icon: "📈",
   },
   {
     id: "reversal_trap",
+    nameEn: "Reversal / Trap",
     nameMn: "Reversal / Trap",
+    descEn: "Catch reversals and traps - Sweep + SFP + Fakeout",
     descriptionMn: "Эргэлт болон trap илрүүлэх - Sweep + SFP + Fakeout",
     detectors: ["GATE_REGIME", "SWEEP", "SFP", "FAKEOUT_TRAP", "PINBAR_AT_LEVEL"],
     icon: "🔄",
   },
   {
     id: "sr_bounce",
+    nameEn: "S/R Bounce",
     nameMn: "S/R Bounce",
+    descEn: "Bounce from Support/Resistance levels",
     descriptionMn: "Support/Resistance түвшнээс bounce хийх стратеги",
     detectors: ["GATE_REGIME", "SR_BOUNCE", "ENGULF_AT_LEVEL", "SR_ROLE_REVERSAL"],
     icon: "⬆️",
   },
   {
     id: "breakout",
+    nameEn: "Breakout Strategy",
     nameMn: "Breakout Strategy",
+    descEn: "Level breakout strategy - Break & Retest + SR Break",
     descriptionMn: "Түвшин эвдэж гарах стратеги - Break & Retest + SR Break",
     detectors: ["GATE_REGIME", "BREAK_RETEST", "SR_BREAK_CLOSE", "COMPRESSION_EXPANSION"],
     icon: "💥",
   },
   {
     id: "institutional",
+    nameEn: "Institutional Flow",
     nameMn: "Institutional Flow",
+    descEn: "Follow institutional movement - OB + FVG + Imbalance",
     descriptionMn: "Институционал хөдөлгөөн дагах - OB + FVG + Imbalance",
     detectors: ["GATE_REGIME", "OB", "FVG", "IMBALANCE", "EQ_BREAK"],
     icon: "🏦",
@@ -480,8 +558,10 @@ export function searchDetectors(query: string): DetectorMeta[] {
   const q = query.toLowerCase()
   return DETECTOR_CATALOG.filter(d => 
     d.id.toLowerCase().includes(q) ||
+    d.labelEn.toLowerCase().includes(q) ||
     d.labelMn.toLowerCase().includes(q) ||
     d.labelShort.toLowerCase().includes(q) ||
+    d.descEn.toLowerCase().includes(q) ||
     d.descriptionMn.toLowerCase().includes(q) ||
     d.tags?.some(t => t.toLowerCase().includes(q))
   )

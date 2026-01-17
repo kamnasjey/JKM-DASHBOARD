@@ -23,37 +23,61 @@ import {
 import { cn } from "@/lib/utils"
 import { DETECTOR_BY_ID, CATEGORY_INFO, type DetectorCategory } from "@/lib/detectors/catalog"
 
-// Root cause type mapping to Mongolian labels
-const ROOT_CAUSE_LABELS: Record<string, { icon: string; label: string; color: string }> = {
+// Root cause type mapping to English/Mongolian labels
+const ROOT_CAUSE_LABELS: Record<string, { icon: string; labelEn: string; labelMn: string; color: string }> = {
   gate_filtered: {
     icon: "🚦",
-    label: "Gate блоклосон",
+    labelEn: "Blocked by Gate",
+    labelMn: "Gate блоклосон",
     color: "text-red-500 border-red-500/50 bg-red-500/10",
   },
   no_triggers: {
     icon: "🎯",
-    label: "Trigger илрээгүй",
+    labelEn: "No Triggers Found",
+    labelMn: "Trigger илрээгүй",
     color: "text-yellow-500 border-yellow-500/50 bg-yellow-500/10",
   },
   no_confluence: {
     icon: "🔗",
-    label: "Confluence хүрээгүй",
+    labelEn: "Confluence Not Met",
+    labelMn: "Confluence хүрээгүй",
     color: "text-orange-500 border-orange-500/50 bg-orange-500/10",
   },
   no_data: {
     icon: "📊",
-    label: "Дата олдсонгүй",
+    labelEn: "No Data Found",
+    labelMn: "Дата олдсонгүй",
     color: "text-purple-500 border-purple-500/50 bg-purple-500/10",
   },
   no_setup: {
     icon: "📉",
-    label: "Зах зээлд setup байгаагүй",
+    labelEn: "No Market Setup",
+    labelMn: "Зах зээлд setup байгаагүй",
     color: "text-blue-500 border-blue-500/50 bg-blue-500/10",
   },
   detector_mismatch: {
     icon: "⚠",
-    label: "Detector нэр mismatch",
+    labelEn: "Detector Mismatch",
+    labelMn: "Detector нэр mismatch",
     color: "text-red-500 border-red-500/50 bg-red-500/10",
+  },
+  NO_EXPLAIN_FROM_BACKEND: {
+    icon: "❓",
+    labelEn: "No Explanation From Backend",
+    labelMn: "Backend тайлбар өгөөгүй",
+    color: "text-gray-500 border-gray-500/50 bg-gray-500/10",
+  },
+  BACKEND_UNREACHABLE: {
+    icon: "🔌",
+    labelEn: "Backend Unreachable",
+    labelMn: "Backend холбогдохгүй",
+    color: "text-red-500 border-red-500/50 bg-red-500/10",
+  },
+  LOW_COVERAGE: {
+    icon: "📉",
+    labelEn: "Insufficient Data Coverage",
+    labelMn: "Дата хангалтгүй",
+    color: "text-yellow-500 border-yellow-500/50 bg-yellow-500/10",
   },
 }
 
@@ -81,6 +105,15 @@ interface ZeroTradesDebugPanelProps {
     detectorsNotImplemented?: string[]
     detectorsUnknown?: string[]
     simVersion?: string
+    dashboardVersion?: string
+    elapsedMs?: number
+  }
+  dataCoverage?: {
+    from?: string
+    to?: string
+    expectedBars?: number
+    actualBars?: number
+    missingPct?: number
   }
   onQuickFix?: (action: "normalize" | "extend_range" | "change_tf" | "disable_gates") => void
   onRerun?: () => void
@@ -90,6 +123,7 @@ interface ZeroTradesDebugPanelProps {
 export function ZeroTradesDebugPanel({
   explainability,
   meta,
+  dataCoverage,
   onQuickFix,
   onRerun,
   isRerunning,
@@ -108,6 +142,9 @@ export function ZeroTradesDebugPanel({
 
   // Check for unknown detectors
   const hasUnknown = meta?.detectorsUnknown && meta.detectorsUnknown.length > 0
+  
+  // Check for data coverage issues
+  const hasDataGap = dataCoverage && dataCoverage.missingPct !== undefined && dataCoverage.missingPct >= 20
 
   return (
     <Card className="border-orange-500/30 bg-orange-950/20">
@@ -119,32 +156,76 @@ export function ZeroTradesDebugPanel({
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="text-base font-semibold text-orange-500 mb-1">
-              Яагаад 0 арилжаа гарсан бэ?
+              Why 0 Trades?
             </h4>
             <p className="text-sm text-muted-foreground">
               {explainability?.explanation || 
-                "Сонгосон detector-ууд болон хугацааны хүрээнд ямар ч сигнал илрээгүй байна."}
+                "No signals found for the selected detectors and time range."}
             </p>
           </div>
         </div>
 
         {/* Root Cause Badge */}
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs text-muted-foreground">Үндсэн шалтгаан:</span>
+          <span className="text-xs text-muted-foreground">Root Cause:</span>
           <Badge variant="outline" className={cn("text-xs", rootCauseInfo.color)}>
-            {rootCauseInfo.icon} {rootCauseInfo.label}
+            {rootCauseInfo.icon} {rootCauseInfo.labelEn}
           </Badge>
           {explainability?.debug?.barsScanned !== undefined && (
             <span className="text-xs text-muted-foreground">
-              ({explainability.debug.barsScanned.toLocaleString()} bar шалгасан)
+              ({explainability.debug.barsScanned.toLocaleString()} bars scanned)
             </span>
           )}
           {meta?.simVersion && (
             <Badge variant="secondary" className="text-[10px]">
-              v{meta.simVersion}
+              sim:{meta.simVersion}
+            </Badge>
+          )}
+          {meta?.dashboardVersion && (
+            <Badge variant="secondary" className="text-[10px]">
+              dash:{meta.dashboardVersion}
             </Badge>
           )}
         </div>
+        
+        {/* Data Coverage Warning */}
+        {hasDataGap && (
+          <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+            <div className="flex items-start gap-2">
+              <span className="text-yellow-500">⚠️</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                  Insufficient Data Coverage ({dataCoverage.missingPct?.toFixed(1)}% missing)
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Only {dataCoverage.actualBars} of {dataCoverage.expectedBars} expected bars found.
+                </p>
+                {onQuickFix && (
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs border-yellow-500/30 hover:bg-yellow-500/10"
+                      onClick={() => onQuickFix("extend_range")}
+                    >
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Try 90 Days
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs border-yellow-500/30 hover:bg-yellow-500/10"
+                      onClick={() => onQuickFix("change_tf")}
+                    >
+                      <Clock className="h-3 w-3 mr-1" />
+                      Try 1H/4H
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Detector Hitmap Section */}
         <div className="space-y-3">
@@ -176,7 +257,7 @@ export function ZeroTradesDebugPanel({
                       <div key={category} className="space-y-1.5">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{catInfo.icon}</span>
-                          <span className="font-medium">{catInfo.labelMn}</span>
+                          <span className="font-medium">{catInfo.labelEn}</span>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pl-5">
                           {hitsInCategory.map(([det, count]) => {
@@ -211,9 +292,9 @@ export function ZeroTradesDebugPanel({
                                     </div>
                                   </TooltipTrigger>
                                   <TooltipContent side="top">
-                                    <p className="font-medium">{detMeta?.labelMn || det}</p>
+                                    <p className="font-medium">{detMeta?.labelEn || det}</p>
                                     <p className="text-xs text-muted-foreground">
-                                      {detMeta?.descriptionMn || `Hit count: ${count}`}
+                                      {detMeta?.descEn || `Hit count: ${count}`}
                                     </p>
                                   </TooltipContent>
                                 </Tooltip>
@@ -229,7 +310,7 @@ export function ZeroTradesDebugPanel({
                 <div className="text-xs text-muted-foreground bg-muted/20 rounded-md p-3">
                   <p className="flex items-center gap-2">
                     <span>ℹ️</span>
-                    Энэ хувилбар hit tracking дэмжихгүй байна. Backend v2.4+ шаардлагатай.
+                    Hit tracking not supported in this version. Requires Backend v2.4+
                   </p>
                 </div>
               )}
@@ -240,7 +321,7 @@ export function ZeroTradesDebugPanel({
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
                     <span>🚦</span>
-                    Gate-ээс блоклогдсон
+                    Blocked by Gate
                   </p>
                   <div className="flex flex-wrap gap-2 pl-5">
                     {Object.entries(explainability.debug.gateBlocks).map(([gate, count]) => {
@@ -257,7 +338,7 @@ export function ZeroTradesDebugPanel({
                     })}
                   </div>
                   <p className="text-xs text-muted-foreground pl-5">
-                    💡 Gate хэт олон блоклож байвал зах зээлийн нөхцөл таарахгүй байна.
+                    💡 Too many Gate blocks may indicate market conditions don't match.
                   </p>
                 </div>
               )}
@@ -270,7 +351,7 @@ export function ZeroTradesDebugPanel({
           <div className="space-y-2 pt-3 border-t border-orange-500/20">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <span>💡</span>
-              Зөвлөмж
+              Suggestions
             </p>
             <ul className="text-sm text-muted-foreground space-y-1">
               {explainability.suggestions.map((s, i) => (
@@ -288,7 +369,7 @@ export function ZeroTradesDebugPanel({
           <div className="space-y-3 pt-3 border-t border-orange-500/20">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
               <Wrench className="h-3 w-3" />
-              Түргэн засвар (1-Click)
+              Quick Fixes (1-Click)
             </p>
             <div className="flex flex-wrap gap-2">
               {needsNormalization && (
@@ -302,11 +383,11 @@ export function ZeroTradesDebugPanel({
                         onClick={() => onQuickFix("normalize")}
                       >
                         <RefreshCw className="h-3 w-3 mr-1.5" />
-                        Нэр засах
+                        Fix Names
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Detector нэрсийг нормализаци хийж дахин run хийнэ</p>
+                      <p>Normalize detector names and re-run</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -322,11 +403,11 @@ export function ZeroTradesDebugPanel({
                       onClick={() => onQuickFix("extend_range")}
                     >
                       <Calendar className="h-3 w-3 mr-1.5" />
-                      90 хоног
+                      90 Days
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Хугацааны хүрээг 90 хоног болгож дахин run хийнэ</p>
+                    <p>Extend time range to 90 days and re-run</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -341,11 +422,11 @@ export function ZeroTradesDebugPanel({
                       onClick={() => onQuickFix("change_tf")}
                     >
                       <Clock className="h-3 w-3 mr-1.5" />
-                      Зөвхөн 1H/4H
+                      Try 1H/4H Only
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Зөвхөн 1H, 4H таймфрэйм дээр run хийнэ</p>
+                    <p>Run on 1H and 4H timeframes only</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -360,12 +441,12 @@ export function ZeroTradesDebugPanel({
                       onClick={() => onQuickFix("disable_gates")}
                     >
                       <Shield className="h-3 w-3 mr-1.5" />
-                      Gate унтраах
+                      Disable Gates
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>GATE_VOLATILITY, GATE_DRIFT_SENTINEL түр унтрааж run хийнэ</p>
-                    <p className="text-[10px] text-muted-foreground">(Strategy хадгалагдахгүй)</p>
+                    <p>Temporarily disable GATE_VOLATILITY, GATE_DRIFT_SENTINEL</p>
+                    <p className="text-[10px] text-muted-foreground">(Strategy won't be saved)</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -379,7 +460,7 @@ export function ZeroTradesDebugPanel({
                   disabled={isRerunning}
                 >
                   <RefreshCw className={cn("h-3 w-3 mr-1.5", isRerunning && "animate-spin")} />
-                  {isRerunning ? "Running..." : "Дахин run"}
+                  {isRerunning ? "Running..." : "Re-run"}
                 </Button>
               )}
             </div>
@@ -389,19 +470,19 @@ export function ZeroTradesDebugPanel({
         {/* Fallback message if no explainability */}
         {!explainability && (
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p>Боломжит шалтгаанууд:</p>
+            <p>Possible reasons:</p>
             <ul className="space-y-1">
               <li className="flex items-start gap-2">
                 <span className="text-orange-500">1.</span>
-                Detector-ууд implement хийгдээгүй (backend-д байхгүй)
+                Detectors not implemented (missing in backend)
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500">2.</span>
-                Сонгосон хугацаанд тохирох setup үүсээгүй
+                No matching setup in selected time range
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500">3.</span>
-                Gate detector бүх сигналыг блоклосон
+                Gate detector blocked all signals
               </li>
             </ul>
           </div>

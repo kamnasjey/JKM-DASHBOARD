@@ -542,4 +542,140 @@ export const api = {
         body: JSON.stringify(params),
       }),
   },
+
+  // Scanner API (continuous setup finder)
+  // V2: strategyId ONLY - backend fetches detectors from Firestore
+  scanner: {
+    start: (params: {
+      strategyId: string
+      // V2: DO NOT send detectors - backend fetches from strategyId
+      symbols: string[]
+      timeframes?: string[]
+      lookbackDays?: number
+      intervalSec?: number
+      maxPairsPerCycle?: number
+      // Setup criteria
+      minRR?: number
+      minConfirmHits?: number
+      minBarsScanned?: number
+      maxMissingPct?: number
+      minConfidence?: number
+    }) =>
+      apiFetch<{
+        ok: boolean
+        message?: string
+        runId?: string
+        error?: string
+        status?: any
+        meta?: {
+          warnings?: string[]
+        }
+      }>("/api/scanner/start", {
+        method: "POST",
+        body: JSON.stringify(params),
+      }),
+
+    stop: () =>
+      apiFetch<{
+        ok: boolean
+        message?: string
+        status?: any
+      }>("/api/scanner/stop", {
+        method: "POST",
+      }),
+
+    status: () =>
+      apiFetch<{
+        ok: boolean
+        running: boolean
+        runId?: string
+        startedAt?: string
+        lastCycleAt?: string
+        nextCycleAt?: string
+        config?: {
+          strategyId: string
+          symbolsCount: number
+          symbols: string[]
+          timeframes: string[]
+          lookbackDays: number
+          intervalSec: number
+          minRR: number
+          minConfirmHits: number
+          maxMissingPct: number
+        }
+        detectors?: {
+          countNormalized: number
+          unknownCount: number
+          unknownSample: string[]
+          gatesCount: number
+          triggersCount: number
+          confluenceCount: number
+          strategyName: string
+          fetchedAt: string
+          fetchError?: string
+        }
+        lastOutcome?: {
+          rootCause: string
+          symbol?: string
+          tf?: string
+          ts?: string
+        }
+        counters?: {
+          cycles: number
+          setupsFound: number
+          errors: number
+          deduped: number
+          cooldownSkipped: number
+          noSetupReasons: Record<string, number>
+        }
+        lastErrors?: Array<{
+          ts: string
+          type?: string
+          error: string
+        }>
+        lastSetups?: Array<{
+          ts: string
+          symbol: string
+          tf: string
+          confidence: number
+        }>
+        simVersion?: string
+      }>("/api/scanner/status"),
+
+    results: (limit: number = 100) =>
+      apiFetch<{
+        ok: boolean
+        count: number
+        statusMessage?: string
+        noSetupReasons?: Record<string, number>
+        results: Array<{
+          ts: string
+          runId?: string
+          symbol: string
+          tf: string
+          strategyId: string
+          strategyName?: string
+          detectorsRequested?: string[]
+          detectorsNormalized?: string[]
+          hitsPerDetector?: Record<string, number>
+          gatesPassed?: boolean
+          gateBlocks?: string[]
+          triggersHit?: number
+          confluenceHit?: number
+          rr?: number
+          confidence?: number
+          bias?: string
+          barsScanned?: number
+          dataCoverage?: {
+            expectedBars?: number
+            actualBars?: number
+            missingPct?: number
+          }
+          explain?: Record<string, any>
+        }>
+        simVersion?: string
+        dashboardVersion?: string
+        error?: string
+      }>(`/api/scanner/results?limit=${limit}`),
+  },
 }

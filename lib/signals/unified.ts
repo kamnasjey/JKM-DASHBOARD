@@ -1,0 +1,292 @@
+/**
+ * Unified Signal Type and Mappers
+ * 
+ * Merges scanner results (setup found) and old signals into ONE canonical shape.
+ * Used by /signals page to display both sources uniformly.
+ */
+
+import type { SignalPayloadPublicV1 } from "@/lib/types"
+
+// ============================================================
+// Canonical Unified Signal Shape
+// ============================================================
+
+export interface UnifiedSignal {
+  /** Unique ID (scanner: strategyId:symbol:tf:ts, signals: signal_id) */
+  id: string
+  /** Source of the signal */
+  source: "scanner" | "signals"
+  /** ISO timestamp */
+  ts: string
+  /** Symbol (e.g., BTCUSDT, EURUSD) */
+  symbol: string
+  /** Timeframe (e.g., 15m, 1h, 4h) */
+  timeframe: string
+  /** Strategy ID if from scanner */
+  strategyId?: string
+  /** Strategy name for display */
+  strategyName?: string
+  /** Direction: long/short/neutral */
+  direction?: "long" | "short" | "neutral"
+  /** Risk/Reward ratio */
+  rr?: number
+  /** Confidence score (0-1) */
+  confidence?: number
+  /** Entry price if available */
+  entry?: number
+  /** Stop loss price */
+  sl?: number
+  /** Take profit price */
+  tp?: number
+  /** Status for old signals */
+  status?: "OK" | "NONE" | "FOUND" | "ACTIVE" | "CLOSED"
+  /** Note or summary */
+  note?: string
+  /** Root cause for no-setup or warnings */
+  rootCause?: string
+  /** Data coverage metrics */
+  dataCoverage?: {
+    missingPct?: number
+    barsScanned?: number
+  }
+  /** Detector information */
+  detectors?: {
+    normalized?: string[]
+    unknown?: string[]
+    hitsPerDetector?: Record<string, number>
+  }
+  /** Gates passed/blocked */
+  gatesPassed?: boolean
+  gateBlocks?: string[]
+  /** Trigger/confluence hits */
+  triggersHit?: number
+  confluenceHit?: number
+  /** Outcome tracking */
+  outcome?: "win" | "loss" | "expired" | "pending"
+  /** Full explain payload if available */
+  explain?: Record<string, any>
+  /** Actionable links */
+  links?: {
+    openSimulator?: string
+  }
+}
+
+// ============================================================
+// Scanner Result Type (from backend)
+// ============================================================
+
+export interface ScannerResult {
+  ts: string
+  runId?: string
+  symbol: string
+  tf: string
+  strategyId: string
+  strategyName?: string
+  detectorsRequested?: string[]
+  detectorsNormalized?: string[]
+  hitsPerDetector?: Record<string, number>
+  gatesPassed?: boolean
+  gateBlocks?: string[]
+  triggersHit?: number
+  confluenceHit?: number
+  rr?: number
+  confidence?: number
+  bias?: string
+  barsScanned?: number
+  dataCoverage?: Record<string, any>
+  explain?: Record<string, any>
+}
+
+// ============================================================
+// Mappers
+// ============================================================
+
+/**
+ * Map scanner result to UnifiedSignal
+ */
+export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
+  // Generate stable ID from key fields
+  const id = `scanner:${item.strategyId}:${item.symbol}:${item.tf}:${item.ts}`
+  
+  // Map bias to direction
+  let direction: "long" | "short" | "neutral" = "neutral"
+  if (item.bias === "bullish" || item.bias === "long") direction = "long"
+  if (item.bias === "bearish" || item.bias === "short") direction = "short"
+  
+  // Build simulator link
+  const to = new Date(item.ts)
+  const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000) // 90 days back
+  const simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(item.tf)}&strategyId=${encodeURIComponent(item.strategyId)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
+  
+  return {
+    id,
+    source: "scanner",
+    ts: item.ts,
+    symbol: item.symbol,
+    timeframe: item.tf,
+    strategyId: item.strategyId,
+    strategyName: item.strategyName || undefined,
+    direction,
+    rr: item.rr,
+    confidence: item.confidence,
+    gatesPassed: item.gatesPassed,
+    gateBlocks: item.gateBlocks,
+    triggersHit: item.triggersHit,
+    confluenceHit: item.confluenceHit,
+    dataCoverage: item.dataCoverage ? {
+      missingPct: item.dataCoverage.missingPct,
+      barsScanned: item.barsScanned || item.dataCoverage.actualBars,
+    } : undefined,
+    detectors: {
+      normalized: item.detectorsNormalized,
+      unknown: [],
+      hitsPerDetector: item.hitsPerDetector,
+    },
+    explain: item.explain,
+    links: {
+      openSimulator: simulatorLink,
+    },
+  }
+}
+
+/**
+ * Map old signal (SignalPayloadPublicV1) to UnifiedSignal
+ */
+export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSignal {
+  const id = `signals:${item.signal_id}`
+  
+  // Map direction
+  let direction: "long" | "short" | "neutral" = "neutral"
+  if (item.direction === "BUY") direction = "long"
+  if (item.direction === "SELL") direction = "short"
+  
+  // Convert epoch to ISO
+  const ts = new Date(item.created_at * 1000).toISOString()
+  
+  // Build simulator link if possible
+  let simulatorLink: string | undefined
+  if (item.symbol && item.timeframe) {
+    const to = new Date(item.created_at * 1000)
+    const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000)
+    simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(item.timeframe)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
+  }
+  
+  // Extract fail reasons as note
+  const note = item.fail_reasons?.length 
+    ? `Fail: ${item.fail_reasons.join(", ")}`
+    : undefined
+  
+  return {
+    id,
+    source: "signals",
+    ts,
+    symbol: item.symbol,
+    timeframe: item.timeframe,
+    direction,
+    rr: item.rr,
+    entry: item.entry,
+    sl: item.sl,
+    tp: item.tp,
+    status: item.status,
+    outcome: item.outcome,
+    note,
+    explain: item.explain,
+    links: simulatorLink ? { openSimulator: simulatorLink } : undefined,
+  }
+}
+
+// ============================================================
+// Merge and Dedupe
+// ============================================================
+
+/**
+ * Create a dedup key for a signal
+ * Uses strategyId+symbol+timeframe+ts_bucket (minute precision)
+ */
+function getDedupeKey(signal: UnifiedSignal): string {
+  const tsBucket = signal.ts.slice(0, 16) // "2026-01-17T10:30" (minute bucket)
+  const strategyPart = signal.strategyId || "none"
+  return `${strategyPart}:${signal.symbol}:${signal.timeframe}:${tsBucket}`
+}
+
+/**
+ * Merge scanner results and old signals into unified list
+ * - Dedupes by key (prefers scanner over old signals)
+ * - Sorts by ts descending (newest first)
+ */
+export function mergeSignals(
+  scannerResults: UnifiedSignal[],
+  oldSignals: UnifiedSignal[]
+): UnifiedSignal[] {
+  const seen = new Map<string, UnifiedSignal>()
+  
+  // Add scanner results first (preferred)
+  for (const signal of scannerResults) {
+    const key = getDedupeKey(signal)
+    seen.set(key, signal)
+  }
+  
+  // Add old signals (only if not already seen)
+  for (const signal of oldSignals) {
+    const key = getDedupeKey(signal)
+    if (!seen.has(key)) {
+      seen.set(key, signal)
+    }
+  }
+  
+  // Convert to array and sort by ts desc
+  const merged = Array.from(seen.values())
+  merged.sort((a, b) => {
+    const ta = new Date(a.ts).getTime()
+    const tb = new Date(b.ts).getTime()
+    return tb - ta // Newest first
+  })
+  
+  return merged
+}
+
+// ============================================================
+// Helper Functions
+// ============================================================
+
+/**
+ * Check if data coverage is concerning (high missing percentage)
+ */
+export function hasLowCoverage(signal: UnifiedSignal, threshold = 30): boolean {
+  return (signal.dataCoverage?.missingPct ?? 0) > threshold
+}
+
+/**
+ * Get confidence level label
+ */
+export function getConfidenceLevel(confidence?: number): "high" | "medium" | "low" | "unknown" {
+  if (confidence === undefined || confidence === null) return "unknown"
+  if (confidence >= 0.7) return "high"
+  if (confidence >= 0.5) return "medium"
+  return "low"
+}
+
+/**
+ * Format direction for display
+ */
+export function formatDirection(direction?: string): string {
+  if (direction === "long") return "LONG"
+  if (direction === "short") return "SHORT"
+  return "—"
+}
+
+/**
+ * Format timestamp for display
+ */
+export function formatTimestamp(ts: string): string {
+  try {
+    return new Date(ts).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  } catch {
+    return ts
+  }
+}

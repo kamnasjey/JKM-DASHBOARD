@@ -196,14 +196,24 @@ export function StrategyMakerPanel(props: {
     const name = strategyName.trim()
 
     if (!name) {
-      toast({ title: "Алдаа", description: "Strategy нэр оруулна уу", variant: "destructive" })
+      toast({ 
+        title: "Missing Name", 
+        description: "Please enter a strategy name / Strategy нэр оруулна уу", 
+        variant: "destructive" 
+      })
       return
     }
 
     if (!isValid) {
+      // Build detailed validation message
+      const missing: string[] = []
+      if (validation.gates < 1) missing.push("Gate (1+)")
+      if (validation.triggers < 1) missing.push("Trigger (1+)")
+      if (validation.confluences < 1) missing.push("Confluence (1+)")
+      
       toast({
-        title: "Анхааруулга",
-        description: "Gate/Trigger/Confluence тус бүрээс хамгийн багадаа 1-ийг сонгоно уу",
+        title: "Incomplete Selection",
+        description: `Please select at least: ${missing.join(", ")}`,
         variant: "destructive",
       })
       return
@@ -224,35 +234,63 @@ export function StrategyMakerPanel(props: {
       })
 
       if (!result.ok) {
-        // Handle specific error codes
+        // Handle specific error codes with detailed messages
         const errorData = result as any
-        if (errorData.error === "LIMIT_REACHED" || errorData.error === "LIMIT_EXCEEDED") {
+        const errorCode = errorData.error || errorData.code || "UNKNOWN"
+        const errorMessage = errorData.message || errorData.error || "Unknown error"
+        
+        if (errorCode === "LIMIT_REACHED" || errorCode === "LIMIT_EXCEEDED" || errorMessage.includes("Maximum")) {
           toast({
-            title: "Хязгаарлалт",
-            description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+            title: "Strategy Limit Reached",
+            description: `Maximum ${MAX_STRATEGIES} strategies allowed. Delete an existing strategy to create a new one.`,
             variant: "destructive",
           })
           return
         }
-        throw new Error(errorData.error || "Failed to save")
-      }
-
-      toast({ title: "Амжилттай", description: "Хадгалагдлаа" })
-      setStrategyName("")
-      props.onSaved?.()
-    } catch (err: any) {
-      // Check for limit error in exception message
-      if (err?.message?.includes("Maximum") || err?.message?.includes("LIMIT")) {
+        
+        // Show the actual server error message
         toast({
-          title: "Хязгаарлалт",
-          description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+          title: `Error: ${errorCode}`,
+          description: errorMessage,
           variant: "destructive",
         })
         return
       }
+
+      toast({ title: "Success!", description: "Strategy saved successfully" })
+      setStrategyName("")
+      props.onSaved?.()
+    } catch (err: any) {
+      // Try to extract detailed error from response
+      let errorMessage = "Failed to save strategy"
+      let errorCode = "SAVE_ERROR"
+      
+      if (err?.response) {
+        try {
+          const data = await err.response.json?.() || err.response
+          errorCode = data.error || data.code || errorCode
+          errorMessage = data.message || data.error || errorMessage
+        } catch {
+          errorMessage = err.message || errorMessage
+        }
+      } else {
+        errorMessage = err?.message || errorMessage
+      }
+      
+      // Check for limit error in exception message
+      if (errorMessage.includes("Maximum") || errorMessage.includes("LIMIT")) {
+        toast({
+          title: "Strategy Limit Reached",
+          description: `Maximum ${MAX_STRATEGIES} strategies allowed.`,
+          variant: "destructive",
+        })
+        return
+      }
+      
+      // Show detailed error
       toast({
-        title: "Алдаа",
-        description: err?.message || "Хадгалахад алдаа гарлаа",
+        title: `Error: ${errorCode}`,
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -432,14 +470,20 @@ export function StrategyMakerPanel(props: {
 
           <div className="rounded-2xl border bg-card p-4">
             <div className="flex gap-3 flex-wrap">
-              <Input value={strategyName} onChange={(e) => setStrategyName(e.target.value)} placeholder="Strategy нэр..." />
+              <Input value={strategyName} onChange={(e) => setStrategyName(e.target.value)} placeholder="Strategy name..." />
               <Button onClick={saveStrategy} disabled={!isValid || !strategyName.trim() || isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? "Хадгалж байна..." : "Хадгалах"}
+                {isSaving ? "Saving..." : "Save Strategy"}
               </Button>
             </div>
+            {/* Validation warning when button is disabled */}
+            {!isValid && (
+              <div className="mt-3 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-600 dark:text-yellow-400">
+                ⚠️ Select at least 1 Gate, 1 Trigger, and 1 Confluence to save.
+              </div>
+            )}
             <div className="mt-3 text-xs text-muted-foreground">
-              Сонгосон: {selectedDetectors.length} детектор • {selectedDetectors.join(", ")}
+              Selected: {selectedDetectors.length} detectors • {selectedDetectors.join(", ")}
             </div>
           </div>
         </div>

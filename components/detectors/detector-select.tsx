@@ -19,7 +19,7 @@ import {
   type DetectorCategory,
   type DetectorPreset,
 } from "@/lib/detectors/catalog"
-import { normalizeDetectorList } from "@/lib/detector-utils"
+import { normalizeDetectorList } from "@/lib/detectors/normalize"
 
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -120,15 +120,20 @@ function DetectorItem({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-sm">{detector.labelMn}</span>
+          <span className="font-medium text-sm">{detector.labelEn}</span>
           {isRequired && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-yellow-500/30 text-yellow-500">
               Required
             </Badge>
           )}
         </div>
+        {detector.labelMn && detector.labelMn !== detector.labelEn && (
+          <p className="text-xs text-muted-foreground/70 mt-0.5">
+            {detector.labelMn}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-          {detector.descriptionMn}
+          {detector.descEn}
         </p>
       </div>
 
@@ -226,9 +231,9 @@ function PresetCard({
         <div className="flex items-start gap-2">
           <span className="text-xl">{preset.icon}</span>
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm">{preset.nameMn}</div>
+            <div className="font-medium text-sm">{preset.nameEn}</div>
             <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-              {preset.descriptionMn}
+              {preset.descEn}
             </p>
             <div className="flex flex-wrap gap-1 mt-2">
               {preset.detectors.slice(0, 3).map(id => (

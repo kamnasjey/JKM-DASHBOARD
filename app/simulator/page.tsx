@@ -483,6 +483,11 @@ export default function SimulatorPage() {
   // ============================================
   // Render
   // ============================================
+  
+  // Extract version from result meta
+  const simVersion = result?.meta?.simVersion || ""
+  const dashboardVersion = result?.meta?.dashboardVersion || ""
+  
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
@@ -495,6 +500,14 @@ export default function SimulatorPage() {
             <p className="text-muted-foreground mt-1">
               Multi-timeframe backtesting across 5m → 4h
             </p>
+            {/* Version info */}
+            {(simVersion || dashboardVersion) && (
+              <p className="text-xs text-muted-foreground/60 mt-1 font-mono">
+                {dashboardVersion && `dash:${dashboardVersion}`}
+                {dashboardVersion && simVersion && " • "}
+                {simVersion && `sim:${simVersion}`}
+              </p>
+            )}
           </div>
           <Badge variant="secondary" className="gap-1.5">
             <Layers className="h-3.5 w-3.5" />

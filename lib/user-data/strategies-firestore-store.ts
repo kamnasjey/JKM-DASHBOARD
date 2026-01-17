@@ -1,7 +1,7 @@
 import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
 import { FieldValue } from "firebase-admin/firestore"
 import type { StrategyDoc, CreateStrategyInput, UpdateStrategyInput } from "@/lib/schemas/strategy"
-import { normalizeDetectorList } from "@/lib/detector-utils"
+import { normalizeDetectorList } from "@/lib/detectors/normalize"
 
 /**
  * Strategy Firestore Store

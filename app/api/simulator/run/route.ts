@@ -8,7 +8,9 @@
  * - We authenticate via NextAuth session
  * - Load access from Firestore (users/{uid}.hasPaidAccess)
  * - Load strategy from Firestore (users/{uid}/strategies/{strategyId})
+ * - Normalize detectors to canonical IDs
  * - Proxy compute to backend with INTERNAL_API_KEY
+ * - Always include meta.simVersion and explain in response
  * - Return result to client
  * 
  * NO PRISMA DEPENDENCY.
@@ -28,7 +30,8 @@ import {
 } from "@/lib/schemas/simulator"
 import { getStrategy } from "@/lib/user-data/strategies-firestore-store"
 import { storeSimulatorDiagnostics, maskUserId, SimulatorDiagnostics } from "@/lib/simulator-diagnostics"
-import { normalizeDetectorList } from "@/lib/detector-utils"
+import { normalizeDetectorIds, normalizeDetectorList } from "@/lib/detectors/normalize"
+import { getDashboardVersion } from "@/lib/version"
 
 export const runtime = "nodejs"
 
@@ -148,18 +151,30 @@ export async function POST(request: NextRequest) {
   if (!INTERNAL_API_KEY) {
     console.error(`[${requestId}] BACKEND_INTERNAL_API_KEY not configured`)
     return NextResponse.json(
-      { ok: false, error: "CONFIG_ERROR", message: "Backend not configured" },
+      { 
+        ok: false, 
+        error: "CONFIG_ERROR", 
+        message: "Backend not configured",
+        meta: { requestId, dashboardVersion: getDashboardVersion() }
+      },
       { status: 500 }
     )
   }
   
   // --- 6. Build backend payload ---
-  // Normalize detectors to canonical IDs (removes duplicates, handles aliases)
+  // Normalize detectors to canonical IDs with full tracking
   const originalDetectors = strategy.detectors || []
-  const normalizedDetectors = normalizeDetectorList(originalDetectors)
+  const normalizeResult = normalizeDetectorIds(originalDetectors)
+  const { requested: detectorsRequested, normalized: detectorsNormalized, unknown: detectorsUnknown } = normalizeResult
+  
+  // Log normalization for debugging
+  if (detectorsUnknown.length > 0) {
+    console.warn(`[${requestId}] Unknown detectors: ${detectorsUnknown.join(", ")}`)
+  }
   
   const backendPayload = {
     uid: userId,
+    requestId,
     symbols: effectiveSymbols,
     from: effectiveFrom,
     to: effectiveTo,
@@ -168,10 +183,10 @@ export async function POST(request: NextRequest) {
     strategy: {
       id: strategy.id,
       name: strategy.name,
-      detectors: normalizedDetectors,
-      // Include original for traceability (backend can compare)
-      detectorsRequested: originalDetectors,
-      detectorsNormalized: normalizedDetectors,
+      detectors: detectorsNormalized,  // Only canonical IDs
+      detectorsRequested,
+      detectorsNormalized,
+      detectorsUnknown,
       symbols: strategy.symbols || [],
       timeframe: strategy.timeframe,
       config: strategy.config || {},
@@ -180,10 +195,12 @@ export async function POST(request: NextRequest) {
   }
   
   // Log detector count for debugging
-  console.log(`[${requestId}] Simulator request: userId=${userId}, strategyId=${strategyId}, originalDetectors=${originalDetectors.length}, normalizedDetectors=${normalizedDetectors.length}, detectors=[${normalizedDetectors.join(", ")}]`)
+  console.log(`[${requestId}] Simulator request: userId=${userId}, strategyId=${strategyId}, detectorsRequested=${detectorsRequested.length}, detectorsNormalized=${detectorsNormalized.length}, unknown=${detectorsUnknown.length}, detectors=[${detectorsNormalized.join(", ")}]`)
   
   // --- 7. Proxy to backend ---
   const backendUrl = `${BACKEND_ORIGIN}/api/simulator/run`
+  const startTime = Date.now()
+  const dashboardVersion = getDashboardVersion()
   
   try {
     const backendResponse = await fetch(backendUrl, {
@@ -191,10 +208,12 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         "x-internal-api-key": INTERNAL_API_KEY,
+        "x-request-id": requestId,
       },
       body: JSON.stringify(backendPayload),
     })
     
+    const elapsedMs = Date.now() - startTime
     const backendText = await backendResponse.text()
     let backendJson: any
     
@@ -258,6 +277,7 @@ export async function POST(request: NextRequest) {
             ok: false,
             error: "BACKEND_UNAVAILABLE",
             message: backendJson?.error?.message || "Backend server error",
+            meta: { requestId, dashboardVersion, elapsedMs },
           },
           { status: 502 }
         )
@@ -269,17 +289,58 @@ export async function POST(request: NextRequest) {
           ok: false,
           error: backendJson?.error?.code || "BACKEND_ERROR",
           message: backendJson?.error?.message || backendJson?.message || "Backend error",
+          meta: { requestId, dashboardVersion, elapsedMs },
         },
         { status: backendResponse.status }
       )
     }
     
-    // --- 9. Add demo mode info to successful response ---
-    if (demoMode && backendJson.ok) {
+    // --- 9. Ensure response always has meta and explain ---
+    const tradesCount = backendJson.summary?.entries ?? backendJson.combined?.summary?.entries ?? 0
+    
+    // Always ensure meta block exists with required fields
+    if (!backendJson.meta) {
+      backendJson.meta = {}
+    }
+    backendJson.meta.requestId = requestId
+    backendJson.meta.dashboardVersion = dashboardVersion
+    backendJson.meta.elapsedMs = elapsedMs
+    backendJson.meta.detectorsRequested = detectorsRequested
+    backendJson.meta.detectorsNormalized = detectorsNormalized
+    backendJson.meta.detectorsUnknown = detectorsUnknown
+    
+    // Add demo mode info if applicable
+    if (demoMode) {
       backendJson.demoMode = true
       backendJson.demoMessage = demoMessage
-      if (backendJson.meta) {
-        backendJson.meta.demoMode = true
+      backendJson.meta.demoMode = true
+    }
+    
+    // Ensure explain/explainability block exists when 0 trades
+    if (tradesCount === 0 && !backendJson.explainability) {
+      // Build default explain block if backend didn't provide one
+      const defaultHitsPerDetector: Record<string, number> = {}
+      for (const det of detectorsNormalized) {
+        defaultHitsPerDetector[det] = 0
+      }
+      
+      backendJson.explainability = {
+        rootCause: "NO_EXPLAIN_FROM_BACKEND",
+        explanation: "Backend did not return explainability data. This may indicate a configuration issue.",
+        severity: "warning",
+        suggestions: [
+          "Try extending the date range to 90 days",
+          "Try a higher timeframe like 1H or 4H",
+          "Check if the selected detectors are compatible"
+        ],
+        debug: {
+          barsScanned: 0,
+          hitsPerDetector: defaultHitsPerDetector,
+          gateBlocks: {},
+          detectorsRequested,
+          detectorsNormalized,
+          detectorsUnknown,
+        }
       }
     }
     
@@ -292,9 +353,9 @@ export async function POST(request: NextRequest) {
           userId: maskUserId(userId),
           strategyId,
           strategyName: strategy.name || strategyId,
-          detectorsCount: originalDetectors.length,
-          detectorsList: originalDetectors,
-          detectorsNormalized: normalizedDetectors,
+          detectorsCount: detectorsRequested.length,
+          detectorsList: detectorsRequested,
+          detectorsNormalized,
           symbols: effectiveSymbols,
           from: effectiveFrom,
           to: effectiveTo,
@@ -303,19 +364,19 @@ export async function POST(request: NextRequest) {
         },
         response: {
           ok: backendJson.ok,
-          entriesTotal: backendJson.summary?.entries ?? backendJson.combined?.summary?.entries,
+          entriesTotal: tradesCount,
           winrate: backendJson.summary?.winrate ?? backendJson.combined?.summary?.winrate,
-          meta: backendJson.meta ? {
-            simVersion: backendJson.meta.simVersion,
-            baseTimeframe: backendJson.meta.baseTimeframe,
-            detectorsRequested: originalDetectors,
-            detectorsNormalized: normalizedDetectors,
-            detectorsRecognized: backendJson.meta.detectorsRecognized,
-            detectorsImplemented: backendJson.meta.detectorsImplemented,
-            detectorsNotImplemented: backendJson.meta.detectorsNotImplemented,
-            detectorsUnknown: backendJson.meta.detectorsUnknown,
-            warnings: backendJson.meta.warnings?.slice(0, 5),
-          } : undefined,
+          meta: {
+            simVersion: backendJson.meta?.simVersion || "unknown",
+            baseTimeframe: backendJson.meta?.baseTimeframe,
+            detectorsRequested,
+            detectorsNormalized,
+            detectorsRecognized: backendJson.meta?.detectorsRecognized,
+            detectorsImplemented: backendJson.meta?.detectorsImplemented,
+            detectorsNotImplemented: backendJson.meta?.detectorsNotImplemented,
+            detectorsUnknown,
+            warnings: backendJson.meta?.warnings?.slice(0, 5),
+          },
           explainability: backendJson.explainability ? {
             rootCause: backendJson.explainability.rootCause,
             explanation: backendJson.explainability.explanation,
@@ -337,12 +398,59 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(backendJson)
     
   } catch (err: any) {
+    const elapsedMs = Date.now() - startTime
     console.error(`[${requestId}] Backend network error:`, err?.message || err)
+    
+    // Store failed diagnostics
+    try {
+      const diagnosticsEntry: SimulatorDiagnostics = {
+        timestamp: new Date().toISOString(),
+        requestId,
+        payload: {
+          userId: maskUserId(userId),
+          strategyId,
+          strategyName: strategy.name || strategyId,
+          detectorsCount: detectorsRequested.length,
+          detectorsList: detectorsRequested,
+          detectorsNormalized,
+          symbols: effectiveSymbols,
+          from: effectiveFrom,
+          to: effectiveTo,
+          timeframe: timeframe || "auto",
+          demoMode,
+        },
+        response: {
+          ok: false,
+          errorCode: "BACKEND_UNREACHABLE",
+          errorMessage: err?.message || "Network error",
+        },
+      }
+      storeSimulatorDiagnostics(diagnosticsEntry)
+    } catch {}
+    
     return NextResponse.json(
       {
         ok: false,
-        error: "BACKEND_UNAVAILABLE",
-        message: "Failed to reach backend server",
+        error: "BACKEND_UNREACHABLE",
+        message: `Failed to reach backend server: ${err?.message || "Network error"}`,
+        meta: { 
+          requestId, 
+          dashboardVersion,
+          elapsedMs,
+          detectorsRequested,
+          detectorsNormalized,
+          detectorsUnknown,
+        },
+        explainability: {
+          rootCause: "BACKEND_UNREACHABLE",
+          explanation: "Could not connect to the simulation backend. The server may be down or unreachable.",
+          severity: "error",
+          suggestions: [
+            "Wait a few minutes and try again",
+            "Check if the backend service is running",
+            "Contact support if the issue persists"
+          ],
+        }
       },
       { status: 502 }
     )
