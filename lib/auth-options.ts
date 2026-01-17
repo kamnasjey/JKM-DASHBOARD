@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { getPrisma, prismaAvailable } from "@/lib/db"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { seedStarterStrategiesForUser } from "@/lib/user-data/starter-strategies"
 
 // Mask email for logs: a***@domain.com
 function maskEmail(email: string): string {
@@ -241,6 +242,14 @@ export const authOptions: NextAuthOptions = {
                 { merge: true },
               )
             ;(token as any).firebaseSynced = true
+
+            // Seed starter strategies for new users (non-blocking, best-effort)
+            // This ensures every user has default strategies on first login
+            try {
+              await seedStarterStrategiesForUser(db, id)
+            } catch (seedErr) {
+              console.error("[Auth] Starter strategies seed failed (continuing):", seedErr)
+            }
           } catch (err) {
             console.error("[Auth] Firestore user upsert failed (continuing):", err)
           }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { hash } from "bcryptjs"
 import { getPrisma, prismaAvailable } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { seedStarterStrategiesForUser } from "@/lib/user-data/starter-strategies"
 
 export const runtime = "nodejs"
 
@@ -62,6 +64,30 @@ export async function POST(request: Request) {
     // Mask email in response
     const maskedEmail = `${normalizedEmail[0]}***@${normalizedEmail.split("@")[1]}`
     console.log(`[Auth] Email register success: ${maskedEmail}`)
+
+    // Seed starter strategies for new user (best-effort, non-blocking)
+    try {
+      const db = getFirebaseAdminDb()
+      
+      // First ensure user doc exists in Firestore
+      await db.collection("users").doc(user.id).set(
+        {
+          user_id: user.id,
+          email: normalizedEmail,
+          name: name?.trim() || null,
+          provider: "email",
+          createdAt: new Date().toISOString(),
+        },
+        { merge: true }
+      )
+      
+      // Then seed starter strategies
+      await seedStarterStrategiesForUser(db, user.id)
+      console.log(`[Auth] Starter strategies seeded for: ${maskedEmail}`)
+    } catch (seedErr) {
+      // Non-blocking: login will retry seeding as fallback
+      console.error(`[Auth] Starter strategies seed failed (will retry on login):`, seedErr)
+    }
 
     return NextResponse.json({
       success: true,

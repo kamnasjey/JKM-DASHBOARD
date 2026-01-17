@@ -423,6 +423,12 @@ export default function StrategiesPage() {
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Layers className="h-4 w-4" />
                       {strategy.name || strategy.strategy_id}
+                      {/* Starter badge for template strategies */}
+                      {(strategy.id || strategy.strategy_id || "").startsWith("starter_") && (
+                        <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                          ⭐ Starter
+                        </Badge>
+                      )}
                       {unknownCount > 0 && (
                         <Badge variant="outline" className="text-[10px] border-red-500/50 text-red-500">
                           ⚠ {unknownCount} unknown
