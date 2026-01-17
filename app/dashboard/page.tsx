@@ -33,6 +33,43 @@ interface Strategy {
   detectors: string[]
 }
 
+// Helper: Classify symbols for market hours detection
+const isCryptoSymbol = (symbol: string): boolean => {
+  const s = symbol.toUpperCase()
+  return /^(BTC|ETH|SOL|XRP|ADA|DOGE|DOT|LINK|AVAX|MATIC|SHIB|LTC|UNI|ATOM)/.test(s) ||
+         s.includes("USDT") || s.includes("USDC") || s.endsWith("USD") && s.startsWith("BTC")
+}
+
+const isForexOrCFD = (symbol: string): boolean => {
+  const s = symbol.toUpperCase()
+  // Forex pairs (major/minor/cross)
+  const forexCurrencies = ["USD", "EUR", "GBP", "JPY", "AUD", "NZD", "CAD", "CHF"]
+  const hasForexPair = forexCurrencies.some(c1 => 
+    forexCurrencies.some(c2 => c1 !== c2 && s.includes(c1) && s.includes(c2))
+  )
+  // Metals
+  const isMetals = s.startsWith("XAU") || s.startsWith("XAG")
+  // Indices
+  const isIndex = /^(US30|NAS100|SPX500|DAX|FTSE|NDX|DJI)/.test(s)
+  
+  return hasForexPair || isMetals || isIndex
+}
+
+// Check if market is closed using server time
+const isMarketClosed = (symbol: string, serverTime: string | null): boolean => {
+  if (!serverTime) return false
+  if (isCryptoSymbol(symbol)) return false // Crypto trades 24/7
+  if (!isForexOrCFD(symbol)) return false
+  
+  try {
+    const dt = new Date(serverTime)
+    const dayOfWeek = dt.getUTCDay() // 0=Sun, 6=Sat
+    return dayOfWeek === 0 || dayOfWeek === 6
+  } catch {
+    return false
+  }
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
@@ -372,6 +409,11 @@ export default function DashboardPage() {
     return nextCandleIn !== null && nextCandleIn < -30 // delayed more than 30 seconds
   }, [nextCandleIn])
 
+  // Market closed detection using server time
+  const marketClosed = useMemo(() => {
+    return isMarketClosed(liveOpsSymbol, feedStatus?.serverTime)
+  }, [liveOpsSymbol, feedStatus?.serverTime])
+
   const scanCadenceSec = useMemo(() => {
     return (engineStatus as any)?.cadence_sec || 300
   }, [engineStatus])
@@ -523,17 +565,30 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-sm flex items-center gap-2">
                       <span className="text-muted-foreground">Next in: </span>
-                      <span className={`font-mono ${candleIsDelayed ? "text-amber-500" : "text-muted-foreground"}`}>
-                        {nextCandleText}
+                      <span className={`font-mono ${candleIsDelayed && !marketClosed ? "text-amber-500" : "text-muted-foreground"}`}>
+                        {marketClosed ? "—" : nextCandleText}
                       </span>
-                      {candleIsDelayed && (
+                      {/* Market closed badge (weekend for Forex/CFD) */}
+                      {marketClosed && (
+                        <Badge variant="outline" className="text-xs text-blue-500 border-blue-500">
+                          Market closed
+                        </Badge>
+                      )}
+                      {/* Provider lag badge (only when market should be open) */}
+                      {!marketClosed && candleIsDelayed && (
                         <Badge variant="outline" className="text-xs text-amber-500 border-amber-500">
                           Provider lag
                         </Badge>
                       )}
                     </div>
+                    {/* Weekend hint for Forex */}
+                    {marketClosed && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        💤 Forex market is closed (weekend). Crypto remains live.
+                      </div>
+                    )}
                     {/* Backend feed status info */}
-                    {feedStatus?.worst && feedStatus.worst.lagSec > 300 && (
+                    {!marketClosed && feedStatus?.worst && feedStatus.worst.lagSec > 300 && (
                       <div className="text-xs text-amber-500 mt-1">
                         ⚠️ Worst lag: {feedStatus.worst.symbol} ({Math.round(feedStatus.worst.lagSec)}s)
                       </div>
