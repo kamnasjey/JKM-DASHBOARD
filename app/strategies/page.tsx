@@ -13,12 +13,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Slider } from "@/components/ui/slider"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Textarea } from "@/components/ui/textarea"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import { normalizeDetectorList } from "@/lib/detector-utils"
+import { DetectorSelect, validateSelection, ensureRequiredDetectors, getUnknownDetectors } from "@/components/detectors/detector-select"
+import { CATEGORY_INFO, DETECTOR_BY_ID } from "@/lib/detectors/catalog"
 
 const MAX_STRATEGIES = 30
 
@@ -40,6 +41,7 @@ interface Strategy {
   min_score?: number
   min_rr?: number
   description?: string
+  notes?: string // User notes for strategy
   config?: Record<string, any>
   createdAt?: string
   updatedAt?: string
@@ -51,6 +53,7 @@ const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
   detectors: [],
   min_score: 1.0,
   min_rr: 2.0,
+  notes: "",
 }
 
 export default function StrategiesPage() {
@@ -174,30 +177,18 @@ export default function StrategiesPage() {
       strategy_id: strategy.id || strategy.strategy_id, // Use id from v2 API
       name: strategy.name,
       enabled: strategy.enabled,
-      detectors: [...strategy.detectors],
+      detectors: ensureRequiredDetectors([...strategy.detectors]),
       min_score: strategy.min_score || strategy.config?.min_score || 1.0,
       min_rr: strategy.min_rr || strategy.config?.min_rr || 2.0,
       description: strategy.description,
+      notes: strategy.notes || "",
     })
     setEditingIndex(index)
     setShowCreateDialog(true)
   }
 
-  const handleFormDetectorToggle = (detectorId: string) => {
-    setEditForm(prev => {
-      const currentDetectors = Array.isArray(prev.detectors) ? prev.detectors : []
-      console.log("[strategies] toggle detector:", detectorId, "current:", currentDetectors)
-      
-      let newDetectors: string[]
-      if (currentDetectors.includes(detectorId)) {
-        newDetectors = currentDetectors.filter(d => d !== detectorId)
-      } else {
-        newDetectors = [...currentDetectors, detectorId]
-      }
-      
-      console.log("[strategies] new detectors:", newDetectors)
-      return { ...prev, detectors: newDetectors }
-    })
+  const handleDetectorSelectionChange = (selected: string[]) => {
+    setEditForm(prev => ({ ...prev, detectors: selected }))
   }
 
   const handleSaveStrategy = async () => {
@@ -210,10 +201,12 @@ export default function StrategiesPage() {
       return
     }
 
-    if (editForm.detectors.length === 0) {
+    // Validate detector selection
+    const validation = validateSelection(editForm.detectors)
+    if (!validation.valid) {
       toast({
         title: "Алдаа",
-        description: "Хамгийн багадаа 1 detector сонгоно уу",
+        description: validation.errors.join("; "),
         variant: "destructive",
       })
       return
@@ -410,7 +403,19 @@ export default function StrategiesPage() {
 
             {/* Strategy Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {strategies.map((strategy, idx) => (
+              {strategies.map((strategy, idx) => {
+                // Group detectors by category for display
+                const detectorsByCategory = (strategy.detectors || []).reduce((acc, id) => {
+                  const detector = DETECTOR_BY_ID.get(id)
+                  const category = detector?.category || "unknown"
+                  if (!acc[category]) acc[category] = []
+                  acc[category].push({ id, label: detector?.labelShort || id, isUnknown: !detector })
+                  return acc
+                }, {} as Record<string, { id: string; label: string; isUnknown: boolean }[]>)
+
+                const unknownCount = detectorsByCategory["unknown"]?.length || 0
+
+                return (
                 <Card key={strategy.strategy_id || idx} className={!strategy.enabled ? "opacity-60" : ""}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -418,6 +423,11 @@ export default function StrategiesPage() {
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Layers className="h-4 w-4" />
                       {strategy.name || strategy.strategy_id}
+                      {unknownCount > 0 && (
+                        <Badge variant="outline" className="text-[10px] border-red-500/50 text-red-500">
+                          ⚠ {unknownCount} unknown
+                        </Badge>
+                      )}
                     </CardTitle>
                     {strategy.description && (
                       <CardDescription className="mt-1">{strategy.description}</CardDescription>
@@ -432,23 +442,47 @@ export default function StrategiesPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* Detectors */}
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                {/* Detectors grouped by category */}
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Detectors ({strategy.detectors?.length || 0})
                   </p>
-                  <div className="flex flex-wrap gap-1">
-                    {strategy.detectors?.slice(0, 6).map((d) => (
-                      <Badge key={d} variant="secondary" className="text-xs">
-                        {d}
-                      </Badge>
-                    ))}
-                    {strategy.detectors?.length > 6 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{strategy.detectors.length - 6} more
-                      </Badge>
-                    )}
-                  </div>
+                  {(["gate", "trigger", "confluence"] as const).map(cat => {
+                    const items = detectorsByCategory[cat]
+                    if (!items?.length) return null
+                    const info = CATEGORY_INFO[cat]
+                    return (
+                      <div key={cat} className="flex flex-wrap gap-1">
+                        <span className="text-xs">{info.icon}</span>
+                        {items.slice(0, 3).map((item, i) => (
+                          <Badge key={i} variant="secondary" className="text-[10px]">
+                            {item.label}
+                          </Badge>
+                        ))}
+                        {items.length > 3 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            +{items.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {/* Unknown detectors in red */}
+                  {detectorsByCategory["unknown"]?.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-xs">❓</span>
+                      {detectorsByCategory["unknown"].slice(0, 3).map((item, i) => (
+                        <Badge key={i} variant="outline" className="text-[10px] border-red-500/50 text-red-500">
+                          {item.id}
+                        </Badge>
+                      ))}
+                      {detectorsByCategory["unknown"].length > 3 && (
+                        <Badge variant="outline" className="text-[10px] border-red-500/50 text-red-500">
+                          +{detectorsByCategory["unknown"].length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Params */}
@@ -456,6 +490,13 @@ export default function StrategiesPage() {
                   <span>Min RR: {strategy.min_rr || 2.0}</span>
                   <span>Min Score: {strategy.min_score || 1.0}</span>
                 </div>
+
+                {/* Notes preview */}
+                {strategy.notes && (
+                  <p className="text-xs text-muted-foreground italic line-clamp-1">
+                    📝 {strategy.notes}
+                  </p>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2 border-t">
@@ -479,18 +520,18 @@ export default function StrategiesPage() {
                 </div>
               </CardContent>
                 </Card>
-              ))}
+              )})}
             </div>
 
           {/* Create/Edit Dialog */}
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingIndex !== null ? "Стратеги засах" : "Шинэ Strategy үүсгэх"}
               </DialogTitle>
               <DialogDescription>
-                Detector-уудыг сонгож combine хийнэ үү
+                Detector-уудыг сонгож combine хийнэ үү. Хамгийн багадаа 1 Gate + 1 Trigger сонгоно уу.
               </DialogDescription>
             </DialogHeader>
 
@@ -514,6 +555,19 @@ export default function StrategiesPage() {
                   placeholder="Энэ стратегийн тухай товч тайлбар"
                   value={editForm.description || ""}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                />
+              </div>
+
+              {/* Notes - New field for user notes */}
+              <div className="space-y-2">
+                <Label htmlFor="notes">Тэмдэглэл (optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Хувийн тэмдэглэл: Энэ стратегийг хэзээ хэрэглэх, ямар зах зээлд сайн ажилладаг гэх мэт..."
+                  value={editForm.notes || ""}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  rows={2}
+                  className="resize-none"
                 />
               </div>
 
@@ -556,115 +610,31 @@ export default function StrategiesPage() {
                 />
               </div>
 
-              {/* Detectors */}
-              <div className="space-y-3">
-                <Label>
-                  Detectors * ({editForm.detectors.length} сонгосон)
-                </Label>
-                
-                {/* Group by category */}
-                {(["gate", "trigger", "confluence"] as const).map((category) => {
-                  const categoryDetectors = detectors.filter(d => d.category === category)
-                  if (categoryDetectors.length === 0) return null
-                  
-                  const categoryLabels = {
-                    gate: "🚪 Gate (Шүүлтүүр)",
-                    trigger: "🎯 Trigger (Entry сигнал)",
-                    confluence: "✅ Confluence (Баталгаа)"
-                  }
-                  
-                  return (
-                    <div key={category} className="space-y-2">
-                      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {categoryLabels[category]}
-                      </div>
-                      <div className="border rounded-lg p-3 max-h-48 overflow-y-auto">
-                        <div className="grid grid-cols-1 gap-2">
-                          {categoryDetectors.map((detector) => {
-                            const detectorId = detector.id || detector.name
-                            const isSelected = editForm.detectors.includes(detectorId)
-                            return (
-                              <TooltipProvider key={detectorId}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div
-                                      className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${
-                                        isSelected 
-                                          ? 'bg-primary/20 border border-primary' 
-                                          : 'hover:bg-muted border border-transparent'
-                                      }`}
-                                      onClick={(e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        handleFormDetectorToggle(detectorId)
-                                      }}
-                                    >
-                                      <Checkbox
-                                        checked={isSelected}
-                                        onCheckedChange={() => {}}
-                                        className="mt-0.5"
-                                      />
-                                      <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium">
-                                          {detector.labelMn || detectorId}
-                                        </div>
-                                        {detector.descriptionMn && (
-                                          <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                                            {detector.descriptionMn}
-                                          </div>
-                                        )}
-                                      </div>
-                                      {detector.descriptionMn && (
-                                        <Info className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-1" />
-                                      )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  {detector.descriptionMn && (
-                                    <TooltipContent side="right" className="max-w-xs">
-                                      <p className="text-sm">{detector.descriptionMn}</p>
-                                    </TooltipContent>
-                                  )}
-                                </Tooltip>
-                              </TooltipProvider>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-                
-                {/* Selected detectors */}
-                {editForm.detectors.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-2 border-t">
-                    <span className="text-xs text-muted-foreground mr-2">Сонгосон:</span>
-                    {editForm.detectors.map((d) => {
-                      // Find detector info to show Cyrillic label if available
-                      const detectorInfo = detectors.find(det => det.id === d || det.name === d)
-                      const displayLabel = detectorInfo?.labelMn?.split('(')[0]?.trim() || d
-                      return (
-                        <Badge
-                          key={d}
-                          variant="secondary"
-                          className="cursor-pointer"
-                          onClick={() => handleFormDetectorToggle(d)}
-                        >
-                          {displayLabel} <X className="h-3 w-3 ml-1" />
-                        </Badge>
-                      )
-                    })}
-                  </div>
-                )}
+              {/* Pro Detector Select Component */}
+              <div className="space-y-2">
+                <Label>Detectors *</Label>
+                <DetectorSelect
+                  selected={editForm.detectors}
+                  onChange={handleDetectorSelectionChange}
+                  maxHeight="350px"
+                />
               </div>
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                Болих
-              </Button>
-              <Button onClick={handleSaveStrategy} disabled={saving}>
-                {saving ? "Хадгалж байна..." : editingIndex !== null ? "Хадгалах" : "Үүсгэх"}
-              </Button>
+              <div className="flex items-center justify-between w-full">
+                <p className="text-xs text-muted-foreground">
+                  Strategies: {strategies.length}/{MAX_STRATEGIES}
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                    Болих
+                  </Button>
+                  <Button onClick={handleSaveStrategy} disabled={saving}>
+                    {saving ? "Хадгалж байна..." : editingIndex !== null ? "Хадгалах" : "Үүсгэх"}
+                  </Button>
+                </div>
+              </div>
             </DialogFooter>
           </DialogContent>
           </Dialog>

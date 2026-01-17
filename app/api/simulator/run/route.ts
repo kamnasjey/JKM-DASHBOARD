@@ -28,6 +28,7 @@ import {
 } from "@/lib/schemas/simulator"
 import { getStrategy } from "@/lib/user-data/strategies-firestore-store"
 import { storeSimulatorDiagnostics, maskUserId, SimulatorDiagnostics } from "@/lib/simulator-diagnostics"
+import { normalizeDetectorList } from "@/lib/detector-utils"
 
 export const runtime = "nodejs"
 
@@ -153,6 +154,10 @@ export async function POST(request: NextRequest) {
   }
   
   // --- 6. Build backend payload ---
+  // Normalize detectors to canonical IDs (removes duplicates, handles aliases)
+  const originalDetectors = strategy.detectors || []
+  const normalizedDetectors = normalizeDetectorList(originalDetectors)
+  
   const backendPayload = {
     uid: userId,
     symbols: effectiveSymbols,
@@ -163,7 +168,10 @@ export async function POST(request: NextRequest) {
     strategy: {
       id: strategy.id,
       name: strategy.name,
-      detectors: strategy.detectors || [],
+      detectors: normalizedDetectors,
+      // Include original for traceability (backend can compare)
+      detectorsRequested: originalDetectors,
+      detectorsNormalized: normalizedDetectors,
       symbols: strategy.symbols || [],
       timeframe: strategy.timeframe,
       config: strategy.config || {},
@@ -172,7 +180,7 @@ export async function POST(request: NextRequest) {
   }
   
   // Log detector count for debugging
-  console.log(`[${requestId}] Simulator request: userId=${userId}, strategyId=${strategyId}, detectorsCount=${strategy.detectors?.length || 0}, detectors=[${(strategy.detectors || []).join(", ")}]`)
+  console.log(`[${requestId}] Simulator request: userId=${userId}, strategyId=${strategyId}, originalDetectors=${originalDetectors.length}, normalizedDetectors=${normalizedDetectors.length}, detectors=[${normalizedDetectors.join(", ")}]`)
   
   // --- 7. Proxy to backend ---
   const backendUrl = `${BACKEND_ORIGIN}/api/simulator/run`
@@ -284,8 +292,9 @@ export async function POST(request: NextRequest) {
           userId: maskUserId(userId),
           strategyId,
           strategyName: strategy.name || strategyId,
-          detectorsCount: strategy.detectors?.length || 0,
-          detectorsList: strategy.detectors || [],
+          detectorsCount: originalDetectors.length,
+          detectorsList: originalDetectors,
+          detectorsNormalized: normalizedDetectors,
           symbols: effectiveSymbols,
           from: effectiveFrom,
           to: effectiveTo,
@@ -299,8 +308,8 @@ export async function POST(request: NextRequest) {
           meta: backendJson.meta ? {
             simVersion: backendJson.meta.simVersion,
             baseTimeframe: backendJson.meta.baseTimeframe,
-            detectorsRequested: backendJson.meta.detectorsRequested,
-            detectorsNormalized: backendJson.meta.detectorsNormalized,  // NEW
+            detectorsRequested: originalDetectors,
+            detectorsNormalized: normalizedDetectors,
             detectorsRecognized: backendJson.meta.detectorsRecognized,
             detectorsImplemented: backendJson.meta.detectorsImplemented,
             detectorsNotImplemented: backendJson.meta.detectorsNotImplemented,

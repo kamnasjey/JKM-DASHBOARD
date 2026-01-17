@@ -25,9 +25,19 @@ import {
   BarChart3,
   Clock,
   Zap,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { 
+  DETECTOR_BY_ID, 
+  CATEGORY_INFO, 
+  type DetectorCategory 
+} from "@/lib/detectors/catalog"
+import { ZeroTradesDebugPanel } from "@/components/simulator/zero-trades-debug-panel"
+import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
 
 // ============================================
 // Types
@@ -404,6 +414,72 @@ export default function SimulatorPage() {
     setError(null)
   }
 
+  // Quick fix handlers for 0 trades debugging
+  async function handleQuickFix(action: "normalize" | "extend_range" | "change_tf" | "disable_gates") {
+    if (!symbol || !strategyId) return
+
+    setRunning(true)
+    setError(null)
+    setResult(null)
+    setActiveTab("combined")
+
+    try {
+      let customFrom = rangeDates.from
+      let customTo = rangeDates.to
+      let customTimeframe = "auto"
+      let customDetectors: string[] | undefined
+
+      switch (action) {
+        case "extend_range":
+          // Set to 90 days
+          const to90 = new Date()
+          const from90 = new Date(to90.getTime() - 90 * 24 * 60 * 60 * 1000)
+          customFrom = from90.toISOString().split("T")[0]
+          customTo = to90.toISOString().split("T")[0]
+          setRangePreset("90D")
+          break
+
+        case "change_tf":
+          customTimeframe = "1h,4h"
+          break
+
+        case "disable_gates":
+          // Filter out gate detectors for this run only
+          const strategyDetectors = selectedStrategy?.detectors || []
+          customDetectors = strategyDetectors.filter(d => 
+            !d.startsWith("GATE_") || d === "GATE_REGIME"
+          )
+          break
+
+        case "normalize":
+          // Just re-run, normalization happens on server
+          break
+      }
+
+      const res = await api.simulatorV2.run({
+        strategyId,
+        symbols: [symbol],
+        from: customFrom,
+        to: customTo,
+        timeframe: customTimeframe,
+        mode: "winrate",
+        demoMode: false,
+        // Note: customDetectors not passed - server always uses strategy detectors
+        // For disable_gates, we'd need a backend feature to override
+      })
+
+      setResult(res as MultiTFResult)
+
+      if (!res.ok && res.error) {
+        setError(res.error.message)
+      }
+    } catch (err: any) {
+      setError(err.message || "Quick fix simulation failed")
+    } finally {
+      setRunning(false)
+    }
+  }
+
   // ============================================
   // Render
   // ============================================
@@ -491,18 +567,78 @@ export default function SimulatorPage() {
               </div>
             </div>
 
-            {/* Requested Detectors - show ALL detectors from strategy */}
+            {/* Requested Detectors - show ALL detectors from strategy grouped by category */}
             {requestedDetectors.length > 0 && (
               <div className="pt-4 border-t border-border">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Requested Detectors ({requestedDetectors.length})
+                  Active Detectors ({requestedDetectors.length})
                 </label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {requestedDetectors.map((d) => (
-                    <Badge key={d} variant="secondary">
-                      {d}
-                    </Badge>
-                  ))}
+                <div className="space-y-3 mt-3">
+                  {/* Group detectors by category */}
+                  {(["gate", "trigger", "confluence"] as DetectorCategory[]).map(category => {
+                    const detectorsInCategory = requestedDetectors.filter(id => {
+                      const meta = DETECTOR_BY_ID.get(id)
+                      return meta?.category === category
+                    })
+                    if (detectorsInCategory.length === 0) return null
+                    
+                    const catInfo = CATEGORY_INFO[category]
+                    return (
+                      <div key={category} className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{catInfo.icon}</span>
+                          <span className="font-medium">{catInfo.labelMn}</span>
+                          <span className="text-muted-foreground/50">
+                            ({detectorsInCategory.length})
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pl-5">
+                          {detectorsInCategory.map(id => {
+                            const meta = DETECTOR_BY_ID.get(id)
+                            return (
+                              <Badge 
+                                key={id} 
+                                variant="secondary" 
+                                className={cn(
+                                  "text-xs",
+                                  category === "gate" && "bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400",
+                                  category === "trigger" && "bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400",
+                                  category === "confluence" && "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400"
+                                )}
+                                title={meta?.descriptionMn}
+                              >
+                                {meta?.labelShort || id}
+                              </Badge>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  
+                  {/* Show unrecognized detectors */}
+                  {requestedDetectors.some(id => !DETECTOR_BY_ID.has(id)) && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>❓</span>
+                        <span className="font-medium">Unknown</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pl-5">
+                        {requestedDetectors
+                          .filter(id => !DETECTOR_BY_ID.has(id))
+                          .map(id => (
+                            <Badge 
+                              key={id} 
+                              variant="outline" 
+                              className="text-xs border-red-500/30 text-red-500"
+                            >
+                              {id}
+                            </Badge>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -828,167 +964,117 @@ export default function SimulatorPage() {
               </Card>
             )}
 
-            {/* Explainability Panel - 0 Trades */}
-            {/* Explainability Panel - 0 Trades */}
+            {/* PRO Zero Trades Debug Panel with 1-click fixes */}
             {result.combined?.summary?.entries === 0 && (
-              <Card className="border-orange-500/30 bg-orange-500/10">
-                <CardContent className="pt-6 space-y-4">
-                  <h4 className="text-sm font-medium text-orange-600 dark:text-orange-500 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    Why 0 Trades?
-                  </h4>
-                  {result.explainability ? (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${
-                            result.explainability.severity === "high" 
-                              ? "border-red-500/50 text-red-600" 
-                              : "border-yellow-500/50 text-yellow-600"
-                          }`}
-                        >
-                          {result.explainability.rootCause || "Unknown"}
-                        </Badge>
-                        {result.explainability.debug?.barsScanned !== undefined && (
-                          <span className="text-xs text-muted-foreground">
-                            ({result.explainability.debug.barsScanned.toLocaleString()} bars scanned)
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {result.explainability.explanation || "No explanation available. Check detector configuration."}
-                      </p>
-                      
-                      {/* Per-detector hit counts */}
-                      {result.explainability.debug?.hitsPerDetector && 
-                       Object.keys(result.explainability.debug.hitsPerDetector).length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Detector Hits
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(result.explainability.debug.hitsPerDetector).map(([det, count]) => (
-                              <Badge 
-                                key={det} 
-                                variant="outline" 
-                                className={`text-xs ${
-                                  (count as number) > 0 
-                                    ? "border-green-500/50 text-green-600" 
-                                    : "border-muted text-muted-foreground"
-                                }`}
-                              >
-                                {det}: {count as number}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Gate blocks */}
-                      {result.explainability.debug?.gateBlocks && 
-                       Object.keys(result.explainability.debug.gateBlocks).length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            Gate Blocks
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(result.explainability.debug.gateBlocks).map(([gate, count]) => (
-                              <Badge 
-                                key={gate} 
-                                variant="outline" 
-                                className="text-xs border-red-500/50 text-red-600"
-                              >
-                                {gate}: {count as number} blocked
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {result.explainability.suggestions && result.explainability.suggestions.length > 0 && (
-                        <div className="space-y-1 pt-2 border-t border-orange-500/20">
-                          <p className="text-sm font-medium text-muted-foreground">Suggestions:</p>
-                          <ul className="text-sm text-muted-foreground list-disc list-inside">
-                            {result.explainability.suggestions.map((s, i) => (
-                              <li key={i}>{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      No trades found. This may be due to: (1) No detectors are implemented in the simulator, 
-                      (2) No matching setups in the date range, or (3) Gates filtered all candidates.
-                      Check the Detector Analysis panel below for details.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+              <ZeroTradesDebugPanel
+                explainability={result.explainability}
+                meta={result.meta}
+                onQuickFix={handleQuickFix}
+                onRerun={runSimulation}
+                isRerunning={running}
+              />
             )}
 
-            {/* Detector Classification Panel */}
+            {/* Detector Classification Panel - Enhanced with categories */}
             {result.meta?.detectorsRequested && result.meta.detectorsRequested.length > 0 && (
               <Card className="border-muted">
-                <CardContent className="pt-6 space-y-3">
+                <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium">Detector Analysis</h4>
-                    <span className="text-xs text-muted-foreground">
-                      {result.meta.detectorsImplemented?.length || 0}/{result.meta.detectorsRequested.length} supported
-                    </span>
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      Detector шинжилгээ
+                    </h4>
+                    <Badge variant="secondary" className="text-xs">
+                      {result.meta.detectorsImplemented?.length || 0}/{result.meta.detectorsRequested.length} дэмжигдсэн
+                    </Badge>
                   </div>
                   
-                  {/* Show normalized detector names with status */}
-                  <div className="flex flex-wrap gap-1">
-                    {(result.meta.detectorsNormalized || result.meta.detectorsRequested).map((d, idx) => {
-                      // Use normalized if available, otherwise try to match from implemented list
-                      const normalizedD = d.toUpperCase().replace(/-/g, "_")
-                      const isImplemented = result.meta?.detectorsImplemented?.some(
-                        impl => impl.toUpperCase() === normalizedD
-                      )
-                      const isNotImplemented = result.meta?.detectorsNotImplemented?.some(
-                        ni => ni.toUpperCase() === normalizedD
-                      )
-                      const isUnknown = result.meta?.detectorsUnknown?.some(
-                        unk => unk.toLowerCase() === d.toLowerCase()
-                      )
-                      const originalName = result.meta?.detectorsRequested?.[idx] || d
+                  {/* Group by category with Mongolian labels */}
+                  <div className="space-y-3">
+                    {(["gate", "trigger", "confluence"] as DetectorCategory[]).map(category => {
+                      const allDetectors = result.meta?.detectorsNormalized || result.meta?.detectorsRequested || []
+                      const detectorsInCategory = allDetectors.filter(d => {
+                        const meta = DETECTOR_BY_ID.get(d)
+                        return meta?.category === category
+                      })
+                      
+                      if (detectorsInCategory.length === 0) return null
+                      
+                      const catInfo = CATEGORY_INFO[category]
+                      
                       return (
-                        <Badge 
-                          key={d} 
-                          variant="outline" 
-                          className={`text-xs ${
-                            isImplemented ? "border-green-500/50 text-green-600" :
-                            isNotImplemented ? "border-yellow-500/50 text-yellow-600" :
-                            isUnknown ? "border-red-500/50 text-red-600" :
-                            "border-green-500/50 text-green-600"  // Default to implemented for new system
-                          }`}
-                          title={
-                            isImplemented ? `✓ ${d} → Supported` :
-                            isNotImplemented ? `⚠ ${d} → Known but not implemented` :
-                            isUnknown ? `✗ ${originalName} → Unknown detector` :
-                            `✓ ${d} → Supported`
-                          }
-                        >
-                          {isImplemented || (!isNotImplemented && !isUnknown) ? "✓ " : ""}{isNotImplemented && "⚠ "}{isUnknown && "✗ "}{d}
-                        </Badge>
+                        <div key={category} className="space-y-1.5">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{catInfo.icon}</span>
+                            <span className="font-medium">{catInfo.labelMn}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 pl-5">
+                            {detectorsInCategory.map((d, idx) => {
+                              const meta = DETECTOR_BY_ID.get(d)
+                              const normalizedD = d.toUpperCase().replace(/-/g, "_")
+                              const isImplemented = result.meta?.detectorsImplemented?.some(
+                                impl => impl.toUpperCase() === normalizedD
+                              )
+                              const isNotImplemented = result.meta?.detectorsNotImplemented?.some(
+                                ni => ni.toUpperCase() === normalizedD
+                              )
+                              
+                              return (
+                                <Badge 
+                                  key={d} 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-xs",
+                                    isImplemented && "border-green-500/50 bg-green-500/10 text-green-500",
+                                    isNotImplemented && "border-yellow-500/50 bg-yellow-500/10 text-yellow-500",
+                                    !isImplemented && !isNotImplemented && "border-green-500/50 bg-green-500/10 text-green-500"
+                                  )}
+                                  title={meta?.descriptionMn || d}
+                                >
+                                  {isImplemented || (!isNotImplemented) ? "✓" : "⚠"} {meta?.labelShort || d}
+                                </Badge>
+                              )
+                            })}
+                          </div>
+                        </div>
                       )
                     })}
+                    
+                    {/* Unknown detectors */}
+                    {result.meta.detectorsUnknown && result.meta.detectorsUnknown.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>❓</span>
+                          <span className="font-medium">Танигдаагүй</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pl-5">
+                          {result.meta.detectorsUnknown.map((d) => (
+                            <Badge 
+                              key={d} 
+                              variant="outline" 
+                              className="text-xs border-red-500/50 bg-red-500/10 text-red-500"
+                            >
+                              ✗ {d}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
-                    <span className="flex items-center gap-1">
-                      <span className="text-green-600">✓</span> Supported
+                  {/* Legend */}
+                  <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-3 border-t">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-green-500">✓</span> Дэмжигдсэн
                     </span>
                     {result.meta.detectorsNotImplemented && result.meta.detectorsNotImplemented.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <span className="text-yellow-600">⚠</span> Not implemented ({result.meta.detectorsNotImplemented.length})
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-yellow-500">⚠</span> Удахгүй ({result.meta.detectorsNotImplemented.length})
                       </span>
                     )}
                     {result.meta.detectorsUnknown && result.meta.detectorsUnknown.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <span className="text-red-600">✗</span> Unknown ({result.meta.detectorsUnknown.length})
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-red-500">✗</span> Танигдаагүй ({result.meta.detectorsUnknown.length})
                       </span>
                     )}
                   </div>
@@ -1014,6 +1100,9 @@ export default function SimulatorPage() {
                 </>
               )}
             </div>
+
+            {/* Diagnostics Panel - Replaces DevTools */}
+            <DiagnosticsPanel />
           </div>
         )}
 

@@ -15,6 +15,7 @@ export interface SimulatorDiagnostics {
     strategyName: string
     detectorsCount: number
     detectorsList: string[]
+    detectorsNormalized?: string[]  // Canonical IDs after normalization
     symbols: string[]
     from: string
     to: string
@@ -54,7 +55,7 @@ export interface SimulatorDiagnostics {
 }
 
 // In-memory store for last N diagnostics (ring buffer)
-const MAX_STORED = 5
+const MAX_STORED = 10
 let diagnosticsStore: SimulatorDiagnostics[] = []
 
 /**

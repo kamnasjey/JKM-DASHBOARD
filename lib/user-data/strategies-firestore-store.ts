@@ -1,6 +1,7 @@
 import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
 import { FieldValue } from "firebase-admin/firestore"
 import type { StrategyDoc, CreateStrategyInput, UpdateStrategyInput } from "@/lib/schemas/strategy"
+import { normalizeDetectorList } from "@/lib/detector-utils"
 
 /**
  * Strategy Firestore Store
@@ -96,11 +97,14 @@ export async function createStrategy(
   const newRef = ref.doc()
   const now = FieldValue.serverTimestamp()
   
+  // Normalize detectors to canonical IDs (removes duplicates, handles aliases)
+  const normalizedDetectors = normalizeDetectorList(input.detectors)
+  
   const data = stripUndefinedDeep({
     name: input.name,
     description: input.description || null,
     enabled: input.enabled ?? true,
-    detectors: input.detectors,
+    detectors: normalizedDetectors,
     symbols: input.symbols || null,
     timeframe: input.timeframe || null,
     config: input.config || {},
@@ -143,7 +147,10 @@ export async function updateStrategy(
   if (input.name !== undefined) updateData.name = input.name
   if (input.description !== undefined) updateData.description = input.description
   if (input.enabled !== undefined) updateData.enabled = input.enabled
-  if (input.detectors !== undefined) updateData.detectors = input.detectors
+  if (input.detectors !== undefined) {
+    // Normalize detectors to canonical IDs (removes duplicates, handles aliases)
+    updateData.detectors = normalizeDetectorList(input.detectors)
+  }
   if (input.symbols !== undefined) updateData.symbols = input.symbols
   if (input.timeframe !== undefined) updateData.timeframe = input.timeframe
   if (input.config !== undefined) updateData.config = input.config

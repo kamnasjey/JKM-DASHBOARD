@@ -1,0 +1,603 @@
+/**
+ * Detector Catalog - Single Source of Truth
+ * 
+ * This file contains all detector metadata used throughout the dashboard.
+ * Both Strategy Maker and Simulator MUST import from this file.
+ * 
+ * DO NOT duplicate detector lists elsewhere!
+ * 
+ * Canonical IDs: UPPERCASE_SNAKE_CASE (stable, used by backend)
+ * UI displays: Mongolian labels + descriptions
+ */
+
+// ============================================================
+// Types
+// ============================================================
+
+export type DetectorCategory = "gate" | "trigger" | "confluence"
+export type DetectorImpact = "high" | "medium" | "low"
+export type DetectorCost = "light" | "medium" | "heavy"
+
+export interface DetectorMeta {
+  /** Canonical ID - UPPERCASE_SNAKE_CASE, used by backend */
+  id: string
+  /** Mongolian label for UI display */
+  labelMn: string
+  /** Short Mongolian label (without ID in parens) */
+  labelShort: string
+  /** Mongolian description */
+  descriptionMn: string
+  /** Category: gate, trigger, or confluence */
+  category: DetectorCategory
+  /** Performance impact on strategy */
+  impact: DetectorImpact
+  /** Computational cost */
+  cost: DetectorCost
+  /** If true, cannot be removed from selection */
+  required?: boolean
+  /** Tags for search/filtering */
+  tags?: string[]
+}
+
+// ============================================================
+// Detector Catalog (31 total)
+// ============================================================
+
+export const DETECTOR_CATALOG: DetectorMeta[] = [
+  // ============================================================
+  // 🚦 GATE DETECTORS (3) - Market condition filters
+  // "If gate fails → block trades"
+  // ============================================================
+  {
+    id: "GATE_REGIME",
+    labelMn: "Regime шүүлтүүр",
+    labelShort: "Regime",
+    descriptionMn: "Зах зээл trend эсэхийг шалгаж, choppy үед trade-г блоклоно. Заавал сонгосон байх ёстой.",
+    category: "gate",
+    impact: "high",
+    cost: "light",
+    required: true,
+    tags: ["trend", "filter", "regime"],
+  },
+  {
+    id: "GATE_VOLATILITY",
+    labelMn: "Volatility шүүлтүүр",
+    labelShort: "Volatility",
+    descriptionMn: "ATR-ээр volatility хэмжиж, хэт бага/өндөр volatility үед trade блоклоно.",
+    category: "gate",
+    impact: "medium",
+    cost: "light",
+    tags: ["volatility", "atr", "filter"],
+  },
+  {
+    id: "GATE_DRIFT_SENTINEL",
+    labelMn: "Drift Sentinel",
+    labelShort: "Drift",
+    descriptionMn: "Хүчтэй momentum drift үед counter-trend trade хийхээс сэргийлнэ.",
+    category: "gate",
+    impact: "medium",
+    cost: "light",
+    tags: ["momentum", "drift", "filter"],
+  },
+
+  // ============================================================
+  // 🎯 TRIGGER DETECTORS (15) - Entry signal generators
+  // "Triggers create entries"
+  // ============================================================
+  {
+    id: "BOS",
+    labelMn: "Бүтэц эвдрэлт (BOS)",
+    labelShort: "BOS",
+    descriptionMn: "Break of Structure - swing high/low эвдрэхэд тренд үргэлжлэх сигнал.",
+    category: "trigger",
+    impact: "high",
+    cost: "light",
+    tags: ["structure", "breakout", "trend"],
+  },
+  {
+    id: "FVG",
+    labelMn: "Fair Value Gap",
+    labelShort: "FVG",
+    descriptionMn: "3 candlestick-ийн дунд gap - институционал хөдөлгөөн илэрнэ.",
+    category: "trigger",
+    impact: "high",
+    cost: "light",
+    tags: ["gap", "institutional", "imbalance"],
+  },
+  {
+    id: "OB",
+    labelMn: "Order Block",
+    labelShort: "OB",
+    descriptionMn: "Институционал захиалгын бүс - том move-ийн өмнөх эсрэг candle.",
+    category: "trigger",
+    impact: "high",
+    cost: "medium",
+    tags: ["institutional", "zone", "supply-demand"],
+  },
+  {
+    id: "CHOCH",
+    labelMn: "Trend өөрчлөлт (CHoCH)",
+    labelShort: "CHoCH",
+    descriptionMn: "Change of Character - тренд эргэлтийн анхны дохио.",
+    category: "trigger",
+    impact: "high",
+    cost: "light",
+    tags: ["reversal", "structure", "change"],
+  },
+  {
+    id: "EQ_BREAK",
+    labelMn: "Equilibrium эвдрэлт",
+    labelShort: "EQ Break",
+    descriptionMn: "50% retrace түвшинг эвдрэхэд тренд үргэлжлэх хүчтэй сигнал.",
+    category: "trigger",
+    impact: "medium",
+    cost: "light",
+    tags: ["equilibrium", "50%", "continuation"],
+  },
+  {
+    id: "SWEEP",
+    labelMn: "Liquidity Sweep",
+    labelShort: "Sweep",
+    descriptionMn: "Хуучин high/low түр эвдээд буцах - stop hunting pattern.",
+    category: "trigger",
+    impact: "high",
+    cost: "light",
+    tags: ["liquidity", "sweep", "stop-hunt"],
+  },
+  {
+    id: "IMBALANCE",
+    labelMn: "Үнийн тэнцвэргүй байдал",
+    labelShort: "Imbalance",
+    descriptionMn: "Buy/Sell хүчний тэнцвэргүй байдал. FVG-тай төстэй.",
+    category: "trigger",
+    impact: "medium",
+    cost: "light",
+    tags: ["imbalance", "gap", "inefficiency"],
+  },
+  {
+    id: "SFP",
+    labelMn: "Swing Failure Pattern",
+    labelShort: "SFP",
+    descriptionMn: "Swing high/low эвдээд буцаж хаагдах - reversal сигнал.",
+    category: "trigger",
+    impact: "high",
+    cost: "light",
+    tags: ["reversal", "failure", "trap"],
+  },
+  {
+    id: "BREAK_RETEST",
+    labelMn: "Break & Retest",
+    labelShort: "Break Retest",
+    descriptionMn: "Түвшин эвдэж, retest хийгээд trend руу үргэлжлэх. Классик pattern.",
+    category: "trigger",
+    impact: "high",
+    cost: "medium",
+    tags: ["breakout", "retest", "confirmation"],
+  },
+  {
+    id: "COMPRESSION_EXPANSION",
+    labelMn: "Compression → Expansion",
+    labelShort: "Compression",
+    descriptionMn: "Нарийн range-ээс хүчтэй breakout. Volatility expansion.",
+    category: "trigger",
+    impact: "medium",
+    cost: "medium",
+    tags: ["compression", "expansion", "volatility"],
+  },
+  {
+    id: "MOMENTUM_CONTINUATION",
+    labelMn: "Momentum үргэлжлэл",
+    labelShort: "Momentum",
+    descriptionMn: "Хүчтэй trend-ийн дараа momentum үргэлжлэх дохио.",
+    category: "trigger",
+    impact: "medium",
+    cost: "light",
+    tags: ["momentum", "continuation", "trend"],
+  },
+  {
+    id: "MEAN_REVERSION_SNAPBACK",
+    labelMn: "Mean Reversion",
+    labelShort: "Snapback",
+    descriptionMn: "Үнэ дундаж руугаа буцах. Overextended үед counter-trend.",
+    category: "trigger",
+    impact: "medium",
+    cost: "medium",
+    tags: ["mean-reversion", "oversold", "overbought"],
+  },
+  {
+    id: "SR_BOUNCE",
+    labelMn: "S/R Bounce",
+    labelShort: "SR Bounce",
+    descriptionMn: "Support/Resistance түвшнээс bounce. Key level entry.",
+    category: "trigger",
+    impact: "high",
+    cost: "medium",
+    tags: ["support", "resistance", "bounce"],
+  },
+  {
+    id: "SR_BREAK_CLOSE",
+    labelMn: "S/R Break & Close",
+    labelShort: "SR Break",
+    descriptionMn: "S/R түвшинг эвдэж, цаана хаагдах. Confirmation breakout.",
+    category: "trigger",
+    impact: "high",
+    cost: "medium",
+    tags: ["support", "resistance", "breakout"],
+  },
+  {
+    id: "TRIANGLE_BREAKOUT_CLOSE",
+    labelMn: "Triangle Breakout",
+    labelShort: "Triangle",
+    descriptionMn: "Triangle pattern-ээс breakout. Consolidation дараах move.",
+    category: "trigger",
+    impact: "medium",
+    cost: "heavy",
+    tags: ["triangle", "pattern", "breakout"],
+  },
+
+  // ============================================================
+  // 🔗 CONFLUENCE DETECTORS (13) - Confirmation signals
+  // "Adds quality / confidence" - Optional
+  // ============================================================
+  {
+    id: "DOJI",
+    labelMn: "Doji Candle",
+    labelShort: "Doji",
+    descriptionMn: "Тэнцвэртэй candle - шийдвэргүй байдал. S/R дээр reversal.",
+    category: "confluence",
+    impact: "low",
+    cost: "light",
+    tags: ["candle", "indecision", "reversal"],
+  },
+  {
+    id: "DOUBLE_TOP_BOTTOM",
+    labelMn: "Double Top/Bottom",
+    labelShort: "Double TB",
+    descriptionMn: "Давхар оргил/ёроол - классик reversal pattern.",
+    category: "confluence",
+    impact: "medium",
+    cost: "medium",
+    tags: ["pattern", "reversal", "double"],
+  },
+  {
+    id: "ENGULF_AT_LEVEL",
+    labelMn: "Engulfing at Level",
+    labelShort: "Engulfing",
+    descriptionMn: "Key түвшин дээр engulfing candle. Хүчтэй reversal.",
+    category: "confluence",
+    impact: "medium",
+    cost: "light",
+    tags: ["candle", "engulfing", "reversal"],
+  },
+  {
+    id: "FAKEOUT_TRAP",
+    labelMn: "Fakeout Trap",
+    labelShort: "Fakeout",
+    descriptionMn: "Хуурамч breakout - түвшин эвдээд буцах. Stop hunt entry.",
+    category: "confluence",
+    impact: "medium",
+    cost: "light",
+    tags: ["trap", "fakeout", "reversal"],
+  },
+  {
+    id: "FIBO_EXTENSION",
+    labelMn: "Fibonacci Extension",
+    labelShort: "Fibo Ext",
+    descriptionMn: "Fibo extension түвшин (127.2%, 161.8%). TP target.",
+    category: "confluence",
+    impact: "low",
+    cost: "light",
+    tags: ["fibonacci", "extension", "target"],
+  },
+  {
+    id: "FIBO_RETRACE_CONFLUENCE",
+    labelMn: "Fibo Retracement",
+    labelShort: "Fibo Ret",
+    descriptionMn: "38.2%, 50%, 61.8% retracement түвшин. Entry zone.",
+    category: "confluence",
+    impact: "medium",
+    cost: "light",
+    tags: ["fibonacci", "retracement", "entry"],
+  },
+  {
+    id: "FLAG_PENNANT",
+    labelMn: "Flag/Pennant",
+    labelShort: "Flag",
+    descriptionMn: "Continuation pattern - хүчтэй move дараа consolidation.",
+    category: "confluence",
+    impact: "medium",
+    cost: "medium",
+    tags: ["pattern", "flag", "continuation"],
+  },
+  {
+    id: "HEAD_SHOULDERS",
+    labelMn: "Head & Shoulders",
+    labelShort: "H&S",
+    descriptionMn: "Толгой мөр pattern - neckline break-ээр reversal entry.",
+    category: "confluence",
+    impact: "high",
+    cost: "heavy",
+    tags: ["pattern", "reversal", "head-shoulders"],
+  },
+  {
+    id: "PINBAR_AT_LEVEL",
+    labelMn: "Pinbar at Level",
+    labelShort: "Pinbar",
+    descriptionMn: "Key түвшин дээр pinbar/hammer. Rejection сигнал.",
+    category: "confluence",
+    impact: "medium",
+    cost: "light",
+    tags: ["candle", "pinbar", "rejection"],
+  },
+  {
+    id: "PRICE_MOMENTUM_WEAKENING",
+    labelMn: "Momentum суларч байна",
+    labelShort: "Weak Momentum",
+    descriptionMn: "Trend хүч суларч байгааг илтгэнэ. Divergence signal.",
+    category: "confluence",
+    impact: "medium",
+    cost: "medium",
+    tags: ["momentum", "divergence", "weakness"],
+  },
+  {
+    id: "RECTANGLE_RANGE_EDGE",
+    labelMn: "Rectangle/Range Edge",
+    labelShort: "Range Edge",
+    descriptionMn: "Range-ийн дээд/доод хил. Bounce эсвэл breakout.",
+    category: "confluence",
+    impact: "medium",
+    cost: "medium",
+    tags: ["range", "rectangle", "edge"],
+  },
+  {
+    id: "SR_ROLE_REVERSAL",
+    labelMn: "S/R Role Reversal",
+    labelShort: "SR Flip",
+    descriptionMn: "Support → Resistance болох эсвэл эсрэгээр. Polarity shift.",
+    category: "confluence",
+    impact: "high",
+    cost: "medium",
+    tags: ["support", "resistance", "flip"],
+  },
+  {
+    id: "TREND_FIBO",
+    labelMn: "Trend + Fibo",
+    labelShort: "Trend Fibo",
+    descriptionMn: "Trend чиглэл + Fibo түвшин давхцах. Strong confluence.",
+    category: "confluence",
+    impact: "medium",
+    cost: "light",
+    tags: ["trend", "fibonacci", "confluence"],
+  },
+]
+
+// ============================================================
+// Lookup Maps (for fast access)
+// ============================================================
+
+/** Map of detector ID to metadata */
+export const DETECTOR_BY_ID = new Map<string, DetectorMeta>(
+  DETECTOR_CATALOG.map(d => [d.id, d])
+)
+
+/** Set of all canonical detector IDs */
+export const CANONICAL_IDS = new Set(DETECTOR_CATALOG.map(d => d.id))
+
+/** Detectors grouped by category */
+export const DETECTORS_BY_CATEGORY: Record<DetectorCategory, DetectorMeta[]> = {
+  gate: DETECTOR_CATALOG.filter(d => d.category === "gate"),
+  trigger: DETECTOR_CATALOG.filter(d => d.category === "trigger"),
+  confluence: DETECTOR_CATALOG.filter(d => d.category === "confluence"),
+}
+
+/** Count by category */
+export const DETECTOR_COUNTS = {
+  gate: DETECTORS_BY_CATEGORY.gate.length,
+  trigger: DETECTORS_BY_CATEGORY.trigger.length,
+  confluence: DETECTORS_BY_CATEGORY.confluence.length,
+  total: DETECTOR_CATALOG.length,
+}
+
+/** Required detectors (cannot be removed) */
+export const REQUIRED_DETECTORS = DETECTOR_CATALOG
+  .filter(d => d.required)
+  .map(d => d.id)
+
+// ============================================================
+// Presets
+// ============================================================
+
+export interface DetectorPreset {
+  id: string
+  nameMn: string
+  descriptionMn: string
+  detectors: string[]
+  icon: string
+}
+
+export const DETECTOR_PRESETS: DetectorPreset[] = [
+  {
+    id: "trend_continuation",
+    nameMn: "Trend Continuation",
+    descriptionMn: "Тренд үргэлжлэх стратеги - BOS + FVG + Flag pattern",
+    detectors: ["GATE_REGIME", "BOS", "FVG", "FLAG_PENNANT", "TREND_FIBO"],
+    icon: "📈",
+  },
+  {
+    id: "reversal_trap",
+    nameMn: "Reversal / Trap",
+    descriptionMn: "Эргэлт болон trap илрүүлэх - Sweep + SFP + Fakeout",
+    detectors: ["GATE_REGIME", "SWEEP", "SFP", "FAKEOUT_TRAP", "PINBAR_AT_LEVEL"],
+    icon: "🔄",
+  },
+  {
+    id: "sr_bounce",
+    nameMn: "S/R Bounce",
+    descriptionMn: "Support/Resistance түвшнээс bounce хийх стратеги",
+    detectors: ["GATE_REGIME", "SR_BOUNCE", "ENGULF_AT_LEVEL", "SR_ROLE_REVERSAL"],
+    icon: "⬆️",
+  },
+  {
+    id: "breakout",
+    nameMn: "Breakout Strategy",
+    descriptionMn: "Түвшин эвдэж гарах стратеги - Break & Retest + SR Break",
+    detectors: ["GATE_REGIME", "BREAK_RETEST", "SR_BREAK_CLOSE", "COMPRESSION_EXPANSION"],
+    icon: "💥",
+  },
+  {
+    id: "institutional",
+    nameMn: "Institutional Flow",
+    descriptionMn: "Институционал хөдөлгөөн дагах - OB + FVG + Imbalance",
+    detectors: ["GATE_REGIME", "OB", "FVG", "IMBALANCE", "EQ_BREAK"],
+    icon: "🏦",
+  },
+]
+
+// ============================================================
+// Helper Functions
+// ============================================================
+
+/**
+ * Get detector metadata by ID
+ */
+export function getDetectorById(id: string): DetectorMeta | undefined {
+  return DETECTOR_BY_ID.get(id.toUpperCase())
+}
+
+/**
+ * Check if a detector ID exists in catalog
+ */
+export function isValidDetectorId(id: string): boolean {
+  return CANONICAL_IDS.has(id.toUpperCase())
+}
+
+/**
+ * Filter detectors by search query
+ */
+export function searchDetectors(query: string): DetectorMeta[] {
+  if (!query.trim()) return DETECTOR_CATALOG
+  
+  const q = query.toLowerCase()
+  return DETECTOR_CATALOG.filter(d => 
+    d.id.toLowerCase().includes(q) ||
+    d.labelMn.toLowerCase().includes(q) ||
+    d.labelShort.toLowerCase().includes(q) ||
+    d.descriptionMn.toLowerCase().includes(q) ||
+    d.tags?.some(t => t.toLowerCase().includes(q))
+  )
+}
+
+/**
+ * Validate selection rules
+ */
+export interface SelectionValidation {
+  isValid: boolean
+  errors: string[]
+  warnings: string[]
+  counts: {
+    gates: number
+    triggers: number
+    confluence: number
+    total: number
+  }
+}
+
+export function validateSelection(selectedIds: string[]): SelectionValidation {
+  const errors: string[] = []
+  const warnings: string[] = []
+  
+  const selected = selectedIds.map(id => getDetectorById(id)).filter(Boolean) as DetectorMeta[]
+  
+  const counts = {
+    gates: selected.filter(d => d.category === "gate").length,
+    triggers: selected.filter(d => d.category === "trigger").length,
+    confluence: selected.filter(d => d.category === "confluence").length,
+    total: selected.length,
+  }
+  
+  // Rule 1: At least 1 gate
+  if (counts.gates < 1) {
+    errors.push("🚦 Gate шүүлтүүр сонгоно уу (хамгийн багадаа 1)")
+  }
+  
+  // Rule 2: At least 1 trigger
+  if (counts.triggers < 1) {
+    errors.push("🎯 Trigger дохио сонгоно уу (хамгийн багадаа 1)")
+  }
+  
+  // Rule 3: GATE_REGIME is required
+  if (!selectedIds.includes("GATE_REGIME")) {
+    errors.push("🚦 GATE_REGIME заавал сонгосон байх ёстой")
+  }
+  
+  // Warnings
+  if (counts.confluence === 0) {
+    warnings.push("💡 Confluence нэмвэл сигналын чанар сайжирна")
+  }
+  
+  if (counts.total > 10) {
+    warnings.push("⚠️ Хэт олон detector сонгосон - илүү энгийн байлгах нь дээр")
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+    counts,
+  }
+}
+
+/**
+ * Ensure required detectors are always included
+ */
+export function ensureRequiredDetectors(selectedIds: string[]): string[] {
+  const result = [...selectedIds]
+  for (const reqId of REQUIRED_DETECTORS) {
+    if (!result.includes(reqId)) {
+      result.unshift(reqId) // Add at beginning
+    }
+  }
+  return result
+}
+
+// ============================================================
+// Category Display Helpers
+// ============================================================
+
+export const CATEGORY_INFO: Record<DetectorCategory, {
+  labelMn: string
+  descriptionMn: string
+  icon: string
+  color: string
+}> = {
+  gate: {
+    labelMn: "Gate (Шүүлтүүр)",
+    descriptionMn: "Gate fail бол trade блоклогдоно",
+    icon: "🚦",
+    color: "text-yellow-500",
+  },
+  trigger: {
+    labelMn: "Trigger (Entry дохио)",
+    descriptionMn: "Entry сигнал үүсгэнэ",
+    icon: "🎯",
+    color: "text-green-500",
+  },
+  confluence: {
+    labelMn: "Confluence (Баталгаа)",
+    descriptionMn: "Сигналын чанар / итгэлийг нэмнэ",
+    icon: "🔗",
+    color: "text-blue-500",
+  },
+}
+
+export const IMPACT_BADGES: Record<DetectorImpact, { label: string; className: string }> = {
+  high: { label: "High", className: "bg-red-500/10 text-red-500 border-red-500/20" },
+  medium: { label: "Med", className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
+  low: { label: "Low", className: "bg-green-500/10 text-green-500 border-green-500/20" },
+}
+
+export const COST_BADGES: Record<DetectorCost, { label: string; className: string }> = {
+  light: { label: "Light", className: "bg-green-500/10 text-green-500 border-green-500/20" },
+  medium: { label: "Medium", className: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+  heavy: { label: "Heavy", className: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+}
