@@ -25,6 +25,55 @@ import { DETECTOR_BY_ID, CATEGORY_INFO, type DetectorCategory } from "@/lib/dete
 
 // Root cause type mapping to English/Mongolian labels
 const ROOT_CAUSE_LABELS: Record<string, { icon: string; labelEn: string; labelMn: string; color: string }> = {
+  MARKET_CLOSED: {
+    icon: "📅",
+    labelEn: "Market Closed (Weekend)",
+    labelMn: "Зах зээл хаалттай",
+    color: "text-blue-500 border-blue-500/50 bg-blue-500/10",
+  },
+  GATES_BLOCKED_ALL: {
+    icon: "🚦",
+    labelEn: "Blocked by Gate",
+    labelMn: "Gate блоклосон",
+    color: "text-red-500 border-red-500/50 bg-red-500/10",
+  },
+  NO_TRIGGER_HITS: {
+    icon: "🎯",
+    labelEn: "No Triggers Found",
+    labelMn: "Trigger илрээгүй",
+    color: "text-yellow-500 border-yellow-500/50 bg-yellow-500/10",
+  },
+  NO_DATA_IN_RANGE: {
+    icon: "📊",
+    labelEn: "No Data Found",
+    labelMn: "Дата олдсонгүй",
+    color: "text-purple-500 border-purple-500/50 bg-purple-500/10",
+  },
+  MARKETDATA_NO_CANDLES: {
+    icon: "📉",
+    labelEn: "No Candle Data",
+    labelMn: "Candle дата байхгүй",
+    color: "text-red-500 border-red-500/50 bg-red-500/10",
+  },
+  MARKETDATA_LOW_COVERAGE: {
+    icon: "📉",
+    labelEn: "Low Data Coverage",
+    labelMn: "Дата бага",
+    color: "text-yellow-500 border-yellow-500/50 bg-yellow-500/10",
+  },
+  NO_SETUPS_IN_RANGE: {
+    icon: "📉",
+    labelEn: "No Market Setup",
+    labelMn: "Зах зээлд setup байгаагүй",
+    color: "text-blue-500 border-blue-500/50 bg-blue-500/10",
+  },
+  DETECTOR_NORMALIZATION_MISMATCH: {
+    icon: "⚠",
+    labelEn: "Detector Mismatch",
+    labelMn: "Detector нэр mismatch",
+    color: "text-red-500 border-red-500/50 bg-red-500/10",
+  },
+  // Legacy lowercase mappings for backwards compatibility
   gate_filtered: {
     icon: "🚦",
     labelEn: "Blocked by Gate",
@@ -78,6 +127,18 @@ const ROOT_CAUSE_LABELS: Record<string, { icon: string; labelEn: string; labelMn
     labelEn: "Insufficient Data Coverage",
     labelMn: "Дата хангалтгүй",
     color: "text-yellow-500 border-yellow-500/50 bg-yellow-500/10",
+  },
+  RR_FILTER: {
+    icon: "📏",
+    labelEn: "RR Filter",
+    labelMn: "RR шүүлтүүр",
+    color: "text-orange-500 border-orange-500/50 bg-orange-500/10",
+  },
+  INTERNAL_ERROR: {
+    icon: "💥",
+    labelEn: "Internal Error",
+    labelMn: "Дотоод алдаа",
+    color: "text-red-500 border-red-500/50 bg-red-500/10",
   },
 }
 

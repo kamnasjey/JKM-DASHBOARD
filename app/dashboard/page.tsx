@@ -409,10 +409,27 @@ export default function DashboardPage() {
     return nextCandleIn !== null && nextCandleIn < -30 // delayed more than 30 seconds
   }, [nextCandleIn])
 
-  // Market closed detection using server time
+  // Market closed detection - now using backend rootCause (server-side detection)
+  // Falls back to client-side guess if rootCause not available (old backend)
   const marketClosed = useMemo(() => {
+    // Prefer backend rootCause from worst item
+    if (feedStatus?.worst?.rootCause === "MARKET_CLOSED") {
+      return true
+    }
+    // Also check current symbol in items
+    const currentItem = feedStatus?.items?.find(
+      (i: any) => i.symbol?.toUpperCase() === liveOpsSymbol.toUpperCase()
+    )
+    if (currentItem?.rootCause === "MARKET_CLOSED") {
+      return true
+    }
+    // Fallback to client-side guess (for backward compat with old backend)
     return isMarketClosed(liveOpsSymbol, feedStatus?.serverTime)
-  }, [liveOpsSymbol, feedStatus?.serverTime])
+  }, [liveOpsSymbol, feedStatus])
+
+  // Get rootCause and reasonText for display
+  const worstRootCause = feedStatus?.worst?.rootCause || null
+  const worstReasonText = feedStatus?.worst?.reasonText || null
 
   const scanCadenceSec = useMemo(() => {
     return (engineStatus as any)?.cadence_sec || 300
@@ -568,27 +585,54 @@ export default function DashboardPage() {
                       <span className={`font-mono ${candleIsDelayed && !marketClosed ? "text-amber-500" : "text-muted-foreground"}`}>
                         {marketClosed ? "—" : nextCandleText}
                       </span>
-                      {/* Market closed badge (weekend for Forex/CFD) */}
+                      {/* Market closed badge (from backend rootCause) */}
                       {marketClosed && (
                         <Badge variant="outline" className="text-xs text-blue-500 border-blue-500">
                           Market closed
                         </Badge>
                       )}
-                      {/* Provider lag badge (only when market should be open) */}
-                      {!marketClosed && candleIsDelayed && (
+                      {/* Provider lag/rate limit badge (from backend rootCause) */}
+                      {!marketClosed && worstRootCause === "PROVIDER_LAG" && (
                         <Badge variant="outline" className="text-xs text-amber-500 border-amber-500">
                           Provider lag
                         </Badge>
                       )}
+                      {!marketClosed && worstRootCause === "PROVIDER_RATE_LIMIT" && (
+                        <Badge variant="outline" className="text-xs text-orange-500 border-orange-500">
+                          Rate limited
+                        </Badge>
+                      )}
+                      {!marketClosed && worstRootCause === "ENGINE_LAG" && (
+                        <Badge variant="outline" className="text-xs text-red-500 border-red-500">
+                          Engine lag
+                        </Badge>
+                      )}
+                      {!marketClosed && worstRootCause === "NO_DATA" && (
+                        <Badge variant="outline" className="text-xs text-gray-500 border-gray-500">
+                          No data
+                        </Badge>
+                      )}
+                      {/* Fallback: client-side delayed detection if no rootCause from backend */}
+                      {!marketClosed && !worstRootCause && candleIsDelayed && (
+                        <Badge variant="outline" className="text-xs text-amber-500 border-amber-500">
+                          Delayed
+                        </Badge>
+                      )}
                     </div>
-                    {/* Weekend hint for Forex */}
+                    {/* Hint using backend reasonText if available */}
                     {marketClosed && (
                       <div className="text-xs text-muted-foreground mt-1">
-                        💤 Forex market is closed (weekend). Crypto remains live.
+                        💤 {worstReasonText || "Forex market is closed (weekend). Crypto remains live."}
                       </div>
                     )}
-                    {/* Backend feed status info */}
-                    {!marketClosed && feedStatus?.worst && feedStatus.worst.lagSec > 300 && (
+                    {/* Backend rootCause hint when not market closed */}
+                    {!marketClosed && worstReasonText && worstRootCause !== "OK" && (
+                      <div className="text-xs text-amber-500 mt-1">
+                        ⚠️ {worstReasonText} ({feedStatus?.worst?.symbol})
+                      </div>
+                    )}
+                    {/* Fallback: old-style worst lag display if no rootCause */}
+                    {!marketClosed && !worstRootCause && feedStatus?.worst && feedStatus.worst.lagSec > 300 && (
                       <div className="text-xs text-amber-500 mt-1">
                         ⚠️ Worst lag: {feedStatus.worst.symbol} ({Math.round(feedStatus.worst.lagSec)}s)
                       </div>

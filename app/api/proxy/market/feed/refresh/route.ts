@@ -22,6 +22,6 @@ export async function POST(request: NextRequest) {
 
   return forwardInternalRequest(request, {
     method: "POST",
-    path: `/api/market/feed/refresh${query}`,
+    path: `/api/feed/refresh${query}`,  // Changed from /api/market/feed/refresh
   })
 }

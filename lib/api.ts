@@ -192,11 +192,16 @@ export const api = {
   startScan: () => apiFetch<any>("/api/proxy/engine/start", { method: "POST" }),
   stopScan: () => apiFetch<any>("/api/proxy/engine/stop", { method: "POST" }),
 
-  // Market Feed Status (anti-drift poller)
+  // Market Feed Status (anti-drift poller with root cause detection)
   feedStatus: () => apiFetch<{
     ok: boolean
     serverTime: string
     running: boolean
+    engine: {
+      pollerRunning: boolean
+      lastTickAt: string | null
+      loopSkewSec: number
+    }
     provider: {
       name: string
       healthy: boolean
@@ -222,21 +227,30 @@ export const api = {
       backoffSec: number
       consecutiveErrors: number
       lastError: string | null
+      // Root cause detection fields
+      instrumentType: "CRYPTO" | "FOREX" | "METAL" | "INDEX" | "UNKNOWN"
+      marketState: "OPEN" | "CLOSED" | "UNKNOWN"
+      rootCause: "OK" | "MARKET_CLOSED" | "PROVIDER_RATE_LIMIT" | "PROVIDER_LAG" | "ENGINE_LAG" | "NO_DATA"
+      reasonText: string
+      expectedPeriodSec: number
     }>
     worst: {
       symbol: string | null
       tf: string | null
       ageSec: number
       lagSec: number
+      rootCause: string | null
+      reasonText: string | null
+      marketState: string | null
     } | null
     simVersion: string
-  }>("/api/proxy/market/feed/status"),
+  }>("/api/proxy/feed/status"),
   
   refreshFeed: (symbol?: string, tf?: string) => {
     const params = new URLSearchParams()
     if (symbol) params.set("symbol", symbol)
     if (tf) params.set("tf", tf)
-    return apiFetch<{ ok: boolean; refreshed: any[] }>(`/api/proxy/market/feed/refresh?${params}`, { method: "POST" })
+    return apiFetch<{ ok: boolean; refreshed: any[] }>(`/api/proxy/feed/refresh?${params}`, { method: "POST" })
   },
 
   // Admin backfill

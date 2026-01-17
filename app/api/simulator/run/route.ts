@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // --- 9. Ensure response always has meta and explain ---
+    // --- 9. Ensure response always has meta, explain, and stats ---
     const tradesCount = backendJson.summary?.entries ?? backendJson.combined?.summary?.entries ?? 0
     
     // Always ensure meta block exists with required fields
@@ -308,6 +308,20 @@ export async function POST(request: NextRequest) {
     backendJson.meta.detectorsRequested = detectorsRequested
     backendJson.meta.detectorsNormalized = detectorsNormalized
     backendJson.meta.detectorsUnknown = detectorsUnknown
+    backendJson.meta.simVersion = backendJson.meta.simVersion || "unknown"
+    
+    // Ensure stats block always exists
+    if (!backendJson.stats) {
+      const summary = backendJson.summary || {}
+      backendJson.stats = {
+        trades: summary.entries || 0,
+        winrate: summary.winrate || 0,
+        tpCount: summary.tp || 0,
+        slCount: summary.sl || 0,
+        openCount: summary.open || 0,
+        timeExitCount: summary.timeExit || 0,
+      }
+    }
     
     // Add demo mode info if applicable
     if (demoMode) {
