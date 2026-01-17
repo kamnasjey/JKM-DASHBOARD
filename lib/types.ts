@@ -165,9 +165,21 @@ export interface StrategiesResponse {
 // Detector types
 // ============================================
 export interface DetectorInfo {
+  /** Canonical uppercase ID (e.g., "BOS", "GATE_REGIME") */
+  id: string
+  /** Legacy name field for backward compatibility */
   name: string
+  /** Mongolian (Cyrillic) display label */
+  labelMn: string
+  /** Mongolian description of what detector does */
+  descriptionMn: string
+  /** Detector category */
+  category: "gate" | "trigger" | "confluence"
+  /** Optional documentation */
   doc?: string
+  /** Optional parameter schema */
   params_schema?: Record<string, any>
+  /** Optional examples */
   examples?: any[]
 }
 
@@ -175,6 +187,11 @@ export interface DetectorsResponse {
   ok: boolean
   detectors: DetectorInfo[]
   count: number
+  categories?: {
+    gate: number
+    trigger: number
+    confluence: number
+  }
 }
 
 // ============================================

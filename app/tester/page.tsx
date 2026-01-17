@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Play, History, Settings, TrendingUp, TrendingDown, Target, AlertTriangle } from "lucide-react"
+import { Play, History, Settings, TrendingUp, TrendingDown, Target, AlertTriangle, Info } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,11 +13,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import type { DetectorInfo } from "@/lib/types"
+import { normalizeDetectorList } from "@/lib/detector-utils"
 import Link from "next/link"
+
+// Extended detector info with Cyrillic labels
+interface DetectorInfo {
+  id: string
+  name?: string
+  labelMn: string
+  descriptionMn: string
+  category: "gate" | "trigger" | "confluence"
+}
 
 interface TesterRun {
   run_id: string
@@ -87,7 +97,12 @@ export default function StrategyTesterPage() {
         api.strategyTester.listRuns().catch(() => ({ runs: [] })),
       ])
       
-      setDetectors(detectorsData?.detectors || [])
+      // Map detectors to include 'name' for backward compat
+      const mappedDetectors = (detectorsData?.detectors || []).map((d: any) => ({
+        ...d,
+        name: d.id,
+      }))
+      setDetectors(mappedDetectors)
       setRuns(runsData?.runs || [])
     } catch (err) {
       console.error("Failed to load data:", err)
@@ -96,12 +111,12 @@ export default function StrategyTesterPage() {
     }
   }
   
-  const handleDetectorToggle = (name: string) => {
+  const handleDetectorToggle = (detectorId: string) => {
     setSelectedDetectors(prev => {
-      if (prev.includes(name)) {
-        return prev.filter(d => d !== name)
+      if (prev.includes(detectorId)) {
+        return prev.filter(d => d !== detectorId)
       }
-      return [...prev, name]
+      return [...prev, detectorId]
     })
   }
   
@@ -115,12 +130,15 @@ export default function StrategyTesterPage() {
       return
     }
     
+    // Normalize detectors before running
+    const normalizedDetectors = normalizeDetectorList(selectedDetectors)
+    
     setRunning(true)
     
     try {
       const result = await api.strategyTester.run({
         symbol,
-        detectors: selectedDetectors,
+        detectors: normalizedDetectors,
         entry_tf: entryTf,
         trend_tf: trendTf,
         spread_pips: spreadPips,

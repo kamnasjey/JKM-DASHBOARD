@@ -224,8 +224,22 @@ export const api = {
   candles: (symbol: string, tf: string = "M5", limit: number = 200) =>
     apiFetch<any>(`/api/proxy/markets/${encodeURIComponent(symbol)}/candles?tf=${tf}&limit=${limit}`),
 
-  // Detectors list
-  detectors: () => apiFetch<any>("/api/proxy/detectors"),
+  // Detectors list - use local /api/detectors endpoint (source of truth with Cyrillic labels)
+  detectors: () => apiFetch<{
+    ok: boolean
+    detectors: Array<{
+      id: string
+      labelMn: string
+      descriptionMn: string
+      category: "gate" | "trigger" | "confluence"
+    }>
+    count: number
+    categories: {
+      gate: number
+      trigger: number
+      confluence: number
+    }
+  }>("/api/detectors"),
 
   // Detailed metrics for performance dashboard
   detailedMetrics: () => apiFetch<any>("/api/proxy/metrics/detailed"),

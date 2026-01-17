@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,12 +14,22 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import type { DetectorInfo } from "@/lib/types"
+import { normalizeDetectorList } from "@/lib/detector-utils"
 
 const MAX_STRATEGIES = 30
+
+// Extended detector info with Cyrillic labels
+interface DetectorInfo {
+  id: string
+  name?: string // backward compat
+  labelMn: string
+  descriptionMn: string
+  category: "gate" | "trigger" | "confluence"
+}
 
 interface Strategy {
   id: string // Changed from strategy_id
@@ -94,7 +104,14 @@ export default function StrategiesPage() {
       }))
       
       setStrategies(mappedStrategies)
-      setDetectors(detectorsData?.detectors || [])
+      
+      // Map detectors to include 'name' for backward compat
+      // Detectors from /api/detectors now have: id, labelMn, descriptionMn, category
+      const mappedDetectors = (detectorsData?.detectors || []).map((d: any) => ({
+        ...d,
+        name: d.id, // backward compat - some UI uses 'name' instead of 'id'
+      }))
+      setDetectors(mappedDetectors)
     } catch (err: any) {
       console.error("[v0] Failed to load data:", err)
       toast({
@@ -166,16 +183,16 @@ export default function StrategiesPage() {
     setShowCreateDialog(true)
   }
 
-  const handleFormDetectorToggle = (detectorName: string) => {
+  const handleFormDetectorToggle = (detectorId: string) => {
     setEditForm(prev => {
       const currentDetectors = Array.isArray(prev.detectors) ? prev.detectors : []
-      console.log("[strategies] toggle detector:", detectorName, "current:", currentDetectors)
+      console.log("[strategies] toggle detector:", detectorId, "current:", currentDetectors)
       
       let newDetectors: string[]
-      if (currentDetectors.includes(detectorName)) {
-        newDetectors = currentDetectors.filter(d => d !== detectorName)
+      if (currentDetectors.includes(detectorId)) {
+        newDetectors = currentDetectors.filter(d => d !== detectorId)
       } else {
-        newDetectors = [...currentDetectors, detectorName]
+        newDetectors = [...currentDetectors, detectorId]
       }
       
       console.log("[strategies] new detectors:", newDetectors)
@@ -202,6 +219,11 @@ export default function StrategiesPage() {
       return
     }
 
+    // Normalize detectors to canonical IDs before saving
+    // This handles BREAKOUT_RETEST_ENTRY -> BREAK_RETEST etc.
+    const normalizedDetectors = normalizeDetectorList(editForm.detectors)
+    console.log("[strategies] normalized detectors:", normalizedDetectors)
+
     setSaving(true)
     try {
       if (editingIndex !== null && editForm.strategy_id) {
@@ -210,7 +232,7 @@ export default function StrategiesPage() {
         const result = await api.strategiesV2.update(strategyId, {
           name: editForm.name,
           enabled: editForm.enabled,
-          detectors: editForm.detectors,
+          detectors: normalizedDetectors, // Use normalized
           description: editForm.description,
           config: {
             min_score: editForm.min_score,
@@ -231,7 +253,7 @@ export default function StrategiesPage() {
         const result = await api.strategiesV2.create({
           name: editForm.name,
           enabled: editForm.enabled,
-          detectors: editForm.detectors,
+          detectors: normalizedDetectors, // Use normalized
           description: editForm.description,
           config: {
             min_score: editForm.min_score,
@@ -539,46 +561,98 @@ export default function StrategiesPage() {
                 <Label>
                   Detectors * ({editForm.detectors.length} сонгосон)
                 </Label>
-                <div className="border rounded-lg p-3 max-h-60 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-2">
-                    {detectors.map((detector) => {
-                      const isSelected = editForm.detectors.includes(detector.name)
-                      return (
-                        <div
-                          key={detector.name}
-                          className={`flex items-center gap-2 p-2 rounded cursor-pointer ${isSelected ? 'bg-primary/20 border border-primary' : 'hover:bg-muted'}`}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleFormDetectorToggle(detector.name)
-                          }}
-                        >
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => {}}
-                          />
-                          <span className="text-sm flex-1">
-                            {detector.name}
-                          </span>
+                
+                {/* Group by category */}
+                {(["gate", "trigger", "confluence"] as const).map((category) => {
+                  const categoryDetectors = detectors.filter(d => d.category === category)
+                  if (categoryDetectors.length === 0) return null
+                  
+                  const categoryLabels = {
+                    gate: "🚪 Gate (Шүүлтүүр)",
+                    trigger: "🎯 Trigger (Entry сигнал)",
+                    confluence: "✅ Confluence (Баталгаа)"
+                  }
+                  
+                  return (
+                    <div key={category} className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {categoryLabels[category]}
+                      </div>
+                      <div className="border rounded-lg p-3 max-h-48 overflow-y-auto">
+                        <div className="grid grid-cols-1 gap-2">
+                          {categoryDetectors.map((detector) => {
+                            const detectorId = detector.id || detector.name
+                            const isSelected = editForm.detectors.includes(detectorId)
+                            return (
+                              <TooltipProvider key={detectorId}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div
+                                      className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${
+                                        isSelected 
+                                          ? 'bg-primary/20 border border-primary' 
+                                          : 'hover:bg-muted border border-transparent'
+                                      }`}
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        handleFormDetectorToggle(detectorId)
+                                      }}
+                                    >
+                                      <Checkbox
+                                        checked={isSelected}
+                                        onCheckedChange={() => {}}
+                                        className="mt-0.5"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-medium">
+                                          {detector.labelMn || detectorId}
+                                        </div>
+                                        {detector.descriptionMn && (
+                                          <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                            {detector.descriptionMn}
+                                          </div>
+                                        )}
+                                      </div>
+                                      {detector.descriptionMn && (
+                                        <Info className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-1" />
+                                      )}
+                                    </div>
+                                  </TooltipTrigger>
+                                  {detector.descriptionMn && (
+                                    <TooltipContent side="right" className="max-w-xs">
+                                      <p className="text-sm">{detector.descriptionMn}</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            )
+                          })}
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
+                      </div>
+                    </div>
+                  )
+                })}
                 
                 {/* Selected detectors */}
                 {editForm.detectors.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {editForm.detectors.map((d) => (
-                      <Badge
-                        key={d}
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => handleFormDetectorToggle(d)}
-                      >
-                        {d} <X className="h-3 w-3 ml-1" />
-                      </Badge>
-                    ))}
+                  <div className="flex flex-wrap gap-1 pt-2 border-t">
+                    <span className="text-xs text-muted-foreground mr-2">Сонгосон:</span>
+                    {editForm.detectors.map((d) => {
+                      // Find detector info to show Cyrillic label if available
+                      const detectorInfo = detectors.find(det => det.id === d || det.name === d)
+                      const displayLabel = detectorInfo?.labelMn?.split('(')[0]?.trim() || d
+                      return (
+                        <Badge
+                          key={d}
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => handleFormDetectorToggle(d)}
+                        >
+                          {displayLabel} <X className="h-3 w-3 ml-1" />
+                        </Badge>
+                      )
+                    })}
                   </div>
                 )}
               </div>
