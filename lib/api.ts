@@ -192,6 +192,53 @@ export const api = {
   startScan: () => apiFetch<any>("/api/proxy/engine/start", { method: "POST" }),
   stopScan: () => apiFetch<any>("/api/proxy/engine/stop", { method: "POST" }),
 
+  // Market Feed Status (anti-drift poller)
+  feedStatus: () => apiFetch<{
+    ok: boolean
+    serverTime: string
+    running: boolean
+    provider: {
+      name: string
+      healthy: boolean
+      lastSuccess: string | null
+      lastError: string | null
+    }
+    summary: {
+      symbols: number
+      timeframes: string[]
+      totalItems: number
+      totalFetches: number
+      totalErrors: number
+      itemsInBackoff: number
+    }
+    items: Array<{
+      symbol: string
+      tf: string
+      lastCandleTs: string | null
+      ageSec: number
+      lagSec: number
+      nextDueAt: string | null
+      nextDueInSec: number | null
+      backoffSec: number
+      consecutiveErrors: number
+      lastError: string | null
+    }>
+    worst: {
+      symbol: string | null
+      tf: string | null
+      ageSec: number
+      lagSec: number
+    } | null
+    simVersion: string
+  }>("/api/proxy/market/feed/status"),
+  
+  refreshFeed: (symbol?: string, tf?: string) => {
+    const params = new URLSearchParams()
+    if (symbol) params.set("symbol", symbol)
+    if (tf) params.set("tf", tf)
+    return apiFetch<{ ok: boolean; refreshed: any[] }>(`/api/proxy/market/feed/refresh?${params}`, { method: "POST" })
+  },
+
   // Admin backfill
   backfill: (payload: any) =>
     apiFetch<any>("/api/proxy/admin/backfill", {

@@ -66,6 +66,10 @@ export default function DashboardPage() {
   const [candleError, setCandleError] = useState<string | null>(null)
   const [nowTs, setNowTs] = useState(() => Math.floor(Date.now() / 1000))
   
+  // Feed status from backend (anti-drift)
+  const [feedStatus, setFeedStatus] = useState<any>(null)
+  const [refreshingFeed, setRefreshingFeed] = useState(false)
+  
   // Show toast when new signals arrive via WebSocket
   useEffect(() => {
     if (newSignals.length > 0) {
@@ -223,59 +227,85 @@ export default function DashboardPage() {
         .catch(() => {})
     }, 60_000)
 
-    // Live Ops: Poll candles every 12 seconds
-    const candleInterval = setInterval(() => {
-      if (!liveOpsSymbol) return
-      api.candles(liveOpsSymbol, "M5", 1)
+    // Live Ops: Poll feed status from backend (anti-drift source of truth)
+    const feedStatusInterval = setInterval(() => {
+      api.feedStatus()
         .then((res: any) => {
-          const candles = res?.candles || res || []
-          if (candles.length > 0) {
-            const candleTs = candles[0].time || candles[0].t || 0
-            const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
-            
-            setPrevCandleTime((prev) => {
-              if (prev !== null && ts > prev) {
-                setCandlePulse(true)
-                setTimeout(() => setCandlePulse(false), 2000)
-              }
-              return lastCandleTime
-            })
-            setLastCandleTime(ts)
+          if (res?.ok !== false) {
+            setFeedStatus(res)
             setCandleError(null)
+            
+            // Find the selected symbol's feed item
+            const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbol)
+            if (item?.lastCandleTs) {
+              const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
+              setPrevCandleTime((prev) => {
+                if (prev !== null && ts > prev) {
+                  setCandlePulse(true)
+                  setTimeout(() => setCandlePulse(false), 2000)
+                }
+                return lastCandleTime
+              })
+              setLastCandleTime(ts)
+            }
           }
         })
         .catch((err: any) => {
-          if (err?.message?.includes("403") || err?.message?.includes("Access")) {
-            setCandleError("Access required")
-          } else {
-            setCandleError(err?.message || "Error")
+          // Fallback to candles endpoint if feed status not available
+          if (liveOpsSymbol) {
+            api.candles(liveOpsSymbol, "M5", 1)
+              .then((res: any) => {
+                const candles = res?.candles || res || []
+                if (candles.length > 0) {
+                  const candleTs = candles[0].time || candles[0].t || 0
+                  const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+                  setLastCandleTime(ts)
+                  setCandleError(null)
+                }
+              })
+              .catch(() => {})
           }
         })
-    }, 12_000)
+    }, 10_000) // Poll every 10 seconds
     
     // Live Ops: Update nowTs every second for countdown
     const tickInterval = setInterval(() => {
       setNowTs(Math.floor(Date.now() / 1000))
     }, 1000)
 
-    // Initial candle fetch
-    if (liveOpsSymbol) {
-      api.candles(liveOpsSymbol, "M5", 1)
-        .then((res: any) => {
-          const candles = res?.candles || res || []
-          if (candles.length > 0) {
-            const candleTs = candles[0].time || candles[0].t || 0
-            const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+    // Initial feed status fetch
+    api.feedStatus()
+      .then((res: any) => {
+        if (res?.ok !== false) {
+          setFeedStatus(res)
+          // Find the selected symbol's feed item
+          const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbol)
+          if (item?.lastCandleTs) {
+            const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
             setLastCandleTime(ts)
           }
-        })
-        .catch(() => {})
-    }
+        }
+      })
+      .catch(() => {
+        // Fallback to candles endpoint
+        if (liveOpsSymbol) {
+          api.candles(liveOpsSymbol, "M5", 1)
+            .then((res: any) => {
+              const candles = res?.candles || res || []
+              if (candles.length > 0) {
+                const candleTs = candles[0].time || candles[0].t || 0
+                const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+                setLastCandleTime(ts)
+              }
+            })
+            .catch(() => {})
+        }
+      })
 
     return () => {
       clearInterval(engineInterval)
       clearInterval(signalsInterval)
-      clearInterval(candleInterval)
+      clearInterval(feedStatusInterval)
       clearInterval(tickInterval)
     }
   }, [status, liveOpsSymbol])
@@ -436,6 +466,11 @@ export default function DashboardPage() {
                   <h4 className="text-sm font-medium flex items-center gap-2">
                     <Zap className={`h-4 w-4 ${candlePulse ? "text-yellow-500 animate-pulse" : "text-muted-foreground"}`} />
                     Market Data Feed
+                    {feedStatus?.provider?.healthy === false && (
+                      <Badge variant="outline" className="text-xs text-red-500 border-red-500">
+                        Unhealthy
+                      </Badge>
+                    )}
                   </h4>
                   {candlePulse && (
                     <Badge variant="outline" className="text-xs text-green-600 border-green-600 animate-pulse">
@@ -456,6 +491,24 @@ export default function DashboardPage() {
                     </SelectContent>
                   </Select>
                   <span className="text-xs text-muted-foreground">M5</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                    onClick={async () => {
+                      setRefreshingFeed(true)
+                      try {
+                        await api.refreshFeed(liveOpsSymbol, "m5")
+                        // Refetch status
+                        const res = await api.feedStatus()
+                        if (res?.ok !== false) setFeedStatus(res)
+                      } catch {}
+                      setRefreshingFeed(false)
+                    }}
+                    disabled={refreshingFeed}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${refreshingFeed ? "animate-spin" : ""}`} />
+                  </Button>
                 </div>
 
                 {candleError ? (
@@ -479,6 +532,17 @@ export default function DashboardPage() {
                         </Badge>
                       )}
                     </div>
+                    {/* Backend feed status info */}
+                    {feedStatus?.worst && feedStatus.worst.lagSec > 300 && (
+                      <div className="text-xs text-amber-500 mt-1">
+                        ⚠️ Worst lag: {feedStatus.worst.symbol} ({Math.round(feedStatus.worst.lagSec)}s)
+                      </div>
+                    )}
+                    {feedStatus?.summary?.itemsInBackoff > 0 && (
+                      <div className="text-xs text-amber-500">
+                        ⏳ {feedStatus.summary.itemsInBackoff} items rate-limited
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
