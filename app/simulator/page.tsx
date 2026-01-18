@@ -109,6 +109,7 @@ interface MultiTFResult {
   }
   meta?: {
     simVersion?: string
+    dashboardVersion?: string
     timeframesRan: string[]
     dataSource: string
     range: { from: string; to: string }
@@ -461,7 +462,7 @@ export default function SimulatorPage() {
         symbols: [symbol],
         from: customFrom,
         to: customTo,
-        timeframe: customTimeframe,
+        timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
         mode: "winrate",
         demoMode: false,
         // Note: customDetectors not passed - server always uses strategy detectors

@@ -83,9 +83,9 @@ interface SetupResult {
   symbol: string
   tf: string
   strategyId: string
-  triggersHit: number
-  confluenceHit: number
-  gatesPassed: boolean
+  triggersHit?: number
+  confluenceHit?: number
+  gatesPassed?: boolean
   summary?: {
     confidence?: number
     bias?: string

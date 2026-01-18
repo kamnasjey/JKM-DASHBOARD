@@ -33,7 +33,7 @@ interface DetectorInfo {
 }
 
 interface Strategy {
-  id: string // Changed from strategy_id
+  id?: string // Unique ID (optional for new strategies)
   strategy_id?: string // Keep for backward compat
   name: string
   enabled: boolean
@@ -203,7 +203,7 @@ export default function StrategiesPage() {
 
     // Validate detector selection
     const validation = validateSelection(editForm.detectors)
-    if (!validation.valid) {
+    if (!validation.isValid) {
       toast({
         title: "Алдаа",
         description: validation.errors.join("; "),

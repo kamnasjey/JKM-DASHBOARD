@@ -226,7 +226,7 @@ export default function JourneyPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
-                <span>Badges: {progress.badges.length}</span>
+                <span>Badges: {progress.badges?.length ?? 0}</span>
               </div>
             </div>
           </CardContent>

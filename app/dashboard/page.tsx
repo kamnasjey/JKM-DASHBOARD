@@ -227,7 +227,7 @@ export default function DashboardPage() {
         enabled: s.strategy_id === selectedStrategyId,
       }))
 
-      const result = await api.updateStrategies({ strategies: updatedStrategies })
+      const result = await api.updateStrategies({ strategies: updatedStrategies }) as { ok: boolean; error?: string }
       if (!result.ok) {
         throw new Error(result.error || "Хадгалж чадсангүй")
       }

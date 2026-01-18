@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { createChart, IChartApi, CandlestickData, Time, LineStyle } from "lightweight-charts"
+import { createChart, IChartApi, CandlestickData, Time, LineStyle, ISeriesApi, CandlestickStyleOptions, SeriesOptionsCommon } from "lightweight-charts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TrendingUp, Loader2 } from "lucide-react"
@@ -100,15 +100,15 @@ export function CandleChart({
 
     chartRef.current = chart
 
-    // Candlestick series
-    const candleSeries = chart.addCandlestickSeries({
+    // Candlestick series - use type assertion for lightweight-charts compatibility
+    const candleSeries = (chart as any).addCandlestickSeries({
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderUpColor: "#22c55e",
       borderDownColor: "#ef4444",
       wickUpColor: "#22c55e",
       wickDownColor: "#ef4444",
-    })
+    }) as ISeriesApi<"Candlestick">
 
     const chartData: CandlestickData<Time>[] = candles.map((c) => ({
       time: c.time as Time,

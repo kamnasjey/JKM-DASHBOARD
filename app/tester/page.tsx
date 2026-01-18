@@ -27,6 +27,7 @@ interface DetectorInfo {
   labelMn: string
   descriptionMn: string
   category: "gate" | "trigger" | "confluence"
+  doc?: string
 }
 
 interface TesterRun {
@@ -406,16 +407,16 @@ export default function StrategyTesterPage() {
                     <div className="grid gap-2 max-h-[400px] overflow-y-auto">
                       {detectors.map(det => (
                         <div
-                          key={det.name}
+                          key={det.id || det.name || 'unknown'}
                           className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer"
-                          onClick={() => handleDetectorToggle(det.name)}
+                          onClick={() => handleDetectorToggle(det.id || det.name || '')}
                         >
                           <Checkbox
-                            checked={selectedDetectors.includes(det.name)}
-                            onCheckedChange={() => handleDetectorToggle(det.name)}
+                            checked={selectedDetectors.includes(det.id || det.name || '')}
+                            onCheckedChange={() => handleDetectorToggle(det.id || det.name || '')}
                           />
                           <div className="flex-1">
-                            <p className="font-medium text-sm">{det.name}</p>
+                            <p className="font-medium text-sm">{det.labelMn || det.name || det.id}</p>
                             {det.doc && (
                               <p className="text-xs text-muted-foreground line-clamp-1">
                                 {det.doc}

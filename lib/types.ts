@@ -71,7 +71,8 @@ export interface Setup {
   updated_at?: number
 }
 
-export interface StrategiesResponse {
+// Legacy StrategiesResponse - kept for backward compatibility with Setup[]
+export interface LegacyStrategiesResponse {
   schema_version: number
   user_id: string
   strategies: Setup[]
@@ -92,6 +93,49 @@ export interface LogEntry {
   level: "INFO" | "WARN" | "ERROR"
   message: string
   details?: any
+}
+
+// ============================================
+// Metrics types
+// ============================================
+export interface Metrics {
+  total_signals: number
+  wins: number
+  losses: number
+  pending: number
+  win_rate: number
+  avg_rr?: number
+  last_updated?: number
+}
+
+// ============================================
+// Journey Progress types
+// ============================================
+export interface JourneyProgress {
+  level: "Beginner" | "Intermediate" | "Pro"
+  xp: number
+  completedMissions: string[]
+  badges?: string[]
+  streak: number
+  lastActiveDate?: string
+}
+
+// ============================================
+// Risk Settings types
+// ============================================
+export interface RiskSettings {
+  riskPerTrade: number
+  maxDailyLoss: number
+  maxOpenPositions: number
+  preferredRRMin: number
+}
+
+// ============================================
+// Annotations types
+// ============================================
+export interface Annotations {
+  reasons?: string[]
+  [key: string]: unknown
 }
 
 // ============================================
@@ -120,6 +164,7 @@ export interface SignalPayloadPublicV1 {
   user_id?: string
   symbol: string
   timeframe: string
+  tf?: string // Alias for timeframe
   created_at: number // epoch seconds
   status: "OK" | "NONE" | "FOUND" | "ACTIVE" | "CLOSED"
   direction: "BUY" | "SELL" | "NA"
@@ -142,6 +187,7 @@ export interface SignalPayloadPublicV1 {
 // Strategy types - matches backend
 // ============================================
 export interface StrategySpec {
+  id?: string // Internal unique ID
   strategy_id: string
   name?: string
   description?: string
@@ -151,7 +197,11 @@ export interface StrategySpec {
   min_rr?: number
   allowed_regimes?: string[]
   parameters?: Record<string, any>
+  notes?: string
 }
+
+// Alias for backward compatibility
+export type Strategy = StrategySpec
 
 export interface StrategiesResponse {
   ok?: boolean
@@ -159,6 +209,13 @@ export interface StrategiesResponse {
   user_id: string
   strategies: StrategySpec[]
   count?: number
+}
+
+// Selection validation for strategy maker
+export interface SelectionValidation {
+  isValid: boolean
+  errors: string[]
+  warnings: string[]
 }
 
 // ============================================

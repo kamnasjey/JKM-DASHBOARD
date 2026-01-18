@@ -821,9 +821,10 @@ export const api = {
         isMapped: boolean
         lastScanTs?: string
         lastSetupFoundTs?: string
-        setupsFoundCount?: number
+        setupsFound24h?: number
         delayReason?: string
         lagSec?: number
+        lastCandleTs?: string
       }>
       error?: string
     }>(`/api/proxy/engine-status/${uid}`),

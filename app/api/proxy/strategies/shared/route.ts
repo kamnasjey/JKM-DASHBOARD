@@ -1,21 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
+import { forwardInternalRequest } from "@/lib/backend-proxy"
+import { requireSession, json } from "@/lib/proxy-auth"
 
-const BACKEND = process.env.INTERNAL_BACKEND_URL || "http://localhost:8000"
-const API_KEY = process.env.INTERNAL_API_KEY || ""
+export const runtime = "nodejs"
 
-export async function GET(request: NextRequest) {
-  try {
-    const res = await fetch(`${BACKEND}/api/strategies/shared`, {
-      headers: {
-        "x-internal-api-key": API_KEY,
-        "Content-Type": "application/json",
-      },
-    })
-    const data = await res.json()
-    return NextResponse.json(data, { status: res.status })
-  } catch (error) {
-    console.error("[proxy] shared strategies error:", error)
-    return NextResponse.json({ ok: false, error: "Backend unreachable" }, { status: 502 })
-  }
+export async function GET(request: Request) {
+  const session = await requireSession()
+  if (!session) return json(401, { ok: false, message: "Unauthorized" })
+
+  return forwardInternalRequest(request, {
+    method: "GET",
+    path: "/api/strategies/shared",
+  })
 }
 

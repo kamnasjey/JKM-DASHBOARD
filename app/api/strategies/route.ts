@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   const existing = await getUserStrategiesFromFirestore(userId)
 
   const newStrategy: Strategy = {
-    strategy_id: globalThis.crypto?.randomUUID ? crypto.randomUUID() : `strat_${Date.now()}`,
+    strategy_id: typeof globalThis.crypto?.randomUUID === 'function' ? crypto.randomUUID() : `strat_${Date.now()}`,
     name,
     enabled: true,
     detectors: cleanedDetectors,

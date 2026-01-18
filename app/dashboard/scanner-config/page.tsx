@@ -73,9 +73,10 @@ interface EffectiveSymbol {
   isMapped: boolean
   lastScanTs?: string
   lastSetupFoundTs?: string
-  setupsFoundCount?: number
+  setupsFound24h?: number  // 24h count from backend
   delayReason?: string
   lagSec?: number
+  lastCandleTs?: string
 }
 
 interface EngineStatus {
@@ -97,14 +98,51 @@ interface EngineStatus {
   error?: string
 }
 
-// Status pill component
+// Status pill component with detailed reasons
 function StatusPill({ status, reason }: { status: string; reason?: string }) {
-  const configs: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    OK: { label: "OK", color: "bg-green-500/20 text-green-400 border-green-500/30", icon: <Check className="h-3 w-3" /> },
-    PROVIDER_LAG: { label: "Lag", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", icon: <Clock className="h-3 w-3" /> },
-    ENGINE_BEHIND: { label: "Behind", color: "bg-red-500/20 text-red-400 border-red-500/30", icon: <AlertTriangle className="h-3 w-3" /> },
-    MARKET_CLOSED: { label: "Closed", color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: <X className="h-3 w-3" /> },
-    NO_NEW_CANDLE_YET: { label: "Waiting", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", icon: <Clock className="h-3 w-3" /> },
+  const configs: Record<string, { label: string; color: string; icon: React.ReactNode; tooltip: string }> = {
+    OK: { 
+      label: "OK", 
+      color: "bg-green-500/20 text-green-400 border-green-500/30", 
+      icon: <Check className="h-3 w-3" />,
+      tooltip: "Scanner хэвийн ажиллаж байна"
+    },
+    PROVIDER_LAG: { 
+      label: "Lag", 
+      color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", 
+      icon: <Clock className="h-3 w-3" />,
+      tooltip: "Data provider-ээс удаашралтай өгөгдөл ирж байна"
+    },
+    ENGINE_BEHIND: { 
+      label: "Behind", 
+      color: "bg-red-500/20 text-red-400 border-red-500/30", 
+      icon: <AlertTriangle className="h-3 w-3" />,
+      tooltip: "Scanner engine удааширсан байна"
+    },
+    MARKET_CLOSED: { 
+      label: "Closed", 
+      color: "bg-gray-500/20 text-gray-400 border-gray-500/30", 
+      icon: <X className="h-3 w-3" />,
+      tooltip: "Зах зээл хаалттай (амралтын өдөр эсвэл trading session хаагдсан)"
+    },
+    NO_NEW_CANDLE_YET: { 
+      label: "Waiting", 
+      color: "bg-blue-500/20 text-blue-400 border-blue-500/30", 
+      icon: <Clock className="h-3 w-3" />,
+      tooltip: "Шинэ candle хүлээж байна"
+    },
+    NO_DATA: {
+      label: "No Data",
+      color: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+      icon: <AlertCircle className="h-3 w-3" />,
+      tooltip: "Өгөгдөл байхгүй байна"
+    },
+    ERROR: {
+      label: "Error",
+      color: "bg-red-500/20 text-red-400 border-red-500/30",
+      icon: <AlertTriangle className="h-3 w-3" />,
+      tooltip: "Scan алдаа гарсан"
+    },
   }
 
   const config = configs[status] || configs.OK
@@ -118,11 +156,9 @@ function StatusPill({ status, reason }: { status: string; reason?: string }) {
             {config.label}
           </Badge>
         </TooltipTrigger>
-        {reason && (
-          <TooltipContent>
-            <p>{reason}</p>
-          </TooltipContent>
-        )}
+        <TooltipContent>
+          <p>{reason || config.tooltip}</p>
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   )
@@ -217,13 +253,13 @@ export default function ScannerConfigPage() {
     }
   }, [uid, loadData, loadEngineStatus])
 
-  // Status polling (every 15 seconds)
+  // Status polling (every 10 seconds)
   useEffect(() => {
     if (!uid) return
 
     pollIntervalRef.current = setInterval(() => {
       loadEngineStatus()
-    }, 15000)
+    }, 10000)
 
     return () => {
       if (pollIntervalRef.current) {
@@ -399,6 +435,19 @@ export default function ScannerConfigPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               {authError} - Backend холболт тохируулна уу
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Engine Stopped Banner */}
+        {!loading && engineStatus && !engineStatus.engineRunning && (
+          <Alert variant="destructive" className="border-red-500/50 bg-red-500/10">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                <strong>24/7 Scanner зогссон байна</strong> — Scan хийгдэхгүй байна. Admin тусламж авна уу.
+              </span>
+              <Badge variant="destructive" className="ml-4">Engine Stopped</Badge>
             </AlertDescription>
           </Alert>
         )}
@@ -599,14 +648,16 @@ export default function ScannerConfigPage() {
                           />
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {symbolStatus?.lagSec != null ? `${symbolStatus.lagSec}s` : "-"}
+                          {symbolStatus?.lagSec != null && symbolStatus.lagSec >= 0 ? `${symbolStatus.lagSec}s` : "-"}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {formatRelativeTime(symbolStatus?.lastScanTs)}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {symbolStatus?.setupsFoundCount != null ? (
-                            <span className="text-green-400">{symbolStatus.setupsFoundCount}</span>
+                          {symbolStatus?.setupsFound24h != null ? (
+                            <span className={symbolStatus.setupsFound24h > 0 ? "text-green-400 font-medium" : "text-muted-foreground"}>
+                              {symbolStatus.setupsFound24h}
+                            </span>
                           ) : "-"}
                         </TableCell>
                         <TableCell>
