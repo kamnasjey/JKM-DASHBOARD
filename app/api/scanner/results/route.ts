@@ -1,32 +1,23 @@
 /**
- * GET /api/scanner/results
+ * GET /api/scanner/results (PUBLIC)
  * 
  * Proxies scanner results request to backend.
- * Requires authentication.
+ * NOTE: Public endpoint - no auth required (read-only results)
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-options"
 import { getDashboardVersion } from "@/lib/version"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com"
 const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY
 
 export async function GET(request: NextRequest) {
-  // --- 1. Authentication ---
-  const session = await getServerSession(authOptions)
+  // PUBLIC endpoint - no auth required (read-only)
   
-  if (!session?.user) {
-    return NextResponse.json(
-      { ok: false, error: "UNAUTHENTICATED", message: "Login required" },
-      { status: 401 }
-    )
-  }
-
-  // --- 2. Get limit from query params ---
+  // --- Get limit from query params ---
   const url = new URL(request.url)
   const limit = url.searchParams.get("limit") || "100"
 
