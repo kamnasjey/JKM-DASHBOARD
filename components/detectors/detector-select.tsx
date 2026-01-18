@@ -169,12 +169,13 @@ function CategorySection({
   const selectedCount = detectors.filter(d => selected.includes(d.id)).length
   const totalCount = detectors.length
   
-  // Filter by search
+  // Filter by search (search in both EN and MN)
   const filteredDetectors = searchQuery
     ? detectors.filter(d =>
         d.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.labelEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
         d.labelMn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.descriptionMn.toLowerCase().includes(searchQuery.toLowerCase())
+        d.descEn.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : detectors
 
@@ -185,14 +186,17 @@ function CategorySection({
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="text-lg">{info.icon}</span>
-          <span className="text-sm font-medium">{info.labelMn}</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">{info.labelEn}</span>
+            <span className="text-xs text-muted-foreground/70">{info.labelMn}</span>
+          </div>
         </div>
         <Badge variant="secondary" className="text-xs">
           {selectedCount}/{totalCount}
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground px-1 mb-2">
-        {info.descriptionMn}
+        {info.descEn}
       </p>
       <div className="space-y-1.5">
         {filteredDetectors.map(detector => (
@@ -263,7 +267,7 @@ function CountMeter({
 }) {
   return (
     <div className="flex items-center gap-3 text-xs">
-      <span className="text-muted-foreground font-medium">Сонгосон:</span>
+      <span className="text-muted-foreground font-medium">Selected:</span>
       <div className="flex items-center gap-2 bg-muted/50 px-2 py-1 rounded-md">
         <span className={cn("font-medium", counts.gates > 0 && "text-yellow-500")}>
           G:{counts.gates}
@@ -308,13 +312,13 @@ function UnknownDetectorWarning({
       <AlertTriangle className="h-4 w-4 text-red-500" />
       <AlertDescription className="text-xs space-y-2">
         <div className="font-medium text-red-600 dark:text-red-400">
-          ⚠ Алдаа/хуучин стратеги илэрлээ
+          ⚠ Unknown/Legacy Detectors Found
         </div>
         <p className="text-muted-foreground">
-          Зарим detector нэр хуучин эсвэл буруу байна ({unknownDetectors.length}): {unknownDetectors.slice(0, 3).join(", ")}{unknownDetectors.length > 3 ? "..." : ""}
+          Some detector names are outdated or invalid ({unknownDetectors.length}): {unknownDetectors.slice(0, 3).join(", ")}{unknownDetectors.length > 3 ? "..." : ""}
         </p>
         <p className="text-muted-foreground">
-          "Fix (Normalize)" дарж автоматаар цэвэрлэнэ.
+          Click "Fix (Normalize)" to auto-correct to canonical IDs.
         </p>
         <div className="flex gap-2 pt-1">
           <Button

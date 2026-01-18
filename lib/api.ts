@@ -91,12 +91,14 @@ export const api = {
   getMetrics: () => apiFetch<any>("/api/proxy/metrics"),
   metrics: () => apiFetch<any>("/api/proxy/metrics"),
 
-  // Signals
+  // Signals (PUBLIC endpoint - no auth required)
   getSignals: (params?: { limit?: number; symbol?: string }) => {
     const qs = new URLSearchParams()
     qs.set("limit", String(params?.limit ?? 50))
     if (params?.symbol) qs.set("symbol", params.symbol)
-    return apiFetch<any[]>(`/api/proxy/signals?${qs.toString()}`)
+    // Use public /api/signals (proxies to backend, no auth)
+    return apiFetch<{ ok: boolean; count: number; signals: any[] }>(`/api/signals?${qs.toString()}`)
+      .then(res => res.signals || [])
   },
   signals: (params?: { limit?: number; symbol?: string }) => api.getSignals(params),
 
@@ -739,4 +741,90 @@ export const api = {
         error?: string
       }>(`/api/scanner/results?limit=${limit}`),
   },
+
+  // ========== BACKEND STRATEGY APIs (via proxy) ==========
+  // These call the Python backend through Next.js route handlers
+  
+  backendStrategies: {
+    /**
+     * Get strategies + activeStrategyId + activeStrategyMap from Python backend
+     */
+    get: (uid: string) =>
+      apiFetch<{
+        ok: boolean
+        uid: string
+        strategies: Array<{
+          id: string
+          name: string
+          detectors: string[]
+          symbols: string[]
+          timeframes: string[]
+          minRR: number
+          enabled: boolean
+          tags?: string[]
+          isStarterClone?: boolean
+        }>
+        activeStrategyId: string
+        activeStrategyMap: Record<string, string>
+        count: number
+      }>(`/api/proxy/backend-strategies/${uid}`),
+
+    /**
+     * Set the global active strategy ID
+     */
+    setActiveStrategy: (uid: string, activeStrategyId: string) =>
+      apiFetch<{ ok: boolean; uid: string; activeStrategyId: string }>(
+        `/api/proxy/active-strategy/${uid}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ activeStrategyId }),
+        }
+      ),
+
+    /**
+     * Save per-symbol strategy mapping
+     * @param map - { symbol: strategyId } mapping
+     */
+    setStrategyMap: (uid: string, map: Record<string, string | null>) =>
+      apiFetch<{ ok: boolean; uid: string; activeStrategyMap: Record<string, string> }>(
+        `/api/proxy/strategy-map/${uid}`,
+        {
+          method: "POST",
+          body: JSON.stringify({ map }),
+        }
+      ),
+  },
+
+  /**
+   * Get 24/7 engine status with per-symbol strategy info
+   */
+  engineStatus247: (uid: string) =>
+    apiFetch<{
+      ok: boolean
+      uid: string
+      engineRunning: boolean
+      scanMode: string
+      lastCycleTs: string
+      lastOutcome?: {
+        cycle: number
+        ts: string
+        symbolsScanned: number
+        setupsFound: number
+        rootCause: string
+        noSetupReasons?: Record<string, number>
+        marketClosedSymbols?: string[]
+      }
+      effectiveSymbols: Array<{
+        symbol: string
+        strategyIdUsed: string
+        strategyNameUsed?: string
+        isMapped: boolean
+        lastScanTs?: string
+        lastSetupFoundTs?: string
+        setupsFoundCount?: number
+        delayReason?: string
+        lagSec?: number
+      }>
+      error?: string
+    }>(`/api/proxy/engine-status/${uid}`),
 }

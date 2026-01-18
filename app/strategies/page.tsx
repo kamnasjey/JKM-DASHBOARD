@@ -623,6 +623,27 @@ export default function StrategiesPage() {
                   selected={editForm.detectors}
                   onChange={handleDetectorSelectionChange}
                   maxHeight="350px"
+                  onFixAndSave={editingIndex !== null ? async (normalizedDetectors) => {
+                    // Auto-save after fixing when editing existing strategy
+                    if (!editForm.strategy_id) return
+                    try {
+                      await api.strategiesV2.update(editForm.strategy_id, {
+                        detectors: normalizedDetectors,
+                      })
+                      toast({
+                        title: "Fixed & Saved",
+                        description: "Detectors normalized and saved to strategy",
+                      })
+                      // Refresh strategy list
+                      loadData()
+                    } catch (err) {
+                      toast({
+                        title: "Save Failed",
+                        description: "Could not save normalized detectors",
+                        variant: "destructive",
+                      })
+                    }
+                  } : undefined}
                 />
               </div>
             </div>

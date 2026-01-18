@@ -2711,6 +2711,44 @@
 				"curl -s http://localhost:8000/signals/stats"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "shell: test map endpoint B",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python3 -c 'import requests,json; r=requests.post(\"http://localhost:8000/api/internal/user-data/active-strategy-map/SMOKE001\",headers={\"x-internal-api-key\":\"dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\",\"Content-Type\":\"application/json\"},json={\"map\":{\"EURUSD\":\"starter_EDGE_CONFLUENCE_SMOKE001\"}}); print(r.status_code, r.text)'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "shell: test B endpoint via file",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cat > /tmp/testb.py << 'PYEOF'\nimport requests\nKEY=\"dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\"\nBASE=\"http://localhost:8000\"\nh={\"x-internal-api-key\": KEY, \"Content-Type\": \"application/json\"}\nUID=\"SMOKE001\"\n\nprint(\"=== Test B: POST strategy map ===\")\nr=requests.post(f\"{BASE}/api/internal/user-data/active-strategy-map/{UID}\",headers=h,json={\"map\":{\"EURUSD\":\"starter_EDGE_CONFLUENCE_SMOKE001\"}})\nprint(f\"status={r.status_code}\")\nprint(f\"body={r.text[:200]}\")\nPYEOF\n\npython3 /tmp/testb.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "security test signals with key",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"ssh root@159.65.11.255 curl -s -H x-internal-api-key:3d2ee6bbbb787c90ebc25f39b26eca1569c8dde81ab4be7d908df477c9d1bda6 http://localhost:8000/api/signals?limit=2"
+			]
+		},
+		{
+			"label": "security test with correct key",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"ssh root@159.65.11.255 curl -s -H \"x-internal-api-key: dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\" http://localhost:8000/api/signals?limit=2"
+			]
 		}
 	]
 }

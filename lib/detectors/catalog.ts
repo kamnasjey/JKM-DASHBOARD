@@ -645,25 +645,33 @@ export function ensureRequiredDetectors(selectedIds: string[]): string[] {
 // ============================================================
 
 export const CATEGORY_INFO: Record<DetectorCategory, {
+  labelEn: string
   labelMn: string
+  descEn: string
   descriptionMn: string
   icon: string
   color: string
 }> = {
   gate: {
+    labelEn: "Gate (Filter)",
     labelMn: "Gate (Шүүлтүүр)",
+    descEn: "If gate fails, trade is blocked",
     descriptionMn: "Gate fail бол trade блоклогдоно",
     icon: "🚦",
     color: "text-yellow-500",
   },
   trigger: {
+    labelEn: "Trigger (Entry Signal)",
     labelMn: "Trigger (Entry дохио)",
+    descEn: "Creates entry signals",
     descriptionMn: "Entry сигнал үүсгэнэ",
     icon: "🎯",
     color: "text-green-500",
   },
   confluence: {
+    labelEn: "Confluence (Confirmation)",
     labelMn: "Confluence (Баталгаа)",
+    descEn: "Adds signal quality/confidence",
     descriptionMn: "Сигналын чанар / итгэлийг нэмнэ",
     icon: "🔗",
     color: "text-blue-500",
