@@ -22,7 +22,7 @@ import { getDashboardVersion } from "@/lib/version"
 export const runtime = "nodejs"
 
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com"
-const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || process.env.BACKEND_INTERNAL_API_KEY
 
 export async function POST(request: NextRequest) {
   // --- 1. Authentication ---

@@ -23,8 +23,8 @@ export async function forwardInternalRequest(
     body?: string
   },
 ): Promise<Response> {
-  const key = process.env.BACKEND_INTERNAL_API_KEY
-  if (!key) return missingEnvResponse("BACKEND_INTERNAL_API_KEY")
+  const key = process.env.INTERNAL_API_KEY || process.env.BACKEND_INTERNAL_API_KEY
+  if (!key) return missingEnvResponse("INTERNAL_API_KEY or BACKEND_INTERNAL_API_KEY")
 
   const url = `${BACKEND_ORIGIN}${opts.path}`
 

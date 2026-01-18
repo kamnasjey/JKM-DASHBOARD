@@ -1,98 +1,132 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { BarChart3, TrendingUp, TrendingDown, Activity, Target, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { BarChart3, Calendar, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts"
+  type ScannerResult,
+  type UnifiedSignal,
+  mapScannerResultToUnified,
+  mapOldSignalToUnified,
+  mergeSignals,
+  formatTimestamp,
+} from "@/lib/signals/unified"
+import type { SignalPayloadPublicV1 } from "@/lib/types"
 
-interface DayMetric {
-  date: string
-  ok: number
-  none: number
+interface SetupSummary {
+  name: string
   total: number
-  hit_rate: number | null
+  tp: number
+  sl: number
+  pending: number
+  lastTs?: string
 }
 
-interface SymbolMetric {
-  ok: number
-  none: number
-  total: number
-  hit_rate: number | null
-}
-
-interface DetailedMetrics {
-  ok: boolean
-  total_signals: number
-  by_symbol: Record<string, SymbolMetric>
-  by_timeframe: Record<string, SymbolMetric>
-  by_day: DayMetric[]
-  by_direction: {
-    BUY: { ok: number; none: number }
-    SELL: { ok: number; none: number }
-  }
-}
+const rangeOptions = [
+  { label: "7 хоног", value: "7" },
+  { label: "30 хоног", value: "30" },
+  { label: "90 хоног", value: "90" },
+  { label: "180 хоног", value: "180" },
+  { label: "365 хоног", value: "365" },
+  { label: "Бүгд", value: "all" },
+]
 
 export default function PerformancePage() {
   useAuthGuard(true)
 
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [metrics, setMetrics] = useState<DetailedMetrics | null>(null)
+  const [rangeDays, setRangeDays] = useState("30")
+  const [scannerResults, setScannerResults] = useState<ScannerResult[]>([])
+  const [oldSignals, setOldSignals] = useState<SignalPayloadPublicV1[]>([])
 
-  useEffect(() => {
-    loadMetrics()
-  }, [])
-
-  const loadMetrics = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true)
     try {
-      const data = await api.detailedMetrics()
-      setMetrics(data)
+      const [scannerRes, signalsRes] = await Promise.all([
+        api.scanner.results(300).catch(() => ({ ok: false, count: 0, results: [] })),
+        api.signals({ limit: 300 }).catch(() => []),
+      ])
+
+      setScannerResults(scannerRes.results || [])
+      setOldSignals(signalsRes)
     } catch (err: any) {
       toast({
         title: "Алдаа",
-        description: err.message || "Metrics ачаалж чадсангүй",
+        description: err.message || "Өгөгдөл ачаалж чадсангүй",
         variant: "destructive",
       })
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
-  const overallHitRate = useMemo(() => {
-    if (!metrics) return null
-    const { by_direction } = metrics
-    const totalOk = by_direction.BUY.ok + by_direction.SELL.ok
-    const totalNone = by_direction.BUY.none + by_direction.SELL.none
-    if (totalOk + totalNone === 0) return null
-    return (totalOk / (totalOk + totalNone)) * 100
-  }, [metrics])
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
-  const sortedSymbols = useMemo(() => {
-    if (!metrics?.by_symbol) return []
-    return Object.entries(metrics.by_symbol)
-      .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, 10)
-  }, [metrics])
+  const unifiedSignals = useMemo<UnifiedSignal[]>(() => {
+    const scannerMapped = scannerResults.map(mapScannerResultToUnified)
+    const signalsMapped = oldSignals.map(mapOldSignalToUnified)
+    return mergeSignals(scannerMapped, signalsMapped)
+  }, [scannerResults, oldSignals])
 
-  const sortedTimeframes = useMemo(() => {
-    if (!metrics?.by_timeframe) return []
-    return Object.entries(metrics.by_timeframe).sort((a, b) => b[1].total - a[1].total)
-  }, [metrics])
+  const filteredSignals = useMemo(() => {
+    if (rangeDays === "all") return unifiedSignals
+    const days = Number(rangeDays)
+    if (!Number.isFinite(days)) return unifiedSignals
+    const since = Date.now() - days * 24 * 60 * 60 * 1000
+    return unifiedSignals.filter(signal => {
+      const ts = new Date(signal.ts).getTime()
+      return Number.isFinite(ts) ? ts >= since : false
+    })
+  }, [unifiedSignals, rangeDays])
+
+  const setupSummaries = useMemo<SetupSummary[]>(() => {
+    const map = new Map<string, SetupSummary>()
+    for (const signal of filteredSignals) {
+      const name = signal.strategyName || signal.strategyId || "Unknown"
+      const summary = map.get(name) || { name, total: 0, tp: 0, sl: 0, pending: 0 }
+      summary.total += 1
+
+      if (signal.outcome === "win") summary.tp += 1
+      else if (signal.outcome === "loss") summary.sl += 1
+      else summary.pending += 1
+
+      if (!summary.lastTs || new Date(signal.ts).getTime() > new Date(summary.lastTs).getTime()) {
+        summary.lastTs = signal.ts
+      }
+
+      map.set(name, summary)
+    }
+    return Array.from(map.values()).sort((a, b) => b.total - a.total)
+  }, [filteredSignals])
+
+  const totals = useMemo(() => {
+    return setupSummaries.reduce(
+      (acc, item) => {
+        acc.total += item.total
+        acc.tp += item.tp
+        acc.sl += item.sl
+        acc.pending += item.pending
+        return acc
+      },
+      { total: 0, tp: 0, sl: 0, pending: 0 },
+    )
+  }, [setupSummaries])
+
+  const winRate = useMemo(() => {
+    const decided = totals.tp + totals.sl
+    if (decided === 0) return null
+    return (totals.tp / decided) * 100
+  }, [totals])
 
   if (loading) {
     return (
@@ -104,211 +138,132 @@ export default function PerformancePage() {
     )
   }
 
-  if (!metrics) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Өгөгдөл байхгүй</p>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
   return (
     <DashboardLayout>
       <div className="space-y-4 sm:space-y-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Performance</h1>
-          <p className="text-sm text-muted-foreground">Дохионы гүйцэтгэлийн дэлгэрэнгүй статистик</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">History</h1>
+            <p className="text-sm text-muted-foreground">Setup бүрийн TP/SL түүх болон үр дүн</p>
+          </div>
+          <div className="w-full sm:w-56">
+            <label className="text-xs font-medium text-muted-foreground">Хугацаа</label>
+            <Select value={rangeDays} onValueChange={setRangeDays}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Хугацаа сонгох" />
+              </SelectTrigger>
+              <SelectContent>
+                {rangeOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Overview Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">Нийт дохио</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Нийт setup</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xl sm:text-2xl font-bold">{metrics.total_signals}</span>
+                <span className="text-xl sm:text-2xl font-bold">{totals.total}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">Hit Rate</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">TP болсон</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xl sm:text-2xl font-bold">
-                  {overallHitRate !== null ? `${overallHitRate.toFixed(1)}%` : "—"}
-                </span>
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span className="text-xl sm:text-2xl font-bold">{totals.tp}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">BUY дохио</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">SL болсон</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <ArrowUpRight className="h-4 w-4 text-green-500" />
-                <span className="text-xl sm:text-2xl font-bold">
-                  {metrics.by_direction.BUY.ok + metrics.by_direction.BUY.none}
-                </span>
+                <XCircle className="h-4 w-4 text-red-500" />
+                <span className="text-xl sm:text-2xl font-bold">{totals.sl}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs sm:text-sm">Хүлээгдэж буй</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xl sm:text-2xl font-bold">{totals.pending}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {metrics.by_direction.BUY.ok} OK
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">SELL дохио</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <ArrowDownRight className="h-4 w-4 text-red-500" />
-                <span className="text-xl sm:text-2xl font-bold">
-                  {metrics.by_direction.SELL.ok + metrics.by_direction.SELL.none}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {metrics.by_direction.SELL.ok} OK
+                TP rate: {winRate !== null ? `${winRate.toFixed(1)}%` : "—"}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* By Symbol */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Symbol-аар</CardTitle>
-            <CardDescription>Топ 10 идэвхтэй symbol</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Setup түүх</CardTitle>
+            <CardDescription>Strategy бүрийн TP/SL тоо болон сүүлийн огноо</CardDescription>
           </CardHeader>
           <CardContent>
-            {sortedSymbols.length === 0 ? (
+            {setupSummaries.length === 0 ? (
               <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
             ) : (
-              <div className="space-y-3">
-                {sortedSymbols.map(([symbol, stats]) => (
-                  <div key={symbol} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{symbol}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {stats.total}
-                        </Badge>
-                      </div>
-                      <span className="text-muted-foreground">
-                        {stats.hit_rate !== null ? `${(stats.hit_rate * 100).toFixed(0)}%` : "—"}
-                      </span>
-                    </div>
-                    <Progress
-                      value={stats.hit_rate !== null ? stats.hit_rate * 100 : 0}
-                      className="h-2"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* By Timeframe */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Timeframe-аар</CardTitle>
-            <CardDescription>Timeframe бүрийн гүйцэтгэл</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {sortedTimeframes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {sortedTimeframes.map(([tf, stats]) => (
-                  <div
-                    key={tf}
-                    className="flex items-center justify-between rounded-lg border border-border p-3"
-                  >
-                    <div>
-                      <Badge variant="secondary">{tf}</Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {stats.ok} OK / {stats.none} NONE
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold">
-                        {stats.hit_rate !== null ? `${(stats.hit_rate * 100).toFixed(0)}%` : "—"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{stats.total} нийт</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Daily Chart with Recharts */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Өдөр бүрийн гүйцэтгэл</CardTitle>
-            <CardDescription>Сүүлийн 30 өдрийн статистик</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {metrics.by_day.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
-            ) : (
-              <div className="w-full">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart
-                    data={metrics.by_day.map(day => ({
-                      date: day.date.slice(5), // MM-DD format
-                      OK: day.ok,
-                      NONE: day.none,
-                      hitRate: day.hit_rate !== null ? Math.round(day.hit_rate * 100) : null,
-                    }))}
-                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 10 }}
-                      tickLine={false}
-                      axisLine={false}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      tick={{ fontSize: 10 }}
-                      tickLine={false}
-                      axisLine={false}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                      labelStyle={{ color: "hsl(var(--foreground))" }}
-                      formatter={(value: number, name: string) => [value, name]}
-                      labelFormatter={(label) => `Огноо: ${label}`}
-                    />
-                    <Legend
-                      wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
-                    />
-                    <Bar dataKey="OK" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="NONE" stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Setup</TableHead>
+                    <TableHead className="text-right">Нийт</TableHead>
+                    <TableHead className="text-right">TP</TableHead>
+                    <TableHead className="text-right">SL</TableHead>
+                    <TableHead className="text-right">Pending</TableHead>
+                    <TableHead>Сүүлд</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {setupSummaries.map(item => (
+                    <TableRow key={item.name}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {item.name}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">{item.total}</TableCell>
+                      <TableCell className="text-right text-green-500">{item.tp}</TableCell>
+                      <TableCell className="text-right text-red-500">{item.sl}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{item.pending}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.lastTs ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatTimestamp(item.lastTs)}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

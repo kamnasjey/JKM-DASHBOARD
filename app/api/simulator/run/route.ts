@@ -37,7 +37,7 @@ export const runtime = "nodejs"
 
 // Backend configuration
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com"
-const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || process.env.BACKEND_INTERNAL_API_KEY
 
 // Demo mode limits
 const DEMO_MAX_SYMBOLS = 1
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
   
   // --- 5. Check internal API key ---
   if (!INTERNAL_API_KEY) {
-    console.error(`[${requestId}] BACKEND_INTERNAL_API_KEY not configured`)
+    console.error(`[${requestId}] INTERNAL_API_KEY not configured`)
     return NextResponse.json(
       { 
         ok: false, 
@@ -244,7 +244,7 @@ export async function POST(request: NextRequest) {
           {
             ok: false,
             error: "BACKEND_KEY_MISMATCH",
-            message: "Backend authentication failed. Check BACKEND_INTERNAL_API_KEY configuration.",
+            message: "Backend authentication failed. Check INTERNAL_API_KEY configuration.",
           },
           { status: 502 }
         )

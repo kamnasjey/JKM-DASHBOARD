@@ -12,7 +12,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com"
-const INTERNAL_API_KEY = process.env.BACKEND_INTERNAL_API_KEY
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || process.env.BACKEND_INTERNAL_API_KEY
 
 export async function GET(request: NextRequest) {
   // PUBLIC endpoint - no auth required (read-only)

@@ -24,17 +24,12 @@ const navItems = [
     icon: LineChart,
   },
   {
-    label: "Signals",
-    href: "/signals",
-    icon: TrendingUp,
-  },
-  {
     label: "Scanner Config",
     href: "/dashboard/scanner-config",
     icon: Radio,
   },
   {
-    label: "Performance",
+    label: "History",
     href: "/performance",
     icon: BarChart3,
   },
