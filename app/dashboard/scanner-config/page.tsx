@@ -184,7 +184,7 @@ export default function ScannerConfigPage() {
   useAuthGuard(true)
   const { data: session } = useSession()
   const { toast } = useToast()
-  const uid = (session?.user as any)?.id || ""
+  const uid = (session as any)?.user?.id || ""
 
   // State
   const [loading, setLoading] = useState(true)

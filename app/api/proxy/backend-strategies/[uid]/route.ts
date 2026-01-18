@@ -15,8 +15,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ uid: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  const userId = (session?.user as any)?.id as string | undefined
+  const session = (await getServerSession(authOptions)) as any
+  const userId = session?.user?.id as string | undefined
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }

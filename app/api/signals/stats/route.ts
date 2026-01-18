@@ -11,13 +11,17 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
 export async function GET() {
   // PUBLIC endpoint - no auth required
   try {
-    const resp = await fetch(`${BACKEND_ORIGIN}/signals/stats`, {
+    const resp = await fetch(`${BACKEND_ORIGIN}/api/signals/stats`, {
       method: "GET",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(INTERNAL_API_KEY ? { "x-internal-api-key": INTERNAL_API_KEY } : {}),
+      },
       next: { revalidate: 0 },
     });
 

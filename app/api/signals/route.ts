@@ -16,6 +16,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
 const querySchema = z.object({
   limit: z.coerce.number().min(1).max(500).optional().default(50),
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
   const { limit, symbol, strategy_id, hours } = parsed.data;
 
   // Build backend URL
-  const backendUrl = new URL(`${BACKEND_ORIGIN}/signals`);
+  const backendUrl = new URL(`${BACKEND_ORIGIN}/api/signals`);
   backendUrl.searchParams.set("limit", String(limit));
   if (symbol) backendUrl.searchParams.set("symbol", symbol);
   if (strategy_id) backendUrl.searchParams.set("strategy_id", strategy_id);
@@ -50,7 +51,10 @@ export async function GET(req: NextRequest) {
   try {
     const resp = await fetch(backendUrl.toString(), {
       method: "GET",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(INTERNAL_API_KEY ? { "x-internal-api-key": INTERNAL_API_KEY } : {}),
+      },
       next: { revalidate: 0 },
     });
 

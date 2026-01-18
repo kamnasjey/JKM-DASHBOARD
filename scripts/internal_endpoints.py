@@ -1,3 +1,39 @@
+from typing import Optional
+import os
+
+try:
+    from fastapi import FastAPI, Header, HTTPException, Depends, Body  # type: ignore
+except Exception:
+    class HTTPException(Exception):
+        def __init__(self, status_code: int, detail: str):
+            super().__init__(detail)
+            self.status_code = status_code
+            self.detail = detail
+
+    def Header(*args, **kwargs):
+        return None
+
+    def Depends(*args, **kwargs):
+        return None
+
+    def Body(*args, **kwargs):
+        return None
+
+    class FastAPI:
+        def get(self, *args, **kwargs):
+            def decorator(fn):
+                return fn
+            return decorator
+
+        def post(self, *args, **kwargs):
+            def decorator(fn):
+                return fn
+            return decorator
+
+try:
+    from api_server import app  # type: ignore
+except Exception:
+    app = FastAPI()
 
 
 # ======== INTERNAL AUTH (must be before routes using it) ========
@@ -16,7 +52,7 @@ def require_internal_key(
 
 @app.get("/api/internal/user-data/strategies/{uid}", dependencies=[Depends(require_internal_key)])
 async def get_user_data_strategies(uid: str):
-    from core.user_strategies_store import ensure_starter_strategies, load_active_strategy_map
+    from core.user_strategies_store import ensure_starter_strategies, load_active_strategy_map  # type: ignore
     strategies, active_id = ensure_starter_strategies(uid)
     strategy_map = load_active_strategy_map(uid)
     return {"ok": True, "uid": uid, "strategies": strategies, "activeStrategyId": active_id, "activeStrategyMap": strategy_map, "count": len(strategies)}
@@ -24,7 +60,7 @@ async def get_user_data_strategies(uid: str):
 
 @app.post("/api/internal/user-data/active-strategy/{uid}", dependencies=[Depends(require_internal_key)])
 async def set_active_strategy(uid: str, payload: dict = Body(...)):
-    from core.user_strategies_store import save_active_strategy_id, ensure_starter_strategies
+    from core.user_strategies_store import save_active_strategy_id, ensure_starter_strategies  # type: ignore
     strategy_id = payload.get("activeStrategyId", "")
     if not strategy_id:
         raise HTTPException(status_code=400, detail="activeStrategyId required")
@@ -38,8 +74,8 @@ async def set_active_strategy(uid: str, payload: dict = Body(...)):
 
 @app.post("/api/internal/user-data/active-strategy-map/{uid}", dependencies=[Depends(require_internal_key)])
 async def set_active_strategy_map(uid: str, payload: dict = Body(...)):
-    from core.user_strategies_store import save_active_strategy_map, ensure_starter_strategies
-    from core.scan_engine_v2 import DEFAULT_15_SYMBOLS
+    from core.user_strategies_store import save_active_strategy_map, ensure_starter_strategies  # type: ignore
+    from core.scan_engine_v2 import DEFAULT_15_SYMBOLS  # type: ignore
     strategy_map = payload.get("map", {})
     if not isinstance(strategy_map, dict):
         raise HTTPException(status_code=400, detail="map must be a dict")
@@ -58,8 +94,8 @@ async def set_active_strategy_map(uid: str, payload: dict = Body(...)):
 
 @app.get("/api/internal/engine/strategy-map-status/{uid}", dependencies=[Depends(require_internal_key)])
 async def get_engine_strategy_map_status(uid: str):
-    from core.user_strategies_store import ensure_starter_strategies, load_active_strategy_id, load_active_strategy_map, get_strategy_id_for_symbol, get_strategy_by_id
-    from core.scan_engine_v2 import DEFAULT_15_SYMBOLS, load_status
+    from core.user_strategies_store import ensure_starter_strategies, load_active_strategy_id, load_active_strategy_map, get_strategy_id_for_symbol, get_strategy_by_id  # type: ignore
+    from core.scan_engine_v2 import DEFAULT_15_SYMBOLS, load_status  # type: ignore
     scanner_status = load_status().dict()
     strategies, _ = ensure_starter_strategies(uid)
     active_id = load_active_strategy_id(uid)
@@ -70,7 +106,7 @@ async def get_engine_strategy_map_status(uid: str):
         strat = get_strategy_by_id(uid, strat_id) if strat_id else {}
         strat_name = strat.get("name", "Unknown")
         try:
-            from core.marketdata_store import get_last_candle_ts_from_file
+            from core.marketdata_store import get_last_candle_ts_from_file  # type: ignore
             last_candle_ts = get_last_candle_ts_from_file(symbol, "m5")
             if last_candle_ts:
                 from datetime import datetime, timezone

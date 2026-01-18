@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
 
 export async function GET(req: NextRequest) {
   // PUBLIC endpoint - no auth required
@@ -18,12 +19,15 @@ export async function GET(req: NextRequest) {
   const symbol = url.searchParams.get("symbol");
 
   try {
-    const backendUrl = new URL(`${BACKEND_ORIGIN}/signals/latest`);
+    const backendUrl = new URL(`${BACKEND_ORIGIN}/api/signals/latest`);
     if (symbol) backendUrl.searchParams.set("symbol", symbol);
 
     const resp = await fetch(backendUrl.toString(), {
       method: "GET",
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        ...(INTERNAL_API_KEY ? { "x-internal-api-key": INTERNAL_API_KEY } : {}),
+      },
       next: { revalidate: 0 },
     });
 
