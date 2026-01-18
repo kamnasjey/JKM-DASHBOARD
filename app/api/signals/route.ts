@@ -67,22 +67,45 @@ export async function GET(req: NextRequest) {
 
     const data = await resp.json();
 
-    // Map to frontend format
-    const signals = (data.signals || []).map((sig: Record<string, unknown>) => ({
-      id: sig.signal_id || String(Math.random()).slice(2, 10),
-      ts: sig.ts,
-      symbol: sig.symbol,
-      timeframe: sig.timeframe,
-      direction: sig.direction,
-      rr: sig.rr,
-      confidence: sig.confidence,
-      strategyId: sig.strategy_id,
-      detectors: sig.detectors_normalized || [],
-      hitsPerDetector: sig.hits_per_detector || {},
-      explain: sig.explain || {},
-      source: sig.source || "scanner",
-      simVersion: sig.simVersion,
-    }));
+    const toEpochSeconds = (value?: unknown) => {
+      if (!value || typeof value !== "string") return undefined
+      const ts = Date.parse(value)
+      return Number.isFinite(ts) ? Math.floor(ts / 1000) : undefined
+    }
+
+    // Map to frontend format (full signal shape)
+    const signals = (data.signals || []).map((sig: Record<string, unknown>) => {
+      const ts = typeof sig.ts === "string" ? sig.ts : undefined
+      const createdAt = (sig.created_at as number | undefined) ?? toEpochSeconds(ts)
+      return {
+        signal_id: sig.signal_id || String(Math.random()).slice(2, 10),
+        ts,
+        created_at: createdAt ?? 0,
+        symbol: sig.symbol,
+        timeframe: sig.timeframe,
+        tf: sig.tf || sig.timeframe,
+        direction: sig.direction,
+        status: sig.status || "FOUND",
+        entry: sig.entry,
+        sl: sig.sl,
+        tp: sig.tp,
+        rr: sig.rr,
+        confidence: sig.confidence,
+        outcome: sig.outcome,
+        resolved_at: sig.resolved_at,
+        resolved_price: sig.resolved_price,
+        strategy_id: sig.strategy_id,
+        strategy_name: sig.strategy_name,
+        detectors_normalized: sig.detectors_normalized || [],
+        hits_per_detector: sig.hits_per_detector || {},
+        explain: sig.explain || {},
+        evidence: sig.evidence || {},
+        chart_drawings: sig.chart_drawings || [],
+        engine_annotations: sig.engine_annotations || {},
+        source: sig.source || "scanner",
+        simVersion: sig.simVersion,
+      }
+    })
 
     return NextResponse.json({
       ok: true,
