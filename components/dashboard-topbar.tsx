@@ -34,6 +34,15 @@ function utcToUB(utcHour: number): string {
 function isSessionOpen(openUTC: number, closeUTC: number): boolean {
   const now = new Date()
   const utcHour = now.getUTCHours()
+  const utcDay = now.getUTCDay()
+
+  // Global forex weekend closure: Fri 22:00 UTC -> Sun 22:00 UTC
+  const weekendClosed =
+    utcDay === 6 ||
+    (utcDay === 5 && utcHour >= 22) ||
+    (utcDay === 0 && utcHour < 22)
+
+  if (weekendClosed) return false
   
   if (openUTC < closeUTC) {
     // Normal case: e.g., 8-17
@@ -49,6 +58,16 @@ function getSessionStatus(openUTC: number, closeUTC: number): { isOpen: boolean;
   const now = new Date()
   const utcHour = now.getUTCHours()
   const utcMin = now.getUTCMinutes()
+  const utcDay = now.getUTCDay()
+
+  const weekendClosed =
+    utcDay === 6 ||
+    (utcDay === 5 && utcHour >= 22) ||
+    (utcDay === 0 && utcHour < 22)
+
+  if (weekendClosed) {
+    return { isOpen: false, timeLeft: "амралт" }
+  }
   const isOpen = isSessionOpen(openUTC, closeUTC)
   
   let targetHour: number

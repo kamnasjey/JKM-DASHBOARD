@@ -6,6 +6,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 
+interface ExtendedSession {
+  user?: {
+    id?: string
+    name?: string | null
+    email?: string | null
+    image?: string | null
+  }
+}
+
 const BACKEND = process.env.INTERNAL_BACKEND_URL || "http://localhost:8000"
 const API_KEY = process.env.INTERNAL_API_KEY || ""
 
@@ -15,8 +24,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ uid: string }> }
 ) {
-  const session = (await getServerSession(authOptions)) as any
-  const userId = session?.user?.id as string | undefined
+  const session = await getServerSession(authOptions) as ExtendedSession | null
+  const userId = session?.user?.id
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }

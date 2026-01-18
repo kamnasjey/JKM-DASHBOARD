@@ -165,13 +165,23 @@ export interface SignalPayloadPublicV1 {
   symbol: string
   timeframe: string
   tf?: string // Alias for timeframe
+  ts?: string // ISO timestamp (newer payloads)
   created_at: number // epoch seconds
   status: "OK" | "NONE" | "FOUND" | "ACTIVE" | "CLOSED"
-  direction: "BUY" | "SELL" | "NA"
+  direction: "BUY" | "SELL" | "NA" | "bullish" | "bearish" | "long" | "short"
   entry?: number
   sl?: number
   tp?: number
   rr?: number
+  confidence?: number
+  strategy_id?: string
+  strategy_name?: string
+  detectors_normalized?: string[]
+  hits_per_detector?: Record<string, number>
+  source?: string
+  primaryTrigger?: string
+  barTs?: string
+  simVersion?: string
   explain: Record<string, any>
   evidence: Record<string, any>
   chart_drawings: ChartDrawing[]

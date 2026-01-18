@@ -128,6 +128,12 @@ export default function PerformancePage() {
     return (totals.tp / decided) * 100
   }, [totals])
 
+  const recentSignals = useMemo(() => {
+    return [...filteredSignals]
+      .sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
+      .slice(0, 50)
+  }, [filteredSignals])
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -259,6 +265,83 @@ export default function PerformancePage() {
                         ) : (
                           "—"
                         )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg">Сүүлийн setup‑ууд</CardTitle>
+            <CardDescription>Symbol, TF, чиглэл, RR, outcome‑ийг дэлгэрэнгүй харуулна</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentSignals.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>TF</TableHead>
+                    <TableHead>Чиглэл</TableHead>
+                    <TableHead className="text-right">RR</TableHead>
+                    <TableHead>Outcome</TableHead>
+                    <TableHead>Strategy</TableHead>
+                    <TableHead>Огноо</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentSignals.map(signal => (
+                    <TableRow key={signal.id}>
+                      <TableCell className="font-mono">{signal.symbol}</TableCell>
+                      <TableCell>{signal.timeframe}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            signal.direction === "long"
+                              ? "default"
+                              : signal.direction === "short"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                        >
+                          {signal.direction === "long"
+                            ? "LONG"
+                            : signal.direction === "short"
+                              ? "SHORT"
+                              : "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {signal.rr !== undefined ? signal.rr.toFixed(2) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {signal.outcome ? (
+                          <Badge
+                            variant={
+                              signal.outcome === "win"
+                                ? "default"
+                                : signal.outcome === "loss"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
+                          >
+                            {signal.outcome.toUpperCase()}
+                          </Badge>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[160px] truncate">
+                        {signal.strategyName || signal.strategyId || "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatTimestamp(signal.ts)}
                       </TableCell>
                     </TableRow>
                   ))}

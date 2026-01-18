@@ -157,18 +157,23 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
   
   // Map direction
   let direction: "long" | "short" | "neutral" = "neutral"
-  if (item.direction === "BUY") direction = "long"
-  if (item.direction === "SELL") direction = "short"
+  if (item.direction === "BUY" || item.direction === "bullish" || item.direction === "long") {
+    direction = "long"
+  }
+  if (item.direction === "SELL" || item.direction === "bearish" || item.direction === "short") {
+    direction = "short"
+  }
   
-  // Convert epoch to ISO
-  const ts = new Date(item.created_at * 1000).toISOString()
+  // Convert epoch to ISO (fallback if ts not provided)
+  const ts = item.ts || new Date(item.created_at * 1000).toISOString()
   
   // Build simulator link if possible
   let simulatorLink: string | undefined
-  if (item.symbol && item.timeframe) {
-    const to = new Date(item.created_at * 1000)
+  const tf = item.timeframe || item.tf
+  if (item.symbol && tf) {
+    const to = new Date(ts)
     const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000)
-    simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(item.timeframe)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
+    simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(tf)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
   }
   
   // Extract fail reasons as note
@@ -176,20 +181,40 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
     ? `Fail: ${item.fail_reasons.join(", ")}`
     : undefined
   
+  const outcome = item.outcome
+    ? String(item.outcome).toLowerCase()
+    : undefined
+
   return {
     id,
     source: "signals",
     ts,
     symbol: item.symbol,
-    timeframe: item.timeframe,
+    timeframe: tf || "—",
+    strategyId: item.strategy_id,
+    strategyName: item.strategy_name,
     direction,
     rr: item.rr,
+    confidence: item.confidence,
     entry: item.entry,
     sl: item.sl,
     tp: item.tp,
     status: item.status,
-    outcome: item.outcome,
+    outcome: outcome as UnifiedSignal["outcome"],
     note,
+    dataCoverage: item.explain?.dataCoverage
+      ? {
+          missingPct: item.explain?.dataCoverage?.missingPct ?? item.explain?.dataCoverage?.pct,
+          barsScanned: item.explain?.dataCoverage?.barsScanned ?? item.explain?.dataCoverage?.rows,
+        }
+      : undefined,
+    detectors: item.detectors_normalized || item.hits_per_detector
+      ? {
+          normalized: item.detectors_normalized,
+          unknown: [],
+          hitsPerDetector: item.hits_per_detector,
+        }
+      : undefined,
     explain: item.explain,
     links: simulatorLink ? { openSimulator: simulatorLink } : undefined,
   }
