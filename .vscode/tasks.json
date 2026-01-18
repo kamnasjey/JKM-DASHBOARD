@@ -591,6 +591,2126 @@
 				"curl -s -o NUL -w \"HTTP_CODE:%{http_code}\\n\" https://www.jkmcopilot.com/api/strategies/v2"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "ssh test connection",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"whoami"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check SIM_VERSION lines",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n SIM_VERSION /opt/JKM-AI-BOT/core/simulator_v2.py | head -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check response building",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n '3000,3100p' /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check response building v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 3000,3100p /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response section A",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 3000,3070p /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find response dict creation",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'response = {' /opt/JKM-AI-BOT/core/simulator_v2.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find response dict",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n response /opt/JKM-AI-BOT/core/simulator_v2.py | grep -E '= \\{' | head -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response section lines",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 2950,3030p /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response section 2920",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 2920,3000p /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response section 2880",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 2880,2960p /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find response line numbers",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"awk '/^[[:space:]]*response = \\{/{print NR}' /opt/JKM-AI-BOT/core/simulator_v2.py | head"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find response lines grep",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'response =' /opt/JKM-AI-BOT/core/simulator_v2.py | head -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response dict 3005-3070",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 3005,3070p /opt/JKM-AI-BOT/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response 3000-3030",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3030 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response lines 3000-3035",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3035 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -35"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response header 3000-3010",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3010 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response meta 3005-3025",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3025 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "response meta 3003-3018",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3018 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "explainability 3060-3095",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3095 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -35"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "explainability 3055-3080",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3080 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -25"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "explainability 3055-3070",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3070 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check imports top",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -65 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "line 60-75",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -75 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp patch_simulator_contract",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/patch_simulator_contract.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp patch_contract_endpoint",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/patch_contract_endpoint.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run patch_simulator_contract",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 patch_simulator_contract.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run patch_contract_endpoint",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 patch_contract_endpoint.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check api_server end",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"tail -30 /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check api_server main",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"tail -50 /opt/JKM-AI-BOT/api_server.py | head -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find __name__ main",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'if __name__' /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find last route",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n '@app.route' /opt/JKM-AI-BOT/api_server.py | tail -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find last route v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n app.route /opt/JKM-AI-BOT/api_server.py | tail -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "api_server line count",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"wc -l /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find route near end",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -2870 /opt/JKM-AI-BOT/api_server.py | tail -20 | grep -n route"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp patch v2",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/patch_contract_endpoint_v2.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run patch contract v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 patch_contract_endpoint_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy backend",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && docker compose up -d --build backend 2>&1 | tail -40"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "wait and check backend",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 30 && docker ps -f name=backend --format '{{.Names}} {{.Status}}'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check backend status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps -f name=backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "backend startup logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --tail 50 2>&1 | head -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test contract endpoint",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/api/simulator/contract | python3 -m json.tool | head -40"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test contract raw",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -si http://localhost:8000/api/simulator/contract | head -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "backend logs error",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --tail 30 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check appended code",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"tail -80 /opt/JKM-AI-BOT/api_server.py | head -60"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check flask imports",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'from flask import\\|import jsonify' /opt/JKM-AI-BOT/api_server.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check jsonify import",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -50 /opt/JKM-AI-BOT/api_server.py | grep -i jsonify"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find jsonify usage",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n jsonify /opt/JKM-AI-BOT/api_server.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check framework",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -30 /opt/JKM-AI-BOT/api_server.py | grep -i 'fastapi\\|flask'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "api_server head imports",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -30 /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix jsonify to dict return",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i 's/return jsonify(contract)/return contract/' /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp fix_jsonify",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/fix_jsonify.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run fix_jsonify",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 fix_jsonify.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check route decorator",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"tail -90 /opt/JKM-AI-BOT/api_server.py | head -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find contract endpoint line",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'Simulator Contract Endpoint' /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check around 2907",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -2915 /opt/JKM-AI-BOT/api_server.py | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp fix_fastapi_route",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/fix_fastapi_route.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run fix_fastapi_route",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 fix_fastapi_route.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rebuild backend v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && docker compose up -d --build backend 2>&1 | tail -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test contract endpoint v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 10 && curl -si http://localhost:8000/api/simulator/contract | head -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test contract now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -si http://localhost:8000/api/simulator/contract | head -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "contract response header",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -si http://localhost:8000/api/simulator/contract | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp smoke test",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/smoke_test_contract.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run smoke test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 smoke_test_contract.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check requestId in sim",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n requestId /opt/JKM-AI-BOT/core/simulator_v2.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check context 3015-3030",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -3030 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check inside container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend grep -n requestId /opt/bot/core/simulator_v2.py | head -3"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check container workdir",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls /app"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check container /app/core",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend grep -n requestId /app/core/simulator_v2.py | head -3"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check meta response",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && curl -s -X POST http://localhost:8000/api/strategy-sim/run -H 'Content-Type: application/json' -d '{\"detectors\":[\"FAIR_VALUE_GAP\"],\"symbols\":[\"AUDJPY\"],\"from\":\"2025-10-01\",\"to\":\"2026-01-17\",\"slPips\":30,\"tpRatio\":2,\"riskPercent\":1}' | python3 -c 'import sys,json; d=json.load(sys.stdin); print(json.dumps(d.get(\"meta\",{}), indent=2))'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp quick_test",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/quick_test.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run quick_test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 quick_test.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp quick_test2",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/quick_test2.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run quick_test2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 quick_test2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp quick_test3",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/quick_test3.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run quick_test3",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 quick_test3.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_inside",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_inside_container.py",
+				"root@159.65.11.255:/tmp/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test inside container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /tmp/test_inside_container.py jkm_bot_backend:/app/ && docker exec jkm_bot_backend python /app/test_inside_container.py 2>&1 | tail -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check SimulatorV2Request class",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend grep -A20 'class SimulatorV2Request' /app/core/simulator_v2.py | head -25"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "find SimulatorV2Request",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend grep -n SimulatorV2Request /app/core/simulator_v2.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check request class def",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sed -n 2246,2270p /app/core/simulator_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_inside2",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_inside_container2.py",
+				"root@159.65.11.255:/tmp/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test inside2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /tmp/test_inside_container2.py jkm_bot_backend:/app/ && docker exec jkm_bot_backend python /app/test_inside_container2.py 2>&1 | tail -40"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test with timeout",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"timeout 60 docker exec jkm_bot_backend python /app/test_inside_container2.py 2>&1 | tail -50"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check logs after test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --tail 20 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify test file exists",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend cat /app/test_inside_container2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "quick python test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -c 'print(\"hello\")'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test with file output",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -c 'cd /app && python test_inside_container2.py > /tmp/result.txt 2>&1; cat /tmp/result.txt | tail -30'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "quick meta test python",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 -c \"import requests; r=requests.post('http://localhost:8000/api/strategy-sim/run', json={'detectors':['FAIR_VALUE_GAP'],'symbols':['AUDJPY'],'from':'2025-10-01','to':'2026-01-17','slPips':30,'tpRatio':2,'riskPercent':1}); print('META:', r.json().get('meta',{}).keys()); print('STATS:', r.json().get('stats')); print('EXPLAIN:', list(r.json().get('explainability',{}).keys()) if r.json().get('explainability') else None)\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_meta",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_meta.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_meta",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 test_meta.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_raw",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_raw.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_raw",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 test_raw.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim routes",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'strategy-sim' /opt/JKM-AI-BOT/api_server.py | head -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check internal key",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'require_internal_key\\|INTERNAL_KEY\\|X-Internal-Key' /opt/JKM-AI-BOT/api_server.py | head -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check require_internal",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n require_internal /opt/JKM-AI-BOT/api_server.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check require_internal_key func",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -385 /opt/JKM-AI-BOT/api_server.py | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "get internal key",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend printenv INTERNAL_API_KEY"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_with_key",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_with_key.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_with_key",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && timeout 120 python3 test_with_key.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_full",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_full_response.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_full",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && timeout 120 python3 test_full_response.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim endpoint params",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -2455 /opt/JKM-AI-BOT/api_server.py | tail -40"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim mode detection",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -2435 /opt/JKM-AI-BOT/api_server.py | tail -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_multi_mode",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_multi_mode.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_multi_mode",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && timeout 180 python3 test_multi_mode.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check test output file",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cat /tmp/test_out.txt 2>/dev/null || echo 'not ready'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check running process",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ps aux | grep test_multi_mode | head -3"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "wait and check process",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 60 && ps aux | grep test_multi_mode | head -2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check still running",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ps aux | grep test_multi | grep -v grep | head -2"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_quick",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_quick.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_quick",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 test_quick.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check test_quick process",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ps aux | grep test_quick | grep -v grep"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp test_to_file",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/test_to_file.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test_to_file",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 test_to_file.py && cat /tmp/sim_result.json | head -60"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim result",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ls -la /tmp/sim_result.json 2>/dev/null && cat /tmp/sim_result.json | head -80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run and wait for result",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && timeout 180 python3 test_to_file.py; cat /tmp/sim_result.json 2>/dev/null | head -80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "read sim result",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cat /tmp/sim_result.json | head -100"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "backend recent logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --tail 20 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "wait 90s and read result",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 90 && cat /tmp/sim_result.json 2>/dev/null | head -100"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check result now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cat /tmp/sim_result.json 2>/dev/null | head -100 || echo 'not ready yet'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check error logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --since 5m 2>&1 | grep -i 'error\\|exception\\|simulator' | tail -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check errors v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --since 5m 2>&1 | grep -iE 'error|exception' | tail -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "recent logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend --since 5m 2>&1 | tail -40"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "container processes",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ps aux | head -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify container patch",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend head -3030 /app/core/simulator_v2.py | tail -35"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "final contract check",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/api/simulator/contract | head -c 500"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "contract endpoint final",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/api/simulator/contract"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "contract version",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/api/simulator/contract 2>&1 | python3 -c \"import sys,json; d=json.load(sys.stdin); print('version:', d.get('version')); print('rootCauseTaxonomy:', d.get('rootCauseTaxonomy'))\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp check_contract",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/check_contract.py",
+				"root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run check_contract",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 check_contract.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check_contract direct",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"python3 /opt/JKM-AI-BOT/check_contract.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check_contract v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"python3 /opt/JKM-AI-BOT/check_contract.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "step0 sanity",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"set -e; cd /opt/JKM-AI-BOT; docker ps --format 'table {{.Names}}\\t{{.Status}}' | sed -n '1,20p'; docker exec jkm_bot_backend sh -lc 'python3 -V; ls -la /app/core | head'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp step0",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/step0_sanity.sh",
+				"root@159.65.11.255:/tmp/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run step0",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"bash /tmp/step0_sanity.sh"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps --format 'table {{.Names}}\\t{{.Status}}'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker ps",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim v2 head",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -80 /opt/JKM-AI-BOT/core/simulator_v2.py | tail -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run deploy scanner",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 deploy_scanner_247.py 2>&1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list jkm py files",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ls -la /opt/JKM-AI-BOT/*.py | head -5"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp deploy script",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp 'c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\deploy_scanner_247.py' root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run deploy scanner 247",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 deploy_scanner_247.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify new files",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ls -la /opt/JKM-AI-BOT/core/scan_engine_v2.py /opt/JKM-AI-BOT/core/signals_api.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check api_server imports",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n 'include_router\\|from core' /opt/JKM-AI-BOT/api_server.py | head -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep include_router",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"grep -n include_router /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "api_server top",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -60 /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "api_server lines 1-80",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n '1,80p' /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "api_server head 80",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"head -80 /opt/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep scanner_router",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep -n scanner_router /opt/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp signals patch",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp 'c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\patch_signals_router.py' root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run signals patch",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"cd /opt/JKM-AI-BOT && python3 patch_signals_router.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run signals patch ssh",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 patch_signals_router.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker compose rebuild",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root && docker compose up -d --build 2>&1 | tail -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "force recreate backend",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker rm -f jkm_bot_backend && cd /root && docker compose up -d --build 2>&1 | tail -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check backend status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps --filter name=jkm_bot_backend --format 'Status: {{.Status}}'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "smoke test scan status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/scan/status | head -c 500"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "smoke test signals",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/signals | head -c 500"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check backend logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend 2>&1 | tail -40"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check signals import",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep signals_router /opt/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check signals_api prefix",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"head -20 /opt/JKM-AI-BOT/core/signals_api.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check import errors",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"docker logs jkm_bot_backend 2>&1 | grep -i 'error\\|import\\|signals' | head -20\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check for errors",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend 2>&1 | grep -i error | head -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check include_router lines",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep -n include_router /opt/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check lines 245-260",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"sed -n '245,260p' /opt/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show lines 245-260",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"awk 'NR>=245 && NR<=260' /opt/JKM-AI-BOT/api_server.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "head tail api_server",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 'head -260 /opt/JKM-AI-BOT/api_server.py | tail -20'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp fix script",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp 'c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\fix_signals_router.py' root@159.65.11.255:/opt/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run fix script",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 fix_signals_router.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix signals v2",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp 'c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\fix_signals_router_v2.py' root@159.65.11.255:/opt/JKM-AI-BOT/ && ssh root@159.65.11.255 'cd /opt/JKM-AI-BOT && python3 fix_signals_router_v2.py'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run fix v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /opt/JKM-AI-BOT && python3 fix_signals_router_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rebuild backend final",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker rm -f jkm_bot_backend; cd /root && docker compose up -d --build 2>&1 | tail -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test signals final",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 3 && curl -s http://localhost:8000/signals"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check startup logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend 2>&1 | head -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep signals logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend 2>&1 | grep -i signals"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep router logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend 2>&1 | grep -i router"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check signals api in code",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep -A5 'SIGNALS API ROUTER' /opt/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check signals_api in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend cat /app/core/signals_api.py | head -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check dockerfile",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cat /root/Dockerfile | head -30"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check compose",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cat /root/docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "compose head",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"head -30 /root/docker-compose.yml"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "get full compose",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 'cat /root/docker-compose.yml'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check build context",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep -A3 'build:' /root/docker-compose.yml\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check jkm-ai-bot dir",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"ls -la /root/JKM-AI-BOT 2>&1 | head -5\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check both dirs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ls -ld /root/JKM-AI-BOT /opt/JKM-AI-BOT"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy to correct dir",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cp /opt/JKM-AI-BOT/core/signals_api.py /root/JKM-AI-BOT/core/ && cp /opt/JKM-AI-BOT/core/scan_engine_v2.py /root/JKM-AI-BOT/core/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy api_server",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cp /opt/JKM-AI-BOT/api_server.py /root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rebuild correct context",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker rm -f jkm_bot_backend; cd /root && docker compose up -d --build 2>&1 | tail -15"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "final signals test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 3 && curl -s http://localhost:8000/signals"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test signals stats",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/signals/stats"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test scan status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/scan/status"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check router load",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs jkm_bot_backend 2>&1 | grep -i router"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check scan imports",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep -n scan_engine /root/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check scan include",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep -A1 'from core.scan_engine_v2' /root/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check all include_router",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep include_router /root/JKM-AI-BOT/api_server.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check scanner router def",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 \"grep APIRouter /root/JKM-AI-BOT/core/scan_engine_v2.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test double prefix",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/scan/scan/status"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix scanner prefix",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -i 's|scanner_router = APIRouter(prefix=\"/scan\"|scanner_router = APIRouter(|' /root/JKM-AI-BOT/core/scan_engine_v2.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "fix scanner prefix v2",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp 'c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\fix_scanner_prefix.py' root@159.65.11.255:/tmp/ && ssh root@159.65.11.255 'python3 /tmp/fix_scanner_prefix.py'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "final rebuild",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker rm -f jkm_bot_backend; cd /root && docker compose up -d --build 2>&1 | tail -10"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "verify scan status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sleep 3 && curl -s http://localhost:8000/scan/status"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "full endpoint test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"echo '=== SCAN STATUS ===' && curl -s http://localhost:8000/scan/status && echo '' && echo '=== SIGNALS ===' && curl -s http://localhost:8000/signals && echo '' && echo '=== SIGNALS STATS ===' && curl -s http://localhost:8000/signals/stats"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "smoke test scan status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/scan/status | head -20"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "smoke test signals",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/signals | head -c 300"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "start scanner test",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s -X POST http://localhost:8000/scan/start -H 'Content-Type: application/json' -d '{\"strategyId\":\"test-247\",\"timeframes\":[\"5m\"]}'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "start scanner v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s -X POST http://localhost:8000/scan/start -H \"Content-Type: application/json\" -d \"{\\\"strategyId\\\":\\\"test-247\\\",\\\"timeframes\\\":[\\\"5m\\\"]}\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "start scan via script",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"echo 'curl -s -X POST http://localhost:8000/scan/start -H \"Content-Type: application/json\" -d \"{\\\"strategyId\\\":\\\"test-247\\\",\\\"timeframes\\\":[\\\"5m\\\"]}\"' > /tmp/test_scan.sh && chmod +x /tmp/test_scan.sh && bash /tmp/test_scan.sh"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run smoke test",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp 'c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\test_scan.sh' root@159.65.11.255:/tmp/ && ssh root@159.65.11.255 'chmod +x /tmp/test_scan.sh && bash /tmp/test_scan.sh'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run test scan script",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 'bash /tmp/test_scan.sh 2>&1'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "upload test script",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"scp c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\test_scan.sh root@159.65.11.255:/tmp/test_scan.sh"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "exec test scan",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-Command",
+				"ssh root@159.65.11.255 'bash /tmp/test_scan.sh'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "final scan status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/scan/status"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "signals stats",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"curl -s http://localhost:8000/signals/stats"
+			],
+			"isBackground": false
 		}
 	]
 }

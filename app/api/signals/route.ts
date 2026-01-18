@@ -1,0 +1,97 @@
+/**
+ * SIGNALS API ROUTE (PUBLIC)
+ * ==========================
+ * Proxies to backend /signals endpoint
+ * Returns scanner-published signals from signals.jsonl
+ * 
+ * NOTE: This endpoint is PUBLIC (no auth required).
+ * It only returns non-sensitive scanner signals (symbol, tf, rr, confidence).
+ * No user PII is exposed.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:8000";
+
+const querySchema = z.object({
+  limit: z.coerce.number().min(1).max(500).optional().default(50),
+  symbol: z.string().optional(),
+  strategy_id: z.string().optional(),
+  hours: z.coerce.number().min(1).max(168).optional(),
+});
+
+export async function GET(req: NextRequest) {
+  // PUBLIC endpoint - no auth required
+  // Parse query params
+  const url = new URL(req.url);
+  const params = Object.fromEntries(url.searchParams);
+
+  const parsed = querySchema.safeParse(params);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "INVALID_PARAMS", details: parsed.error.issues },
+      { status: 400 }
+    );
+  }
+
+  const { limit, symbol, strategy_id, hours } = parsed.data;
+
+  // Build backend URL
+  const backendUrl = new URL(`${BOT_API_URL}/signals`);
+  backendUrl.searchParams.set("limit", String(limit));
+  if (symbol) backendUrl.searchParams.set("symbol", symbol);
+  if (strategy_id) backendUrl.searchParams.set("strategy_id", strategy_id);
+  if (hours) backendUrl.searchParams.set("hours", String(hours));
+
+  try {
+    const resp = await fetch(backendUrl.toString(), {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      next: { revalidate: 0 },
+    });
+
+    if (!resp.ok) {
+      return NextResponse.json(
+        { ok: false, error: "BACKEND_ERROR", status: resp.status },
+        { status: 502 }
+      );
+    }
+
+    const data = await resp.json();
+
+    // Map to frontend format
+    const signals = (data.signals || []).map((sig: Record<string, unknown>) => ({
+      id: sig.signal_id || String(Math.random()).slice(2, 10),
+      ts: sig.ts,
+      symbol: sig.symbol,
+      timeframe: sig.timeframe,
+      direction: sig.direction,
+      rr: sig.rr,
+      confidence: sig.confidence,
+      strategyId: sig.strategy_id,
+      detectors: sig.detectors_normalized || [],
+      hitsPerDetector: sig.hits_per_detector || {},
+      explain: sig.explain || {},
+      source: sig.source || "scanner",
+      simVersion: sig.simVersion,
+    }));
+
+    return NextResponse.json({
+      ok: true,
+      count: signals.length,
+      total: data.total || signals.length,
+      signals,
+      source: "backend_signals",
+    });
+  } catch (err) {
+    console.error("[signals/route] Fetch error:", err);
+    return NextResponse.json(
+      { ok: false, error: "FETCH_FAILED", message: String(err) },
+      { status: 500 }
+    );
+  }
+}

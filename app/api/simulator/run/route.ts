@@ -198,9 +198,14 @@ export async function POST(request: NextRequest) {
   console.log(`[${requestId}] Simulator request: userId=${userId}, strategyId=${strategyId}, detectorsRequested=${detectorsRequested.length}, detectorsNormalized=${detectorsNormalized.length}, unknown=${detectorsUnknown.length}, detectors=[${detectorsNormalized.join(", ")}]`)
   
   // --- 7. Proxy to backend ---
-  const backendUrl = `${BACKEND_ORIGIN}/api/simulator/run`
+  const backendUrl = `${BACKEND_ORIGIN}/api/strategy-sim/run`
   const startTime = Date.now()
   const dashboardVersion = getDashboardVersion()
+  
+  // STEP 5: Add timeout to prevent long-running requests
+  const BACKEND_TIMEOUT_MS = 60_000 // 60 seconds
+  const abortController = new AbortController()
+  const timeoutId = setTimeout(() => abortController.abort(), BACKEND_TIMEOUT_MS)
   
   try {
     const backendResponse = await fetch(backendUrl, {
@@ -211,8 +216,10 @@ export async function POST(request: NextRequest) {
         "x-request-id": requestId,
       },
       body: JSON.stringify(backendPayload),
+      signal: abortController.signal,
     })
     
+    clearTimeout(timeoutId) // Clear timeout after response received
     const elapsedMs = Date.now() - startTime
     const backendText = await backendResponse.text()
     let backendJson: any
@@ -412,8 +419,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(backendJson)
     
   } catch (err: any) {
+    clearTimeout(timeoutId) // Clear timeout in error path
     const elapsedMs = Date.now() - startTime
-    console.error(`[${requestId}] Backend network error:`, err?.message || err)
+    
+    // Check if it was a timeout abort
+    const isTimeout = err?.name === "AbortError"
+    const errorCode = isTimeout ? "BACKEND_TIMEOUT" : "BACKEND_UNREACHABLE"
+    const errorMessage = isTimeout 
+      ? `Backend request timed out after ${BACKEND_TIMEOUT_MS / 1000}s`
+      : (err?.message || "Network error")
+    
+    console.error(`[${requestId}] Backend ${isTimeout ? 'timeout' : 'network error'}:`, errorMessage)
     
     // Store failed diagnostics
     try {
@@ -435,8 +451,8 @@ export async function POST(request: NextRequest) {
         },
         response: {
           ok: false,
-          errorCode: "BACKEND_UNREACHABLE",
-          errorMessage: err?.message || "Network error",
+          errorCode,
+          errorMessage,
         },
       }
       storeSimulatorDiagnostics(diagnosticsEntry)
@@ -445,8 +461,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: "BACKEND_UNREACHABLE",
-        message: `Failed to reach backend server: ${err?.message || "Network error"}`,
+        error: errorCode,
+        message: errorMessage,
         meta: { 
           requestId, 
           dashboardVersion,
@@ -456,17 +472,25 @@ export async function POST(request: NextRequest) {
           detectorsUnknown,
         },
         explainability: {
-          rootCause: "BACKEND_UNREACHABLE",
-          explanation: "Could not connect to the simulation backend. The server may be down or unreachable.",
+          rootCause: errorCode,
+          explanation: isTimeout 
+            ? "The simulation request took too long. Try reducing the date range or number of symbols."
+            : "Could not connect to the simulation backend. The server may be down or unreachable.",
           severity: "error",
-          suggestions: [
-            "Wait a few minutes and try again",
-            "Check if the backend service is running",
-            "Contact support if the issue persists"
-          ],
+          suggestions: isTimeout
+            ? [
+              "Reduce the date range (e.g., 7 days instead of 30)",
+              "Use fewer symbols",
+              "Try the single timeframe mode instead of multi-TF"
+            ]
+            : [
+              "Wait a few minutes and try again",
+              "Check if the backend service is running",
+              "Contact support if the issue persists"
+            ],
         }
       },
-      { status: 502 }
+      { status: isTimeout ? 504 : 502 }
     )
   }
 }

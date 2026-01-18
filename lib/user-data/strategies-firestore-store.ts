@@ -2,6 +2,7 @@ import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
 import { FieldValue } from "firebase-admin/firestore"
 import type { StrategyDoc, CreateStrategyInput, UpdateStrategyInput } from "@/lib/schemas/strategy"
 import { normalizeDetectorList } from "@/lib/detectors/normalize"
+import { isStarterStrategy, markStarterDeleted } from "@/lib/user-data/starter-strategies"
 
 /**
  * Strategy Firestore Store
@@ -170,13 +171,21 @@ export async function updateStrategy(
 
 /**
  * Delete a strategy
+ * 
+ * If deleting a starter strategy, marks it as deleted to prevent resurrection.
  */
 export async function deleteStrategy(userId: string, strategyId: string): Promise<void> {
+  const db = getFirebaseAdminDb()
   const ref = getStrategiesRef(userId).doc(strategyId)
   const doc = await ref.get()
   
   if (!doc.exists) {
     throw new Error("Strategy not found")
+  }
+
+  // If this is a starter strategy, mark it as deleted to prevent resurrection
+  if (isStarterStrategy(strategyId)) {
+    await markStarterDeleted(db, userId, strategyId)
   }
   
   await ref.delete()

@@ -214,11 +214,24 @@ export async function seedStarterStrategiesForUser(
         return { seeded: false, reason: "ALREADY_SEEDED" }
       }
 
-      // 3. Create starter strategies
+      // 3. Get list of deleted starter IDs (never recreate these)
+      const deletedIds: string[] = Array.isArray(userData.starterDeletedIds)
+        ? userData.starterDeletedIds
+        : []
+
+      // 4. Create starter strategies
       const now = FieldValue.serverTimestamp()
       let created = 0
 
       for (const template of STARTER_STRATEGIES_V1) {
+        // Skip if user previously deleted this starter
+        if (deletedIds.includes(template.id)) {
+          console.log(
+            `[starter-strategies] Skipping ${template.id} - user deleted previously`
+          )
+          continue
+        }
+
         const stratRef = strategiesRef.doc(template.id)
         
         // Check if doc already exists (in case of partial seed)
@@ -260,7 +273,7 @@ export async function seedStarterStrategiesForUser(
         created++
       }
 
-      // 4. Update user doc with seed marker
+      // 5. Update user doc with seed marker
       tx.set(
         userRef,
         {
@@ -308,5 +321,61 @@ export async function hasStarterStrategiesSeeded(
     )
   } catch {
     return false
+  }
+}
+
+// ============================================================
+// Starter Strategy IDs (exported for UI badge detection)
+// ============================================================
+
+/** Deterministic starter strategy IDs */
+export const STARTER_STRATEGY_IDS = STARTER_STRATEGIES_V1.map((s) => s.id)
+
+/**
+ * Check if a strategy ID is a starter strategy
+ */
+export function isStarterStrategy(strategyId: string): boolean {
+  return strategyId.startsWith("starter_")
+}
+
+// ============================================================
+// Mark Starter as Deleted (prevents resurrection)
+// ============================================================
+
+/**
+ * Mark a starter strategy as deleted.
+ * 
+ * When user deletes a starter, we add its ID to starterDeletedIds array.
+ * This prevents the strategy from being re-created on next login.
+ * 
+ * @param db Firestore database instance
+ * @param userId User ID
+ * @param strategyId Strategy ID being deleted
+ */
+export async function markStarterDeleted(
+  db: Firestore,
+  userId: string,
+  strategyId: string
+): Promise<void> {
+  if (!userId || !strategyId) return
+  if (!isStarterStrategy(strategyId)) return // Only track starters
+
+  try {
+    const userRef = db.collection(USERS_COLLECTION).doc(userId)
+    await userRef.set(
+      {
+        starterDeletedIds: FieldValue.arrayUnion(strategyId),
+      },
+      { merge: true }
+    )
+    console.log(
+      `[starter-strategies] Marked starter ${strategyId} as deleted for user ${userId.slice(0, 8)}...`
+    )
+  } catch (error: any) {
+    console.error(
+      `[starter-strategies] Failed to mark starter deleted:`,
+      error?.message || error
+    )
+    // Non-fatal: don't throw
   }
 }
