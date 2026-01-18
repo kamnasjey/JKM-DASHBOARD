@@ -10,12 +10,12 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:8000";
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
 
 export async function GET() {
   // PUBLIC endpoint - no auth required
   try {
-    const resp = await fetch(`${BOT_API_URL}/signals/stats`, {
+    const resp = await fetch(`${BACKEND_ORIGIN}/signals/stats`, {
       method: "GET",
       headers: { Accept: "application/json" },
       next: { revalidate: 0 },

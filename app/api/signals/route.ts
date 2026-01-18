@@ -15,7 +15,7 @@ import { z } from "zod";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:8000";
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
 
 const querySchema = z.object({
   limit: z.coerce.number().min(1).max(500).optional().default(50),
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   const { limit, symbol, strategy_id, hours } = parsed.data;
 
   // Build backend URL
-  const backendUrl = new URL(`${BOT_API_URL}/signals`);
+  const backendUrl = new URL(`${BACKEND_ORIGIN}/signals`);
   backendUrl.searchParams.set("limit", String(limit));
   if (symbol) backendUrl.searchParams.set("symbol", symbol);
   if (strategy_id) backendUrl.searchParams.set("strategy_id", strategy_id);

@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BOT_API_URL = process.env.BOT_API_URL || "http://localhost:8000";
+const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
 
 export async function GET(req: NextRequest) {
   // PUBLIC endpoint - no auth required
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const symbol = url.searchParams.get("symbol");
 
   try {
-    const backendUrl = new URL(`${BOT_API_URL}/signals/latest`);
+    const backendUrl = new URL(`${BACKEND_ORIGIN}/signals/latest`);
     if (symbol) backendUrl.searchParams.set("symbol", symbol);
 
     const resp = await fetch(backendUrl.toString(), {
