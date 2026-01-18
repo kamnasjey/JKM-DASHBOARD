@@ -15,7 +15,10 @@ interface ExtendedSession {
   }
 }
 
-const BACKEND = process.env.INTERNAL_BACKEND_URL || "http://localhost:8000"
+const BACKEND =
+  process.env.INTERNAL_BACKEND_URL ||
+  process.env.BACKEND_ORIGIN ||
+  "https://api.jkmcopilot.com"
 const API_KEY = process.env.INTERNAL_API_KEY || ""
 
 export const runtime = "nodejs"

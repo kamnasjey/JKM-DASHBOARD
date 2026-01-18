@@ -67,6 +67,8 @@ export async function GET(req: NextRequest) {
 
     const data = await resp.json();
 
+    const rawSignals = Array.isArray(data) ? data : data.signals || []
+
     const toEpochSeconds = (value?: unknown) => {
       if (!value || typeof value !== "string") return undefined
       const ts = Date.parse(value)
@@ -74,7 +76,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Map to frontend format (full signal shape)
-    const signals = (data.signals || []).map((sig: Record<string, unknown>) => {
+    const signals = rawSignals.map((sig: Record<string, unknown>) => {
       const ts = typeof sig.ts === "string" ? sig.ts : undefined
       const createdAt = (sig.created_at as number | undefined) ?? toEpochSeconds(ts)
       return {
@@ -110,7 +112,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       count: signals.length,
-      total: data.total || signals.length,
+      total: (Array.isArray(data) ? signals.length : (data.total || signals.length)),
       signals,
       source: "backend_signals",
     });
