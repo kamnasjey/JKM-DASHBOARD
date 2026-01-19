@@ -29,13 +29,21 @@ export async function POST(
   try {
     const body = await request.json()
 
-    const map = body?.map || {}
-    await setStrategyMap(uid, map)
+    const rawMap = body?.map || {}
+    const cleanedMap: Record<string, string> = {}
+    for (const [symbol, value] of Object.entries(rawMap)) {
+      if (typeof value !== "string") continue
+      const trimmed = value.trim()
+      if (!trimmed || trimmed === "__default__") continue
+      cleanedMap[symbol] = trimmed
+    }
+
+    await setStrategyMap(uid, cleanedMap)
 
     return NextResponse.json({
       ok: true,
       uid,
-      activeStrategyMap: map,
+      activeStrategyMap: cleanedMap,
     })
   } catch (error: any) {
     console.error("[proxy/strategy-map] Error:", error)
