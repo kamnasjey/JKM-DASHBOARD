@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalKey } from "@/lib/internal-auth"
-import { getStrategyMap, saveStrategyMap } from "@/lib/internal-storage"
+import { getStrategyConfig, setStrategyMap } from "@/lib/user-data/strategy-config-store"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,12 +25,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const data = await getStrategyMap(uid)
+    const data = await getStrategyConfig(uid)
     return NextResponse.json({
       ok: true,
       uid,
-      map: data.map,
-      default: data.default,
+      map: data.activeStrategyMap || {},
+      default: data.activeStrategyId || null,
       updatedAt: data.updatedAt,
     })
   } catch (error) {
@@ -72,11 +72,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ ok: false, error: "default must be a string" }, { status: 400 })
     }
 
-    const success = await saveStrategyMap(uid, map as Record<string, string>, defaultId)
-    
-    if (!success) {
-      return NextResponse.json({ ok: false, error: "Failed to save strategy map" }, { status: 500 })
-    }
+    await setStrategyMap(uid, map as Record<string, string>, defaultId ?? null)
 
     return NextResponse.json({
       ok: true,

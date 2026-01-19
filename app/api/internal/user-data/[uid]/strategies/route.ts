@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalKey } from "@/lib/internal-auth"
-import { getStrategies, saveStrategies } from "@/lib/internal-storage"
+import { listStrategies } from "@/lib/user-data/strategies-firestore-store"
+import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,12 +26,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const data = await getStrategies(uid)
+    const data = await listStrategies(uid, { limit: 200 })
+    const strategies = data.strategies.map((s) => ({
+      strategy_id: s.id,
+      name: s.name,
+      enabled: s.enabled,
+      detectors: s.detectors || [],
+      symbols: s.symbols || [],
+      timeframe: s.timeframe || null,
+      config: s.config || {},
+    }))
     return NextResponse.json({
       ok: true,
       uid,
-      strategies: data.strategies,
-      updatedAt: data.updatedAt,
+      strategies,
+      updatedAt: new Date().toISOString(),
     })
   } catch (error) {
     console.error("[internal/strategies] GET error:", error)
@@ -56,20 +66,27 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ ok: false, error: "strategies must be an array" }, { status: 400 })
     }
 
-    // Validate each strategy has at least id and name
-    for (const s of strategies) {
-      if (!s.id || typeof s.id !== "string") {
-        return NextResponse.json({ ok: false, error: "Each strategy must have a string id" }, { status: 400 })
-      }
-      if (!s.name || typeof s.name !== "string") {
-        return NextResponse.json({ ok: false, error: "Each strategy must have a string name" }, { status: 400 })
-      }
-    }
+    const db = getFirebaseAdminDb()
+    const ref = db.collection("users").doc(uid).collection("strategies")
 
-    const success = await saveStrategies(uid, strategies)
-    
-    if (!success) {
-      return NextResponse.json({ ok: false, error: "Failed to save strategies" }, { status: 500 })
+    for (const s of strategies) {
+      const id = String(s.id || s.strategy_id || "").trim()
+      const name = String(s.name || s.strategy_name || id).trim()
+      if (!id || !name) continue
+
+      await ref.doc(id).set(
+        stripUndefinedDeep({
+          name,
+          enabled: s.enabled ?? true,
+          detectors: Array.isArray(s.detectors) ? s.detectors : [],
+          symbols: Array.isArray(s.symbols) ? s.symbols : null,
+          timeframe: s.timeframe ?? null,
+          config: s.config || {},
+          updatedAt: new Date().toISOString(),
+          createdAt: s.createdAt ?? new Date().toISOString(),
+        }),
+        { merge: true },
+      )
     }
 
     return NextResponse.json({

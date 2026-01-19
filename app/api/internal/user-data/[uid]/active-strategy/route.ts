@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalKey } from "@/lib/internal-auth"
-import { getActiveStrategy, saveActiveStrategy } from "@/lib/internal-storage"
+import { getStrategyConfig, setActiveStrategyId } from "@/lib/user-data/strategy-config-store"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,11 +25,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const data = await getActiveStrategy(uid)
+    const data = await getStrategyConfig(uid)
     return NextResponse.json({
       ok: true,
       uid,
-      activeStrategyId: data.activeStrategyId,
+      activeStrategyId: data.activeStrategyId ?? null,
       updatedAt: data.updatedAt,
     })
   } catch (error) {
@@ -56,11 +56,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ ok: false, error: "activeStrategyId must be string or null" }, { status: 400 })
     }
 
-    const success = await saveActiveStrategy(uid, activeStrategyId)
-    
-    if (!success) {
-      return NextResponse.json({ ok: false, error: "Failed to save active strategy" }, { status: 500 })
-    }
+    await setActiveStrategyId(uid, activeStrategyId ?? null)
 
     return NextResponse.json({
       ok: true,
