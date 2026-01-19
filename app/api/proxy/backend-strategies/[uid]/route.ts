@@ -65,7 +65,40 @@ export async function GET(
     }
 
     const data = await res.json()
-    return NextResponse.json(data)
+
+    const rawStrategies = Array.isArray(data?.strategies) ? data.strategies : []
+    const strategies = rawStrategies.map((s: any) => ({
+      id: s.id || s.strategy_id || s.strategyId || "",
+      name: s.name || s.strategy_name || s.strategyName || s.strategy_id || "Unnamed",
+      detectors: Array.isArray(s.detectors) ? s.detectors : [],
+      symbols: Array.isArray(s.symbols) ? s.symbols : [],
+      timeframes: Array.isArray(s.timeframes) ? s.timeframes : (s.timeframe ? [s.timeframe] : []),
+      minRR: s.min_rr ?? s.minRR ?? 0,
+      enabled: s.enabled ?? true,
+      tags: Array.isArray(s.tags) ? s.tags : undefined,
+      isStarterClone: s.isStarterClone ?? s.is_starter_clone,
+    }))
+
+    const activeStrategyId =
+      data?.activeStrategyId ||
+      data?.active_strategy_id ||
+      strategies[0]?.id ||
+      ""
+
+    const activeStrategyMap =
+      data?.activeStrategyMap ||
+      data?.active_strategy_map ||
+      data?.strategyMap ||
+      {}
+
+    return NextResponse.json({
+      ok: data?.ok ?? true,
+      uid,
+      strategies,
+      activeStrategyId,
+      activeStrategyMap,
+      count: strategies.length,
+    })
   } catch (error: any) {
     console.error("[proxy/backend-strategies] Error:", error)
     return NextResponse.json(

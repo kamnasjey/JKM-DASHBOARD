@@ -37,7 +37,7 @@ export async function GET(
   }
 
   try {
-    const res = await fetch(`${BACKEND}/api/internal/engine/strategy-map-status/${uid}`, {
+    const res = await fetch(`${BACKEND}/api/engine/status`, {
       method: "GET",
       headers: {
         "x-internal-api-key": API_KEY,
@@ -56,7 +56,19 @@ export async function GET(
     }
 
     const data = await res.json()
-    return NextResponse.json(data)
+    const lastCycleTs = data?.last_scan_ts
+      ? new Date((data.last_scan_ts as number) * 1000).toISOString()
+      : ""
+
+    return NextResponse.json({
+      ok: data?.ok ?? true,
+      uid,
+      engineRunning: Boolean(data?.running),
+      scanMode: data?.scan_mode || "TICK",
+      lastCycleTs,
+      effectiveSymbols: [],
+      error: data?.last_error || data?.error,
+    })
   } catch (error: any) {
     console.error("[proxy/engine-status] Error:", error)
     return NextResponse.json(
