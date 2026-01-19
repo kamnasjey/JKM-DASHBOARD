@@ -102,6 +102,16 @@ export const api = {
   },
   signals: (params?: { limit?: number; symbol?: string }) => api.getSignals(params),
 
+  // User signals (Firestore user-data, authenticated)
+  userSignals: (params?: { limit?: number; symbol?: string; status?: string }) => {
+    const qs = new URLSearchParams()
+    qs.set("limit", String(params?.limit ?? 50))
+    if (params?.symbol) qs.set("symbol", params.symbol)
+    if (params?.status) qs.set("status", params.status)
+    return apiFetch<{ ok: boolean; signals: any[] }>(`/api/user-signals?${qs.toString()}`)
+      .then(res => res.signals || [])
+  },
+
   // Symbols
   getSymbols: () => apiFetch<string[]>("/api/proxy/symbols"),
   symbols: () => api.getSymbols(),
