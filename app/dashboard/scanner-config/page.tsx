@@ -205,11 +205,33 @@ export default function ScannerConfigPage() {
     if (!uid) return
     
     try {
-      const data = await api.backendStrategies.get(uid)
-      if (data.ok) {
-        setStrategies(data.strategies || [])
-        setActiveStrategyId(data.activeStrategyId || "")
-        setActiveStrategyMap(data.activeStrategyMap || {})
+      const [backendData, v2Data] = await Promise.all([
+        api.backendStrategies.get(uid),
+        api.strategiesV2.list({ limit: 100 }).catch(() => ({ ok: false, strategies: [] })),
+      ])
+
+      const v2Strategies = (v2Data as any)?.strategies?.map((s: any) => ({
+        id: s.id || s.strategy_id || "",
+        name: s.name || s.strategy_id || "Unnamed",
+        detectors: Array.isArray(s.detectors) ? s.detectors : [],
+        symbols: Array.isArray(s.symbols) ? s.symbols : [],
+        timeframes: s.timeframe ? [s.timeframe] : [],
+        minRR: s.config?.min_rr ?? s.config?.minRR ?? 0,
+        enabled: s.enabled ?? true,
+        tags: Array.isArray(s.tags) ? s.tags : undefined,
+        isStarterClone: s.isStarterClone ?? s.is_starter_clone,
+      })) || []
+
+      if (backendData.ok) {
+        const nextStrategies = v2Strategies.length > 0 ? v2Strategies : (backendData.strategies || [])
+        setStrategies(nextStrategies)
+        const backendActiveId = backendData.activeStrategyId || ""
+        const fallbackActiveId = nextStrategies[0]?.id || ""
+        const resolvedActiveId = nextStrategies.some(s => s.id === backendActiveId)
+          ? backendActiveId
+          : fallbackActiveId
+        setActiveStrategyId(resolvedActiveId)
+        setActiveStrategyMap(backendData.activeStrategyMap || {})
         setPendingMap({})
         setAuthError(null)
       } else {
