@@ -197,6 +197,11 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+  updateUserPrefs: (payload: { telegram_chat_id?: string | null; telegram_enabled?: boolean }) =>
+    apiFetch<any>("/api/user-prefs", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
 
   // Engine controls
   engineStatus: () => apiFetch<any>("/api/proxy/engine/status"),

@@ -1,0 +1,1 @@
+{"ok":true,"strategies":[{"strategy_id":"jkm_mkgnp5ce","name":"jkm","enabled":true,"detectors":["gate_regime","momentum_continuation","fakeout_trap","fibo_extension"],"min_score":1,"min_rr":2}]}

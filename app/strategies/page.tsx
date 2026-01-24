@@ -23,6 +23,40 @@ import { CATEGORY_INFO, DETECTOR_BY_ID } from "@/lib/detectors/catalog"
 
 const MAX_STRATEGIES = 30
 
+const STRATEGY_NAME_PREFIX = /^EDGE Starter #\d+\s+—\s+/i
+
+const formatStrategyName = (name: string | null | undefined, id?: string) => {
+  const raw = String(name || "").trim()
+  if (!raw) return id || ""
+  return raw.replace(STRATEGY_NAME_PREFIX, "").trim() || raw
+}
+
+const buildStrategyExplanation = (detectors: string[]) => {
+  const has = (id: string) => detectors.includes(id)
+  const notes: string[] = []
+
+  if (has("GATE_REGIME")) notes.push("Зах зээлийн нөхцөлийг шүүж, choppy үед оролтыг багасгана")
+  if (has("GATE_VOLATILITY")) notes.push("Volatility‑ийн хэт бага/өндөр үед шүүлтүүр хийж false signal‑ийг бууруулна")
+  if (has("GATE_DRIFT_SENTINEL")) notes.push("Хүчтэй drift үед эсрэг чиглэлийн эрсдэлийг бууруулна")
+
+  if (has("BOS")) notes.push("Structure break илэрмэгц трендийн үргэлжлэлийг барина")
+  if (has("MOMENTUM_CONTINUATION")) notes.push("Momentum‑ын continuation‑г баталгаажуулна")
+  if (has("BREAK_RETEST")) notes.push("Breakout + retest нь трендэд найдвартай оролт өгнө")
+  if (has("SR_BOUNCE")) notes.push("S/R bounce нь range үед ажиллах боломж нэмнэ")
+  if (has("MEAN_REVERSION_SNAPBACK")) notes.push("Overextended үед mean‑reversion оролтыг барина")
+  if (has("SFP")) notes.push("Swing failure нь reversal‑ийг илрүүлэхэд тусална")
+
+  if (has("FIBO_RETRACE_CONFLUENCE")) notes.push("Retrace бүс дээр нэмэлт баталгаажуулалт өгнө")
+  if (has("FLAG_PENNANT")) notes.push("Continuation pattern‑оор трендийг улам баталгаажуулна")
+  if (has("SR_ROLE_REVERSAL")) notes.push("Polarity flip нь breakout‑ын хүчийг баталгаажуулна")
+  if (has("PINBAR_AT_LEVEL")) notes.push("Key level дээрх pinbar нь rejection‑ийг батална")
+  if (has("PRICE_MOMENTUM_WEAKENING")) notes.push("Momentum‑ын суларлыг барьж reversal эрсдэлийг илрүүлнэ")
+
+  const base = "AI тайлбар: Gate detectors нь зах зээлийг шүүж, trigger detectors нь оролтын дохиог өгч, confluence нь баталгаажуулалтыг нэмэгдүүлдэг."
+  const extra = notes.length ? ` ${notes.join(". ")}.` : ""
+  return `${base}${extra}`
+}
+
 // Extended detector info with Cyrillic labels
 interface DetectorInfo {
   id: string
@@ -65,6 +99,7 @@ export default function StrategiesPage() {
   const [saving, setSaving] = useState(false)
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [detectors, setDetectors] = useState<DetectorInfo[]>([])
+  const [expandedStrategyId, setExpandedStrategyId] = useState<string | null>(null)
   
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -404,6 +439,10 @@ export default function StrategiesPage() {
             {/* Strategy Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {strategies.map((strategy, idx) => {
+                const strategyKey = String(strategy.id || strategy.strategy_id || idx)
+                const displayName = formatStrategyName(strategy.name, strategy.strategy_id || strategy.id)
+                const open = expandedStrategyId === strategyKey
+
                 // Group detectors by category for display
                 const detectorsByCategory = (strategy.detectors || []).reduce((acc, id) => {
                   const detector = DETECTOR_BY_ID.get(id)
@@ -422,7 +461,7 @@ export default function StrategiesPage() {
                   <div className="flex-1">
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Layers className="h-4 w-4" />
-                      {strategy.name || strategy.strategy_id}
+                      {displayName}
                       {/* Starter badge for template strategies */}
                       {(strategy.id || strategy.strategy_id || "").startsWith("starter_") && (
                         <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
@@ -491,6 +530,26 @@ export default function StrategiesPage() {
                   )}
                 </div>
 
+                {open && (
+                  <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+                    <div className="mb-2 font-medium text-foreground">Detector дэлгэрэнгүй</div>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {(strategy.detectors || []).map((id) => {
+                        const meta = DETECTOR_BY_ID.get(id)
+                        const label = meta?.labelShort || meta?.labelMn || meta?.labelEn || id
+                        return (
+                          <Badge key={id} variant="secondary" className="text-[10px]">
+                            {label}
+                          </Badge>
+                        )
+                      })}
+                    </div>
+                    <div>
+                      {buildStrategyExplanation(strategy.detectors || [])}
+                    </div>
+                  </div>
+                )}
+
                 {/* Params */}
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   <span>Min RR: {strategy.min_rr || 2.0}</span>
@@ -506,6 +565,14 @@ export default function StrategiesPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2 border-t">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedStrategyId(open ? null : strategyKey)}
+                  >
+                    <Info className="mr-1 h-3 w-3" />
+                    Дэлгэрэнгүй
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

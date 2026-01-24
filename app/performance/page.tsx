@@ -11,30 +11,11 @@ import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import {
-  type ScannerResult,
   type UnifiedSignal,
-  mapScannerResultToUnified,
   mapOldSignalToUnified,
-  mergeSignals,
   formatTimestamp,
 } from "@/lib/signals/unified"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
-
-type UserSignal = {
-  signal_key: string
-  symbol: string
-  direction: string
-  timeframe: string
-  entry?: number
-  sl?: number
-  tp?: number
-  rr?: number
-  strategy_name?: string
-  generated_at?: string
-  status?: string
-  createdAt?: string
-  updatedAt?: string
-}
 
 interface SetupSummary {
   name: string
@@ -60,57 +41,13 @@ export default function PerformancePage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [rangeDays, setRangeDays] = useState("30")
-  const [scannerResults, setScannerResults] = useState<ScannerResult[]>([])
   const [oldSignals, setOldSignals] = useState<SignalPayloadPublicV1[]>([])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [scannerRes, signalsRes] = await Promise.all([
-        api.scanner.results(300).catch(() => ({ ok: false, count: 0, results: [] })),
-        api.userSignals({ limit: 300 }).catch(() => []),
-      ])
-
-      setScannerResults(scannerRes.results || [])
-      const normalizedSignals = (signalsRes as UserSignal[])
-        .filter((s) => s && s.symbol && s.timeframe)
-        .map((s) => {
-          const outcome = s.status
-            ? (String(s.status).toLowerCase().includes("tp")
-                ? "win"
-                : String(s.status).toLowerCase().includes("sl")
-                  ? "loss"
-                  : String(s.status).toLowerCase().includes("expired")
-                    ? "expired"
-                    : String(s.status).toLowerCase().includes("pending")
-                      ? "pending"
-                      : undefined)
-            : undefined
-
-          return {
-          signal_id: s.signal_key,
-          symbol: s.symbol,
-          timeframe: s.timeframe,
-          created_at: s.generated_at ? Math.floor(Date.parse(s.generated_at) / 1000) : Math.floor(Date.parse(s.createdAt || "") / 1000) || 0,
-          status: "FOUND",
-          direction: (s.direction || "NA") as any,
-          entry: s.entry,
-          sl: s.sl,
-          tp: s.tp,
-          rr: s.rr,
-          explain: {},
-          evidence: {},
-          chart_drawings: [],
-          outcome: outcome as any,
-          strategy_name: s.strategy_name,
-        }})
-
-      // Deduplicate by signal_id
-      const unique = Array.from(
-        new Map(normalizedSignals.map((s) => [s.signal_id, s])).values()
-      )
-
-      setOldSignals(unique)
+      const signalsRes = await api.signals({ limit: 500 }).catch(() => [])
+      setOldSignals((signalsRes as SignalPayloadPublicV1[]) || [])
     } catch (err: any) {
       toast({
         title: "Алдаа",
@@ -127,10 +64,8 @@ export default function PerformancePage() {
   }, [fetchData])
 
   const unifiedSignals = useMemo<UnifiedSignal[]>(() => {
-    const scannerMapped = scannerResults.map(mapScannerResultToUnified)
-    const signalsMapped = oldSignals.map(mapOldSignalToUnified)
-    return mergeSignals(scannerMapped, signalsMapped)
-  }, [scannerResults, oldSignals])
+    return oldSignals.map(mapOldSignalToUnified)
+  }, [oldSignals])
 
   const filteredSignals = useMemo(() => {
     if (rangeDays === "all") return unifiedSignals

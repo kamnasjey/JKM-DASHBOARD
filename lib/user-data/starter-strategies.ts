@@ -100,31 +100,32 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
   },
 
   // ============================================================
-  // EDGE Starter #2 — Breakout Retest
-  // Catch breakouts and enter on retest
+  // EDGE Starter #2 — Balanced Core
+  // Balanced mix for trend + range + sideways
   // ============================================================
   {
     id: "starter_EDGE_2",
-    name: "EDGE Starter #2 — Breakout Retest",
-    description: "Enter after price breaks a key level and retests it. Classic breakout strategy.",
+    name: "EDGE Starter #2 — Balanced Core",
+    description: "Balanced core for trend, range, and sideways conditions. Combines breakout, bounce, and mean-reversion triggers.",
     starterKey: "EDGE_2",
     // Detectors composition:
-    // Gate: GATE_REGIME, GATE_VOLATILITY (need volatility for breakout)
-    // Triggers: BREAK_RETEST (main entry), SR_BREAK_CLOSE (confirmation)
-    // Confluence: SR_ROLE_REVERSAL (polarity flip), ENGULF_AT_LEVEL (candle confirmation)
-    gates: ["GATE_REGIME", "GATE_VOLATILITY"],
-    triggers: ["BREAK_RETEST", "SR_BREAK_CLOSE"],
-    confluence: ["SR_ROLE_REVERSAL", "ENGULF_AT_LEVEL"],
+    // Gates: GATE_VOLATILITY, GATE_DRIFT_SENTINEL (avoid extreme conditions)
+    // Triggers: BREAK_RETEST (trend), SR_BOUNCE (range), MEAN_REVERSION_SNAPBACK (sideways)
+    // Confluence: SR_ROLE_REVERSAL, PINBAR_AT_LEVEL (confirmation)
+    gates: ["GATE_VOLATILITY", "GATE_DRIFT_SENTINEL"],
+    triggers: ["BREAK_RETEST", "SR_BOUNCE", "MEAN_REVERSION_SNAPBACK"],
+    confluence: ["SR_ROLE_REVERSAL", "PINBAR_AT_LEVEL"],
     detectors: [
-      "GATE_REGIME",
       "GATE_VOLATILITY",
+      "GATE_DRIFT_SENTINEL",
       "BREAK_RETEST",
-      "SR_BREAK_CLOSE",
+      "SR_BOUNCE",
+      "MEAN_REVERSION_SNAPBACK",
       "SR_ROLE_REVERSAL",
-      "ENGULF_AT_LEVEL",
+      "PINBAR_AT_LEVEL",
     ],
     risk: {
-      minRR: 2.0,
+      minRR: 1.7,
       maxRiskPercent: 1.5,
       minConfirmHits: 1,
     },

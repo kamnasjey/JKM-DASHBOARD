@@ -2749,6 +2749,1718 @@
 				"/c",
 				"ssh root@159.65.11.255 curl -s -H \"x-internal-api-key: dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\" http://localhost:8000/api/signals?limit=2"
 			]
+		},
+		{
+			"label": "check provider env",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; grep -E '^(DATA_PROVIDER|MARKET_DATA_PROVIDER|ALLOW_USER_WATCHLIST_MASSIVE)=' .env || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "write backend env",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; printf 'MASSIVE_API_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En\\nMASSIVE_S3_ACCESS_KEY_ID=083159b1-e401-4fa6-bc44-7e63585a82e4\\nMASSIVE_S3_SECRET_ACCESS_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En\\nMASSIVE_S3_ENDPOINT=https://files.massive.com\\nMASSIVE_S3_BUCKET=flatfiles\\nUSE_ENHANCED_INGESTOR=1\\nENABLE_MARKETDATA_WEBSOCKET=1\\nINGESTOR_MAX_PARALLEL=5\\nINGESTOR_TIMEFRAME=m5\\nSNAPSHOT_ENABLED=1\\nDATA_PROVIDER=massive\\nMARKET_DATA_PROVIDER=massive\\nALLOW_USER_WATCHLIST_MASSIVE=0\\n' > .env"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend compose",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; docker compose -f docker-compose.yml up -d --build --force-recreate 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs watching",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 120 jkm_bot_backend | grep -E 'Watching|Ingestor: Refreshing'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs watching simple",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 120 jkm_bot_backend | grep Watching"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs full",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 200 jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check watchlist in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -c \"from watchlist_union import get_union_watchlist; print(get_union_watchlist())\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check watchlist script",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"printf 'from watchlist_union import get_union_watchlist\\nprint(get_union_watchlist())\\n' > /tmp/wl.py; python /tmp/wl.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs 500",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 500 jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rewrite env lines",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; printf '%s\n' 'MASSIVE_API_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En' 'MASSIVE_S3_ACCESS_KEY_ID=083159b1-e401-4fa6-bc44-7e63585a82e4' 'MASSIVE_S3_SECRET_ACCESS_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En' 'MASSIVE_S3_ENDPOINT=https://files.massive.com' 'MASSIVE_S3_BUCKET=flatfiles' 'USE_ENHANCED_INGESTOR=1' 'ENABLE_MARKETDATA_WEBSOCKET=1' 'INGESTOR_MAX_PARALLEL=5' 'INGESTOR_TIMEFRAME=m5' 'SNAPSHOT_ENABLED=1' 'DATA_PROVIDER=massive' 'MARKET_DATA_PROVIDER=massive' 'ALLOW_USER_WATCHLIST_MASSIVE=0' > .env"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp env deploy",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\.env.deploy",
+				"root@159.65.11.255:/root/JKM-AI-BOT/.env"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend compose after env",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; docker compose -f docker-compose.yml up -d --build --force-recreate 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs 200 after env",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 200 jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep watching logs",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 500 jkm_bot_backend | grep Watching"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show user_core_engine",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n '1,200p' /root/JKM-AI-BOT/user_core_engine.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show user_core_engine noquotes",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"sed -n 1,200p /root/JKM-AI-BOT/user_core_engine.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp user_core_engine",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/user_core_engine.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\user_core_engine.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp core user_core_engine",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/core/user_core_engine.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\user_core_engine.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp core primitives",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/core/primitives.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\primitives.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp detectors package",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"-r",
+				"root@159.65.11.255:/root/JKM-AI-BOT/detectors",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\detectors"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp data_providers massive_provider",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/data_providers/massive_provider.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\data_providers\\massive_provider.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp market_data_cache",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/market_data_cache.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\market_data_cache.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp env deploy2",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\.env.deploy2",
+				"root@159.65.11.255:/root/JKM-AI-BOT/.env"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy indicator and second-agg changes",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\data_providers\\massive_provider.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\data_providers\\indicators_client.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\data_ingestor_enhanced.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\second_agg_cache.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\detectors\\base.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\detectors\\runner.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy remaining files",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\data_ingestor_enhanced.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\second_agg_cache.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\detectors\\base.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\detectors\\runner.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend after indicators",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; docker compose -f docker-compose.yml up -d --build --force-recreate 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check watchlist logs after restart",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 200 jkm_bot_backend | grep Watching"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy latency diag",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\tools\\diag_latency.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/tools/diag_latency.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run latency diag",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /app/tools/diag_latency.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy diag into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/tools/diag_latency.py jkm_bot_backend:/app/tools/diag_latency.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "mkdir tools in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc 'mkdir -p /app/tools'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy scanner and ingestor updates",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\data_ingestor_enhanced.py",
+				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\scanner_service.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend after staleness checks",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"cd /root/JKM-AI-BOT; docker compose -f docker-compose.yml up -d --build --force-recreate 2>&1 | tail -n 80"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs staleness",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 220 jkm_bot_backend | grep -E 'M5_STALE|SECOND_STALE|Watching'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail backend logs 200 full",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker logs --tail 200 jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run eurjpy sim",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /app/run_sim_default_eurjpy.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim file",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"ls -l /root/JKM-AI-BOT | grep run_sim_default_eurjpy.py || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp sim script",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_default_eurjpy.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/run_sim_default_eurjpy.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run eurjpy sim now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /app/run_sim_default_eurjpy.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "inspect backend mounts",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker inspect jkm_bot_backend --format '{{json .Mounts}}'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list /app in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"ls -la /app | head -n 20\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy sim script into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/run_sim_default_eurjpy.py jkm_bot_backend:/tmp/run_sim_default_eurjpy.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run eurjpy sim in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/run_sim_default_eurjpy.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run eurjpy sim capture output",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python /tmp/run_sim_default_eurjpy.py > /tmp/sim_output.txt 2>&1; cat /tmp/sim_output.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "cleanup sim script",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"rm -f /root/JKM-AI-BOT/run_sim_default_eurjpy.py; docker exec jkm_bot_backend rm -f /tmp/run_sim_default_eurjpy.py /tmp/sim_output.txt"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp sim 15x3 script",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_15symbols_3strats.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy sim 15x3 into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 capture output",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python /tmp/run_sim_15symbols_3strats.py > /tmp/sim_15x3_output.txt 2>&1; cat /tmp/sim_15x3_output.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail sim 15x3 output",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"tail -n 200 /tmp/sim_15x3_output.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 output size",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"ls -l /tmp/sim_15x3_output.txt; wc -l /tmp/sim_15x3_output.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 files in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"ls -l /tmp | grep sim_15x3 || true; ls -l /tmp/run_sim_15symbols_3strats.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "re-copy sim 15x3 into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 file now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"ls -l /tmp/run_sim_15symbols_3strats.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim file simple",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 json",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/sim_15symbols_3strats.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim process",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"ps aux | grep run_sim_15symbols_3strats.py | grep -v grep\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 with ls",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/run_sim_15symbols_3strats.py; ls -l /tmp/sim_15symbols_3strats.json || true\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show sim 15x3 script head",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"sed -n '1,40p' /tmp/run_sim_15symbols_3strats.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list /tmp in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "python hello in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -c \"print('hello')\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 to file with status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python /tmp/run_sim_15symbols_3strats.py > /tmp/sim_15x3_out.txt 2>&1; echo EXIT:$?; wc -l /tmp/sim_15x3_out.txt; ls -l /tmp/sim_15x3_out.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "python version in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python --version"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "head sim script in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"head -n 5 /tmp/run_sim_15symbols_3strats.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "wc sim script in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"wc -c /tmp/run_sim_15symbols_3strats.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "wc sim script simple",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend wc -c /tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 simple",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 unbuffered",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -u /tmp/run_sim_15symbols_3strats.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 json after run",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/sim_15symbols_3strats.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp sim report script",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_report_15x3.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/run_sim_report_15x3.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy sim report into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/run_sim_report_15x3.py jkm_bot_backend:/tmp/run_sim_report_15x3.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 report",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/run_sim_report_15x3.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy sim json to host",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp jkm_bot_backend:/tmp/sim_15symbols_3strats.json /root/JKM-AI-BOT/sim_15symbols_3strats.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp sim json to local",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/sim_15symbols_3strats.json",
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/sim_15symbols_3strats.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim report ps1",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-File",
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/sim_report_15x3.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim version",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -c \"import core.simulator_v2 as s; print(s.SIM_VERSION)\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp multi-tf patch + sim scripts",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/patch_multi_tf_starters.py",
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_15symbols_3strats_multi_tf.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp multi-tf sim script",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_15symbols_3strats_multi_tf.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy multi-tf scripts into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/patch_multi_tf_starters.py jkm_bot_backend:/tmp/patch_multi_tf_starters.py && docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats_multi_tf.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "apply multi-tf strategy patch",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/patch_multi_tf_starters.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "apply multi-tf patch capture",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/patch_multi_tf_starters.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 multi-tf capture",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/run_sim_15symbols_3strats_multi_tf.py > /tmp/sim_15x3_multi_out.txt 2>&1; tail -n 200 /tmp/sim_15x3_multi_out.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 multi output size",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"wc -l /tmp/sim_15x3_multi_out.txt; ls -l /tmp/sim_15symbols_3strats_multi_tf.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 multi-tf now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -u /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim 15x3 multi json",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/sim_15symbols_3strats_multi_tf.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim 15x3 multi status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/run_sim_15symbols_3strats_multi_tf.py > /tmp/sim_15x3_multi_out.txt 2>&1; echo EXIT:$?; tail -n 5 /tmp/sim_15x3_multi_out.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check multi-tf script size",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend wc -c /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check multi-tf json after wait",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"ls -l /tmp/sim_15symbols_3strats_multi_tf.json || true\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list /tmp after multi-tf run",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim with log",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/run_sim_15symbols_3strats_multi_tf.py > /tmp/sim_15x3_multi_out.txt 2>&1; echo EXIT:$?; tail -n 20 /tmp/sim_15x3_multi_out.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check internal key in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -c \"import os; print(bool(os.getenv('INTERNAL_API_KEY')))\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check internal key in container (fixed)",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -c 'import os; print(bool(os.getenv(\\\"INTERNAL_API_KEY\\\")))'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim and show file",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/run_sim_15symbols_3strats_multi_tf.py; echo DONE; ls -l /tmp/sim_15symbols_3strats_multi_tf.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail multi-tf script",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"tail -n 5 /tmp/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "tail multi-tf script direct",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend tail -n 5 /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "test write tmp in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -c 'open(\"/tmp/test_write.txt\",\"w\").write(\"ok\")' && ls -l /tmp/test_write.txt\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp updated multi-tf sim script",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_15symbols_3strats_multi_tf.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy updated multi-tf sim script into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats_multi_tf.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim after update",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend sh -lc \"python -u /tmp/run_sim_15symbols_3strats_multi_tf.py; ls -l /tmp/sim_15symbols_3strats_multi_tf.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim direct",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check multi-tf json now",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/sim_15symbols_3strats_multi_tf.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy multi-tf json to host",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp jkm_bot_backend:/tmp/sim_15symbols_3strats_multi_tf.json /root/JKM-AI-BOT/sim_15symbols_3strats_multi_tf.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp multi-tf json to local",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/sim_15symbols_3strats_multi_tf.json",
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/sim_15symbols_3strats_multi_tf.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim report multi-tf ps1",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-File",
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/sim_report_15x3_multi_tf.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy updated core into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/core/simulator_v2.py jkm_bot_backend:/app/core/simulator_v2.py && docker cp /root/JKM-AI-BOT/scanner_service.py jkm_bot_backend:/app/scanner_service.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker restart jkm_bot_backend"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check backend status",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker ps --filter name=jkm_bot_backend --format '{{.Status}}'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim after restart",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -u /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check multi-tf json after restart run",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/sim_15symbols_3strats_multi_tf.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy multi-tf json to local (refresh)",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"root@159.65.11.255:/root/JKM-AI-BOT/sim_15symbols_3strats_multi_tf.json",
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/sim_15symbols_3strats_multi_tf.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp updated multi-tf sim script v2",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/run_sim_15symbols_3strats_multi_tf.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy updated multi-tf sim script v2 into container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats_multi_tf.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim v2",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python -u /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check multi-tf v2 json",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp/sim_15symbols_3strats_multi_tf_v2.json"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list /tmp after v2 run",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend ls -l /tmp | grep multi_tf || true"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp check sim meta script",
+			"type": "shell",
+			"command": "scp",
+			"args": [
+				"C:/Users/Kamna/OneDrive/Desktop/ganbayar_trading_bot/check_sim_meta.py",
+				"root@159.65.11.255:/root/JKM-AI-BOT/"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run check sim meta in container",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker cp /root/JKM-AI-BOT/check_sim_meta.py jkm_bot_backend:/tmp/check_sim_meta.py && docker exec jkm_bot_backend python /tmp/check_sim_meta.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta (container)",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/check_sim_meta.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "echo hi",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"echo hi"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta (container via pwsh)",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"--%",
+				"ssh",
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/check_sim_meta.py"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "scp and run check_sim_meta",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"scp \"$env:USERPROFILE\\OneDrive\\Desktop\\ganbayar_trading_bot\\check_sim_meta.py\" root@159.65.11.255:/root/JKM-AI-BOT/; ssh root@159.65.11.255 \"docker cp /root/JKM-AI-BOT/check_sim_meta.py jkm_bot_backend:/tmp/check_sim_meta.py && docker exec jkm_bot_backend python /tmp/check_sim_meta.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run check_sim_meta capture output",
+			"type": "shell",
+			"command": "pwsh",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/check_sim_meta.py > /tmp/check_sim_meta.out 2>&1\"; scp root@159.65.11.255:/tmp/check_sim_meta.out \"$env:USERPROFILE\\OneDrive\\Desktop\\ganbayar_trading_bot\\check_sim_meta.out\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta (cmd ssh)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/check_sim_meta.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show container check_sim_meta.py",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'sed -n \\\"1,120p\\\" /tmp/check_sim_meta.py'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "head container check_sim_meta.py",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend head -n 80 /tmp/check_sim_meta.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta (cmd ssh with markers)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"echo START; docker exec jkm_bot_backend python /tmp/check_sim_meta.py; echo END\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta (write then cat)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/check_sim_meta.py > /tmp/check_sim_meta.out 2>&1\" & ssh root@159.65.11.255 \"cat /tmp/check_sim_meta.out\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta (write then cat sequential)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/check_sim_meta.py > /tmp/check_sim_meta.out 2>&1\" && ssh root@159.65.11.255 \"cat /tmp/check_sim_meta.out\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show simulator_v2 path in container",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python - <<'PY'\nimport core.simulator_v2 as s\nprint(s.__file__)\nPY\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show simulator_v2 file path",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python -c \\\"import core.simulator_v2 as s; print(s.__file__)\\\"\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show simulator_v2 file path (single quotes)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python -c 'import core.simulator_v2 as s; print(s.__file__)'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check simulator_v2 locations",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"ls -la /app/core/simulator_v2.py /opt/JKM-AI-BOT/core/simulator_v2.py 2>/dev/null\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check simulator_v2 locations (no redirect)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"ls -la /app/core/simulator_v2.py /opt/JKM-AI-BOT/core/simulator_v2.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check simulator_v2 in container",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /app/core/simulator_v2.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check simulator_v2 in /root/JKM-AI-BOT",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"ls -la /root/JKM-AI-BOT/core/simulator_v2.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "deploy simulator_v2 and scanner_service",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"scp \"C:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\core\\simulator_v2.py\" root@159.65.11.255:/root/JKM-AI-BOT/core/simulator_v2.py && scp \"C:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\scanner_service.py\" root@159.65.11.255:/root/JKM-AI-BOT/scanner_service.py && ssh root@159.65.11.255 \"docker cp /root/JKM-AI-BOT/core/simulator_v2.py jkm_bot_backend:/app/core/simulator_v2.py && docker cp /root/JKM-AI-BOT/scanner_service.py jkm_bot_backend:/app/scanner_service.py && docker restart jkm_bot_backend\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check container simulator_v2 timestamp",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /app/core/simulator_v2.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check container scanner_service timestamp",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /app/scanner_service.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "restart backend container (cmd)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker restart jkm_bot_backend\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta after deploy",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/check_sim_meta.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim meta after deploy (tee)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'python /tmp/check_sim_meta.py | tee /tmp/check_sim_meta.out'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "show container simulator_v2 meta block",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend awk 'NR==3120,NR==3180 {print}' /app/core/simulator_v2.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep entryTimeframes in container simulator_v2",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'grep -n \"entryTimeframes\" /app/core/simulator_v2.py | head -5'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "grep entryTimeframes in container simulator_v2 (no pipe)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'grep -n \"entryTimeframes\" /app/core/simulator_v2.py'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy container simulator_v2 to local",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker cp jkm_bot_backend:/app/core/simulator_v2.py /tmp/simulator_v2.py\" && scp root@159.65.11.255:/tmp/simulator_v2.py \"C:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\simulator_v2_container.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check run_sim script on server",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"ls -la /root/JKM-AI-BOT/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim in container",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats_multi_tf.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats_multi_tf.py && docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim in container (semicolon)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker cp /root/JKM-AI-BOT/run_sim_15symbols_3strats_multi_tf.py jkm_bot_backend:/tmp/run_sim_15symbols_3strats_multi_tf.py; docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check multi-tf sim output file",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"ls -la /tmp/sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim output in container /tmp",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "copy sim json to local",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker cp jkm_bot_backend:/tmp/sim_15symbols_3strats_multi_tf_v2.json /tmp/sim_15symbols_3strats_multi_tf_v2.json\" && scp root@159.65.11.255:/tmp/sim_15symbols_3strats_multi_tf_v2.json \"C:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rerun multi-tf sim in container",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim output timestamp (container)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim output timestamp (container) 2",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim with output capture",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'python /tmp/run_sim_15symbols_3strats_multi_tf.py > /tmp/run_sim_multi_tf.out 2>&1'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim with tee",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'python /tmp/run_sim_15symbols_3strats_multi_tf.py | tee /tmp/run_sim_multi_tf.out'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check run_sim output file",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/run_sim_multi_tf.out\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim script in container",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run multi-tf sim (no capture)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats_multi_tf.py\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim output timestamp after rerun",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim script running",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'ps -ef | grep run_sim_15symbols_3strats_multi_tf.py | grep -v grep'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rerun sim after removing old file",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc 'rm -f /tmp/sim_15symbols_3strats_multi_tf_v2.json; python /tmp/run_sim_15symbols_3strats_multi_tf.py'\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "rerun sim (escaped quotes)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend sh -lc \\\"rm -f /tmp/sim_15symbols_3strats_multi_tf_v2.json; python /tmp/run_sim_15symbols_3strats_multi_tf.py\\\"\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check sim output timestamp later",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/d",
+				"/c",
+				"ssh root@159.65.11.255 \"docker exec jkm_bot_backend ls -la /tmp/sim_15symbols_3strats_multi_tf_v2.json\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run sim via direct ssh args",
+			"type": "shell",
+			"command": "ssh",
+			"args": [
+				"root@159.65.11.255",
+				"docker exec jkm_bot_backend python /tmp/run_sim_15symbols_3strats_multi_tf.py"
+			],
+			"isBackground": false
 		}
 	]
 }

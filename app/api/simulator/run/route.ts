@@ -110,15 +110,18 @@ export async function POST(request: NextRequest) {
   
   // --- 3. Check access (owner bypass) ---
   const isOwner = isOwnerEmail(userEmail)
-  let hasPaidAccess = isOwner ? true : await checkUserAccess(userId)
-  // Demo mode: forced by client OR due to lack of paid access
-  let demoMode = clientDemoMode || !hasPaidAccess
+  const hasPaidAccess = isOwner ? true : await checkUserAccess(userId)
+  // Allow gaps when demoMode is requested or when no paid access.
+  const allowGaps = clientDemoMode || !hasPaidAccess
+  // Only apply demo limits when access is not paid.
+  const applyDemoLimits = !hasPaidAccess
+  let demoMode = allowGaps
   let effectiveSymbols = symbols
   let effectiveFrom = from
   let effectiveTo = to
   let demoMessage: string | undefined
-  
-  if (demoMode) {
+
+  if (applyDemoLimits) {
     // Demo mode limitations
     effectiveSymbols = symbols.slice(0, DEMO_MAX_SYMBOLS)
     const limited = limitDateRange(from, to, DEMO_MAX_DAYS)
@@ -208,7 +211,7 @@ export async function POST(request: NextRequest) {
   const timeoutId = setTimeout(() => abortController.abort(), BACKEND_TIMEOUT_MS)
   
   try {
-    const backendResponse = await fetch(backendUrl, {
+    let backendResponse = await fetch(backendUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -223,6 +226,8 @@ export async function POST(request: NextRequest) {
     const elapsedMs = Date.now() - startTime
     const backendText = await backendResponse.text()
     let backendJson: any
+    let demoModeUsed = demoMode
+    let demoMessageUsed = demoMessage
     
     try {
       backendJson = JSON.parse(backendText)
@@ -234,7 +239,37 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // --- 8. Map backend errors ---
+    // --- 8. Retry on DATA_GAP with demoMode=true (allow gaps without demo limits) ---
+    if (!backendResponse.ok && backendJson?.error?.code === "DATA_GAP" && !demoMode) {
+      const retryPayload = { ...backendPayload, demoMode: true }
+      const retryController = new AbortController()
+      const retryTimeoutId = setTimeout(() => retryController.abort(), BACKEND_TIMEOUT_MS)
+      try {
+        const retryResponse = await fetch(backendUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-api-key": INTERNAL_API_KEY,
+            "x-request-id": requestId,
+          },
+          body: JSON.stringify(retryPayload),
+          signal: retryController.signal,
+        })
+        clearTimeout(retryTimeoutId)
+        const retryText = await retryResponse.text()
+        const retryJson = JSON.parse(retryText)
+        if (retryResponse.ok) {
+          backendResponse = retryResponse
+          backendJson = retryJson
+          demoModeUsed = true
+          demoMessageUsed = "Data gaps detected. demoMode=true enabled to proceed with gaps." 
+        }
+      } catch {
+        clearTimeout(retryTimeoutId)
+      }
+    }
+
+    // --- 9. Map backend errors ---
     if (!backendResponse.ok) {
       const status = backendResponse.status
       
@@ -302,7 +337,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // --- 9. Ensure response always has meta, explain, and stats ---
+    // --- 10. Ensure response always has meta, explain, and stats ---
     const tradesCount = backendJson.summary?.entries ?? backendJson.combined?.summary?.entries ?? 0
     
     // Always ensure meta block exists with required fields
@@ -331,9 +366,9 @@ export async function POST(request: NextRequest) {
     }
     
     // Add demo mode info if applicable
-    if (demoMode) {
+    if (demoModeUsed) {
       backendJson.demoMode = true
-      backendJson.demoMessage = demoMessage
+      backendJson.demoMessage = demoMessageUsed
       backendJson.meta.demoMode = true
     }
     
@@ -365,7 +400,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // --- 10. Store diagnostics for debugging endpoint ---
+    // --- 11. Store diagnostics for debugging endpoint ---
     try {
       const diagnosticsEntry: SimulatorDiagnostics = {
         timestamp: new Date().toISOString(),
@@ -381,7 +416,7 @@ export async function POST(request: NextRequest) {
           from: effectiveFrom,
           to: effectiveTo,
           timeframe: timeframe || "auto",
-          demoMode,
+          demoMode: demoModeUsed,
         },
         response: {
           ok: backendJson.ok,

@@ -55,6 +55,11 @@ export default function ProfilePage() {
     setSaving(true)
     try {
       await api.updateProfile({ profile })
+      const rawChatId = typeof profile?.telegram_chat_id === "string" ? profile.telegram_chat_id.trim() : ""
+      await api.updateUserPrefs({
+        telegram_chat_id: rawChatId || null,
+        telegram_enabled: Boolean(rawChatId),
+      })
       toast({
         title: "Амжилттай",
         description: "Profile хадгалагдлаа",
@@ -153,6 +158,19 @@ export default function ProfilePage() {
                     onChange={(e) => setProfile({ ...profile!, telegram_handle: e.target.value })}
                     placeholder="@username"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="telegram_chat_id">Telegram ID</Label>
+                  <Input
+                    id="telegram_chat_id"
+                    value={profile?.telegram_chat_id || ""}
+                    onChange={(e) => setProfile({ ...profile!, telegram_chat_id: e.target.value })}
+                    placeholder="123456789"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Telegram Bot-аар холбогдоогүй бол чат ID-гаа энд оруулна.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

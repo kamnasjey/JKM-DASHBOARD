@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireInternalKey } from "@/lib/internal-auth"
 import { listStrategies } from "@/lib/user-data/strategies-firestore-store"
 import { getFirebaseAdminDb, stripUndefinedDeep } from "@/lib/firebase-admin"
+import { seedStarterStrategiesForUser } from "@/lib/user-data/starter-strategies"
+import { getStrategyConfig, setActiveStrategyId } from "@/lib/user-data/strategy-config-store"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -26,8 +28,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   try {
-    const data = await listStrategies(uid, { limit: 200 })
-    const strategies = data.strategies.map((s) => ({
+    const db = getFirebaseAdminDb()
+    let data = await listStrategies(uid, { limit: 200 })
+
+    if (data.strategies.length === 0) {
+      await seedStarterStrategiesForUser(db, uid)
+      data = await listStrategies(uid, { limit: 200 })
+    }
+
+    let strategies = data.strategies.map((s) => ({
       strategy_id: s.id,
       name: s.name,
       enabled: s.enabled,
@@ -36,6 +45,43 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       timeframe: s.timeframe || null,
       config: s.config || {},
     }))
+
+    const enabledCount = strategies.filter((s) => s.enabled).length
+    if (enabledCount === 0 && strategies.length > 0) {
+      const config = await getStrategyConfig(uid)
+      const envDefault = (process.env.DEFAULT_STARTER_STRATEGY_ID || "").trim()
+      const preferredId = (config.activeStrategyId || envDefault || "starter_EDGE_2").trim()
+      const defaultId = strategies.find((s) => s.strategy_id === preferredId)?.strategy_id || strategies[0].strategy_id
+
+      if (!config.activeStrategyId || config.activeStrategyId !== defaultId) {
+        await setActiveStrategyId(uid, defaultId)
+      }
+
+      const ref = db.collection("users").doc(uid).collection("strategies")
+      const batch = db.batch()
+      let changed = 0
+
+      strategies = strategies.map((s) => {
+        const shouldEnable = s.strategy_id === defaultId
+        if (s.enabled !== shouldEnable) {
+          batch.set(
+            ref.doc(s.strategy_id),
+            stripUndefinedDeep({
+              enabled: shouldEnable,
+              updatedAt: new Date().toISOString(),
+            }),
+            { merge: true },
+          )
+          changed += 1
+        }
+        return { ...s, enabled: shouldEnable }
+      })
+
+      if (changed > 0) {
+        await batch.commit()
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       uid,

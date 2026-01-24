@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useWebSocketSignals } from "@/hooks/use-websocket-signals"
 import { api } from "@/lib/api"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
+import { DETECTOR_CATALOG } from "@/lib/detectors/catalog"
 import {
   Select,
   SelectContent,
@@ -31,6 +32,16 @@ interface Strategy {
   name: string
   enabled: boolean
   detectors: string[]
+}
+
+type DetectorGroupKey = "gate" | "trigger" | "confluence" | "other"
+
+const STRATEGY_NAME_PREFIX = /^EDGE Starter #\d+\s+—\s+/i
+
+const formatStrategyName = (name: string | null | undefined, id: string) => {
+  const raw = String(name || "").trim()
+  if (!raw) return id
+  return raw.replace(STRATEGY_NAME_PREFIX, "").trim() || raw
 }
 
 // Helper: Classify symbols for market hours detection
@@ -83,7 +94,7 @@ export default function DashboardPage() {
     clearNewSignals 
   } = useWebSocketSignals()
 
-  const [metrics, setMetrics] = useState<any>(null)
+  const [outcomeStats, setOutcomeStats] = useState<any>(null)
   const [activeStrategies, setActiveStrategies] = useState<number | null>(null)
   const [recentSignals, setRecentSignals] = useState<SignalPayloadPublicV1[]>([])
   const [engineStatus, setEngineStatus] = useState<any>(null)
@@ -94,6 +105,7 @@ export default function DashboardPage() {
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null)
   const [savingStrategy, setSavingStrategy] = useState(false)
+  const [expandedStrategyId, setExpandedStrategyId] = useState<string | null>(null)
   
   // Live Ops: Market data heartbeat
   const [liveOpsSymbol, setLiveOpsSymbol] = useState<string>("XAUUSD")
@@ -106,6 +118,61 @@ export default function DashboardPage() {
   // Feed status from backend (anti-drift)
   const [feedStatus, setFeedStatus] = useState<any>(null)
   const [refreshingFeed, setRefreshingFeed] = useState(false)
+
+  const detectorMetaMap = useMemo(() => {
+    return new Map(DETECTOR_CATALOG.map((d) => [d.id, d]))
+  }, [])
+
+  const getDetectorLabel = useCallback((id: string) => {
+    const meta = detectorMetaMap.get(id)
+    if (!meta) return id
+    return meta.labelMn ? `${meta.labelEn} · ${meta.labelMn}` : meta.labelEn
+  }, [detectorMetaMap])
+
+  const getDetectorGroup = useCallback((id: string): DetectorGroupKey => {
+    const meta = detectorMetaMap.get(id)
+    if (!meta) return "other"
+    return meta.category || "other"
+  }, [detectorMetaMap])
+
+  const buildDetectorGroups = useCallback((detectors: string[]) => {
+    const groups: Record<DetectorGroupKey, string[]> = {
+      gate: [],
+      trigger: [],
+      confluence: [],
+      other: [],
+    }
+    detectors.forEach((id) => {
+      groups[getDetectorGroup(id)].push(id)
+    })
+    return groups
+  }, [getDetectorGroup])
+
+  const buildStrategyExplanation = useCallback((detectors: string[]) => {
+    const has = (id: string) => detectors.includes(id)
+    const notes: string[] = []
+
+    if (has("GATE_REGIME")) notes.push("Зах зээлийн нөхцөлийг шүүж, хэт choppy үед оролтыг багасгана")
+    if (has("GATE_VOLATILITY")) notes.push("Volatility‑ийн хэт бага/өндөр үед шүүлтүүр хийж false signal‑ийг бууруулна")
+    if (has("GATE_DRIFT_SENTINEL")) notes.push("Хүчтэй drift үед эсрэг чиглэлд оролт хийх эрсдэлийг бууруулна")
+
+    if (has("BOS")) notes.push("Structure break илэрмэгц трендийн үргэлжлэлийг барина")
+    if (has("MOMENTUM_CONTINUATION")) notes.push("Хүчтэй momentum‑ын дараах continuation‑г баталгаажуулна")
+    if (has("BREAK_RETEST")) notes.push("Breakout + retest үед илүү найдвартай оролт өгнө")
+    if (has("SR_BOUNCE")) notes.push("Support/Resistance bounce нь range үед ажиллах боломж нэмнэ")
+    if (has("MEAN_REVERSION_SNAPBACK")) notes.push("Overextended үед mean‑reversion оролтыг барина")
+    if (has("SFP")) notes.push("Swing failure нь reversal‑ийг илрүүлэхэд тусална")
+
+    if (has("FIBO_RETRACE_CONFLUENCE")) notes.push("Retrace бүс дээр нэмэлт баталгаажуулалт өгнө")
+    if (has("FLAG_PENNANT")) notes.push("Continuation pattern‑оор трендийг улам баталгаажуулна")
+    if (has("SR_ROLE_REVERSAL")) notes.push("Polarity flip нь breakout‑ын хүчийг баталгаажуулна")
+    if (has("PINBAR_AT_LEVEL")) notes.push("Key level дээрх pinbar нь rejection‑ийг батална")
+    if (has("PRICE_MOMENTUM_WEAKENING")) notes.push("Momentum‑ын суларлыг барьж reversal эрсдэлийг илрүүлнэ")
+
+    const base = "AI тайлбар: Gate detectors нь зах зээлийг шүүж, trigger detectors нь оролтын дохиог өгч, confluence нь баталгаажуулалтыг нэмэгдүүлдэг."
+    const extra = notes.length ? ` ${notes.join(". ")}.` : ""
+    return `${base}${extra}`
+  }, [])
   
   // Show toast when new signals arrive via WebSocket
   useEffect(() => {
@@ -130,7 +197,7 @@ export default function DashboardPage() {
   }, [wsConnected, wsSignals, recentSignals])
 
   const winRateText = useMemo(() => {
-    const raw = metrics?.win_rate ?? metrics?.winrate
+    const raw = outcomeStats?.win_rate ?? outcomeStats?.winrate
     if (raw === null || raw === undefined) return "—"
     const num = Number(raw)
     if (!Number.isFinite(num)) return "—"
@@ -138,18 +205,18 @@ export default function DashboardPage() {
     // Backend may return 0..1 or 0..100
     const pct = num <= 1 ? num * 100 : num
     return `${pct.toFixed(1)}%`
-  }, [metrics])
+  }, [outcomeStats])
 
   const totalSignalsText = useMemo(() => {
-    const direct = metrics?.total_signals ?? metrics?.total
+    const direct = outcomeStats?.total_signals ?? outcomeStats?.total
     if (direct !== null && direct !== undefined) return String(direct)
 
-    const wins = Number(metrics?.wins ?? 0)
-    const losses = Number(metrics?.losses ?? 0)
-    const pending = Number(metrics?.pending ?? 0)
+    const wins = Number(outcomeStats?.wins ?? 0)
+    const losses = Number(outcomeStats?.losses ?? 0)
+    const pending = Number(outcomeStats?.pending ?? 0)
     const sum = wins + losses + pending
     return sum > 0 ? String(sum) : "—"
-  }, [metrics])
+  }, [outcomeStats])
 
   const lastScanText = useMemo(() => {
     const raw = (engineStatus as any)?.last_scan_ts
@@ -169,15 +236,15 @@ export default function DashboardPage() {
   const refreshDashboard = async () => {
     setLoading(true)
     try {
-      const [m, s, sigs, eng, syms] = await Promise.all([
-        api.metrics(),
+      const [o, s, sigs, eng, syms] = await Promise.all([
+        api.outcomes(30),
         api.strategies(),
         api.signals({ limit: 10 }),
         api.engineStatus(),
         api.symbols().catch(() => ({ ok: true, symbols: [] })),
       ])
 
-      setMetrics(m)
+      setOutcomeStats(o)
 
       // Parse symbols
       const symbolList = (syms as any)?.symbols || syms || []
@@ -718,7 +785,7 @@ export default function DashboardPage() {
                       <SelectItem key={s.strategy_id} value={s.strategy_id}>
                         <div className="flex items-center gap-2">
                           {s.enabled && <Check className="h-3 w-3 text-green-500" />}
-                          <span>{s.name || s.strategy_id}</span>
+                          <span>{formatStrategyName(s.name, s.strategy_id)}</span>
                           <Badge variant="outline" className="ml-2 text-xs">
                             {s.detectors?.length || 0} detector
                           </Badge>
@@ -744,6 +811,106 @@ export default function DashboardPage() {
                   </>
                 )}
               </Button>
+            </div>
+
+            {/* Strategy Details */}
+            <div className="mt-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">Стратегийн дэлгэрэнгүй</h4>
+                <span className="text-xs text-muted-foreground">{strategies.length} стратеги</span>
+              </div>
+
+              {strategies.map((s) => {
+                const open = expandedStrategyId === s.strategy_id
+                const displayName = formatStrategyName(s.name, s.strategy_id)
+                const groups = buildDetectorGroups(s.detectors || [])
+                const explanation = buildStrategyExplanation(s.detectors || [])
+
+                return (
+                  <div key={s.strategy_id} className="rounded-lg border p-4 bg-card/50">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium">{displayName}</div>
+                        <div className="text-xs text-muted-foreground">{s.strategy_id}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {s.enabled && (
+                          <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-600">
+                            Default
+                          </Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedStrategyId(open ? null : s.strategy_id)}
+                        >
+                          Дэлгэрэнгүй
+                          <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {open && (
+                      <div className="mt-4 space-y-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          {groups.gate.length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">Gate</div>
+                              <div className="flex flex-wrap gap-2">
+                                {groups.gate.map((id) => (
+                                  <Badge key={id} variant="secondary" className="text-xs">
+                                    {getDetectorLabel(id)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {groups.trigger.length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">Trigger</div>
+                              <div className="flex flex-wrap gap-2">
+                                {groups.trigger.map((id) => (
+                                  <Badge key={id} variant="secondary" className="text-xs">
+                                    {getDetectorLabel(id)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {groups.confluence.length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">Confluence</div>
+                              <div className="flex flex-wrap gap-2">
+                                {groups.confluence.map((id) => (
+                                  <Badge key={id} variant="secondary" className="text-xs">
+                                    {getDetectorLabel(id)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {groups.other.length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold text-muted-foreground mb-2">Other</div>
+                              <div className="flex flex-wrap gap-2">
+                                {groups.other.map((id) => (
+                                  <Badge key={id} variant="secondary" className="text-xs">
+                                    {getDetectorLabel(id)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">AI тайлбар:</span> {explanation}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
 
             {/* All Symbols Grid */}
