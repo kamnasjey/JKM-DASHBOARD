@@ -279,33 +279,6 @@ function TFTab({
   )
 }
 
-function TagAttributionTable({
-  tags,
-}: {
-  tags: TagInsight[]
-}) {
-  if (!tags || tags.length === 0) {
-    return (
-      <div className="text-sm text-muted-foreground">
-        No tag data available.
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-2">
-      {tags.slice(0, 8).map((t) => (
-        <div key={t.tag} className="flex items-center justify-between text-sm">
-          <span className="font-medium">{t.tag}</span>
-          <span className="text-muted-foreground">
-            {t.winrate.toFixed(1)}% ({t.tp}/{t.sl})
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function TagAttributionTable({ tags }: { tags: TagInsight[] }) {
   if (!tags || tags.length === 0) {
     return (
