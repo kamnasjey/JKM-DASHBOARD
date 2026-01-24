@@ -545,6 +545,15 @@ export default function SimulatorPage() {
   // Extract version from result meta
   const simVersion = result?.meta?.simVersion || ""
   const dashboardVersion = result?.meta?.dashboardVersion || ""
+  const combinedResult = result?.combined || (result?.summary ? {
+    summary: result.summary,
+    bestTf: undefined,
+    bestWinrate: undefined,
+    tagsAny: [],
+    tagsPrimary: [],
+    tradesSample: [],
+  } : undefined)
+  const isNoSetups = !!combinedResult && (combinedResult.summary?.entries ?? 0) === 0
   
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -788,41 +797,55 @@ export default function SimulatorPage() {
         )}
 
         {/* Results */}
-        {result?.ok && result.combined && !running && (
+        {result?.ok && combinedResult && !running && (
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* Combined Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <MetricCard
                 label="Total Trades"
-                value={result.combined.summary.entries}
+                value={combinedResult.summary.entries}
                 subValue="across all TFs"
               />
               <MetricCard
                 label="Win Rate"
-                value={`${result.combined.summary.winrate.toFixed(1)}%`}
-                subValue={`${result.combined.summary.tp}W / ${result.combined.summary.sl}L`}
-                trend={result.combined.summary.winrate >= 50 ? "up" : "down"}
+                value={`${combinedResult.summary.winrate.toFixed(1)}%`}
+                subValue={`${combinedResult.summary.tp}W / ${combinedResult.summary.sl}L`}
+                trend={combinedResult.summary.winrate >= 50 ? "up" : "down"}
               />
               <MetricCard
                 label="TP Hits"
-                value={result.combined.summary.tp}
+                value={combinedResult.summary.tp}
                 trend="up"
               />
               <MetricCard
                 label="SL Hits"
-                value={result.combined.summary.sl}
+                value={combinedResult.summary.sl}
                 trend="down"
               />
               <MetricCard
                 label="Best TF"
-                value={result.combined.bestTf?.toUpperCase() || "—"}
+                value={combinedResult.bestTf?.toUpperCase() || "—"}
                 subValue={
-                  result.combined.bestWinrate
-                    ? `${result.combined.bestWinrate.toFixed(1)}% WR`
+                  combinedResult.bestWinrate
+                    ? `${combinedResult.bestWinrate.toFixed(1)}% WR`
                     : undefined
                 }
               />
             </div>
+
+            {isNoSetups && (
+              <Card className="border-muted">
+                <CardContent className="pt-6">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                    No setups found
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Энэ хугацаанд тохирох trigger илрээгүй байна. Entry/TP/SL нь 0 гэж харуулж байна.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Timeframe Tabs */}
             <Card>
@@ -864,7 +887,7 @@ export default function SimulatorPage() {
                         </CardHeader>
                         <CardContent>
                           <TagAttributionTable
-                            tags={result.combined.tagsAny || []}
+                            tags={combinedResult.tagsAny || []}
                           />
                         </CardContent>
                       </Card>
@@ -881,7 +904,7 @@ export default function SimulatorPage() {
                         </CardHeader>
                         <CardContent>
                           <TagAttributionTable
-                            tags={result.combined.tagsPrimary || []}
+                            tags={combinedResult.tagsPrimary || []}
                           />
                         </CardContent>
                       </Card>
@@ -1036,7 +1059,7 @@ export default function SimulatorPage() {
             )}
 
             {/* PRO Zero Trades Debug Panel with 1-click fixes */}
-            {result.combined?.summary?.entries === 0 && (
+            {combinedResult?.summary?.entries === 0 && (
               <ZeroTradesDebugPanel
                 explainability={result.explainability}
                 meta={result.meta}

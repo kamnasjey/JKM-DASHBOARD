@@ -32,6 +32,7 @@ import { getStrategy } from "@/lib/user-data/strategies-firestore-store"
 import { storeSimulatorDiagnostics, maskUserId, SimulatorDiagnostics } from "@/lib/simulator-diagnostics"
 import { normalizeDetectorIds, normalizeDetectorList } from "@/lib/detectors/normalize"
 import { getDashboardVersion } from "@/lib/version"
+import { getDetectorById } from "@/lib/detectors/catalog"
 
 export const runtime = "nodejs"
 
@@ -339,6 +340,117 @@ export async function POST(request: NextRequest) {
     
     // --- 10. Ensure response always has meta, explain, and stats ---
     const tradesCount = backendJson.summary?.entries ?? backendJson.combined?.summary?.entries ?? 0
+
+    // --- 10.5. Retry if no trades (NO_TRIGGER_HITS) with broader settings ---
+    const rootCause = backendJson?.explainability?.rootCause
+    const isNoTriggerHits = tradesCount === 0 && rootCause === "NO_TRIGGER_HITS"
+
+    const buildFilteredDetectors = (mode: "gate_trigger" | "trigger_only") => {
+      const out: string[] = []
+      for (const det of detectorsNormalized) {
+        const meta = getDetectorById(det)
+        const category = meta?.category
+        if (mode === "gate_trigger") {
+          if (category === "gate" || category === "trigger") out.push(det)
+          continue
+        }
+        if (mode === "trigger_only") {
+          if (category === "trigger") out.push(det)
+          continue
+        }
+        out.push(det)
+      }
+      return out.length > 0 ? out : detectorsNormalized
+    }
+
+    const extendRange = (days: number) => {
+      if (!applyDemoLimits) {
+        const fromDate = new Date(effectiveTo)
+        fromDate.setUTCDate(fromDate.getUTCDate() - days)
+        return {
+          from: fromDate.toISOString().split("T")[0],
+          to: effectiveTo,
+        }
+      }
+      // Demo users cannot exceed DEMO_MAX_DAYS
+      const limited = limitDateRange(effectiveFrom, effectiveTo, DEMO_MAX_DAYS)
+      return { from: limited.from, to: limited.to }
+    }
+
+    const runFallback = async (fallbackPayload: typeof backendPayload) => {
+      const retryController = new AbortController()
+      const retryTimeoutId = setTimeout(() => retryController.abort(), BACKEND_TIMEOUT_MS)
+      try {
+        const retryResponse = await fetch(backendUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-internal-api-key": INTERNAL_API_KEY,
+            "x-request-id": requestId,
+          },
+          body: JSON.stringify(fallbackPayload),
+          signal: retryController.signal,
+        })
+        clearTimeout(retryTimeoutId)
+        const retryText = await retryResponse.text()
+        const retryJson = JSON.parse(retryText)
+        if (retryResponse.ok) {
+          return { ok: true, json: retryJson }
+        }
+        return { ok: false, json: retryJson }
+      } catch {
+        clearTimeout(retryTimeoutId)
+        return { ok: false, json: null }
+      }
+    }
+
+    if (isNoTriggerHits) {
+      const range90 = extendRange(90)
+      const gateTriggerDetectors = buildFilteredDetectors("gate_trigger")
+      const fallbackPayloadA = {
+        ...backendPayload,
+        from: range90.from,
+        to: range90.to,
+        timeframe: "1h,4h",
+        strategy: {
+          ...backendPayload.strategy,
+          detectors: gateTriggerDetectors,
+        },
+      }
+
+      const fallbackA = await runFallback(fallbackPayloadA)
+      if (fallbackA.ok) {
+        backendJson = fallbackA.json
+        backendJson.meta = backendJson.meta || {}
+        backendJson.meta.warnings = [
+          ...(backendJson.meta.warnings || []),
+          "No trigger hits. Retried with 1H/4H and fewer confluence detectors.",
+        ]
+      } else {
+        const range120 = extendRange(120)
+        const triggerOnlyDetectors = buildFilteredDetectors("trigger_only")
+        const fallbackPayloadB = {
+          ...backendPayload,
+          from: range120.from,
+          to: range120.to,
+          timeframe: "1h,4h",
+          strategy: {
+            ...backendPayload.strategy,
+            detectors: triggerOnlyDetectors,
+          },
+        }
+
+        const fallbackB = await runFallback(fallbackPayloadB)
+        if (fallbackB.ok) {
+          backendJson = fallbackB.json
+          backendJson.meta = backendJson.meta || {}
+          backendJson.meta.warnings = [
+            ...(backendJson.meta.warnings || []),
+            "No trigger hits. Retried with triggers only on 1H/4H.",
+          ]
+        }
+      }
+    }
     
     // Always ensure meta block exists with required fields
     if (!backendJson.meta) {
