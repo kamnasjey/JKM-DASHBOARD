@@ -151,6 +151,8 @@ const RANGE_PRESETS = [
 
 const TIMEFRAMES = ["5m", "15m", "30m", "1h", "4h"]
 
+const GAP_ERROR_PATTERN = /missing bars|data quality|gaps|demoMode=true/i
+
 // ============================================
 // Helpers
 // ============================================
@@ -171,6 +173,23 @@ function formatDateShort(dateStr: string): string {
     month: "short",
     day: "numeric",
   })
+}
+
+function isGapError(res: any): boolean {
+  const message = res?.error?.message || ""
+  return GAP_ERROR_PATTERN.test(message)
+}
+
+function addDemoWarning(res: any, warning: string): any {
+  const meta = res?.meta || {}
+  const warnings = Array.isArray(meta.warnings) ? meta.warnings : []
+  return {
+    ...res,
+    meta: {
+      ...meta,
+      warnings: [...warnings, warning],
+    },
+  }
 }
 
 // ============================================
@@ -398,6 +417,25 @@ export default function SimulatorPage() {
         demoMode: false,
       })
 
+      if (!res.ok && isGapError(res)) {
+        const demoRes = await api.simulatorV2.run({
+          strategyId,
+          symbols: [symbol],
+          from: rangeDates.from,
+          to: rangeDates.to,
+          timeframe: "auto",
+          mode: "winrate",
+          demoMode: true,
+        })
+        const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."
+        const patched = addDemoWarning(demoRes, warning)
+        setResult(patched as MultiTFResult)
+        if (!patched.ok && patched.error) {
+          setError(patched.error.message)
+        }
+        return
+      }
+
       setResult(res as MultiTFResult)
 
       if (!res.ok && res.error) {
@@ -468,6 +506,25 @@ export default function SimulatorPage() {
         // Note: customDetectors not passed - server always uses strategy detectors
         // For disable_gates, we'd need a backend feature to override
       })
+
+      if (!res.ok && isGapError(res)) {
+        const demoRes = await api.simulatorV2.run({
+          strategyId,
+          symbols: [symbol],
+          from: customFrom,
+          to: customTo,
+          timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
+          mode: "winrate",
+          demoMode: true,
+        })
+        const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."
+        const patched = addDemoWarning(demoRes, warning)
+        setResult(patched as MultiTFResult)
+        if (!patched.ok && patched.error) {
+          setError(patched.error.message)
+        }
+        return
+      }
 
       setResult(res as MultiTFResult)
 
