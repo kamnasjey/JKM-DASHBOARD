@@ -545,6 +545,13 @@ export default function SimulatorPage() {
   // Extract version from result meta
   const simVersion = result?.meta?.simVersion || ""
   const dashboardVersion = result?.meta?.dashboardVersion || ""
+  const formatSuggestion = (input: any) => {
+    if (typeof input === "string") return input
+    if (input && typeof input === "object") {
+      return input.suggestion || input.title || input.message || JSON.stringify(input)
+    }
+    return String(input)
+  }
   const combinedResult = result?.combined || (result?.summary ? {
     summary: result.summary,
     bestTf: undefined,
@@ -1026,7 +1033,7 @@ export default function SimulatorPage() {
                                         className="text-sm text-muted-foreground flex items-start gap-2"
                                       >
                                         <span className="text-primary">•</span>
-                                        {s.title || s}
+                                        {formatSuggestion(s)}
                                       </li>
                                     ))}
                                   </ul>

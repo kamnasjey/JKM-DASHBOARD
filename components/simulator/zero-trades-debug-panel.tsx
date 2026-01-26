@@ -190,6 +190,13 @@ export function ZeroTradesDebugPanel({
   isRerunning,
 }: ZeroTradesDebugPanelProps) {
   const [showHitmap, setShowHitmap] = useState(true)
+  const formatSuggestion = (input: any) => {
+    if (typeof input === "string") return input
+    if (input && typeof input === "object") {
+      return input.suggestion || input.title || input.message || JSON.stringify(input)
+    }
+    return String(input)
+  }
 
   // Determine root cause label
   const rootCauseKey = explainability?.rootCause || "no_setup"
@@ -418,7 +425,7 @@ export function ZeroTradesDebugPanel({
               {explainability.suggestions.map((s, i) => (
                 <li key={i} className="flex items-start gap-2">
                   <span className="text-orange-500">•</span>
-                  {s}
+                  {formatSuggestion(s)}
                 </li>
               ))}
             </ul>
