@@ -664,6 +664,21 @@ export const api = {
           dataTier: "green" | "yellow" | "red"
           warnings: string[]
         }
+        // Per-trade details (when mode="detailed" or backend supports it)
+        trades?: Array<{
+          entry_ts: number
+          exit_ts: number
+          direction: "BUY" | "SELL"
+          entry: number
+          sl: number
+          tp: number
+          outcome: "TP" | "SL"
+          r: number
+          duration_bars: number
+          detector: string
+          symbol?: string
+          tf?: string
+        }>
         demoMode?: boolean
         demoMessage?: string
         error?: {

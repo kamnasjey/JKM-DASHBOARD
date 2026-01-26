@@ -39,6 +39,7 @@ import {
 import { ZeroTradesDebugPanel } from "@/components/simulator/zero-trades-debug-panel"
 import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { TradesTable } from "@/components/simulator/trades-table"
 
 // ============================================
 // Types
@@ -73,8 +74,24 @@ interface TagInsight {
   tfCount?: number
 }
 
+interface TradeDetail {
+  entry_ts: number
+  exit_ts: number
+  direction: "BUY" | "SELL"
+  entry: number
+  sl: number
+  tp: number
+  outcome: "TP" | "SL"
+  r: number
+  duration_bars: number
+  detector: string
+  symbol?: string
+  tf?: string
+}
+
 interface MultiTFResult {
   ok: boolean
+  trades?: TradeDetail[]  // Per-trade details from mode="detailed"
   combined?: {
     summary: TFSummary
     tagsAny: TagInsight[]
@@ -914,11 +931,22 @@ export default function SimulatorPage() {
               </CardHeader>
               <CardContent className="pt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-6 mb-6">
+                  <TabsList className="grid w-full grid-cols-7 mb-6">
                     <TabsTrigger value="combined">
                       <div className="flex items-center gap-1.5">
                         <BarChart3 className="h-3.5 w-3.5" />
                         <span>Combined</span>
+                      </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="trades">
+                      <div className="flex items-center gap-1.5">
+                        <Target className="h-3.5 w-3.5" />
+                        <span>Trades</span>
+                        {result.trades && result.trades.length > 0 && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 ml-1">
+                            {result.trades.length}
+                          </Badge>
+                        )}
                       </div>
                     </TabsTrigger>
                     {TIMEFRAMES.map((tf) => (
@@ -969,6 +997,42 @@ export default function SimulatorPage() {
                         </CardContent>
                       </Card>
                     </div>
+                  </TabsContent>
+
+                  {/* Trades Tab - Per-trade details */}
+                  <TabsContent value="trades" className="space-y-6">
+                    {result.trades && result.trades.length > 0 ? (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-base font-medium">Trade жагсаалт</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Нийт {result.trades.length} trade • Entry/Exit огноо, TP/SL үр дүн
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Badge variant="outline" className="text-green-500 border-green-500/30">
+                              TP: {result.trades.filter(t => t.outcome === "TP").length}
+                            </Badge>
+                            <Badge variant="outline" className="text-red-500 border-red-500/30">
+                              SL: {result.trades.filter(t => t.outcome === "SL").length}
+                            </Badge>
+                          </div>
+                        </div>
+                        <TradesTable trades={result.trades} />
+                      </>
+                    ) : (
+                      <Card className="border-muted">
+                        <CardContent className="py-10 text-center">
+                          <Target className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                          <h4 className="text-sm font-medium mb-1">Trade дэлгэрэнгүй мэдээлэл алга</h4>
+                          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                            Backend-ээс per-trade мэдээлэл ирээгүй байна. Энэ функционал удахгүй нэмэгдэнэ.
+                            Одоогоор зөвхөн aggregate статистик (winrate, TP/SL тоо) харагдаж байна.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
                   </TabsContent>
 
                   {/* Individual TF Tabs */}
