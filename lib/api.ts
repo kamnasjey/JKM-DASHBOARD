@@ -18,6 +18,36 @@ function toMessage(text: string): string {
   return text.replace(/^"|"$/g, "").trim()
 }
 
+function normalizeNotice(input: any): string {
+  if (typeof input === "string") return input
+  if (input && typeof input === "object") {
+    const message = input.message || input.reasonText || input.suggestion || input.rootCause
+    return typeof message === "string" ? message : JSON.stringify(input)
+  }
+  return String(input)
+}
+
+function sanitizeSimulatorV2Response(res: any) {
+  if (!res || typeof res !== "object") return res
+
+  if (Array.isArray(res.meta?.warnings)) {
+    res.meta.warnings = res.meta.warnings.map(normalizeNotice)
+  }
+
+  if (res.error) {
+    if (typeof res.error === "string") {
+      res.error = { code: "ERROR", message: res.error }
+    } else if (typeof res.error === "object") {
+      res.error.message = normalizeNotice(res.error.message ?? res.error)
+      if (Array.isArray(res.error.suggestedActions)) {
+        res.error.suggestedActions = res.error.suggestedActions.map(normalizeNotice)
+      }
+    }
+  }
+
+  return res
+}
+
 // Fetch wrapper
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   // Normalize to same-origin relative URL.
@@ -618,7 +648,7 @@ export const api = {
       }>("/api/simulator/run", {
         method: "POST",
         body: JSON.stringify(params),
-      }),
+      }).then(sanitizeSimulatorV2Response),
   },
 
   // Scanner API (continuous setup finder)
