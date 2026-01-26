@@ -188,7 +188,7 @@ export function TradesTable({ trades, className }: TradesTableProps) {
                 {trade.duration_bars} bars
               </td>
               <td className="px-4 py-3 text-xs text-[#6C7BA8] truncate max-w-[120px]">
-                {trade.detector}
+                {typeof trade.detector === "string" ? trade.detector : "unknown"}
               </td>
             </tr>
           ))}

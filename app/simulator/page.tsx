@@ -683,22 +683,25 @@ export default function SimulatorPage() {
       // Extract version from result meta
       const simVersion = result?.meta?.simVersion || ""
       const dashboardVersion = result?.meta?.dashboardVersion || ""
-      const formatSuggestion = (input: any) => {
+      
+      // Universal safe string converter - prevents React #31 error
+      const safeString = (input: any): string => {
+        if (input === null || input === undefined) return ""
         if (typeof input === "string") return input
+        if (typeof input === "number" || typeof input === "boolean") return String(input)
         if (input && typeof input === "object") {
-          const message = input.suggestion || input.title || input.message || input.reasonText || input.rootCause
-          return typeof message === "string" ? message : JSON.stringify(input)
+          // Try to extract a message field from common patterns
+          const msg = input.message || input.suggestion || input.title || input.reasonText || input.rootCause || input.error
+          if (typeof msg === "string") return msg
+          // Fallback to JSON but truncate for display
+          const json = JSON.stringify(input)
+          return json.length > 100 ? json.slice(0, 100) + "..." : json
         }
         return String(input)
       }
-      const formatWarning = (input: any) => {
-        if (typeof input === "string") return input
-        if (input && typeof input === "object") {
-          const message = input.message || input.reasonText || input.suggestion || input.rootCause
-          return typeof message === "string" ? message : JSON.stringify(input)
-        }
-        return String(input)
-      }
+      
+      const formatSuggestion = (input: any) => safeString(input)
+      const formatWarning = (input: any) => safeString(input)
       const combinedResult = result?.combined || (result?.summary ? {
         summary: result.summary,
         bestTf: undefined,
@@ -1169,7 +1172,7 @@ export default function SimulatorPage() {
                           <CardContent className="py-6 text-center">
                             <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
                             <p className="text-sm text-destructive">
-                              {result.byTimeframe[tf].error}
+                              {safeString(result.byTimeframe[tf].error)}
                             </p>
                           </CardContent>
                         </Card>
