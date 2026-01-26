@@ -191,7 +191,10 @@ export default function DashboardPage() {
   const displaySignals = useMemo(() => {
     if (wsConnected && wsSignals.length > 0) {
       // Return last 10 signals from WS
-      return wsSignals.slice(-10).reverse() as SignalPayloadPublicV1[]
+      return wsSignals
+        .filter((s) => typeof s?.symbol === "string" && typeof s?.direction === "string")
+        .slice(-10)
+        .reverse() as SignalPayloadPublicV1[]
     }
     return recentSignals
   }, [wsConnected, wsSignals, recentSignals])

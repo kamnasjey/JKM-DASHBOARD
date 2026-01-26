@@ -24,6 +24,44 @@ interface WebSocketMessage {
   ts?: number
 }
 
+function normalizeSignals(input: any[]): Signal[] {
+  if (!Array.isArray(input)) return []
+
+  return input
+    .map((raw: any) => {
+      if (!raw || typeof raw !== "object") return null
+      const symbol = typeof raw.symbol === "string" ? raw.symbol : null
+      const direction = typeof raw.direction === "string" ? raw.direction : null
+      if (!symbol || !direction) return null
+
+      const createdAtRaw = raw.created_at ?? raw.createdAt ?? raw.timestamp ?? raw.ts
+      let created_at: number | undefined
+      if (typeof createdAtRaw === "number") {
+        created_at = createdAtRaw
+      } else if (typeof createdAtRaw === "string") {
+        const ts = Date.parse(createdAtRaw)
+        if (!Number.isNaN(ts)) created_at = Math.floor(ts / 1000)
+      }
+
+      return {
+        signal_id: typeof raw.signal_id === "string" ? raw.signal_id : undefined,
+        symbol,
+        tf: typeof raw.tf === "string" ? raw.tf : (typeof raw.timeframe === "string" ? raw.timeframe : undefined),
+        direction,
+        entry: typeof raw.entry === "number" ? raw.entry : undefined,
+        sl: typeof raw.sl === "number" ? raw.sl : undefined,
+        tp: typeof raw.tp === "number" ? raw.tp : undefined,
+        rr: typeof raw.rr === "number" ? raw.rr : undefined,
+        score: typeof raw.score === "number" ? raw.score : undefined,
+        detectors: Array.isArray(raw.detectors) ? raw.detectors : undefined,
+        timestamp: typeof raw.timestamp === "string" ? raw.timestamp : undefined,
+        status: typeof raw.status === "string" ? raw.status : undefined,
+        ...(created_at !== undefined ? { created_at } : {}),
+      } as Signal & { created_at?: number }
+    })
+    .filter(Boolean) as Signal[]
+}
+
 export function useWebSocketSignals() {
   const [signals, setSignals] = useState<Signal[]>([])
   const [newSignals, setNewSignals] = useState<Signal[]>([])
@@ -69,13 +107,14 @@ export function useWebSocketSignals() {
         
         if (data.type === "initial") {
           console.log("[signals-ws] Received initial signals:", data.signals?.length)
-          setSignals(data.signals || [])
+          setSignals(normalizeSignals(data.signals || []))
           setTotalCount(data.total || 0)
           setLastUpdate(new Date())
         } else if (data.type === "new_signals") {
           console.log("[signals-ws] Received new signals:", data.signals?.length)
-          setSignals(prev => [...prev, ...(data.signals || [])])
-          setNewSignals(data.signals || [])
+          const normalized = normalizeSignals(data.signals || [])
+          setSignals(prev => [...prev, ...normalized])
+          setNewSignals(normalized)
           setTotalCount(data.total || 0)
           setLastUpdate(new Date())
           
