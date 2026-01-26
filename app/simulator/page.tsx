@@ -552,6 +552,13 @@ export default function SimulatorPage() {
     }
     return String(input)
   }
+  const formatWarning = (input: any) => {
+    if (typeof input === "string") return input
+    if (input && typeof input === "object") {
+      return input.message || input.reasonText || input.suggestion || JSON.stringify(input)
+    }
+    return String(input)
+  }
   const combinedResult = result?.combined || (result?.summary ? {
     summary: result.summary,
     bestTf: undefined,
@@ -1058,7 +1065,7 @@ export default function SimulatorPage() {
                   </h4>
                   <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                     {result.meta.warnings.map((w, i) => (
-                      <li key={i}>{w}</li>
+                      <li key={i}>{formatWarning(w)}</li>
                     ))}
                   </ul>
                 </CardContent>

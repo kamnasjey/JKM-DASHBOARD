@@ -76,6 +76,13 @@ export function DiagnosticsPanel() {
   const [data, setData] = useState<DiagnosticsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [selectedRunIndex, setSelectedRunIndex] = useState(0)
+  const formatWarning = (input: any) => {
+    if (typeof input === "string") return input
+    if (input && typeof input === "object") {
+      return input.message || input.reasonText || input.suggestion || JSON.stringify(input)
+    }
+    return String(input)
+  }
 
   async function fetchDiagnostics() {
     setLoading(true)
@@ -377,7 +384,7 @@ export function DiagnosticsPanel() {
                         <p className="text-xs text-yellow-500 font-medium">⚠ Warnings</p>
                         <ul className="text-xs text-muted-foreground space-y-0.5">
                           {selectedRun.warnings.map((w, i) => (
-                            <li key={i}>• {w}</li>
+                            <li key={i}>• {formatWarning(w)}</li>
                           ))}
                         </ul>
                       </div>
