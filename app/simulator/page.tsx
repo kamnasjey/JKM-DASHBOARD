@@ -1092,21 +1092,21 @@ export default function SimulatorPage() {
             {/* Timeframe Tabs */}
             <Card>
               <CardHeader className="pb-0">
-                <CardTitle className="text-lg">Results by Timeframe</CardTitle>
+                <CardTitle className="text-lg">Simulation Results</CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-7 mb-6">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
                     <TabsTrigger value="combined">
                       <div className="flex items-center gap-1.5">
                         <BarChart3 className="h-3.5 w-3.5" />
-                        <span>Combined</span>
+                        <span>Overview</span>
                       </div>
                     </TabsTrigger>
                     <TabsTrigger value="trades">
                       <div className="flex items-center gap-1.5">
                         <Target className="h-3.5 w-3.5" />
-                        <span>Trades</span>
+                        <span>All Trades</span>
                         {result.trades && result.trades.length > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 ml-1">
                             {result.trades.length}
@@ -1114,15 +1114,6 @@ export default function SimulatorPage() {
                         )}
                       </div>
                     </TabsTrigger>
-                    {TIMEFRAMES.map((tf) => (
-                      <TabsTrigger key={tf} value={tf}>
-                        <TFTab
-                          tf={tf}
-                          result={result.byTimeframe?.[tf]}
-                          isActive={activeTab === tf}
-                        />
-                      </TabsTrigger>
-                    ))}
                   </TabsList>
 
                   {/* Combined Tab - Overview with TF breakdown */}
@@ -1355,137 +1346,8 @@ export default function SimulatorPage() {
                       </Card>
                     )}
                   </TabsContent>
-
-                  {/* Individual TF Tabs */}
-                  {TIMEFRAMES.map((tf) => (
-                    <TabsContent key={tf} value={tf} className="space-y-6">
-                      {result.byTimeframe?.[tf]?.error ? (
-                        <Card className="border-destructive/50 bg-destructive/10">
-                          <CardContent className="py-6 text-center">
-                            <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
-                            <p className="text-sm text-destructive">
-                              {safeString(result.byTimeframe[tf].error)}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ) : (
-                        <>
-                          {/* TF Summary */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <MetricCard
-                              label="Trades"
-                              value={result.byTimeframe?.[tf]?.summary?.entries || 0}
-                            />
-                            <MetricCard
-                              label="Win Rate"
-                              value={`${(result.byTimeframe?.[tf]?.summary?.winrate || 0).toFixed(1)}%`}
-                              trend={
-                                (result.byTimeframe?.[tf]?.summary?.winrate || 0) >= 50
-                                  ? "up"
-                                  : "down"
-                              }
-                            />
-                            <MetricCard
-                              label="TP Hits"
-                              value={result.byTimeframe?.[tf]?.summary?.tp || 0}
-                            />
-                            <MetricCard
-                              label="SL Hits"
-                              value={result.byTimeframe?.[tf]?.summary?.sl || 0}
-                            />
-                          </div>
-
-                          {/* By Horizon */}
-                          {result.byTimeframe?.[tf]?.byHorizon && (
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <Card>
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-base">Intraday</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                      <p className="text-2xl font-bold">
-                                        {result.byTimeframe[tf].byHorizon?.intraday?.entries || 0}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">Trades</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-2xl font-bold text-green-500">
-                                        {result.byTimeframe[tf].byHorizon?.intraday?.tp || 0}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">TP</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-2xl font-bold text-red-500">
-                                        {result.byTimeframe[tf].byHorizon?.intraday?.sl || 0}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">SL</p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-
-                              <Card>
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-base">Swing</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="grid grid-cols-3 gap-4 text-center">
-                                    <div>
-                                      <p className="text-2xl font-bold">
-                                        {result.byTimeframe[tf].byHorizon?.swing?.entries || 0}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">Trades</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-2xl font-bold text-green-500">
-                                        {result.byTimeframe[tf].byHorizon?.swing?.tp || 0}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">TP</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-2xl font-bold text-red-500">
-                                        {result.byTimeframe[tf].byHorizon?.swing?.sl || 0}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">SL</p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          )}
-
-                          {/* Suggestions */}
-                          {result.byTimeframe?.[tf]?.suggestions &&
-                            result.byTimeframe[tf].suggestions!.length > 0 && (
-                              <Card>
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-base">Suggestions</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <ul className="space-y-2">
-                                    {result.byTimeframe[tf].suggestions!.map((s: any, i: number) => (
-                                      <li
-                                        key={i}
-                                        className="text-sm text-muted-foreground flex items-start gap-2"
-                                      >
-                                        <span className="text-primary">•</span>
-                                        {formatSuggestion(s)}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </CardContent>
-                              </Card>
-                            )}
-                        </>
-                      )}
-                    </TabsContent>
-                  ))}
                 </Tabs>
               </CardContent>
-            </Card>
-
             {/* PRO Zero Trades Debug Panel with 1-click fixes */}
             {combinedResult?.summary?.entries === 0 && (
               <ZeroTradesDebugPanel
