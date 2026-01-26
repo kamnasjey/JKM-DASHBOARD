@@ -130,10 +130,20 @@ interface MultiTFResult {
     simVersion?: string
     dashboardVersion?: string
     timeframesRan: string[]
-    dataSource: string
+    dataSource: string | {
+      source?: string
+      hasData?: boolean
+      candleCount?: number
+      firstTs?: string | null
+      lastTs?: string | null
+      coveragePct?: number
+      missingRanges?: any[]
+      rootCause?: string | null
+      suggestion?: string | null
+    }
     range: { from: string; to: string }
     symbols: string[]
-    warnings: string[]
+    warnings: (string | object)[]
     // Detector classification for UI transparency
     detectorsRequested?: string[]
     detectorsNormalized?: string[]
@@ -1431,7 +1441,9 @@ export default function SimulatorPage() {
 
             {/* Data Source Info */}
             <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
-              <span>Data: {result.meta?.dataSource || "unknown"}</span>
+              <span>Data: {typeof result.meta?.dataSource === "string" 
+                ? result.meta.dataSource 
+                : result.meta?.dataSource?.source || "unknown"}</span>
               <span>•</span>
               <span>
                 Range: {result.meta?.range?.from} → {result.meta?.range?.to}
