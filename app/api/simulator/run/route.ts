@@ -451,6 +451,15 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+
+    const formatNotice = (input: any) => {
+      if (typeof input === "string") return input
+      if (input && typeof input === "object") {
+        const message = input.message || input.reasonText || input.suggestion || input.rootCause
+        return typeof message === "string" ? message : JSON.stringify(input)
+      }
+      return String(input)
+    }
     
     // Always ensure meta block exists with required fields
     if (!backendJson.meta) {
@@ -463,6 +472,9 @@ export async function POST(request: NextRequest) {
     backendJson.meta.detectorsNormalized = detectorsNormalized
     backendJson.meta.detectorsUnknown = detectorsUnknown
     backendJson.meta.simVersion = backendJson.meta.simVersion || "unknown"
+    if (Array.isArray(backendJson.meta.warnings)) {
+      backendJson.meta.warnings = backendJson.meta.warnings.map(formatNotice)
+    }
     
     // Ensure stats block always exists
     if (!backendJson.stats) {
@@ -499,7 +511,7 @@ export async function POST(request: NextRequest) {
         suggestions: [
           "Try extending the date range to 90 days",
           "Try a higher timeframe like 1H or 4H",
-          "Check if the selected detectors are compatible"
+          "Check if the selected detectors are compatible",
         ],
         debug: {
           barsScanned: 0,
@@ -510,6 +522,10 @@ export async function POST(request: NextRequest) {
           detectorsUnknown,
         }
       }
+    }
+
+    if (Array.isArray(backendJson.explainability?.suggestions)) {
+      backendJson.explainability.suggestions = backendJson.explainability.suggestions.map(formatNotice)
     }
     
     // --- 11. Store diagnostics for debugging endpoint ---
