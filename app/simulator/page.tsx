@@ -1348,6 +1348,7 @@ export default function SimulatorPage() {
                   </TabsContent>
                 </Tabs>
               </CardContent>
+            </Card>
             {/* PRO Zero Trades Debug Panel with 1-click fixes */}
             {combinedResult?.summary?.entries === 0 && (
               <ZeroTradesDebugPanel
