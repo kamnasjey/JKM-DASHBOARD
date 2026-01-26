@@ -35,6 +35,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 // ============================================
 // Types
@@ -386,8 +387,25 @@ export default function SimulatorMVPPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-4 py-8 space-y-6 max-w-6xl">
+    <ErrorBoundary
+      fallback={
+        <div className="min-h-screen bg-background text-foreground">
+          <div className="container mx-auto px-4 py-8 max-w-3xl">
+            <Card>
+              <CardContent className="py-10 text-center">
+                <AlertTriangle className="h-8 w-8 mx-auto text-destructive mb-4" />
+                <p className="text-sm text-muted-foreground">Simulator (MVP) хэсэг алдаа гарлаа.</p>
+                <Button className="mt-4" onClick={() => window.location.reload()}>
+                  Дахин ачаалах
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container mx-auto px-4 py-8 space-y-6 max-w-6xl">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Strategy Simulator</h1>
@@ -1154,7 +1172,8 @@ export default function SimulatorMVPPage() {
             )}
           </>
         )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }

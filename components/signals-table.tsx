@@ -17,7 +17,8 @@ interface SignalsTableProps {
 }
 
 function OutcomeBadge({ outcome }: { outcome?: string }) {
-  if (!outcome || outcome === "PENDING") {
+  const safeOutcome = typeof outcome === "string" ? outcome : (outcome ? JSON.stringify(outcome) : "")
+  if (!safeOutcome || safeOutcome === "PENDING") {
     return (
       <Badge variant="outline" className="text-yellow-500 border-yellow-500/50">
         <Clock className="h-3 w-3 mr-1" />
@@ -25,7 +26,7 @@ function OutcomeBadge({ outcome }: { outcome?: string }) {
       </Badge>
     )
   }
-  if (outcome === "WIN") {
+  if (safeOutcome === "WIN") {
     return (
       <Badge className="bg-green-500 hover:bg-green-600">
         <Trophy className="h-3 w-3 mr-1" />
@@ -33,7 +34,7 @@ function OutcomeBadge({ outcome }: { outcome?: string }) {
       </Badge>
     )
   }
-  if (outcome === "LOSS") {
+  if (safeOutcome === "LOSS") {
     return (
       <Badge variant="destructive">
         <XCircle className="h-3 w-3 mr-1" />
@@ -41,7 +42,14 @@ function OutcomeBadge({ outcome }: { outcome?: string }) {
       </Badge>
     )
   }
-  return <Badge variant="secondary">{outcome}</Badge>
+  return <Badge variant="secondary">{safeOutcome}</Badge>
+}
+
+function safeText(value: unknown, fallback = "—") {
+  if (typeof value === "string") return value
+  if (typeof value === "number") return String(value)
+  if (value && typeof value === "object") return JSON.stringify(value)
+  return fallback
 }
 
 export function SignalsTable({ signals, limit }: SignalsTableProps) {
@@ -114,9 +122,9 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                       {formatTimestamp(signal.created_at)}
                     </TableCell>
-                    <TableCell className="font-medium">{signal.symbol}</TableCell>
+                    <TableCell className="font-medium">{safeText(signal.symbol)}</TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge variant="outline">{signal.tf}</Badge>
+                      <Badge variant="outline">{safeText(signal.tf)}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -128,13 +136,21 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                         ) : (
                           <ArrowDownRight className="h-3 w-3" />
                         )}
-                        <span className="hidden xs:inline">{signal.direction}</span>
+                        <span className="hidden xs:inline">{safeText(signal.direction)}</span>
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{signal.entry?.toFixed(5) || "N/A"}</TableCell>
-                    <TableCell className="hidden md:table-cell">{signal.sl?.toFixed(5) || "N/A"}</TableCell>
-                    <TableCell className="hidden md:table-cell">{signal.tp?.toFixed(5) || "N/A"}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{signal.rr?.toFixed(2) || "N/A"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {typeof signal.entry === "number" ? signal.entry.toFixed(5) : "N/A"}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {typeof signal.sl === "number" ? signal.sl.toFixed(5) : "N/A"}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {typeof signal.tp === "number" ? signal.tp.toFixed(5) : "N/A"}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {typeof signal.rr === "number" ? signal.rr.toFixed(2) : "N/A"}
+                    </TableCell>
                     <TableCell>
                       <OutcomeBadge outcome={(signal as any).outcome} />
                     </TableCell>
@@ -186,13 +202,13 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
                   </div>
                   <div>
                     <p className="font-medium text-sm sm:text-base">
-                      {signal.symbol} <span className="text-muted-foreground">{signal.direction}</span>
+                      {safeText(signal.symbol)} <span className="text-muted-foreground">{safeText(signal.direction)}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">{formatTimestamp(signal.created_at)}</p>
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  {signal.rr && (
+                  {typeof signal.rr === "number" && (
                     <Badge variant="outline" className="hidden xs:inline-flex">
                       RR {signal.rr.toFixed(1)}
                     </Badge>

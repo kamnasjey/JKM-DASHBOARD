@@ -38,6 +38,7 @@ import {
 } from "@/lib/detectors/catalog"
 import { ZeroTradesDebugPanel } from "@/components/simulator/zero-trades-debug-panel"
 import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 // ============================================
 // Types
@@ -583,8 +584,40 @@ export default function SimulatorPage() {
       const isNoSetups = !!combinedResult && (combinedResult.summary?.entries ?? 0) === 0
 
       return (
-        <div className="min-h-screen bg-background text-foreground">
-          <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
+        <ErrorBoundary
+          fallback={
+            <div className="min-h-screen bg-background text-foreground">
+              <div className="container mx-auto px-4 py-8 max-w-3xl">
+                <Card>
+                  <CardContent className="py-10 text-center">
+                    <AlertTriangle className="h-8 w-8 mx-auto text-destructive mb-4" />
+                    <p className="text-sm text-muted-foreground">Simulator хэсэг алдаа гарлаа.</p>
+                    <Button className="mt-4" onClick={() => window.location.reload()}>
+                      Дахин ачаалах
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          }
+        >
+          <div className="min-h-screen bg-background text-foreground">
+            <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
+              {process.env.NODE_ENV !== "production" && (
+                <div className="hidden" aria-hidden>
+                  {formatWarning({
+                    source: "mock",
+                    hasData: false,
+                    candleCount: 0,
+                    firstTs: null,
+                    lastTs: null,
+                    coveragePct: 0,
+                    missingRanges: [],
+                    rootCause: "NO_DATA",
+                    suggestion: "Extend range",
+                  })}
+                </div>
+              )}
             {/* Header */}
             <div className="flex items-start justify-between">
               <div>
@@ -1254,7 +1287,8 @@ export default function SimulatorPage() {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }

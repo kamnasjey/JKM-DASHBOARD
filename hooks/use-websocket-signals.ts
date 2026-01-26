@@ -98,7 +98,6 @@ export function useWebSocketSignals() {
       console.log("[signals-ws] Connected")
       setConnected(true)
       setError(null)
-      setReconnectAttempts(0) // Reset on successful connection
     }
 
     ws.onmessage = (event) => {
@@ -110,6 +109,7 @@ export function useWebSocketSignals() {
           setSignals(normalizeSignals(data.signals || []))
           setTotalCount(data.total || 0)
           setLastUpdate(new Date())
+          setReconnectAttempts(0) // Reset after first successful payload
         } else if (data.type === "new_signals") {
           console.log("[signals-ws] Received new signals:", data.signals?.length)
           const normalized = normalizeSignals(data.signals || [])
@@ -117,12 +117,14 @@ export function useWebSocketSignals() {
           setNewSignals(normalized)
           setTotalCount(data.total || 0)
           setLastUpdate(new Date())
+          setReconnectAttempts(0) // Reset after stable data
           
           // Clear newSignals after 10 seconds (for notification purposes)
           setTimeout(() => setNewSignals([]), 10000)
         } else if (data.type === "heartbeat") {
           // Heartbeat received, connection is alive
           setLastUpdate(new Date())
+          setReconnectAttempts(0) // Reset after stable heartbeat
         }
       } catch (err) {
         console.error("[signals-ws] Failed to parse message:", err)
