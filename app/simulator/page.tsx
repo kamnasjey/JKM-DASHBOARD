@@ -1213,6 +1213,87 @@ export default function SimulatorPage() {
                           </CardContent>
                         </Card>
 
+                        {/* NEW: 3 KPI Dashboard */}
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              📊 Гол KPI-ууд
+                            </CardTitle>
+                            <CardDescription>
+                              Strategy-ийн чанарыг хэмжих гол үзүүлэлтүүд
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            {(() => {
+                              const totalTrades = result.trades?.length || 0
+                              const tpCount = result.trades?.filter(t => t.outcome === "TP").length || 0
+                              const slCount = result.trades?.filter(t => t.outcome === "SL").length || 0
+                              const timeExitCount = combinedResult?.summary?.timeExit || 0
+                              const resolvedCount = tpCount + slCount + timeExitCount
+                              
+                              // Calculate entries per week based on date range
+                              const weeks = Math.max(1, Math.ceil((selectedRange || 30) / 7))
+                              const entriesPerWeek = totalTrades / weeks
+                              
+                              // Resolution rate: how many trades completed vs total
+                              const resolutionRate = totalTrades > 0 ? (resolvedCount / totalTrades) * 100 : 0
+                              
+                              // TimeExit rate: how many ended by time instead of TP/SL
+                              const timeExitRate = resolvedCount > 0 ? (timeExitCount / resolvedCount) * 100 : 0
+                              
+                              return (
+                                <div className="grid grid-cols-3 gap-4">
+                                  {/* Entries per Week */}
+                                  <div className={cn(
+                                    "text-center p-4 rounded-lg border",
+                                    entriesPerWeek >= 3 ? "bg-green-500/10 border-green-500/30" :
+                                    entriesPerWeek >= 1 ? "bg-yellow-500/10 border-yellow-500/30" :
+                                    "bg-red-500/10 border-red-500/30"
+                                  )}>
+                                    <p className="text-3xl font-bold">{entriesPerWeek.toFixed(1)}</p>
+                                    <p className="text-sm font-medium mt-1">Entries / Week</p>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      {entriesPerWeek < 1 ? "⚠️ Хэт цөөн" :
+                                       entriesPerWeek > 10 ? "⚠️ Spam signal?" :
+                                       "✅ Хэвийн"}
+                                    </p>
+                                  </div>
+                                  
+                                  {/* Resolution Rate */}
+                                  <div className={cn(
+                                    "text-center p-4 rounded-lg border",
+                                    resolutionRate >= 90 ? "bg-green-500/10 border-green-500/30" :
+                                    resolutionRate >= 70 ? "bg-yellow-500/10 border-yellow-500/30" :
+                                    "bg-red-500/10 border-red-500/30"
+                                  )}>
+                                    <p className="text-3xl font-bold">{resolutionRate.toFixed(0)}%</p>
+                                    <p className="text-sm font-medium mt-1">Resolution Rate</p>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      {resolutionRate < 70 ? "⚠️ Олон pending" :
+                                       "✅ Дуусдаг"}
+                                    </p>
+                                  </div>
+                                  
+                                  {/* TimeExit Rate */}
+                                  <div className={cn(
+                                    "text-center p-4 rounded-lg border",
+                                    timeExitRate <= 20 ? "bg-green-500/10 border-green-500/30" :
+                                    timeExitRate <= 40 ? "bg-yellow-500/10 border-yellow-500/30" :
+                                    "bg-red-500/10 border-red-500/30"
+                                  )}>
+                                    <p className="text-3xl font-bold">{timeExitRate.toFixed(0)}%</p>
+                                    <p className="text-sm font-medium mt-1">Time Exit Rate</p>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      {timeExitRate > 40 ? "⚠️ Strategy тодорхойгүй" :
+                                       "✅ TP/SL-д хүрдэг"}
+                                    </p>
+                                  </div>
+                                </div>
+                              )
+                            })()}
+                          </CardContent>
+                        </Card>
+
                         {/* Average Duration */}
                         <Card>
                           <CardHeader className="pb-2">

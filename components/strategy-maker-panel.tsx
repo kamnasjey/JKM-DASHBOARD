@@ -25,70 +25,156 @@ interface Message {
   detectors?: string[]
 }
 
+// NEW: 3-Layer Detector Types
+type DetectorLayer = "context" | "trigger" | "risk"
+
 interface Detector {
   name: string
   role: DetectorRole
+  layer: DetectorLayer  // NEW: 3-layer classification
   description: string
   required?: boolean
+  options?: DetectorOption[]  // NEW: Configurable options
+}
+
+interface DetectorOption {
+  key: string
+  label: string
+  type: "select" | "number"
+  values?: string[]
+  default?: string | number
 }
 
 const MAX_STRATEGIES = 30
 
-// 24 detectors (synced with backend /api/detectors)
+// NEW: 3-Layer Detector System (Context / Trigger / Risk)
 const ALL_DETECTORS: Detector[] = [
-  // Gates
-  { name: "gate_regime", role: "gate", description: "Зах зээл Trend/Range/Chop байгааг тодорхойлно", required: true },
-  { name: "gate_volatility", role: "gate", description: "Volatility өндөр/бага/хэвийн гэдгийг хэмжинэ" },
-  { name: "gate_drift_sentinel", role: "gate", description: "Сканнерийн гүйцэтгэл муудаж байгааг анхааруулна" },
-
-  // Triggers (entry)
-  { name: "break_retest", role: "trigger", description: "S/R эвдээд буцаад retest хийх" },
-  { name: "breakout_retest_entry", role: "trigger", description: "Breakout → retest → confirmation (илүү strict)" },
-  { name: "compression_expansion", role: "trigger", description: "Volatility шахагдаад дэлбэрэх (squeeze → expansion)" },
-  { name: "momentum_continuation", role: "trigger", description: "Impulse → pullback → continuation" },
-  { name: "mean_reversion_snapback", role: "trigger", description: "Дундаж руу буцах (snapback)" },
-  { name: "sr_bounce", role: "trigger", description: "S/R түвшингээс эргэлт" },
-  { name: "sr_break_close", role: "trigger", description: "S/R түвшин дээр clean close гарсан" },
-  { name: "triangle_breakout_close", role: "trigger", description: "Triangle breakout close" },
-
-  // Confluence (confirmation)
-  { name: "doji", role: "confluence", description: "Шийдэмгий бус лаа (нээлт≈хаалт)" },
-  { name: "double_top_bottom", role: "confluence", description: "Double top / bottom pattern" },
-  { name: "engulf_at_level", role: "confluence", description: "Чухал түвшин дээр гарсан engulfing" },
-  { name: "fakeout_trap", role: "confluence", description: "Fakeout trap (wick out → close back inside)" },
-  { name: "fibo_extension", role: "confluence", description: "Fibo extension зорилтот түвшин" },
-  { name: "fibo_retrace_confluence", role: "confluence", description: "Fibo retrace + S/R confluence" },
-  { name: "flag_pennant", role: "confluence", description: "Flag / pennant pattern" },
-  { name: "head_shoulders", role: "confluence", description: "Head & Shoulders pattern" },
-  { name: "pinbar_at_level", role: "confluence", description: "Чухал түвшин дээр гарсан pinbar" },
-  { name: "price_momentum_weakening", role: "confluence", description: "Momentum weakening (сулрах)" },
-  { name: "rectangle_range_edge", role: "confluence", description: "Range edge (rectangle) дээр fade хийх" },
-  { name: "sr_role_reversal", role: "confluence", description: "Resistance → Support (эсвэл эсрэгээр)" },
-  { name: "trend_fibo", role: "confluence", description: "Trend + fib retracement zone confluence" },
+  // ============================================================
+  // LAYER 1: CONTEXT (Хаана ажиллах вэ?)
+  // ============================================================
+  { 
+    name: "session_filter", 
+    role: "gate", 
+    layer: "context",
+    description: "Trading session шүүлт (London/NY/Overlap)", 
+    options: [
+      { key: "sessions", label: "Sessions", type: "select", values: ["London", "NY", "Overlap", "Asia", "ALL"], default: "ALL" }
+    ]
+  },
+  { 
+    name: "htf_bias", 
+    role: "gate", 
+    layer: "context",
+    description: "Higher Timeframe чиглэл шүүлт",
+    options: [
+      { key: "bias", label: "Bias", type: "select", values: ["BULLISH", "BEARISH", "ANY"], default: "ANY" }
+    ]
+  },
+  { 
+    name: "volatility_filter", 
+    role: "gate", 
+    layer: "context",
+    description: "Volatility төлөв шүүлт",
+    options: [
+      { key: "mode", label: "Mode", type: "select", values: ["HIGH", "NORMAL", "LOW", "ANY"], default: "ANY" }
+    ]
+  },
+  { name: "gate_regime", role: "gate", layer: "context", description: "Зах зээл Trend/Range/Chop байгааг тодорхойлно", required: true },
+  { name: "gate_volatility", role: "gate", layer: "context", description: "Volatility өндөр/бага/хэвийн гэдгийг хэмжинэ" },
+  
+  // ============================================================
+  // LAYER 2: TRIGGER (Хаана орох вэ?)
+  // ============================================================
+  // Core ICT/SMC Triggers
+  { name: "bos", role: "trigger", layer: "trigger", description: "Break of Structure - Бүтэц эвдэх" },
+  { name: "choch", role: "trigger", layer: "trigger", description: "Change of Character - Чиглэл өөрчлөх" },
+  { name: "fvg", role: "trigger", layer: "trigger", description: "Fair Value Gap - Үнийн цоорхой" },
+  { name: "ob", role: "trigger", layer: "trigger", description: "Order Block - Захиалгын бүс" },
+  { name: "sweep", role: "trigger", layer: "trigger", description: "Liquidity Sweep - Хөрвөх чадварын цуглуулга" },
+  // Additional Triggers
+  { name: "break_retest", role: "trigger", layer: "trigger", description: "S/R эвдээд буцаад retest хийх" },
+  { name: "compression_expansion", role: "trigger", layer: "trigger", description: "Volatility шахагдаад дэлбэрэх (squeeze → expansion)" },
+  { name: "momentum_continuation", role: "trigger", layer: "trigger", description: "Impulse → pullback → continuation" },
+  { name: "mean_reversion_snapback", role: "trigger", layer: "trigger", description: "Дундаж руу буцах (snapback)" },
+  { name: "sr_bounce", role: "trigger", layer: "trigger", description: "S/R түвшингээс эргэлт" },
+  { name: "sr_break_close", role: "trigger", layer: "trigger", description: "S/R түвшин дээр clean close гарсан" },
+  
+  // ============================================================
+  // LAYER 3: CONFLUENCE / CONFIRMATION
+  // ============================================================
+  { name: "engulf_at_level", role: "confluence", layer: "trigger", description: "Чухал түвшин дээр гарсан engulfing" },
+  { name: "pinbar_at_level", role: "confluence", layer: "trigger", description: "Чухал түвшин дээр гарсан pinbar" },
+  { name: "doji", role: "confluence", layer: "trigger", description: "Шийдэмгий бус лаа (нээлт≈хаалт)" },
+  { name: "double_top_bottom", role: "confluence", layer: "trigger", description: "Double top / bottom pattern" },
+  { name: "fakeout_trap", role: "confluence", layer: "trigger", description: "Fakeout trap (wick out → close back inside)" },
+  { name: "fibo_retrace_confluence", role: "confluence", layer: "trigger", description: "Fibo retrace + S/R confluence" },
+  { name: "flag_pennant", role: "confluence", layer: "trigger", description: "Flag / pennant pattern" },
+  { name: "sr_role_reversal", role: "confluence", layer: "trigger", description: "Resistance → Support (эсвэл эсрэгээр)" },
 ]
 
+// Layer labels and colors
+const LAYER_LABELS: Record<DetectorLayer, string> = {
+  context: "📍 CONTEXT (Хаана ажиллах?)",
+  trigger: "🎯 TRIGGER (Хаана орох?)",
+  risk: "🛡️ RISK (Яаж дуусгах?)",
+}
+
+const LAYER_COLORS: Record<DetectorLayer, string> = {
+  context: "bg-purple-500/15 border-purple-500/40 text-purple-200",
+  trigger: "bg-blue-500/15 border-blue-500/40 text-blue-200",
+  risk: "bg-green-500/15 border-green-500/40 text-green-200",
+}
+
 const ROLE_LABELS: Record<DetectorRole, string> = {
-  gate: "Gate (Шүүлт)",
+  gate: "Context / Gate",
   trigger: "Trigger (Entry)",
   confluence: "Confluence (Баталгаа)",
 }
 
 const ROLE_COLORS: Record<DetectorRole, string> = {
-  gate: "bg-yellow-500/15 border-yellow-500/40 text-yellow-200",
+  gate: "bg-purple-500/15 border-purple-500/40 text-purple-200",
   trigger: "bg-blue-500/15 border-blue-500/40 text-blue-200",
   confluence: "bg-green-500/15 border-green-500/40 text-green-200",
 }
+
+// Preset Strategy Templates (NEW!)
+const STRATEGY_PRESETS = [
+  {
+    id: "trend_continuation",
+    name: "🔥 Trend Continuation",
+    description: "Trend дагах - Structure + FVG",
+    detectors: ["gate_regime", "bos", "fvg", "engulf_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.0 }
+  },
+  {
+    id: "liquidity_reversal", 
+    name: "💎 Liquidity Reversal",
+    description: "Liquidity sweep дээр эргэх - Sweep + CHOCH + OB",
+    detectors: ["gate_regime", "sweep", "choch", "ob", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5 }
+  },
+  {
+    id: "range_mean_reversion",
+    name: "📊 Range Mean Reversion",
+    description: "Range дотор дундаж руу буцах",
+    detectors: ["gate_regime", "fvg", "mean_reversion_snapback", "doji"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 1.5 }
+  }
+]
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content:
     `Сайн байна уу! Би таны Strategy Maker туслах байна.\n\n` +
+    `🎯 **3-Давхар Strategy Builder**:\n` +
+    `1. 📍 **Context** - Хаана ажиллах? (Session, HTF Bias, Volatility)\n` +
+    `2. 🎯 **Trigger** - Хаана орох? (BOS, FVG, OB, CHOCH, SWEEP)\n` +
+    `3. 🛡️ **Risk** - Яаж дуусгах? (RR, Time Exit)\n\n` +
+    `💡 **Хурдан эхлэх**: Preset template сонгоод өөрчилж болно!\n\n` +
     `Надад дараах зүйлсийг хэлээрэй:\n` +
-    `- Та ямар төрлийн trader бэ? (Trend follower, Range trader, Scalper, Swing trader...)\n` +
-    `- Таны risk tolerance ямар вэ? (Аюулгүй, Дунд, Өндөр эрсдэл)\n` +
-    `- Ямар timeframe дээр trade хийдэг вэ? (1m, 5m, 15m, 1H, 4H, Daily...)\n` +
-    `- Ямар зах зээл дээр trade хийдэг вэ? (Forex, Crypto, Indices, Commodities...)\n\n` +
-    `Жишээ: "Би trend follower, 4H timeframe дээр BTCUSD trade хийдэг, дунд зэргийн эрсдэл авдаг"`,
+    `- Та ямар төрлийн trader бэ? (Trend follower, Range trader, Scalper...)\n` +
+    `- Ямар timeframe дээр trade хийдэг вэ? (5m, 15m, 1H, 4H...)\n\n` +
+    `Жишээ: "Би trend follower, 4H timeframe дээр BTC trade хийдэг"`,
 }
 
 export function StrategyMakerPanel(props: {
@@ -105,6 +191,35 @@ export function StrategyMakerPanel(props: {
   const [strategyName, setStrategyName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // NEW: Risk/Exit settings
+  const [riskSettings, setRiskSettings] = useState({
+    rr: 2.0,
+    timeExitBars: 12,
+    cooldownBars: 3,
+  })
+  
+  // NEW: Context filter settings  
+  const [contextSettings, setContextSettings] = useState({
+    sessionFilter: "ALL",
+    htfBias: "ANY",
+    volatilityFilter: "ANY",
+  })
+
+  // NEW: Apply preset
+  const applyPreset = (preset: typeof STRATEGY_PRESETS[0]) => {
+    setSelectedDetectors(preset.detectors)
+    setStrategyName(preset.name.replace(/[🔥💎📊]/g, "").trim())
+    if (preset.config) {
+      setRiskSettings(prev => ({ ...prev, rr: preset.config.rr || 2.0 }))
+      setContextSettings(prev => ({
+        ...prev,
+        htfBias: preset.config.htf_bias || "ANY",
+        sessionFilter: preset.config.session_filter || "ALL",
+      }))
+    }
+    toast({ title: "Preset Applied", description: `${preset.name} template ашиглав` })
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -169,19 +284,21 @@ export function StrategyMakerPanel(props: {
     }
   }
 
-  const groupedDetectors = ALL_DETECTORS.reduce((acc, det) => {
-    if (!acc[det.role]) acc[det.role] = []
-    acc[det.role].push(det)
+  // Group detectors by layer (NEW 3-layer structure)
+  const groupedByLayer = ALL_DETECTORS.reduce((acc, det) => {
+    if (!acc[det.layer]) acc[det.layer] = []
+    acc[det.layer].push(det)
     return acc
-  }, {} as Record<DetectorRole, Detector[]>)
+  }, {} as Record<DetectorLayer, Detector[]>)
 
   const validation = {
-    gates: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.role === "gate").length,
-    triggers: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.role === "trigger").length,
+    context: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.layer === "context").length,
+    triggers: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.layer === "trigger" && ALL_DETECTORS.find((det) => det.name === d)?.role === "trigger").length,
     confluences: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.role === "confluence").length,
   }
 
-  const isValid = validation.gates >= 1 && validation.triggers >= 1 && validation.confluences >= 1
+  // Simplified validation: need at least 1 context + 1 trigger
+  const isValid = validation.context >= 1 && validation.triggers >= 1
 
   const makeStrategyId = (name: string) =>
     name
@@ -207,9 +324,8 @@ export function StrategyMakerPanel(props: {
     if (!isValid) {
       // Build detailed validation message
       const missing: string[] = []
-      if (validation.gates < 1) missing.push("Gate (1+)")
+      if (validation.context < 1) missing.push("Context (1+)")
       if (validation.triggers < 1) missing.push("Trigger (1+)")
-      if (validation.confluences < 1) missing.push("Confluence (1+)")
       
       toast({
         title: "Incomplete Selection",
@@ -222,14 +338,27 @@ export function StrategyMakerPanel(props: {
     setIsSaving(true)
     try {
       // Use v2 API (Firestore-based) - single source of truth
+      // NEW: Include context and risk settings
       const result = await api.strategiesV2.create({
         name,
         enabled: true,
         detectors: selectedDetectors,
         config: {
           min_score: 1.0,
-          min_rr: 2.0,
+          min_rr: riskSettings.rr,
           gate_regime_enabled: selectedDetectors.includes("gate_regime"),
+          // NEW: Context filter settings
+          context_filters: {
+            session_filter: contextSettings.sessionFilter,
+            htf_bias: contextSettings.htfBias,
+            volatility_filter: contextSettings.volatilityFilter,
+          },
+          // NEW: Risk/Exit settings
+          risk_settings: {
+            rr: riskSettings.rr,
+            time_exit_bars: riskSettings.timeExitBars,
+            cooldown_bars: riskSettings.cooldownBars,
+          },
         },
       })
 
@@ -401,8 +530,28 @@ export function StrategyMakerPanel(props: {
           </div>
         </div>
 
-        {/* Right: Detector Selection */}
+        {/* Right: 3-Layer Strategy Builder */}
         <div className="space-y-4">
+          {/* Preset Templates (NEW!) */}
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+              💡 Preset Templates (Хурдан эхлэх)
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              {STRATEGY_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => applyPreset(preset)}
+                  className="p-3 rounded-lg border border-border bg-background hover:border-purple-500/50 hover:bg-purple-500/5 text-left transition-all"
+                >
+                  <div className="font-medium text-sm">{preset.name}</div>
+                  <div className="text-xs text-muted-foreground">{preset.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Validation Status */}
           <div
             className={`p-4 rounded-xl border ${
               isValid ? "bg-green-500/10 border-green-500/30" : "bg-yellow-500/10 border-yellow-500/30"
@@ -420,29 +569,24 @@ export function StrategyMakerPanel(props: {
                 </span>
               </div>
               <div className="flex gap-4 text-sm">
-                <span className={validation.gates >= 1 ? "text-green-500" : "text-red-500"}>Gate: {validation.gates}/1+</span>
+                <span className={validation.context >= 1 ? "text-green-500" : "text-red-500"}>Context: {validation.context}/1+</span>
                 <span className={validation.triggers >= 1 ? "text-green-500" : "text-red-500"}>Trigger: {validation.triggers}/1+</span>
-                <span className={validation.confluences >= 1 ? "text-green-500" : "text-red-500"}>Confluence: {validation.confluences}/1+</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border bg-card p-4 max-h-[calc(100vh-500px)] overflow-y-auto">
-            {(["gate", "trigger", "confluence"] as DetectorRole[]).map((role) => (
-              <div key={role} className="mb-6 last:mb-0">
+          {/* 3-Layer Detector Selection */}
+          <div className="rounded-2xl border bg-card p-4 max-h-[calc(100vh-600px)] overflow-y-auto">
+            {(["context", "trigger"] as DetectorLayer[]).map((layer) => (
+              <div key={layer} className="mb-6 last:mb-0">
                 <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                  {ROLE_LABELS[role]}
+                  {LAYER_LABELS[layer]}
                   <span className="text-muted-foreground">
-                    (
-                    {
-                      selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.role === role)
-                        .length
-                    }
-                    сонгосон)
+                    ({selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.layer === layer).length} сонгосон)
                   </span>
                 </h3>
                 <div className="grid grid-cols-1 gap-2">
-                  {groupedDetectors[role]?.map((det) => {
+                  {groupedByLayer[layer]?.map((det) => {
                     const isSelected = selectedDetectors.includes(det.name)
                     return (
                       <button
@@ -451,7 +595,7 @@ export function StrategyMakerPanel(props: {
                         disabled={det.required && isSelected}
                         className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
                           isSelected
-                            ? ROLE_COLORS[role]
+                            ? LAYER_COLORS[layer]
                             : "border-border bg-background hover:border-foreground/30 text-foreground"
                         } ${det.required ? "ring-1 ring-yellow-500/30" : ""}`}
                       >
@@ -468,6 +612,50 @@ export function StrategyMakerPanel(props: {
             ))}
           </div>
 
+          {/* Risk/Exit Settings (NEW!) */}
+          <div className="rounded-2xl border bg-card p-4">
+            <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+              🛡️ RISK / EXIT Settings
+            </h3>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Risk:Reward</label>
+                <Input 
+                  type="number" 
+                  step="0.5" 
+                  min="1" 
+                  max="5"
+                  value={riskSettings.rr} 
+                  onChange={(e) => setRiskSettings(prev => ({ ...prev, rr: parseFloat(e.target.value) || 2.0 }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Time Exit (bars)</label>
+                <Input 
+                  type="number" 
+                  min="1" 
+                  max="100"
+                  value={riskSettings.timeExitBars} 
+                  onChange={(e) => setRiskSettings(prev => ({ ...prev, timeExitBars: parseInt(e.target.value) || 12 }))}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Cooldown (bars)</label>
+                <Input 
+                  type="number" 
+                  min="0" 
+                  max="20"
+                  value={riskSettings.cooldownBars} 
+                  onChange={(e) => setRiskSettings(prev => ({ ...prev, cooldownBars: parseInt(e.target.value) || 3 }))}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Save Strategy */}
           <div className="rounded-2xl border bg-card p-4">
             <div className="flex gap-3 flex-wrap">
               <Input value={strategyName} onChange={(e) => setStrategyName(e.target.value)} placeholder="Strategy name..." />
@@ -479,11 +667,11 @@ export function StrategyMakerPanel(props: {
             {/* Validation warning when button is disabled */}
             {!isValid && (
               <div className="mt-3 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-600 dark:text-yellow-400">
-                ⚠️ Select at least 1 Gate, 1 Trigger, and 1 Confluence to save.
+                ⚠️ Select at least 1 Context filter and 1 Trigger to save.
               </div>
             )}
             <div className="mt-3 text-xs text-muted-foreground">
-              Selected: {selectedDetectors.length} detectors • {selectedDetectors.join(", ")}
+              Selected: {selectedDetectors.length} detectors • RR: {riskSettings.rr} • TimeExit: {riskSettings.timeExitBars} bars
             </div>
           </div>
         </div>
