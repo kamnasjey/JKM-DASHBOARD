@@ -48,6 +48,35 @@ function sanitizeSimulatorV2Response(res: any) {
   return res
 }
 
+function normalizeSignalArray(input: any[]): any[] {
+  if (!Array.isArray(input)) return []
+  return input
+    .map((raw) => {
+      if (!raw || typeof raw !== "object") return null
+      const symbol = typeof raw.symbol === "string" ? raw.symbol : null
+      const direction = typeof raw.direction === "string" ? raw.direction : null
+      if (!symbol || !direction) return null
+
+      const createdAtRaw = raw.created_at ?? raw.createdAt ?? raw.timestamp ?? raw.ts
+      let created_at = raw.created_at
+      if (created_at === undefined) {
+        if (typeof createdAtRaw === "number") created_at = createdAtRaw
+        else if (typeof createdAtRaw === "string") {
+          const ts = Date.parse(createdAtRaw)
+          if (!Number.isNaN(ts)) created_at = Math.floor(ts / 1000)
+        }
+      }
+
+      return {
+        ...raw,
+        symbol,
+        direction,
+        created_at,
+      }
+    })
+    .filter(Boolean)
+}
+
 // Fetch wrapper
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   // Normalize to same-origin relative URL.
@@ -128,7 +157,7 @@ export const api = {
     if (params?.symbol) qs.set("symbol", params.symbol)
     // Use public /api/signals (proxies to backend, no auth)
     return apiFetch<{ ok: boolean; count: number; signals: any[] }>(`/api/signals?${qs.toString()}`)
-      .then(res => res.signals || [])
+      .then(res => normalizeSignalArray(res.signals || []))
   },
   signals: (params?: { limit?: number; symbol?: string }) => api.getSignals(params),
 
@@ -139,7 +168,7 @@ export const api = {
     if (params?.symbol) qs.set("symbol", params.symbol)
     if (params?.status) qs.set("status", params.status)
     return apiFetch<{ ok: boolean; signals: any[] }>(`/api/user-signals?${qs.toString()}`)
-      .then(res => res.signals || [])
+      .then(res => normalizeSignalArray(res.signals || []))
   },
 
   // Symbols
