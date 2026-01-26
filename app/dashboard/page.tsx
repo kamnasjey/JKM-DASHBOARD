@@ -496,7 +496,16 @@ export default function DashboardPage() {
 
   // Get rootCause and reasonText for display
   const worstRootCause = feedStatus?.worst?.rootCause || null
-  const worstReasonText = feedStatus?.worst?.reasonText || null
+  const worstReasonText = useMemo(() => {
+    const input = feedStatus?.worst?.reasonText
+    if (input === null || input === undefined) return null
+    if (typeof input === "string") return input
+    if (typeof input === "object") {
+      const message = (input as any).message || (input as any).reasonText || (input as any).suggestion || (input as any).rootCause
+      return typeof message === "string" ? message : JSON.stringify(input)
+    }
+    return String(input)
+  }, [feedStatus?.worst?.reasonText])
 
   const scanCadenceSec = useMemo(() => {
     return (engineStatus as any)?.cadence_sec || 300
