@@ -40,6 +40,7 @@ import { ZeroTradesDebugPanel } from "@/components/simulator/zero-trades-debug-p
 import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { TradesTable } from "@/components/simulator/trades-table"
+import { LiveTradesStream } from "@/components/simulator/live-trades-stream"
 
 // ============================================
 // Types
@@ -382,6 +383,22 @@ export default function SimulatorPage() {
   
   // Result tabs
   const [activeTab, setActiveTab] = useState("combined")
+  
+  // Streaming simulation state
+  const [streamingTrades, setStreamingTrades] = useState<Array<{
+    id: string
+    entry_ts: number
+    exit_ts?: number
+    direction: "BUY" | "SELL"
+    entry: number
+    sl: number
+    tp: number
+    outcome?: "TP" | "SL" | "PENDING"
+    r?: number
+    duration_bars?: number
+    detector: string
+    status: "entering" | "waiting" | "resolved"
+  }>>([])
 
   // Computed
   const selectedStrategy = strategies.find((s) => s.id === strategyId)
@@ -423,6 +440,54 @@ export default function SimulatorPage() {
     }
   }
 
+  // Animate trades streaming effect
+  async function animateTradesStream(trades: TradeDetail[]) {
+    if (!trades || trades.length === 0) return
+    
+    setStreamingTrades([])
+    
+    // Sort by entry time
+    const sortedTrades = [...trades].sort((a, b) => a.entry_ts - b.entry_ts)
+    
+    for (let i = 0; i < sortedTrades.length; i++) {
+      const trade = sortedTrades[i]
+      
+      // Add trade as "entering"
+      setStreamingTrades(prev => [
+        ...prev,
+        {
+          id: `trade-${i}`,
+          ...trade,
+          outcome: "PENDING" as const,
+          status: "entering" as const,
+        },
+      ])
+      
+      // Wait a bit then change to "waiting"
+      await new Promise(r => setTimeout(r, 150))
+      
+      setStreamingTrades(prev =>
+        prev.map((t, idx) =>
+          idx === i ? { ...t, status: "waiting" as const } : t
+        )
+      )
+      
+      // Wait then resolve
+      await new Promise(r => setTimeout(r, 300))
+      
+      setStreamingTrades(prev =>
+        prev.map((t, idx) =>
+          idx === i
+            ? { ...t, outcome: trade.outcome, status: "resolved" as const, r: trade.r }
+            : t
+        )
+      )
+      
+      // Small delay between trades
+      await new Promise(r => setTimeout(r, 100))
+    }
+  }
+
   async function runSimulation() {
     if (!symbol || !strategyId) {
       setError("Please select a symbol and strategy")
@@ -432,6 +497,7 @@ export default function SimulatorPage() {
     setRunning(true)
     setError(null)
     setResult(null)
+    setStreamingTrades([])
     setActiveTab("combined")
 
     try {
@@ -462,10 +528,19 @@ export default function SimulatorPage() {
         if (!patched.ok && patched.error) {
           setError(normalizeMessage(patched.error))
         }
+        // Animate trades if available
+        if (patched.trades && patched.trades.length > 0) {
+          animateTradesStream(patched.trades)
+        }
         return
       }
 
       setResult(res as MultiTFResult)
+      
+      // Animate trades if available
+      if (res.trades && res.trades.length > 0) {
+        animateTradesStream(res.trades)
+      }
 
       if (!res.ok && res.error) {
         setError(normalizeMessage(res.error))
@@ -480,6 +555,7 @@ export default function SimulatorPage() {
   function clearResults() {
     setResult(null)
     setError(null)
+    setStreamingTrades([])
   }
 
   // Quick fix handlers for 0 trades debugging
@@ -847,30 +923,37 @@ export default function SimulatorPage() {
           </Card>
         )}
 
-        {/* Loading State */}
+        {/* Loading State with Live Trades Stream */}
         {running && (
-          <Card>
-            <CardContent className="py-12">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <Zap className="h-6 w-6 text-primary animate-pulse" />
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Zap className="h-6 w-6 text-primary animate-pulse" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Running Multi-Timeframe Simulation
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Analyzing {symbol} across 5 timeframes...
+                  </p>
+                  <div className="flex gap-2 mt-4">
+                    {TIMEFRAMES.map((tf) => (
+                      <Badge key={tf} variant="outline" className="animate-pulse">
+                        {tf}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Running Multi-Timeframe Simulation
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Analyzing {symbol} across 5 timeframes...
-                </p>
-                <div className="flex gap-2 mt-4">
-                  {TIMEFRAMES.map((tf) => (
-                    <Badge key={tf} variant="outline" className="animate-pulse">
-                      {tf}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            {/* Live Trades Stream Preview */}
+            {streamingTrades.length > 0 && (
+              <LiveTradesStream trades={streamingTrades} isRunning={true} />
+            )}
+          </div>
         )}
 
         {/* Results */}
@@ -999,7 +1082,7 @@ export default function SimulatorPage() {
                     </div>
                   </TabsContent>
 
-                  {/* Trades Tab - Per-trade details */}
+                  {/* Trades Tab - Per-trade details with live stream */}
                   <TabsContent value="trades" className="space-y-6">
                     {result.trades && result.trades.length > 0 ? (
                       <>
@@ -1019,7 +1102,17 @@ export default function SimulatorPage() {
                             </Badge>
                           </div>
                         </div>
-                        <TradesTable trades={result.trades} />
+                        
+                        {/* Live Trades Stream Visualization */}
+                        {streamingTrades.length > 0 && (
+                          <LiveTradesStream trades={streamingTrades} isRunning={false} />
+                        )}
+                        
+                        {/* Traditional Table View */}
+                        <div className="mt-4">
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Бүх Trade-ийн хүснэгт</h4>
+                          <TradesTable trades={result.trades} />
+                        </div>
                       </>
                     ) : (
                       <Card className="border-muted">
