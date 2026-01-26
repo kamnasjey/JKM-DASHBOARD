@@ -140,25 +140,25 @@ const ROLE_COLORS: Record<DetectorRole, string> = {
 // Preset Strategy Templates (NEW!)
 const STRATEGY_PRESETS = [
   {
-    id: "trend_continuation",
-    name: "🔥 Trend Continuation",
-    description: "Trend дагах - Structure + FVG",
-    detectors: ["gate_regime", "bos", "fvg", "engulf_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.0 }
+    id: "trend_following",
+    name: "📈🐢 Trend Following",
+    description: "Trend дагах - MA bias + BOS pullback. H1/H4 дээр сайн, range үед шүүрдүүлнэ.",
+    detectors: ["gate_regime", "bos", "htf_bias"],
+    config: { htf_bias: "WITH_TREND", session_filter: "London,NY", rr: 3.0 }
   },
   {
-    id: "liquidity_reversal", 
-    name: "💎 Liquidity Reversal",
-    description: "Liquidity sweep дээр эргэх - Sweep + CHOCH + OB",
-    detectors: ["gate_regime", "sweep", "choch", "ob", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5 }
+    id: "breakout_retest", 
+    name: "🚀📌 Breakout + Retest",
+    description: "Key level break → retest → entry. London/NY open-д сайн, false breakout-аас болгоомжил.",
+    detectors: ["gate_regime", "bos", "ob"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 3.0 }
   },
   {
-    id: "range_mean_reversion",
-    name: "📊 Range Mean Reversion",
-    description: "Range дотор дундаж руу буцах",
-    detectors: ["gate_regime", "fvg", "mean_reversion_snapback", "doji"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 1.5 }
+    id: "liquidity_sweep_reversal",
+    name: "🧲🔄 Liquidity Sweep → Reversal",
+    description: "Stop hunt → CHOCH/SWEEP → Reversal. Range үед сайн, confirmation шаардлагатай.",
+    detectors: ["gate_regime", "sweep", "choch"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 3.0 }
   }
 ]
 
@@ -194,7 +194,7 @@ export function StrategyMakerPanel(props: {
   
   // NEW: Risk/Exit settings
   const [riskSettings, setRiskSettings] = useState({
-    rr: 2.0,
+    rr: 3.0,
     timeExitBars: 12,
     cooldownBars: 3,
   })
