@@ -72,6 +72,7 @@ export function useWebSocketSignals() {
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const shouldReconnectRef = useRef(true)
   const maxReconnectAttempts = 10
 
   const connect = useCallback(() => {
@@ -137,9 +138,12 @@ export function useWebSocketSignals() {
       setError("WebSocket холболтын алдаа")
     }
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       console.log("[signals-ws] Closed")
       setConnected(false)
+
+      if (!shouldReconnectRef.current) return
+      if (event.code === 1000) return
       
       // Exponential backoff reconnect (5s, 10s, 20s, 40s... max 5min)
       setReconnectAttempts(prev => {
@@ -160,9 +164,11 @@ export function useWebSocketSignals() {
   }, [])
 
   useEffect(() => {
+    shouldReconnectRef.current = true
     connect()
 
     return () => {
+      shouldReconnectRef.current = false
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
       }
