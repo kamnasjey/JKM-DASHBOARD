@@ -1074,7 +1074,6 @@ export default function SimulatorPage() {
                 </div>
               )
             })()}
-            </div>
 
             {isNoSetups && (
               <Card className="border-muted">
