@@ -653,7 +653,9 @@ export default function SimulatorPage() {
           break
 
         case "change_tf":
-          customTimeframe = "1h,4h"
+          // Backend now automatically uses multi-TF mode with "auto"
+          // No need for comma-separated format - auto handles all TFs
+          customTimeframe = "auto"
           break
 
         case "disable_gates":
