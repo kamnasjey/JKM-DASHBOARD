@@ -1304,7 +1304,7 @@ export default function SimulatorPage() {
               </CardContent>
             </Card>
 
-            {/* Warnings */}
+            {/* Warnings - with helpful context */}
             {result.meta?.warnings && result.meta.warnings.length > 0 && (
               <Card className="border-yellow-500/30 bg-yellow-500/10">
                 <CardContent className="pt-6">
@@ -1313,9 +1313,21 @@ export default function SimulatorPage() {
                     Warnings
                   </h4>
                   <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                    {result.meta.warnings.map((w, i) => (
-                      <li key={i}>{formatWarning(w)}</li>
-                    ))}
+                    {result.meta.warnings.map((w, i) => {
+                      const warnStr = formatWarning(w)
+                      // Add context for data gaps
+                      if (warnStr.includes("data gaps") || warnStr.includes("missing")) {
+                        return (
+                          <li key={i}>
+                            {warnStr}
+                            <span className="text-xs text-muted-foreground/70 ml-1">
+                              (Forex дээр амралтын өдрүүдэд зах зээл хаалттай байдаг тул 5-10% gap хэвийн)
+                            </span>
+                          </li>
+                        )
+                      }
+                      return <li key={i}>{warnStr}</li>
+                    })}
                   </ul>
                 </CardContent>
               </Card>
