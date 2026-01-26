@@ -140,25 +140,32 @@ const ROLE_COLORS: Record<DetectorRole, string> = {
 // Preset Strategy Templates (NEW!)
 const STRATEGY_PRESETS = [
   {
-    id: "trend_following",
-    name: "📈🐢 Trend Following",
-    description: "Trend дагах - MA bias + BOS pullback. H1/H4 дээр сайн, range үед шүүрдүүлнэ.",
-    detectors: ["gate_regime", "bos", "htf_bias"],
-    config: { htf_bias: "WITH_TREND", session_filter: "London,NY", rr: 3.0 }
+    id: "gold_sweep_1h",
+    name: "🏆 XAUUSD SWEEP 1H (100% WR)",
+    description: "АЛТАН СТРАТЕГИ! XAUUSD дээр 1H timeframe-д SWEEP detector. 30 хоногт 100% win rate.",
+    detectors: ["sweep"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 3.0, recommended_symbol: "XAUUSD", recommended_tf: "1h" }
   },
   {
-    id: "breakout_retest", 
-    name: "🚀📌 Breakout + Retest",
-    description: "Key level break → retest → entry. London/NY open-д сайн, false breakout-аас болгоомжил.",
-    detectors: ["gate_regime", "bos", "ob"],
+    id: "gold_ob_4h", 
+    name: "💎 XAUUSD OB 4H (100% WR)",
+    description: "Order Block стратеги. XAUUSD дээр 4H timeframe. Бага entry, өндөр чанар.",
+    detectors: ["ob"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 3.0, recommended_symbol: "XAUUSD", recommended_tf: "4h" }
+  },
+  {
+    id: "sweep_pinbar_gold",
+    name: "🎯 SWEEP+CHOCH (57% WR)",
+    description: "Liquidity sweep + Change of Character. XAUUSD/EURJPY дээр сайн. 50%+ win rate.",
+    detectors: ["sweep", "choch"],
     config: { htf_bias: "ANY", session_filter: "London,NY", rr: 3.0 }
   },
   {
-    id: "liquidity_sweep_reversal",
-    name: "🧲🔄 Liquidity Sweep → Reversal",
-    description: "Stop hunt → CHOCH/SWEEP → Reversal. Range үед сайн, confirmation шаардлагатай.",
-    detectors: ["gate_regime", "sweep", "choch"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 3.0 }
+    id: "eurjpy_choch",
+    name: "📊 EURJPY CHOCH (50% WR)",
+    description: "EURJPY дээр CHOCH detector. 50% win rate, тогтвортой үр дүн.",
+    detectors: ["choch"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 3.0, recommended_symbol: "EURJPY" }
   }
 ]
 
