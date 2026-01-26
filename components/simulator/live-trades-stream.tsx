@@ -164,12 +164,12 @@ function TradeCard({ trade, index }: { trade: StreamingTrade; index: number }) {
       </div>
 
       {/* Duration bar for resolved trades */}
-      {trade.duration_bars && trade.outcome && (
+      {trade.duration_bars && trade.outcome && trade.outcome !== "PENDING" && (
         <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
           <Clock className="h-3 w-3" />
           <span>{trade.duration_bars} bars</span>
           <span>•</span>
-          <span>{trade.detector}</span>
+          <span>{typeof trade.detector === "string" ? trade.detector : "unknown"}</span>
         </div>
       )}
     </div>

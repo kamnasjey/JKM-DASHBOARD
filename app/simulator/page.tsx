@@ -440,24 +440,57 @@ export default function SimulatorPage() {
     }
   }
 
+  // Sanitize trade object - extract only the needed primitive fields
+  function sanitizeTrade(trade: any): TradeDetail | null {
+    if (!trade || typeof trade !== "object") return null
+    // Only extract primitive fields to avoid rendering objects
+    const entry_ts = typeof trade.entry_ts === "number" ? trade.entry_ts : 0
+    const exit_ts = typeof trade.exit_ts === "number" ? trade.exit_ts : 0
+    const direction = trade.direction === "BUY" || trade.direction === "SELL" ? trade.direction : "BUY"
+    const entry = typeof trade.entry === "number" ? trade.entry : 0
+    const sl = typeof trade.sl === "number" ? trade.sl : 0
+    const tp = typeof trade.tp === "number" ? trade.tp : 0
+    const outcome = trade.outcome === "TP" || trade.outcome === "SL" ? trade.outcome : "SL"
+    const r = typeof trade.r === "number" ? trade.r : 0
+    const duration_bars = typeof trade.duration_bars === "number" ? trade.duration_bars : 0
+    const detector = typeof trade.detector === "string" ? trade.detector : "unknown"
+    const symbol = typeof trade.symbol === "string" ? trade.symbol : undefined
+    const tf = typeof trade.tf === "string" ? trade.tf : undefined
+    
+    return { entry_ts, exit_ts, direction, entry, sl, tp, outcome, r, duration_bars, detector, symbol, tf }
+  }
+
   // Animate trades streaming effect
   async function animateTradesStream(trades: TradeDetail[]) {
     if (!trades || trades.length === 0) return
     
     setStreamingTrades([])
     
-    // Sort by entry time
-    const sortedTrades = [...trades].sort((a, b) => a.entry_ts - b.entry_ts)
+    // Sanitize and sort by entry time
+    const sanitizedTrades = trades
+      .map(sanitizeTrade)
+      .filter((t): t is TradeDetail => t !== null)
+      .sort((a, b) => a.entry_ts - b.entry_ts)
     
-    for (let i = 0; i < sortedTrades.length; i++) {
-      const trade = sortedTrades[i]
+    for (let i = 0; i < sanitizedTrades.length; i++) {
+      const trade = sanitizedTrades[i]
       
-      // Add trade as "entering"
+      // Add trade as "entering" - only use sanitized primitive fields
       setStreamingTrades(prev => [
         ...prev,
         {
           id: `trade-${i}`,
-          ...trade,
+          entry_ts: trade.entry_ts,
+          exit_ts: trade.exit_ts,
+          direction: trade.direction,
+          entry: trade.entry,
+          sl: trade.sl,
+          tp: trade.tp,
+          r: trade.r,
+          duration_bars: trade.duration_bars,
+          detector: trade.detector,
+          symbol: trade.symbol,
+          tf: trade.tf,
           outcome: "PENDING" as const,
           status: "entering" as const,
         },
