@@ -669,7 +669,7 @@ export default function SimulatorMVPPage() {
                 <AlertTriangle className="h-4 w-4 text-orange-500" />
                 <AlertTitle className="text-orange-500">Why 0 Trades?</AlertTitle>
                 <AlertDescription className="text-orange-500/80 space-y-2">
-                  <p>{result.explainability.explanation}</p>
+                  <p>{formatWarning(result.explainability.explanation)}</p>
                   
                   {/* Unknown detectors */}
                   {result.explainability.debugInfo?.unknownDetectorsDropped && 

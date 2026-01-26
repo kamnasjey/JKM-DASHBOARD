@@ -228,7 +228,7 @@ export function ZeroTradesDebugPanel({
               Why 0 Trades?
             </h4>
             <p className="text-sm text-muted-foreground">
-              {explainability?.explanation || 
+              {formatSuggestion(explainability?.explanation) || 
                 "No signals found for the selected detectors and time range."}
             </p>
           </div>
