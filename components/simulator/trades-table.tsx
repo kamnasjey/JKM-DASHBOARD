@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { TrendingUp, TrendingDown, Copy, Check } from "lucide-react"
 import { StatusPill } from "./status-pill"
+import { Badge } from "@/components/ui/badge"
 import {
   Tooltip,
   TooltipContent,
@@ -23,6 +24,7 @@ interface Trade {
   r: number
   duration_bars: number
   detector: string
+  tf?: string // 5m, 15m, 30m, 1h, 4h
 }
 
 interface TradesTableProps {
@@ -43,6 +45,32 @@ function formatPrice(price: number) {
   if (price > 100) return price.toFixed(2)
   if (price > 1) return price.toFixed(4)
   return price.toFixed(5)
+}
+
+// Convert bars to human readable duration
+function formatDuration(bars: number, tf?: string): string {
+  // Map timeframe to minutes per bar
+  const tfMinutes: Record<string, number> = {
+    "5m": 5,
+    "15m": 15,
+    "30m": 30,
+    "1h": 60,
+    "4h": 240,
+  }
+  const minutesPerBar = tf ? (tfMinutes[tf] || 15) : 15
+  const totalMinutes = bars * minutesPerBar
+  
+  if (totalMinutes < 60) {
+    return `${totalMinutes}мин`
+  } else if (totalMinutes < 1440) {
+    const hours = Math.floor(totalMinutes / 60)
+    const mins = totalMinutes % 60
+    return mins > 0 ? `${hours}ц ${mins}мин` : `${hours}ц`
+  } else {
+    const days = Math.floor(totalMinutes / 1440)
+    const hours = Math.floor((totalMinutes % 1440) / 60)
+    return hours > 0 ? `${days}ө ${hours}ц` : `${days}ө`
+  }
 }
 
 export function TradesTable({ trades, className }: TradesTableProps) {
@@ -93,6 +121,9 @@ export function TradesTable({ trades, className }: TradesTableProps) {
             <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
               Date
             </th>
+            <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
+              TF
+            </th>
             <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
               Direction
             </th>
@@ -119,7 +150,14 @@ export function TradesTable({ trades, className }: TradesTableProps) {
               </TooltipProvider>
             </th>
             <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
-              Duration
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="cursor-help">Хугацаа</TooltipTrigger>
+                  <TooltipContent side="top" className="bg-[#1E2749] text-[#F0F4FF] border-[#2A3556]">
+                    <p className="text-xs">Entry-ээс Exit хүртэл хугацаа</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </th>
             <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
               Detector
@@ -138,6 +176,15 @@ export function TradesTable({ trades, className }: TradesTableProps) {
             >
               <td className="px-4 py-3 text-xs text-[#A0A8C0] whitespace-nowrap">
                 {formatDate(trade.entry_ts)}
+              </td>
+              <td className="px-4 py-3 text-center">
+                {trade.tf ? (
+                  <Badge variant="outline" className="text-[10px] px-1.5 font-mono">
+                    {trade.tf.toUpperCase()}
+                  </Badge>
+                ) : (
+                  <span className="text-[10px] text-[#6C7BA8]">—</span>
+                )}
               </td>
               <td className="px-4 py-3">
                 <span
@@ -185,7 +232,16 @@ export function TradesTable({ trades, className }: TradesTableProps) {
                 </button>
               </td>
               <td className="px-4 py-3 text-right text-xs text-[#A0A8C0]">
-                {trade.duration_bars} bars
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="cursor-help">
+                      {formatDuration(trade.duration_bars, trade.tf)}
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-[#1E2749] text-[#F0F4FF] border-[#2A3556]">
+                      <p className="text-xs">{trade.duration_bars} bars ({trade.tf || "15m"})</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </td>
               <td className="px-4 py-3 text-xs text-[#6C7BA8] truncate max-w-[120px]">
                 {typeof trade.detector === "string" ? trade.detector : "unknown"}

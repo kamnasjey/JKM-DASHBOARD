@@ -87,7 +87,33 @@ interface TradeDetail {
   duration_bars: number
   detector: string
   symbol?: string
-  tf?: string
+  tf?: string // 5m, 15m, 30m, 1h, 4h
+}
+
+// Helper: Convert bars to human readable duration
+function formatDuration(bars: number, tf?: string): string {
+  // Map timeframe to minutes per bar
+  const tfMinutes: Record<string, number> = {
+    "5m": 5,
+    "15m": 15,
+    "30m": 30,
+    "1h": 60,
+    "4h": 240,
+  }
+  const minutesPerBar = tf ? (tfMinutes[tf] || 15) : 15
+  const totalMinutes = bars * minutesPerBar
+  
+  if (totalMinutes < 60) {
+    return `${totalMinutes}мин`
+  } else if (totalMinutes < 1440) {
+    const hours = Math.floor(totalMinutes / 60)
+    const mins = totalMinutes % 60
+    return mins > 0 ? `${hours}ц ${mins}мин` : `${hours}ц`
+  } else {
+    const days = Math.floor(totalMinutes / 1440)
+    const hours = Math.floor((totalMinutes % 1440) / 60)
+    return hours > 0 ? `${days}ө ${hours}ц` : `${days}ө`
+  }
 }
 
 interface MultiTFResult {
@@ -1005,38 +1031,49 @@ export default function SimulatorPage() {
         {/* Results */}
         {result?.ok && combinedResult && !running && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Combined Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <MetricCard
-                label="Total Trades"
-                value={combinedResult.summary.entries}
-                subValue="across all TFs"
-              />
-              <MetricCard
-                label="Win Rate"
-                value={`${combinedResult.summary.winrate.toFixed(1)}%`}
-                subValue={`${combinedResult.summary.tp}W / ${combinedResult.summary.sl}L`}
-                trend={combinedResult.summary.winrate >= 50 ? "up" : "down"}
-              />
-              <MetricCard
-                label="TP Hits"
-                value={combinedResult.summary.tp}
-                trend="up"
-              />
-              <MetricCard
-                label="SL Hits"
-                value={combinedResult.summary.sl}
-                trend="down"
-              />
-              <MetricCard
-                label="Best TF"
-                value={combinedResult.bestTf?.toUpperCase() || "—"}
-                subValue={
-                  combinedResult.bestWinrate
-                    ? `${combinedResult.bestWinrate.toFixed(1)}% WR`
-                    : undefined
-                }
-              />
+            {/* Combined Summary Cards - Use trades array as single source of truth */}
+            {(() => {
+              // Single source of truth: use trades array if available, otherwise summary
+              const totalTrades = result.trades?.length || combinedResult.summary.entries
+              const tpHits = result.trades?.filter(t => t.outcome === "TP").length ?? combinedResult.summary.tp
+              const slHits = result.trades?.filter(t => t.outcome === "SL").length ?? combinedResult.summary.sl
+              const winRate = tpHits + slHits > 0 ? (tpHits / (tpHits + slHits)) * 100 : 0
+              
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <MetricCard
+                    label="Total Trades"
+                    value={totalTrades}
+                    subValue="across all TFs"
+                  />
+                  <MetricCard
+                    label="Win Rate"
+                    value={`${winRate.toFixed(1)}%`}
+                    subValue={`${tpHits}W / ${slHits}L`}
+                    trend={winRate >= 50 ? "up" : "down"}
+                  />
+                  <MetricCard
+                    label="TP Hits"
+                    value={tpHits}
+                    trend="up"
+                  />
+                  <MetricCard
+                    label="SL Hits"
+                    value={slHits}
+                    trend="down"
+                  />
+                  <MetricCard
+                    label="Best TF"
+                    value={combinedResult.bestTf?.toUpperCase() || "—"}
+                    subValue={
+                      combinedResult.bestWinrate
+                        ? `${combinedResult.bestWinrate.toFixed(1)}% WR`
+                        : undefined
+                    }
+                  />
+                </div>
+              )
+            })()}
             </div>
 
             {isNoSetups && (
@@ -1089,54 +1126,208 @@ export default function SimulatorPage() {
                     ))}
                   </TabsList>
 
-                  {/* Combined Tab */}
+                  {/* Combined Tab - Overview with TF breakdown */}
                   <TabsContent value="combined" className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Tag Attribution - Any Mode */}
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">
-                            Tag Attribution (Any)
-                          </CardTitle>
-                          <CardDescription>
-                            Winrate when tag appears in signal
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <TagAttributionTable
-                            tags={combinedResult.tagsAny || []}
-                          />
-                        </CardContent>
-                      </Card>
+                    {/* Quick Stats from trades */}
+                    {result.trades && result.trades.length > 0 && (
+                      <>
+                        {/* Trades by Timeframe breakdown */}
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base">
+                              Timeframe тус бүрээр
+                            </CardTitle>
+                            <CardDescription>
+                              Entry олдсон timeframe-ээр ангилсан
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-5 gap-3">
+                              {TIMEFRAMES.map((tf) => {
+                                const tfTrades = result.trades?.filter(t => t.tf === tf) || []
+                                const tfTP = tfTrades.filter(t => t.outcome === "TP").length
+                                const tfSL = tfTrades.filter(t => t.outcome === "SL").length
+                                const tfWR = tfTP + tfSL > 0 ? (tfTP / (tfTP + tfSL)) * 100 : 0
+                                
+                                return (
+                                  <div key={tf} className={cn(
+                                    "p-3 rounded-lg border text-center transition-colors",
+                                    tfTrades.length > 0 
+                                      ? "border-primary/30 bg-primary/5" 
+                                      : "border-border bg-muted/30"
+                                  )}>
+                                    <p className="text-sm font-semibold mb-1">{tf.toUpperCase()}</p>
+                                    <p className="text-2xl font-bold">{tfTrades.length}</p>
+                                    <p className="text-xs text-muted-foreground">entries</p>
+                                    {tfTrades.length > 0 && (
+                                      <div className="mt-2 text-xs">
+                                        <span className="text-green-500">{tfTP}W</span>
+                                        <span className="mx-1">/</span>
+                                        <span className="text-red-500">{tfSL}L</span>
+                                        <span className="mx-2">•</span>
+                                        <span className={cn(
+                                          "font-medium",
+                                          tfWR >= 50 ? "text-green-500" : "text-red-500"
+                                        )}>
+                                          {tfWR.toFixed(0)}%
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </CardContent>
+                        </Card>
 
-                      {/* Tag Attribution - Primary Mode */}
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">
-                            Tag Attribution (Primary)
-                          </CardTitle>
-                          <CardDescription>
-                            Winrate when tag is primary reason
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <TagAttributionTable
-                            tags={combinedResult.tagsPrimary || []}
-                          />
+                        {/* Performance Summary */}
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base">
+                              Гүйцэтгэлийн товч
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="text-center p-3 bg-muted/30 rounded-lg">
+                                <p className="text-3xl font-bold">{result.trades.length}</p>
+                                <p className="text-xs text-muted-foreground">Нийт Trade</p>
+                              </div>
+                              <div className="text-center p-3 bg-green-500/10 rounded-lg">
+                                <p className="text-3xl font-bold text-green-500">
+                                  {result.trades.filter(t => t.outcome === "TP").length}
+                                </p>
+                                <p className="text-xs text-muted-foreground">TP Hit</p>
+                              </div>
+                              <div className="text-center p-3 bg-red-500/10 rounded-lg">
+                                <p className="text-3xl font-bold text-red-500">
+                                  {result.trades.filter(t => t.outcome === "SL").length}
+                                </p>
+                                <p className="text-xs text-muted-foreground">SL Hit</p>
+                              </div>
+                              <div className={cn(
+                                "text-center p-3 rounded-lg",
+                                combinedResult.summary.winrate >= 50 ? "bg-green-500/10" : "bg-red-500/10"
+                              )}>
+                                <p className={cn(
+                                  "text-3xl font-bold",
+                                  combinedResult.summary.winrate >= 50 ? "text-green-500" : "text-red-500"
+                                )}>
+                                  {combinedResult.summary.winrate.toFixed(1)}%
+                                </p>
+                                <p className="text-xs text-muted-foreground">Win Rate</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Average Duration */}
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base">
+                              Дундаж хугацаа
+                            </CardTitle>
+                            <CardDescription>
+                              Entry-ээс Exit хүртэл дундаж хугацаа
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="p-3 bg-green-500/10 rounded-lg">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Clock className="h-4 w-4 text-green-500" />
+                                  <span className="text-sm font-medium">TP дундаж</span>
+                                </div>
+                                {(() => {
+                                  const tpTrades = result.trades?.filter(t => t.outcome === "TP") || []
+                                  if (tpTrades.length === 0) return <p className="text-lg font-bold">—</p>
+                                  const avgBars = Math.round(tpTrades.reduce((sum, t) => sum + t.duration_bars, 0) / tpTrades.length)
+                                  const commonTf = tpTrades[0]?.tf || "15m"
+                                  return <p className="text-lg font-bold">{formatDuration(avgBars, commonTf)}</p>
+                                })()}
+                              </div>
+                              <div className="p-3 bg-red-500/10 rounded-lg">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Clock className="h-4 w-4 text-red-500" />
+                                  <span className="text-sm font-medium">SL дундаж</span>
+                                </div>
+                                {(() => {
+                                  const slTrades = result.trades?.filter(t => t.outcome === "SL") || []
+                                  if (slTrades.length === 0) return <p className="text-lg font-bold">—</p>
+                                  const avgBars = Math.round(slTrades.reduce((sum, t) => sum + t.duration_bars, 0) / slTrades.length)
+                                  const commonTf = slTrades[0]?.tf || "15m"
+                                  return <p className="text-lg font-bold">{formatDuration(avgBars, commonTf)}</p>
+                                })()}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </>
+                    )}
+                    
+                    {/* Tag Attribution Tables - only if tags exist */}
+                    {((combinedResult.tagsAny && combinedResult.tagsAny.length > 0) || 
+                      (combinedResult.tagsPrimary && combinedResult.tagsPrimary.length > 0)) && (
+                      <div className="grid md:grid-cols-2 gap-6">
+                        {/* Tag Attribution - Any Mode */}
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base">
+                              Tag Attribution (Any)
+                            </CardTitle>
+                            <CardDescription>
+                              Winrate when tag appears in signal
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <TagAttributionTable
+                              tags={combinedResult.tagsAny || []}
+                            />
+                          </CardContent>
+                        </Card>
+
+                        {/* Tag Attribution - Primary Mode */}
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base">
+                              Tag Attribution (Primary)
+                            </CardTitle>
+                            <CardDescription>
+                              Winrate when tag is primary reason
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <TagAttributionTable
+                              tags={combinedResult.tagsPrimary || []}
+                            />
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                    
+                    {/* Empty state when no trades */}
+                    {(!result.trades || result.trades.length === 0) && (
+                      <Card className="border-muted">
+                        <CardContent className="py-10 text-center">
+                          <Target className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                          <h4 className="text-sm font-medium mb-1">Энэ хугацаанд trade олдсонгүй</h4>
+                          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                            Өдрийн хүрээг өргөтгөх эсвэл өөр detector ашиглаж үзнэ үү.
+                          </p>
                         </CardContent>
                       </Card>
-                    </div>
+                    )}
                   </TabsContent>
 
-                  {/* Trades Tab - Per-trade details with live stream */}
+                  {/* Trades Tab - Per-trade details - simplified */}
                   <TabsContent value="trades" className="space-y-6">
                     {result.trades && result.trades.length > 0 ? (
                       <>
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="text-base font-medium">Trade жагсаалт</h3>
+                            <h3 className="text-base font-medium">Бүх Trade-ийн жагсаалт</h3>
                             <p className="text-sm text-muted-foreground">
-                              Нийт {result.trades.length} trade • Entry/Exit огноо, TP/SL үр дүн
+                              Нийт {result.trades.length} trade
                             </p>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
@@ -1149,16 +1340,8 @@ export default function SimulatorPage() {
                           </div>
                         </div>
                         
-                        {/* Live Trades Stream Visualization */}
-                        {streamingTrades.length > 0 && (
-                          <LiveTradesStream trades={streamingTrades} isRunning={false} />
-                        )}
-                        
-                        {/* Traditional Table View */}
-                        <div className="mt-4">
-                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Бүх Trade-ийн хүснэгт</h4>
-                          <TradesTable trades={result.trades} />
-                        </div>
+                        {/* Table Only - removed duplicate visualization */}
+                        <TradesTable trades={result.trades} />
                       </>
                     ) : (
                       <Card className="border-muted">
@@ -1303,35 +1486,6 @@ export default function SimulatorPage() {
                 </Tabs>
               </CardContent>
             </Card>
-
-            {/* Warnings - with helpful context */}
-            {result.meta?.warnings && result.meta.warnings.length > 0 && (
-              <Card className="border-yellow-500/30 bg-yellow-500/10">
-                <CardContent className="pt-6">
-                  <h4 className="text-sm font-medium text-yellow-600 dark:text-yellow-500 mb-2 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    Warnings
-                  </h4>
-                  <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                    {result.meta.warnings.map((w, i) => {
-                      const warnStr = formatWarning(w)
-                      // Add context for data gaps
-                      if (warnStr.includes("data gaps") || warnStr.includes("missing")) {
-                        return (
-                          <li key={i}>
-                            {warnStr}
-                            <span className="text-xs text-muted-foreground/70 ml-1">
-                              (Forex дээр амралтын өдрүүдэд зах зээл хаалттай байдаг тул 5-10% gap хэвийн)
-                            </span>
-                          </li>
-                        )
-                      }
-                      return <li key={i}>{warnStr}</li>
-                    })}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
 
             {/* PRO Zero Trades Debug Panel with 1-click fixes */}
             {combinedResult?.summary?.entries === 0 && (
