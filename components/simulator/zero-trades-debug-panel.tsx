@@ -193,7 +193,8 @@ export function ZeroTradesDebugPanel({
   const formatSuggestion = (input: any) => {
     if (typeof input === "string") return input
     if (input && typeof input === "object") {
-      return input.suggestion || input.title || input.message || JSON.stringify(input)
+      const message = input.suggestion || input.title || input.message || input.reasonText || input.rootCause
+      return typeof message === "string" ? message : JSON.stringify(input)
     }
     return String(input)
   }

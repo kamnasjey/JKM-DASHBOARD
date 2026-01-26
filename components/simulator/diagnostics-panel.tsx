@@ -79,7 +79,8 @@ export function DiagnosticsPanel() {
   const formatWarning = (input: any) => {
     if (typeof input === "string") return input
     if (input && typeof input === "object") {
-      return input.message || input.reasonText || input.suggestion || JSON.stringify(input)
+      const message = input.message || input.reasonText || input.suggestion || input.rootCause
+      return typeof message === "string" ? message : JSON.stringify(input)
     }
     return String(input)
   }
