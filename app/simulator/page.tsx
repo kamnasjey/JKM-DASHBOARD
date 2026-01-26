@@ -153,6 +153,17 @@ const TIMEFRAMES = ["5m", "15m", "30m", "1h", "4h"]
 
 const GAP_ERROR_PATTERN = /missing bars|data quality|gaps|demoMode=true/i
 
+function normalizeMessage(input: unknown): string {
+  if (typeof input === "string") return input
+  if (input && typeof input === "object") {
+    const record = input as Record<string, unknown>
+    const message = record.message ?? record.reasonText ?? record.suggestion ?? record.rootCause
+    if (typeof message === "string") return message
+    return JSON.stringify(input)
+  }
+  return String(input)
+}
+
 // ============================================
 // Helpers
 // ============================================
@@ -446,7 +457,7 @@ export default function SimulatorPage() {
     } finally {
       setRunning(false)
     }
-  }
+            setError(normalizeMessage(patched.error))
 
   function clearResults() {
     setResult(null)
@@ -454,10 +465,10 @@ export default function SimulatorPage() {
   }
 
   // Quick fix handlers for 0 trades debugging
-  async function handleQuickFix(action: "normalize" | "extend_range" | "change_tf" | "disable_gates") {
+          setError(normalizeMessage(res.error))
     if (!symbol || !strategyId) return
 
-    setRunning(true)
+        setError(normalizeMessage(err))
     setError(null)
     setResult(null)
     setActiveTab("combined")
@@ -612,7 +623,7 @@ export default function SimulatorPage() {
                 <Select value={symbol} onValueChange={setSymbol} disabled={loading}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select symbol..." />
-                  </SelectTrigger>
+          setError(normalizeMessage(patched.error))
                   <SelectContent>
                     {symbols.map((s) => (
                       <SelectItem key={s} value={s}>
@@ -620,10 +631,10 @@ export default function SimulatorPage() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+        setError(normalizeMessage(res.error))
               </div>
 
-              {/* Strategy */}
+      setError(normalizeMessage(err))
               <div className="space-y-2">
                 <label className="text-sm font-medium">Strategy</label>
                 <Select value={strategyId} onValueChange={setStrategyId} disabled={loading}>
