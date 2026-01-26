@@ -126,7 +126,7 @@ interface SimulatorResult {
     symbols: string[]
     confidenceScore?: number
     dataTier?: "green" | "yellow" | "red"
-    warnings: string[]
+    warnings: unknown[]
     // Detector classification for UI transparency
     detectorsRequested?: string[]
     detectorsRecognized?: string[]
@@ -167,6 +167,17 @@ function getDateRange(preset: string): { from: string; to: string } {
     from: from.toISOString().slice(0, 10),
     to: to.toISOString().slice(0, 10),
   }
+}
+
+function formatWarning(input: unknown): string {
+  if (typeof input === "string") return input
+  if (input && typeof input === "object") {
+    const record = input as Record<string, unknown>
+    const message = record.message ?? record.reasonText ?? record.suggestion ?? record.rootCause
+    if (typeof message === "string") return message
+    return JSON.stringify(input)
+  }
+  return String(input)
 }
 
 // ============================================
@@ -327,7 +338,7 @@ export default function SimulatorMVPPage() {
         if (res.error.code !== "DATA_GAP") {
           toast({
             title: "Error",
-            description: res.error.message,
+            description: formatWarning(res.error.message),
             variant: "destructive",
           })
         }
@@ -503,7 +514,7 @@ export default function SimulatorMVPPage() {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Data Quality Issue</AlertTitle>
             <AlertDescription className="space-y-3">
-              <p>{result.error.message}</p>
+              <p>{formatWarning(result.error.message)}</p>
               {result.error.gapRatio && (
                 <p className="text-sm">
                   Gap ratio: <strong>{(result.error.gapRatio * 100).toFixed(1)}%</strong>
@@ -517,7 +528,7 @@ export default function SimulatorMVPPage() {
                   <p className="font-medium">Suggested actions:</p>
                   <ul className="list-disc list-inside space-y-1">
                     {result.error.suggestedActions.map((action, i) => (
-                      <li key={i}>{action}</li>
+                      <li key={i}>{formatWarning(action)}</li>
                     ))}
                   </ul>
                 </div>
@@ -540,7 +551,7 @@ export default function SimulatorMVPPage() {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Error: {result.error.code}</AlertTitle>
-            <AlertDescription>{result.error.message}</AlertDescription>
+            <AlertDescription>{formatWarning(result.error.message)}</AlertDescription>
           </Alert>
         )}
 
@@ -555,7 +566,7 @@ export default function SimulatorMVPPage() {
                 <AlertDescription className="text-amber-500/80">
                   <ul className="list-disc list-inside space-y-1">
                     {result.meta.warnings.map((w, i) => (
-                      <li key={i}>{w}</li>
+                      <li key={i}>{formatWarning(w)}</li>
                     ))}
                   </ul>
                 </AlertDescription>
