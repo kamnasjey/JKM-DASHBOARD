@@ -442,7 +442,7 @@ export default function SimulatorPage() {
         const patched = addDemoWarning(demoRes, warning)
         setResult(patched as MultiTFResult)
         if (!patched.ok && patched.error) {
-          setError(patched.error.message)
+          setError(normalizeMessage(patched.error))
         }
         return
       }
@@ -450,14 +450,14 @@ export default function SimulatorPage() {
       setResult(res as MultiTFResult)
 
       if (!res.ok && res.error) {
-        setError(res.error.message)
+        setError(normalizeMessage(res.error))
       }
     } catch (err: any) {
-      setError(err.message || "Simulation failed")
+      setError(normalizeMessage(err?.message || "Simulation failed"))
     } finally {
       setRunning(false)
     }
-            setError(normalizeMessage(patched.error))
+  }
 
   function clearResults() {
     setResult(null)
@@ -465,10 +465,10 @@ export default function SimulatorPage() {
   }
 
   // Quick fix handlers for 0 trades debugging
-          setError(normalizeMessage(res.error))
+  async function handleQuickFix(action: "normalize" | "extend_range" | "change_tf" | "disable_gates") {
     if (!symbol || !strategyId) return
 
-        setError(normalizeMessage(err))
+    setRunning(true)
     setError(null)
     setResult(null)
     setActiveTab("combined")
@@ -496,7 +496,7 @@ export default function SimulatorPage() {
         case "disable_gates":
           // Filter out gate detectors for this run only
           const strategyDetectors = selectedStrategy?.detectors || []
-          customDetectors = strategyDetectors.filter(d => 
+          customDetectors = strategyDetectors.filter(d =>
             !d.startsWith("GATE_") || d === "GATE_REGIME"
           )
           break
@@ -532,7 +532,7 @@ export default function SimulatorPage() {
         const patched = addDemoWarning(demoRes, warning)
         setResult(patched as MultiTFResult)
         if (!patched.ok && patched.error) {
-          setError(patched.error.message)
+          setError(normalizeMessage(patched.error))
         }
         return
       }
@@ -540,10 +540,10 @@ export default function SimulatorPage() {
       setResult(res as MultiTFResult)
 
       if (!res.ok && res.error) {
-        setError(res.error.message)
+        setError(normalizeMessage(res.error))
       }
     } catch (err: any) {
-      setError(err.message || "Quick fix simulation failed")
+      setError(normalizeMessage(err?.message || "Quick fix simulation failed"))
     } finally {
       setRunning(false)
     }
@@ -552,62 +552,62 @@ export default function SimulatorPage() {
   // ============================================
   // Render
   // ============================================
-  
-  // Extract version from result meta
-  const simVersion = result?.meta?.simVersion || ""
-  const dashboardVersion = result?.meta?.dashboardVersion || ""
-  const formatSuggestion = (input: any) => {
-    if (typeof input === "string") return input
-    if (input && typeof input === "object") {
-      return input.suggestion || input.title || input.message || JSON.stringify(input)
-    }
-    return String(input)
-  }
-  const formatWarning = (input: any) => {
-    if (typeof input === "string") return input
-    if (input && typeof input === "object") {
-      return input.message || input.reasonText || input.suggestion || JSON.stringify(input)
-    }
-    return String(input)
-  }
-  const combinedResult = result?.combined || (result?.summary ? {
-    summary: result.summary,
-    bestTf: undefined,
-    bestWinrate: undefined,
-    tagsAny: [],
-    tagsPrimary: [],
-    tradesSample: [],
-  } : undefined)
-  const isNoSetups = !!combinedResult && (combinedResult.summary?.entries ?? 0) === 0
-  
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Strategy Simulator
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Multi-timeframe backtesting across 5m → 4h
-            </p>
-            {/* Version info */}
-            {(simVersion || dashboardVersion) && (
-              <p className="text-xs text-muted-foreground/60 mt-1 font-mono">
-                {dashboardVersion && `dash:${dashboardVersion}`}
-                {dashboardVersion && simVersion && " • "}
-                {simVersion && `sim:${simVersion}`}
-              </p>
-            )}
-          </div>
-          <Badge variant="secondary" className="gap-1.5">
-            <Layers className="h-3.5 w-3.5" />
-            Multi-TF Auto
-          </Badge>
-        </div>
 
-        {/* Configuration Card */}
+      // Extract version from result meta
+      const simVersion = result?.meta?.simVersion || ""
+      const dashboardVersion = result?.meta?.dashboardVersion || ""
+      const formatSuggestion = (input: any) => {
+        if (typeof input === "string") return input
+        if (input && typeof input === "object") {
+          return input.suggestion || input.title || input.message || JSON.stringify(input)
+        }
+        return String(input)
+      }
+      const formatWarning = (input: any) => {
+        if (typeof input === "string") return input
+        if (input && typeof input === "object") {
+          return input.message || input.reasonText || input.suggestion || JSON.stringify(input)
+        }
+        return String(input)
+      }
+      const combinedResult = result?.combined || (result?.summary ? {
+        summary: result.summary,
+        bestTf: undefined,
+        bestWinrate: undefined,
+        tagsAny: [],
+        tagsPrimary: [],
+        tradesSample: [],
+      } : undefined)
+      const isNoSetups = !!combinedResult && (combinedResult.summary?.entries ?? 0) === 0
+
+      return (
+        <div className="min-h-screen bg-background text-foreground">
+          <div className="container mx-auto px-4 py-8 space-y-6 max-w-7xl">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  Strategy Simulator
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  Multi-timeframe backtesting across 5m → 4h
+                </p>
+                {/* Version info */}
+                {(simVersion || dashboardVersion) && (
+                  <p className="text-xs text-muted-foreground/60 mt-1 font-mono">
+                    {dashboardVersion && `dash:${dashboardVersion}`}
+                    {dashboardVersion && simVersion && " • "}
+                    {simVersion && `sim:${simVersion}`}
+                  </p>
+                )}
+              </div>
+              <Badge variant="secondary" className="gap-1.5">
+                <Layers className="h-3.5 w-3.5" />
+                Multi-TF Auto
+              </Badge>
+            </div>
+
+            {/* Configuration Card */}
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Configuration</CardTitle>
@@ -623,7 +623,7 @@ export default function SimulatorPage() {
                 <Select value={symbol} onValueChange={setSymbol} disabled={loading}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select symbol..." />
-          setError(normalizeMessage(patched.error))
+                  </SelectTrigger>
                   <SelectContent>
                     {symbols.map((s) => (
                       <SelectItem key={s} value={s}>
@@ -631,10 +631,10 @@ export default function SimulatorPage() {
                       </SelectItem>
                     ))}
                   </SelectContent>
-        setError(normalizeMessage(res.error))
+                </Select>
               </div>
 
-      setError(normalizeMessage(err))
+              {/* Strategy */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Strategy</label>
                 <Select value={strategyId} onValueChange={setStrategyId} disabled={loading}>
