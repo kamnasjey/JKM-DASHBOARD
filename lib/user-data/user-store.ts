@@ -136,13 +136,17 @@ export async function listUsersFromFirestore(options?: {
   limit?: number
 }): Promise<UserDoc[]> {
   const db = getFirebaseAdminDb()
-  let query = db.collection(USERS_COLLECTION).orderBy("updatedAt", "desc")
+  // Note: compound queries (where + orderBy on different fields) require Firestore index
+  // For now, filter client-side to avoid index requirement
+  let query: FirebaseFirestore.Query = db.collection(USERS_COLLECTION)
 
   if (options?.onlyPaid) {
+    // Use only the where clause, sort client-side to avoid index requirement
     query = query.where("has_paid_access", "==", true)
   }
 
-  if (options?.limit) {
+  if (options?.limit && !options?.onlyPaid) {
+    // Only apply limit if not filtering (we'll limit after client-side sort)
     query = query.limit(options.limit)
   }
 
@@ -164,6 +168,18 @@ export async function listUsersFromFirestore(options?: {
       scan_enabled: data.scan_enabled !== undefined ? Boolean(data.scan_enabled) : null,
       updatedAt: data.updatedAt !== undefined ? String(data.updatedAt) : undefined,
     })
+  }
+
+  // Sort client-side by updatedAt (newest first)
+  users.sort((a, b) => {
+    const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0
+    const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0
+    return bTime - aTime
+  })
+
+  // Apply limit after sorting if specified
+  if (options?.limit && users.length > options.limit) {
+    return users.slice(0, options.limit)
   }
 
   return users
