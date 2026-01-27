@@ -771,191 +771,45 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Strategy Selector & All Symbols */}
+        {/* All Symbols Grid - Simplified */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
-              Стратеги сонгох
+              Бүх хослолууд ({symbols.length})
             </CardTitle>
             <CardDescription>
-              Стратеги сонгоод "Идэвхжүүлэх" дарснаар бүх хослол дээр тэр стратегигаар scan хийнэ
+              Scanner Config хуудаснаас symbol бүрт strategy тохируулна уу
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex-1">
-                <Select 
-                  value={selectedStrategyId || ""} 
-                  onValueChange={(v) => setSelectedStrategyId(v)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Стратеги сонгох..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {strategies.map((s) => (
-                      <SelectItem key={s.strategy_id} value={s.strategy_id}>
-                        <div className="flex items-center gap-2">
-                          {s.enabled && <Check className="h-3 w-3 text-green-500" />}
-                          <span>{formatStrategyName(s.name, s.strategy_id)}</span>
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            {s.detectors?.length || 0} detector
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button 
-                onClick={handleActivateStrategy} 
-                disabled={savingStrategy || !selectedStrategyId}
-              >
-                {savingStrategy ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Хадгалж байна...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Идэвхжүүлэх
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Strategy Details */}
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Стратегийн дэлгэрэнгүй</h4>
-                <span className="text-xs text-muted-foreground">{strategies.length} стратеги</span>
-              </div>
-
-              {strategies.map((s) => {
-                const open = expandedStrategyId === s.strategy_id
-                const displayName = formatStrategyName(s.name, s.strategy_id)
-                const groups = buildDetectorGroups(s.detectors || [])
-                const explanation = buildStrategyExplanation(s.detectors || [])
-
+            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+              {symbols.map((symbol) => {
+                // Find last signal for this symbol
+                const lastSig = displaySignals.find((s) => s.symbol === symbol)
                 return (
-                  <div key={s.strategy_id} className="rounded-lg border p-4 bg-card/50">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-medium">{displayName}</div>
-                        <div className="text-xs text-muted-foreground">{s.strategy_id}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {s.enabled && (
-                          <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-600">
-                            Default
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setExpandedStrategyId(open ? null : s.strategy_id)}
-                        >
-                          Дэлгэрэнгүй
-                          <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`} />
-                        </Button>
-                      </div>
+                  <div
+                    key={symbol}
+                    className="rounded-lg border p-2 text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                    title={lastSig ? `${lastSig.direction} @ ${lastSig.entry}` : "Дохиогүй"}
+                  >
+                    <div className="font-mono text-xs font-medium">{symbol}</div>
+                    <div className="mt-1 flex justify-center">
+                      {lastSig ? (
+                        lastSig.direction === "BUY" ? (
+                          <TrendingUp className="h-3 w-3 text-green-500" />
+                        ) : lastSig.direction === "SELL" ? (
+                          <TrendingDown className="h-3 w-3 text-red-500" />
+                        ) : (
+                          <Minus className="h-3 w-3 text-muted-foreground" />
+                        )
+                      ) : (
+                        <Minus className="h-3 w-3 text-muted-foreground" />
+                      )}
                     </div>
-
-                    {open && (
-                      <div className="mt-4 space-y-3">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                          {groups.gate.length > 0 && (
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-2">Gate</div>
-                              <div className="flex flex-wrap gap-2">
-                                {groups.gate.map((id) => (
-                                  <Badge key={id} variant="secondary" className="text-xs">
-                                    {getDetectorLabel(id)}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {groups.trigger.length > 0 && (
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-2">Trigger</div>
-                              <div className="flex flex-wrap gap-2">
-                                {groups.trigger.map((id) => (
-                                  <Badge key={id} variant="secondary" className="text-xs">
-                                    {getDetectorLabel(id)}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {groups.confluence.length > 0 && (
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-2">Confluence</div>
-                              <div className="flex flex-wrap gap-2">
-                                {groups.confluence.map((id) => (
-                                  <Badge key={id} variant="secondary" className="text-xs">
-                                    {getDetectorLabel(id)}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {groups.other.length > 0 && (
-                            <div>
-                              <div className="text-xs font-semibold text-muted-foreground mb-2">Other</div>
-                              <div className="flex flex-wrap gap-2">
-                                {groups.other.map((id) => (
-                                  <Badge key={id} variant="secondary" className="text-xs">
-                                    {getDetectorLabel(id)}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">AI тайлбар:</span> {explanation}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )
               })}
-            </div>
-
-            {/* All Symbols Grid */}
-            <div className="mt-6">
-              <h4 className="text-sm font-medium mb-3">Бүх хослолууд ({symbols.length})</h4>
-              <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                {symbols.map((symbol) => {
-                  // Find last signal for this symbol
-                  const lastSig = displaySignals.find((s) => s.symbol === symbol)
-                  return (
-                    <div
-                      key={symbol}
-                      className="rounded-lg border p-2 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                      title={lastSig ? `${lastSig.direction} @ ${lastSig.entry}` : "Дохиогүй"}
-                    >
-                      <div className="font-mono text-xs font-medium">{symbol}</div>
-                      <div className="mt-1 flex justify-center">
-                        {lastSig ? (
-                          lastSig.direction === "BUY" ? (
-                            <TrendingUp className="h-3 w-3 text-green-500" />
-                          ) : lastSig.direction === "SELL" ? (
-                            <TrendingDown className="h-3 w-3 text-red-500" />
-                          ) : (
-                            <Minus className="h-3 w-3 text-muted-foreground" />
-                          )
-                        ) : (
-                          <Minus className="h-3 w-3 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
             </div>
           </CardContent>
         </Card>

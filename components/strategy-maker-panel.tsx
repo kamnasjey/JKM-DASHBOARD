@@ -79,7 +79,7 @@ const ALL_DETECTORS: Detector[] = [
       { key: "mode", label: "Mode", type: "select", values: ["HIGH", "NORMAL", "LOW", "ANY"], default: "ANY" }
     ]
   },
-  { name: "gate_regime", role: "gate", layer: "context", description: "Зах зээл Trend/Range/Chop байгааг тодорхойлно", required: true },
+  { name: "gate_regime", role: "gate", layer: "context", description: "Зах зээл Trend/Range/Chop байгааг тодорхойлно (auto)" },
   { name: "gate_volatility", role: "gate", layer: "context", description: "Volatility өндөр/бага/хэвийн гэдгийг хэмжинэ" },
   
   // ============================================================
@@ -266,7 +266,7 @@ export function StrategyMakerPanel(props: {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedDetectors, setSelectedDetectors] = useState<string[]>(["gate_regime"])
+  const [selectedDetectors, setSelectedDetectors] = useState<string[]>([])
   const [strategyName, setStrategyName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)

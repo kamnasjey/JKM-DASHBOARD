@@ -56,8 +56,14 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
   // Default to timeline on mobile, table on desktop
   const [view, setView] = useState<"table" | "timeline">("timeline")
   
-  // Sort signals by created_at (newest first)
-  const sortedSignals = [...signals].sort((a, b) => b.created_at - a.created_at)
+  // Sort signals by created_at (newest first) and filter out old signals (>7 days)
+  const now = Date.now()
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+  const recentSignals = signals.filter(s => {
+    const signalTime = s.created_at * 1000 // convert to ms if in seconds
+    return (now - signalTime) < sevenDaysMs
+  })
+  const sortedSignals = [...recentSignals].sort((a, b) => b.created_at - a.created_at)
   const displaySignals = limit ? sortedSignals.slice(0, limit) : sortedSignals
 
   useEffect(() => {
@@ -69,7 +75,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
     // Only run once on mount
   }, [])
 
-  if (signals.length === 0) {
+  if (displaySignals.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -77,8 +83,8 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-muted-foreground">Энд таны дохио хараахан алга.</p>
-            <p className="text-sm text-muted-foreground">Scan асаалттай эсэхийг шалгаарай.</p>
+            <p className="text-muted-foreground">Сүүлийн 7 хоногт дохио олдсонгүй.</p>
+            <p className="text-sm text-muted-foreground">Scanner Config хуудаснаас strategy тохируулна уу.</p>
           </div>
         </CardContent>
       </Card>
