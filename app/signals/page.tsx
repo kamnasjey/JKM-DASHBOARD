@@ -661,8 +661,7 @@ export default function SignalsPage() {
             ) : filteredSignals.length === 0 ? (
               scannerCount === 0 ? <EmptyScannerState /> : <EmptySignalsState />
             ) : (
-            ): (
-                <UnifiedSignalsTable signals = { filteredSignals } onToggle = { handleEntryToggle } />
+              <UnifiedSignalsTable signals={filteredSignals} onToggle={handleEntryToggle} />
             )}
           </TabsContent>
 
