@@ -15,6 +15,7 @@ import type { SignalPayloadPublicV1 } from "@/lib/types"
 import { DETECTOR_CATALOG } from "@/lib/detectors/catalog"
 import { ActiveStrategiesPanel } from "@/components/active-strategies-panel"
 import { SignalsHistoryPanel } from "@/components/signals-history-panel"
+import { AdminLiveOpsPanel } from "@/components/admin-live-ops-panel"
 import {
   Select,
   SelectContent,
@@ -22,6 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+
+// Admin email address for full Live Ops access
+const ADMIN_EMAIL = "kamnasjey@gmail.com"
 
 interface SymbolInfo {
   symbol: string
@@ -86,6 +90,12 @@ export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
   const uid = (session as any)?.user?.id || ""
+  
+  // Check if current user is admin
+  const isAdmin = useMemo(() => {
+    const email = session?.user?.email?.toLowerCase()
+    return email === ADMIN_EMAIL.toLowerCase()
+  }, [session?.user?.email])
   
   // WebSocket real-time signals
   const { 
@@ -578,6 +588,15 @@ export default function DashboardPage() {
             icon={Layers3}
           />
         </div>
+
+        {/* Admin Live Ops Panel - All 15 Symbols (Admin Only) */}
+        {isAdmin && (
+          <AdminLiveOpsPanel
+            feedStatus={feedStatus}
+            engineStatus247={engineStatus247}
+            nowTs={nowTs}
+          />
+        )}
 
         {/* Live Ops Status Card */}
         <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
