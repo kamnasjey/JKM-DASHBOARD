@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { MetricCard } from "@/components/metric-card"
-import { SignalsTable } from "@/components/signals-table"
 import { useToast } from "@/hooks/use-toast"
 import { useWebSocketSignals } from "@/hooks/use-websocket-signals"
 import { api } from "@/lib/api"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
 import { DETECTOR_CATALOG } from "@/lib/detectors/catalog"
+import { ActiveStrategiesPanel } from "@/components/active-strategies-panel"
+import { SignalsHistoryPanel } from "@/components/signals-history-panel"
 import {
   Select,
   SelectContent,
@@ -771,103 +772,49 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* All Symbols Grid - Simplified */}
+        {/* Active Strategies - Scanner Config-оос идэвхжүүлсэн */}
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
-              Бүх хослолууд ({symbols.length})
+              Идэвхтэй стратегиуд
+              {wsConnected && (
+                <Badge className="ml-auto bg-green-600 text-xs flex items-center gap-1">
+                  <Wifi className="h-3 w-3" />
+                  Live
+                </Badge>
+              )}
             </CardTitle>
-            <CardDescription>
-              Scanner Config хуудаснаас symbol бүрт strategy тохируулна уу
-            </CardDescription>
+            <CardDescription>Scanner Config-оос идэвхжүүлсэн стратегиуд</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
-              {symbols.map((symbol) => {
-                // Find last signal for this symbol
-                const lastSig = displaySignals.find((s) => s.symbol === symbol)
-                return (
-                  <div
-                    key={symbol}
-                    className="rounded-lg border p-2 text-center hover:bg-muted/50 transition-colors cursor-pointer"
-                    title={lastSig ? `${lastSig.direction} @ ${lastSig.entry}` : "Дохиогүй"}
-                  >
-                    <div className="font-mono text-xs font-medium">{symbol}</div>
-                    <div className="mt-1 flex justify-center">
-                      {lastSig ? (
-                        lastSig.direction === "BUY" ? (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
-                        ) : lastSig.direction === "SELL" ? (
-                          <TrendingDown className="h-3 w-3 text-red-500" />
-                        ) : (
-                          <Minus className="h-3 w-3 text-muted-foreground" />
-                        )
-                      ) : (
-                        <Minus className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <ActiveStrategiesPanel
+              strategies={strategies}
+              feedStatus={feedStatus}
+              lastSignals={Object.fromEntries(
+                displaySignals.map((s) => [s.symbol, { direction: s.direction, entry: s.entry, time: s.timestamp || "" }])
+              )}
+              onSymbolClick={(symbol) => setLiveOpsSymbol(symbol)}
+            />
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              System
-              {/* WebSocket Connection Status */}
-              <Badge 
-                variant={wsConnected ? "default" : "secondary"} 
-                className={`ml-auto flex items-center gap-1 text-xs ${wsConnected ? "bg-green-600" : ""}`}
-              >
-                {wsConnected ? (
-                  <>
-                    <Wifi className="h-3 w-3" />
-                    Live
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="h-3 w-3" />
-                    Polling
-                  </>
-                )}
-              </Badge>
-            </CardTitle>
-            <CardDescription>Engine төлөв ба сүүлийн скан</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">
-              {engineStatus ? (
-                <div className="space-y-1">
-                  <div>
-                    Төлөв: <span className={engineStatus.running ? "text-emerald-600" : "text-destructive"}>
-                      {engineStatus.running ? "Ажиллаж байна" : "Зогссон"}
-                    </span>
-                  </div>
-                  {lastScanText && (
-                    <div>
-                      Сүүлийн скан: <span className="font-mono text-xs">{lastScanText}</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                "Уншиж байна…"
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {wsConnected ? (
-                <span className="text-green-600">Real-time updates · {wsLastUpdate?.toLocaleTimeString() || ""}</span>
-              ) : (
-                "Signals auto refresh: 60s · Engine: 5s"
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <SignalsTable signals={displaySignals} limit={10} />
+        {/* Signals History with Entry Tracking */}
+        <SignalsHistoryPanel
+          signals={displaySignals.map((s, i) => ({
+            ...s,
+            entry_taken: null, // Will be loaded from user data
+            outcome: null, // Will be loaded from outcomes
+          }))}
+          onEntryToggle={(signalId, taken) => {
+            // TODO: Save entry tracking to user data
+            toast({
+              title: taken ? "Entry бүртгэгдлээ" : "Entry хасагдлаа",
+              description: `Signal ${signalId}`,
+            })
+          }}
+          showWinRate={true}
+        />
       </div>
     </DashboardLayout>
   )
