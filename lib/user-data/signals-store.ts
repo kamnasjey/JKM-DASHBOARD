@@ -17,6 +17,9 @@ export type StoredSignal = {
   meta?: unknown
   updatedAt?: string
   createdAt?: string
+  // Entry tracking
+  entry_taken?: boolean | null
+  outcome?: "win" | "loss" | "pending" | null
 }
 
 const USERS_COLLECTION = "users"
@@ -189,4 +192,37 @@ export async function deleteUserSignal(userId: string, signalKey: string): Promi
     .doc(signalKey)
 
   await ref.delete()
+}
+
+/**
+ * Update entry tracking for a signal.
+ * @param userId - User ID
+ * @param signalKey - Signal key to update
+ * @param entryTaken - Whether user took the entry (true/false/null)
+ * @param outcome - Outcome if known (win/loss/pending/null)
+ */
+export async function updateSignalEntryTracking(
+  userId: string,
+  signalKey: string,
+  entryTaken: boolean | null,
+  outcome?: "win" | "loss" | "pending" | null
+): Promise<void> {
+  const db = getFirebaseAdminDb()
+
+  const ref = db
+    .collection(USERS_COLLECTION)
+    .doc(userId)
+    .collection("signals")
+    .doc(signalKey)
+
+  const update: Record<string, unknown> = {
+    entry_taken: entryTaken,
+    updatedAt: new Date().toISOString(),
+  }
+
+  if (outcome !== undefined) {
+    update.outcome = outcome
+  }
+
+  await ref.set(update, { merge: true })
 }

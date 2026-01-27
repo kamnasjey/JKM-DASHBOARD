@@ -85,6 +85,7 @@ const isMarketClosed = (symbol: string, serverTime: string | null): boolean => {
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
+  const uid = (session as any)?.user?.id || ""
   
   // WebSocket real-time signals
   const { 
@@ -96,17 +97,18 @@ export default function DashboardPage() {
   } = useWebSocketSignals()
 
   const [outcomeStats, setOutcomeStats] = useState<any>(null)
-  const [activeStrategies, setActiveStrategies] = useState<number | null>(null)
   const [recentSignals, setRecentSignals] = useState<SignalPayloadPublicV1[]>([])
   const [engineStatus, setEngineStatus] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   
-  // New: symbols and strategies state
+  // Symbol-Strategy mapping from Scanner Config
   const [symbols, setSymbols] = useState<string[]>([])
   const [strategies, setStrategies] = useState<Strategy[]>([])
-  const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null)
-  const [savingStrategy, setSavingStrategy] = useState(false)
-  const [expandedStrategyId, setExpandedStrategyId] = useState<string | null>(null)
+  const [activeStrategyMap, setActiveStrategyMap] = useState<Record<string, string>>({})
+  const [symbolEnabled, setSymbolEnabled] = useState<Record<string, boolean>>({})
+  
+  // Engine status 247
+  const [engineStatus247, setEngineStatus247] = useState<any>(null)
   
   // Live Ops: Market data heartbeat
   const [liveOpsSymbol, setLiveOpsSymbol] = useState<string>("XAUUSD")
@@ -188,17 +190,33 @@ export default function DashboardPage() {
     }
   }, [newSignals, toast, clearNewSignals])
   
-  // Use WS signals if available, otherwise HTTP
+  // Use WS signals if available, otherwise HTTP - limit to 20
   const displaySignals = useMemo(() => {
     if (wsConnected && wsSignals.length > 0) {
-      // Return last 10 signals from WS
       return wsSignals
         .filter((s) => typeof s?.symbol === "string" && typeof s?.direction === "string")
-        .slice(-10)
+        .slice(-20)
         .reverse() as SignalPayloadPublicV1[]
     }
-    return recentSignals
+    return recentSignals.slice(0, 20)
   }, [wsConnected, wsSignals, recentSignals])
+
+  // Handle entry tracking toggle
+  const handleEntryToggle = useCallback(async (signalKey: string, taken: boolean) => {
+    try {
+      await api.updateSignalEntry(signalKey, taken)
+      toast({
+        title: taken ? "✓ Entry бүртгэгдлээ" : "✗ Entry хасагдлаа",
+        description: `Signal ${signalKey.slice(0, 8)}...`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Entry tracking хадгалж чадсангүй",
+        variant: "destructive",
+      })
+    }
+  }, [toast])
 
   const winRateText = useMemo(() => {
     const raw = outcomeStats?.win_rate ?? outcomeStats?.winrate
@@ -237,15 +255,25 @@ export default function DashboardPage() {
     return new Date(ms).toLocaleString("mn-MN")
   }, [engineStatus])
 
+  // Count active symbols (symbols with strategy mapping)
+  const activeSymbolCount = useMemo(() => {
+    return Object.entries(activeStrategyMap).filter(([sym, stratId]) => 
+      stratId && (symbolEnabled[sym] !== false)
+    ).length
+  }, [activeStrategyMap, symbolEnabled])
+
   const refreshDashboard = async () => {
+    if (!uid) return
     setLoading(true)
     try {
-      const [o, s, sigs, eng, syms] = await Promise.all([
+      // Load backend strategies with symbol-strategy mapping
+      const [o, backendData, sigs, eng, syms, eng247] = await Promise.all([
         api.outcomes(30),
-        api.strategies(),
-        api.signals({ limit: 10 }),
+        api.backendStrategies.get(uid).catch(() => ({ ok: false, strategies: [], activeStrategyMap: {}, symbolEnabled: {} })),
+        api.signals({ limit: 20 }),
         api.engineStatus(),
         api.symbols().catch(() => ({ ok: true, symbols: [] })),
+        api.engineStatus247(uid).catch(() => null),
       ])
 
       setOutcomeStats(o)
@@ -254,22 +282,21 @@ export default function DashboardPage() {
       const symbolList = (syms as any)?.symbols || syms || []
       setSymbols(Array.isArray(symbolList) ? symbolList : [])
 
-      // Parse strategies
-      const strategiesList = (s as any)?.strategies || []
-      if (Array.isArray(strategiesList)) {
-        setStrategies(strategiesList)
-        setActiveStrategies(strategiesList.filter((x: any) => x?.enabled).length)
-        // Set selected to first enabled strategy
-        const enabled = strategiesList.find((x: any) => x?.enabled)
-        if (enabled && !selectedStrategyId) {
-          setSelectedStrategyId(enabled.strategy_id)
-        }
-      } else {
-        setActiveStrategies(null)
+      // Parse strategies and mapping from backend
+      if ((backendData as any)?.ok) {
+        const bd = backendData as any
+        setStrategies(bd.strategies || [])
+        setActiveStrategyMap(bd.activeStrategyMap || {})
+        setSymbolEnabled(bd.symbolEnabled || {})
+      }
+
+      // Engine status 247 (per-symbol details)
+      if (eng247) {
+        setEngineStatus247(eng247)
       }
 
       const normalizedSignals = Array.isArray(sigs) ? sigs : ((sigs as any)?.signals ?? [])
-      setRecentSignals(normalizedSignals as SignalPayloadPublicV1[])
+      setRecentSignals(normalizedSignals.slice(0, 20) as SignalPayloadPublicV1[])
 
       setEngineStatus(eng)
     } catch (err: any) {
@@ -283,49 +310,15 @@ export default function DashboardPage() {
     }
   }
 
-  // Activate selected strategy and save
-  const handleActivateStrategy = useCallback(async () => {
-    if (!selectedStrategyId) {
-      toast({ title: "Алдаа", description: "Стратеги сонгоно уу", variant: "destructive" })
-      return
-    }
-
-    setSavingStrategy(true)
-    try {
-      // Enable selected strategy, disable others
-      const updatedStrategies = strategies.map((s) => ({
-        ...s,
-        enabled: s.strategy_id === selectedStrategyId,
-      }))
-
-      const result = await api.updateStrategies({ strategies: updatedStrategies }) as { ok: boolean; error?: string }
-      if (!result.ok) {
-        throw new Error(result.error || "Хадгалж чадсангүй")
-      }
-
-      setStrategies(updatedStrategies)
-      setActiveStrategies(1)
-      
-      toast({ 
-        title: "Амжилттай", 
-        description: `"${strategies.find(s => s.strategy_id === selectedStrategyId)?.name || selectedStrategyId}" стратеги идэвхжлээ` 
-      })
-
-      // Trigger a scan with new strategy
-      await api.manualScan().catch(() => {})
-    } catch (err: any) {
-      toast({ title: "Алдаа", description: err.message, variant: "destructive" })
-    } finally {
-      setSavingStrategy(false)
-    }
-  }, [selectedStrategyId, strategies, toast])
-
   useEffect(() => {
-    if (status !== "authenticated") return
+    if (status !== "authenticated" || !uid) return
     refreshDashboard()
 
     const engineInterval = setInterval(() => {
       api.engineStatus().then(setEngineStatus).catch(() => {})
+      if (uid) {
+        api.engineStatus247(uid).then(setEngineStatus247).catch(() => {})
+      }
     }, 5000)
 
     const signalsInterval = setInterval(() => {
@@ -580,8 +573,8 @@ export default function DashboardPage() {
           <MetricCard title="Win rate" value={winRateText} subtitle="Ялалтын хувь" icon={Activity} />
           <MetricCard
             title="Идэвхтэй стратеги"
-            value={activeStrategies === null ? "—" : activeStrategies}
-            subtitle="Enabled стратегийн тоо"
+            value={activeSymbolCount || "—"}
+            subtitle="Идэвхтэй хослол"
             icon={Layers3}
           />
         </div>
@@ -777,7 +770,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
-              Идэвхтэй стратегиуд
+              Идэвхтэй хослолууд ({activeSymbolCount})
               {wsConnected && (
                 <Badge className="ml-auto bg-green-600 text-xs flex items-center gap-1">
                   <Wifi className="h-3 w-3" />
@@ -785,11 +778,14 @@ export default function DashboardPage() {
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Scanner Config-оос идэвхжүүлсэн стратегиуд</CardDescription>
+            <CardDescription>Scanner Config-оос тохируулсан symbol-strategy mapping</CardDescription>
           </CardHeader>
           <CardContent>
             <ActiveStrategiesPanel
+              activeStrategyMap={activeStrategyMap}
+              symbolEnabled={symbolEnabled}
               strategies={strategies}
+              engineStatus247={engineStatus247}
               feedStatus={feedStatus}
               lastSignals={Object.fromEntries(
                 displaySignals.map((s) => [s.symbol, { direction: s.direction, entry: s.entry, time: s.timestamp || "" }])
@@ -799,20 +795,15 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Signals History with Entry Tracking */}
+        {/* Signals History with Entry Tracking (last 20) */}
         <SignalsHistoryPanel
-          signals={displaySignals.map((s, i) => ({
+          signals={displaySignals.map((s) => ({
             ...s,
-            entry_taken: null, // Will be loaded from user data
-            outcome: null, // Will be loaded from outcomes
+            signal_id: s.signal_id || `${s.symbol}_${s.direction}_${s.entry}_${s.created_at || Date.now()}`,
+            entry_taken: (s as any).entry_taken ?? null,
+            outcome: (s as any).outcome ?? null,
           }))}
-          onEntryToggle={(signalId, taken) => {
-            // TODO: Save entry tracking to user data
-            toast({
-              title: taken ? "Entry бүртгэгдлээ" : "Entry хасагдлаа",
-              description: `Signal ${signalId}`,
-            })
-          }}
+          onEntryToggle={handleEntryToggle}
           showWinRate={true}
         />
       </div>

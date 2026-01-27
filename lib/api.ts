@@ -171,6 +171,16 @@ export const api = {
       .then(res => normalizeSignalArray(res.signals || []))
   },
 
+  // Update signal entry tracking
+  updateSignalEntry: (signalKey: string, entryTaken: boolean | null, outcome?: "win" | "loss" | "pending" | null) =>
+    apiFetch<{ ok: boolean; signal_key: string; entry_taken: boolean | null; outcome: string | null }>(
+      `/api/user-signals/${encodeURIComponent(signalKey)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ entry_taken: entryTaken, outcome }),
+      }
+    ),
+
   // Symbols
   getSymbols: () => apiFetch<string[]>("/api/proxy/symbols"),
   symbols: () => api.getSymbols(),
