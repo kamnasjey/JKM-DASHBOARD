@@ -246,31 +246,44 @@ export function mergeSignals(
   scannerResults: UnifiedSignal[],
   oldSignals: UnifiedSignal[]
 ): UnifiedSignal[] {
-  const seen = new Map<string, UnifiedSignal>()
+  // Combine all signals
+  const all = [...scannerResults, ...oldSignals]
 
-  // Add scanner results first (preferred)
-  for (const signal of scannerResults) {
-    const key = getDedupeKey(signal)
-    seen.set(key, signal)
-  }
+  // Sort by ts descending (Newest first)
+  all.sort((a, b) => {
+    const ta = new Date(a.ts).getTime()
+    const tb = new Date(b.ts).getTime()
+    return tb - ta
+  })
 
-  // Add old signals (only if not already seen)
-  for (const signal of oldSignals) {
-    const key = getDedupeKey(signal)
-    if (!seen.has(key)) {
-      seen.set(key, signal)
+  // Dedup with 60-minute sliding window per Symbol+Direction
+  const deduped: UnifiedSignal[] = []
+
+  for (const signal of all) {
+    const ts = new Date(signal.ts).getTime()
+
+    // Check if we already have a similar signal within 60 minutes
+    const duplicate = deduped.find(d => {
+      // Must match Symbol and Direction
+      if (d.symbol !== signal.symbol) return false
+
+      // Normalize direction/side comparison
+      const dDir = (d.direction || "").toLowerCase()
+      const sDir = (signal.direction || "").toLowerCase()
+      if (dDir !== sDir) return false
+
+      // Check time difference (60 minutes = 3600000 ms)
+      const dTs = new Date(d.ts).getTime()
+      return Math.abs(dTs - ts) < 3600000
+    })
+
+    // If no duplicate found (or if this is the first/newest), keep it
+    if (!duplicate) {
+      deduped.push(signal)
     }
   }
 
-  // Convert to array and sort by ts desc
-  const merged = Array.from(seen.values())
-  merged.sort((a, b) => {
-    const ta = new Date(a.ts).getTime()
-    const tb = new Date(b.ts).getTime()
-    return tb - ta // Newest first
-  })
-
-  return merged
+  return deduped
 }
 
 // ============================================================
