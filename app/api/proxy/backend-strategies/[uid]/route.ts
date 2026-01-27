@@ -60,6 +60,8 @@ export async function GET(
       ""
 
     const activeStrategyMap = strategyConfig.activeStrategyMap || {}
+    const symbolEnabled = strategyConfig.symbolEnabled || {}
+    const requireExplicitMapping = strategyConfig.requireExplicitMapping ?? true
 
     return NextResponse.json({
       ok: true,
@@ -67,6 +69,8 @@ export async function GET(
       strategies,
       activeStrategyId,
       activeStrategyMap,
+      symbolEnabled,
+      requireExplicitMapping,
       count: strategies.length,
     })
   } catch (error: any) {

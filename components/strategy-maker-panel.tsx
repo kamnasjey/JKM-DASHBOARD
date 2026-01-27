@@ -137,35 +137,107 @@ const ROLE_COLORS: Record<DetectorRole, string> = {
   confluence: "bg-green-500/15 border-green-500/40 text-green-200",
 }
 
-// Preset Strategy Templates (NEW!)
+// Preset Strategy Templates - Based on 7-day backtest (Jan 2026)
+// All presets: 60%+ WR, 4+ entries, RR 2.5+
 const STRATEGY_PRESETS = [
+  // =====================================================
+  // TOP PERFORMERS (70%+ WR)
+  // =====================================================
   {
-    id: "gold_sweep_1h",
-    name: "🏆 XAUUSD SWEEP 1H (100% WR)",
-    description: "АЛТАН СТРАТЕГИ! XAUUSD дээр 1H timeframe-д SWEEP detector. 30 хоногт 100% win rate.",
-    detectors: ["sweep"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 3.0, recommended_symbol: "XAUUSD", recommended_tf: "1h" }
+    id: "btcusd_bos_pinbar",
+    name: "🏆 BTCUSD BOS+PINBAR (83.3% WR)",
+    description: "7 хоногийн тестэд 83.3% WR (5W/1L), 6 trades, RR 2.5. BTCUSD 15m дээр BOS trigger + PINBAR confluence.",
+    detectors: ["bos", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
   },
   {
-    id: "gold_ob_4h", 
-    name: "💎 XAUUSD OB 4H (100% WR)",
-    description: "Order Block стратеги. XAUUSD дээр 4H timeframe. Бага entry, өндөр чанар.",
+    id: "btcusd_choch_pinbar",
+    name: "💎 BTCUSD CHOCH+PINBAR (80% WR)",
+    description: "7 хоногийн тестэд 80% WR (4W/1L), 5 trades, RR 2.5-3.0. BTCUSD 15m дээр CHOCH trigger + PINBAR confluence.",
+    detectors: ["choch", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+  },
+  {
+    id: "btcusd_triple_combo",
+    name: "🎯 BTCUSD BOS+CHOCH+PINBAR (77.8% WR)",
+    description: "7 хоногийн тестэд 77.8% WR (7W/2L), 9 trades, RR 2.5. Хамгийн олон trade-тай combo.",
+    detectors: ["bos", "choch", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+  },
+  {
+    id: "btcusdt_ob",
+    name: "💰 BTCUSDT OB (75% WR)",
+    description: "7 хоногийн тестэд 75% WR (3W/1L), 4 trades, RR 2.5. BTCUSDT 15m дээр Order Block trigger.",
     detectors: ["ob"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 3.0, recommended_symbol: "XAUUSD", recommended_tf: "4h" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSDT", recommended_tf: "15m" }
+  },
+  
+  // =====================================================
+  // SOLID PERFORMERS (60-70% WR)
+  // =====================================================
+  {
+    id: "usdchf_ob_doji",
+    name: "🔥 USDCHF OB+DOJI (66.7% WR)",
+    description: "7 хоногийн тестэд 66.7% WR (4W/2L), 6 trades, RR 2.5. USDCHF 15m дээр OB trigger + DOJI confluence.",
+    detectors: ["ob", "doji"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "USDCHF", recommended_tf: "15m" }
   },
   {
-    id: "sweep_pinbar_gold",
-    name: "🎯 SWEEP+CHOCH (57% WR)",
-    description: "Liquidity sweep + Change of Character. XAUUSD/EURJPY дээр сайн. 50%+ win rate.",
-    detectors: ["sweep", "choch"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 3.0 }
+    id: "usdchf_ob_pinbar",
+    name: "📊 USDCHF OB+PINBAR (64.3% WR)",
+    description: "7 хоногийн тестэд 64.3% WR (9W/5L), 14 trades, RR 2.5. Хамгийн олон trade: USDCHF 15m OB+PINBAR.",
+    detectors: ["ob", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "USDCHF", recommended_tf: "15m" }
   },
   {
-    id: "eurjpy_choch",
-    name: "📊 EURJPY CHOCH (50% WR)",
-    description: "EURJPY дээр CHOCH detector. 50% win rate, тогтвортой үр дүн.",
-    detectors: ["choch"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 3.0, recommended_symbol: "EURJPY" }
+    id: "xauusd_sr_bounce_pinbar",
+    name: "🥇 XAUUSD SR_BOUNCE+PINBAR (62.5% WR)",
+    description: "7 хоногийн тестэд 62.5% WR (5W/3L), 8 trades, RR 2.5. XAUUSD 15m дээр S/R bounce + PINBAR.",
+    detectors: ["sr_bounce", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "XAUUSD", recommended_tf: "15m" }
+  },
+  {
+    id: "audusd_break_retest",
+    name: "📈 AUDUSD BREAK_RETEST (61.5% WR)",
+    description: "7 хоногийн тестэд 61.5% WR (8W/5L), 13 trades, RR 2.5. Хамгийн идэвхтэй: AUDUSD 15m Break & Retest.",
+    detectors: ["break_retest"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "AUDUSD", recommended_tf: "15m" }
+  },
+  
+  // =====================================================
+  // OTHER PAIRS (60% WR)
+  // =====================================================
+  {
+    id: "usdjpy_sweep_dbl_top",
+    name: "🌊 USDJPY SWEEP+DBL_TOP (60% WR)",
+    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.5. USDJPY 15m дээр Liquidity Sweep + Double Top/Bottom.",
+    detectors: ["sweep", "double_top_bottom"],
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "USDJPY", recommended_tf: "15m" }
+  },
+  {
+    id: "nzdusd_bos_pinbar",
+    name: "🌿 NZDUSD BOS+PINBAR (60% WR)",
+    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.5. NZDUSD 15m дээр BOS trigger + PINBAR confluence.",
+    detectors: ["bos", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "NZDUSD", recommended_tf: "15m" }
+  },
+  
+  // =====================================================
+  // UNIVERSAL (All Pairs)
+  // =====================================================
+  {
+    id: "universal_bos_pinbar",
+    name: "🌐 Universal BOS+PINBAR",
+    description: "BOS+PINBAR combo нь олон pair дээр тогтвортой ажилладаг (BTCUSD 83%, NZDUSD 60%). Бүх pair дээр ашиглах боломжтой.",
+    detectors: ["bos", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5 }
+  },
+  {
+    id: "universal_ob_pinbar",
+    name: "🌐 Universal OB+PINBAR",
+    description: "OB+PINBAR combo (USDCHF 64.3%, BTCUSDT 75%). Order Block + Pinbar бол найдвартай combo.",
+    detectors: ["ob", "pinbar_at_level"],
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5 }
   }
 ]
 

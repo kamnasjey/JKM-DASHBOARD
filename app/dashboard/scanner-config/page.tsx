@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -196,6 +197,11 @@ export default function ScannerConfigPage() {
   const [engineStatus, setEngineStatus] = useState<EngineStatus | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
+  
+  // New: Symbol enable/disable and no-default mode
+  const [symbolEnabled, setSymbolEnabled] = useState<Record<string, boolean>>({})
+  const [pendingEnabled, setPendingEnabled] = useState<Record<string, boolean>>({})
+  const [requireExplicitMapping, setRequireExplicitMapping] = useState(true) // Default: no default strategy
 
   // Polling ref
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -232,7 +238,10 @@ export default function ScannerConfigPage() {
           : fallbackActiveId
         setActiveStrategyId(resolvedActiveId)
         setActiveStrategyMap(backendData.activeStrategyMap || {})
+        setSymbolEnabled(backendData.symbolEnabled || {})
+        setRequireExplicitMapping(backendData.requireExplicitMapping ?? true)
         setPendingMap({})
+        setPendingEnabled({})
         setAuthError(null)
       } else {
         throw new Error("Failed to load strategies")
@@ -291,7 +300,7 @@ export default function ScannerConfigPage() {
   }, [uid, loadEngineStatus])
 
   // Check if there are unsaved changes
-  const hasUnsavedChanges = Object.keys(pendingMap).length > 0
+  const hasUnsavedChanges = Object.keys(pendingMap).length > 0 || Object.keys(pendingEnabled).length > 0
 
   // Handle global active strategy change
   const handleActiveStrategyChange = async (strategyId: string) => {
@@ -338,6 +347,37 @@ export default function ScannerConfigPage() {
     })
   }
 
+  // Handle symbol enable/disable toggle
+  const handleSymbolToggle = (symbol: string, enabled: boolean) => {
+    setPendingEnabled(prev => {
+      const newEnabled = { ...prev }
+      if (enabled === (symbolEnabled[symbol] ?? true)) {
+        // Same as current - remove from pending
+        delete newEnabled[symbol]
+      } else {
+        newEnabled[symbol] = enabled
+      }
+      return newEnabled
+    })
+  }
+
+  // Check if symbol is enabled (considering pending changes)
+  const isSymbolEnabled = (symbol: string): boolean => {
+    if (symbol in pendingEnabled) {
+      return pendingEnabled[symbol]
+    }
+    return symbolEnabled[symbol] ?? true
+  }
+
+  // Check if symbol has required strategy (when requireExplicitMapping is true)
+  const hasRequiredStrategy = (symbol: string): boolean => {
+    if (!requireExplicitMapping) return true
+    // Check pending first
+    if (symbol in pendingMap && pendingMap[symbol]) return true
+    // Check saved map
+    return !!activeStrategyMap[symbol]
+  }
+
   // Save pending map changes
   const handleSaveMap = async () => {
     if (!uid || !hasUnsavedChanges) return
@@ -354,10 +394,18 @@ export default function ScannerConfigPage() {
         }
       }
 
-      const result = await api.backendStrategies.setStrategyMap(uid, newMap)
+      // Merge pending enabled state
+      const newEnabled = { ...symbolEnabled }
+      for (const [symbol, enabled] of Object.entries(pendingEnabled)) {
+        newEnabled[symbol] = enabled
+      }
+
+      const result = await api.backendStrategies.setStrategyMap(uid, newMap, newEnabled, requireExplicitMapping)
       if (result.ok) {
         setActiveStrategyMap(result.activeStrategyMap || newMap)
+        setSymbolEnabled(result.symbolEnabled || newEnabled)
         setPendingMap({})
+        setPendingEnabled({})
         toast({
           title: "Амжилттай",
           description: "Symbol mapping хадгалагдлаа",
@@ -605,14 +653,13 @@ export default function ScannerConfigPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[60px]">Active</TableHead>
                     <TableHead className="w-[100px]">Symbol</TableHead>
-                    <TableHead className="w-[200px]">Assigned Strategy</TableHead>
-                    <TableHead className="w-[180px]">Effective Strategy</TableHead>
+                    <TableHead className="w-[200px]">Strategy</TableHead>
                     <TableHead className="w-[80px]">Status</TableHead>
                     <TableHead className="w-[80px]">Lag</TableHead>
                     <TableHead className="w-[100px]">Last Scan</TableHead>
-                    <TableHead className="w-[100px]">Setups</TableHead>
-                    <TableHead className="w-[60px]">Clear</TableHead>
+                    <TableHead className="w-[80px]">Setups</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -620,23 +667,50 @@ export default function ScannerConfigPage() {
                     const effective = getEffectiveStrategy(symbol)
                     const dropdownValue = getDropdownValue(symbol)
                     const symbolStatus = getSymbolStatus(symbol)
-                    const hasPendingChange = symbol in pendingMap
+                    const hasPendingChange = symbol in pendingMap || symbol in pendingEnabled
+                    const enabled = isSymbolEnabled(symbol)
+                    const hasStrategy = hasRequiredStrategy(symbol)
+                    const needsStrategy = requireExplicitMapping && !hasStrategy
 
                     return (
-                      <TableRow key={symbol} className={hasPendingChange ? "bg-yellow-500/5" : ""}>
-                        <TableCell className="font-medium">{symbol}</TableCell>
+                      <TableRow 
+                        key={symbol} 
+                        className={`${hasPendingChange ? "bg-yellow-500/5" : ""} ${!enabled ? "opacity-50" : ""}`}
+                      >
+                        {/* Enable/Disable Toggle */}
+                        <TableCell>
+                          <Switch
+                            checked={enabled}
+                            onCheckedChange={(checked) => handleSymbolToggle(symbol, checked)}
+                            disabled={saving}
+                          />
+                        </TableCell>
+                        
+                        {/* Symbol */}
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {symbol}
+                            {needsStrategy && enabled && (
+                              <Badge variant="destructive" className="text-xs">
+                                !
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        
+                        {/* Strategy Selection */}
                         <TableCell>
                           <Select
                             value={dropdownValue}
-                            onValueChange={(val) => handleSymbolStrategyChange(symbol, val === "__default__" ? null : val)}
-                            disabled={saving}
+                            onValueChange={(val) => handleSymbolStrategyChange(symbol, val === "__none__" ? null : val)}
+                            disabled={saving || !enabled}
                           >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue />
+                            <SelectTrigger className={`h-8 text-xs ${needsStrategy && enabled ? "border-red-500" : ""}`}>
+                              <SelectValue placeholder="Select strategy" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="__default__">
-                                <span className="text-muted-foreground">Use Default</span>
+                              <SelectItem value="__none__">
+                                <span className="text-muted-foreground">-- No Strategy --</span>
                               </SelectItem>
                               {strategies.map((strategy) => (
                                 <SelectItem key={strategy.id} value={strategy.id}>
@@ -646,23 +720,8 @@ export default function ScannerConfigPage() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-sm ${effective.isPending ? "text-yellow-400" : ""}`}>
-                              {effective.name}
-                            </span>
-                            {effective.isMapped && !effective.isPending && (
-                              <Badge variant="outline" className="text-xs text-blue-400 border-blue-500/30">
-                                Override
-                              </Badge>
-                            )}
-                            {effective.isPending && (
-                              <Badge variant="outline" className="text-xs text-yellow-400 border-yellow-500/30">
-                                Pending
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
+                        
+                        {/* Status */}
                         <TableCell>
                           <StatusPill
                             status={symbolStatus?.delayReason || "OK"}
@@ -681,19 +740,6 @@ export default function ScannerConfigPage() {
                               {symbolStatus.setupsFound24h}
                             </span>
                           ) : "-"}
-                        </TableCell>
-                        <TableCell>
-                          {(activeStrategyMap[symbol] || pendingMap[symbol]) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => handleSymbolStrategyChange(symbol, null)}
-                              disabled={saving}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
                         </TableCell>
                       </TableRow>
                     )

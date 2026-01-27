@@ -855,6 +855,8 @@ export const api = {
         }>
         activeStrategyId: string
         activeStrategyMap: Record<string, string>
+        symbolEnabled?: Record<string, boolean>
+        requireExplicitMapping?: boolean
         count: number
       }>(`/api/proxy/backend-strategies/${uid}`),
 
@@ -871,15 +873,27 @@ export const api = {
       ),
 
     /**
-     * Save per-symbol strategy mapping
+     * Save per-symbol strategy mapping with enable/disable state
      * @param map - { symbol: strategyId } mapping
+     * @param symbolEnabled - { symbol: boolean } enable/disable state
+     * @param requireExplicitMapping - if true, symbols without mapping are not scanned
      */
-    setStrategyMap: (uid: string, map: Record<string, string | null>) =>
-      apiFetch<{ ok: boolean; uid: string; activeStrategyMap: Record<string, string> }>(
+    setStrategyMap: (
+      uid: string, 
+      map: Record<string, string | null>,
+      symbolEnabled?: Record<string, boolean>,
+      requireExplicitMapping?: boolean
+    ) =>
+      apiFetch<{ 
+        ok: boolean; 
+        uid: string; 
+        activeStrategyMap: Record<string, string>;
+        symbolEnabled?: Record<string, boolean>;
+      }>(
         `/api/proxy/strategy-map/${uid}`,
         {
           method: "POST",
-          body: JSON.stringify({ map }),
+          body: JSON.stringify({ map, symbolEnabled, requireExplicitMapping }),
         }
       ),
   },
