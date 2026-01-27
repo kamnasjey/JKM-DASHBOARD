@@ -63,6 +63,8 @@ export interface UnifiedSignal {
   confluenceHit?: number
   /** Outcome tracking */
   outcome?: "win" | "loss" | "expired" | "pending"
+  /** Entry taken by user */
+  entry_taken?: boolean | null
   /** Full explain payload if available */
   explain?: Record<string, any>
   /** Actionable links */
@@ -107,17 +109,17 @@ export interface ScannerResult {
 export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
   // Generate stable ID from key fields
   const id = `scanner:${item.strategyId}:${item.symbol}:${item.tf}:${item.ts}`
-  
+
   // Map bias to direction
   let direction: "long" | "short" | "neutral" = "neutral"
   if (item.bias === "bullish" || item.bias === "long") direction = "long"
   if (item.bias === "bearish" || item.bias === "short") direction = "short"
-  
+
   // Build simulator link
   const to = new Date(item.ts)
   const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000) // 90 days back
   const simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(item.tf)}&strategyId=${encodeURIComponent(item.strategyId)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
-  
+
   return {
     id,
     source: "scanner",
@@ -154,7 +156,7 @@ export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
  */
 export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSignal {
   const id = `signals:${item.signal_id}`
-  
+
   // Map direction
   let direction: "long" | "short" | "neutral" = "neutral"
   if (item.direction === "BUY" || item.direction === "bullish" || item.direction === "long") {
@@ -163,10 +165,10 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
   if (item.direction === "SELL" || item.direction === "bearish" || item.direction === "short") {
     direction = "short"
   }
-  
+
   // Convert epoch to ISO (fallback if ts not provided)
   const ts = item.ts || new Date(item.created_at * 1000).toISOString()
-  
+
   // Build simulator link if possible
   let simulatorLink: string | undefined
   const tf = item.timeframe || item.tf
@@ -175,12 +177,12 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
     const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000)
     simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(tf)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
   }
-  
+
   // Extract fail reasons as note
-  const note = item.fail_reasons?.length 
+  const note = item.fail_reasons?.length
     ? `Fail: ${item.fail_reasons.join(", ")}`
     : undefined
-  
+
   const outcome = item.outcome
     ? String(item.outcome).toLowerCase()
     : undefined
@@ -204,19 +206,20 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
     note,
     dataCoverage: item.explain?.dataCoverage
       ? {
-          missingPct: item.explain?.dataCoverage?.missingPct ?? item.explain?.dataCoverage?.pct,
-          barsScanned: item.explain?.dataCoverage?.barsScanned ?? item.explain?.dataCoverage?.rows,
-        }
+        missingPct: item.explain?.dataCoverage?.missingPct ?? item.explain?.dataCoverage?.pct,
+        barsScanned: item.explain?.dataCoverage?.barsScanned ?? item.explain?.dataCoverage?.rows,
+      }
       : undefined,
     detectors: item.detectors_normalized || item.hits_per_detector
       ? {
-          normalized: item.detectors_normalized,
-          unknown: [],
-          hitsPerDetector: item.hits_per_detector,
-        }
+        normalized: item.detectors_normalized,
+        unknown: [],
+        hitsPerDetector: item.hits_per_detector,
+      }
       : undefined,
     explain: item.explain,
     links: simulatorLink ? { openSimulator: simulatorLink } : undefined,
+    entry_taken: item.entry_taken ?? item.user_tracking?.entry_taken,
   }
 }
 
@@ -244,13 +247,13 @@ export function mergeSignals(
   oldSignals: UnifiedSignal[]
 ): UnifiedSignal[] {
   const seen = new Map<string, UnifiedSignal>()
-  
+
   // Add scanner results first (preferred)
   for (const signal of scannerResults) {
     const key = getDedupeKey(signal)
     seen.set(key, signal)
   }
-  
+
   // Add old signals (only if not already seen)
   for (const signal of oldSignals) {
     const key = getDedupeKey(signal)
@@ -258,7 +261,7 @@ export function mergeSignals(
       seen.set(key, signal)
     }
   }
-  
+
   // Convert to array and sort by ts desc
   const merged = Array.from(seen.values())
   merged.sort((a, b) => {
@@ -266,7 +269,7 @@ export function mergeSignals(
     const tb = new Date(b.ts).getTime()
     return tb - ta // Newest first
   })
-  
+
   return merged
 }
 

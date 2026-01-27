@@ -191,6 +191,13 @@ export interface SignalPayloadPublicV1 {
   outcome?: "win" | "loss" | "expired" | "pending"
   resolved_at?: number  // epoch seconds
   resolved_price?: number
+  // User tracking
+  entry_taken?: boolean | null
+  user_tracking?: {
+    entry_taken?: boolean | null
+    notes?: string
+    updated_at?: number
+  }
 }
 
 // ============================================

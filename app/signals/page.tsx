@@ -2,18 +2,20 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { 
-  Filter, 
-  Wifi, 
-  WifiOff, 
-  Zap, 
-  AlertTriangle, 
+import {
+  Filter,
+  Wifi,
+  WifiOff,
+  Zap,
+  AlertTriangle,
   ExternalLink,
   RefreshCw,
   Activity,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Check,
+  X
 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -72,17 +74,17 @@ interface ScannerStatus {
 // Health Strip Component
 // ============================================================
 
-function ScannerHealthStrip({ 
-  status, 
-  loading, 
-  onRefresh 
-}: { 
+function ScannerHealthStrip({
+  status,
+  loading,
+  onRefresh
+}: {
   status: ScannerStatus | null
   loading: boolean
   onRefresh: () => void
 }) {
   const dashboardVersion = getDashboardVersion()
-  
+
   if (!status) {
     return (
       <Card className="border-yellow-500/30 bg-yellow-950/10">
@@ -126,7 +128,7 @@ function ScannerHealthStrip({
                 </Badge>
               )}
             </div>
-            
+
             {/* Counters */}
             {isRunning && (
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -156,7 +158,7 @@ function ScannerHealthStrip({
                 Last: {formatTimestamp(status.lastCycleAt)}
               </span>
             )}
-            
+
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
                 dash:{dashboardVersion}
@@ -182,10 +184,17 @@ function ScannerHealthStrip({
 // Signal Row Component
 // ============================================================
 
-function SignalRow({ signal }: { signal: UnifiedSignal }) {
+function SignalRow({
+  signal,
+  onToggle
+}: {
+  signal: UnifiedSignal
+  onToggle?: (id: string, taken: boolean) => void
+}) {
   const lowCoverage = hasLowCoverage(signal)
   const confidenceLevel = getConfidenceLevel(signal.confidence)
-  
+  const entryTaken = signal.entry_taken
+
   const confidenceColor = {
     high: "text-green-500",
     medium: "text-yellow-500",
@@ -197,7 +206,7 @@ function SignalRow({ signal }: { signal: UnifiedSignal }) {
     <TableRow>
       {/* Source Badge */}
       <TableCell>
-        <Badge 
+        <Badge
           variant={signal.source === "scanner" ? "default" : "secondary"}
           className={cn(
             "text-xs",
@@ -211,53 +220,73 @@ function SignalRow({ signal }: { signal: UnifiedSignal }) {
           )}
         </Badge>
       </TableCell>
-      
+
       {/* Symbol */}
       <TableCell className="font-mono font-medium">{signal.symbol}</TableCell>
-      
+
       {/* Timeframe */}
       <TableCell>{signal.timeframe}</TableCell>
-      
+
       {/* Direction */}
       <TableCell>
         <Badge variant={signal.direction === "long" ? "default" : signal.direction === "short" ? "destructive" : "secondary"}>
           {formatDirection(signal.direction)}
         </Badge>
       </TableCell>
-      
+
       {/* Confidence */}
       <TableCell className={confidenceColor}>
-        {signal.confidence !== undefined 
-          ? `${(signal.confidence * 100).toFixed(0)}%` 
+        {signal.confidence !== undefined
+          ? `${(signal.confidence * 100).toFixed(0)}%`
           : "—"
         }
       </TableCell>
-      
+
       {/* RR */}
       <TableCell>
         {signal.rr !== undefined ? signal.rr.toFixed(2) : "—"}
       </TableCell>
-      
+
       {/* Strategy */}
       <TableCell className="max-w-[150px] truncate">
         {signal.strategyName || signal.strategyId?.slice(0, 8) || "—"}
       </TableCell>
-      
+
       {/* Time */}
       <TableCell className="text-muted-foreground text-sm">
         {formatTimestamp(signal.ts)}
       </TableCell>
-      
-      {/* Warnings */}
-      <TableCell>
-        {lowCoverage && (
-          <Badge variant="outline" className="text-yellow-500 border-yellow-500/30 text-xs">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            {signal.dataCoverage?.missingPct?.toFixed(0)}% missing
-          </Badge>
+
+      {/* Entry Toggle (Signals only) */}
+      <TableCell className="text-center">
+        {signal.source === "signals" ? (
+          <Button
+            variant={entryTaken === true ? "default" : entryTaken === false ? "outline" : "ghost"}
+            size="sm"
+            className={cn(
+              "h-7 w-7 p-0",
+              entryTaken === true && "bg-green-600 hover:bg-green-700",
+              entryTaken === false && "border-red-500 text-red-500"
+            )}
+            onClick={() => {
+              const rawId = signal.id.replace("signals:", "")
+              onToggle?.(rawId, entryTaken !== true)
+            }}
+            title={entryTaken === true ? "Entry Taken" : "Mark as Taken"}
+          >
+            {entryTaken === true ? (
+              <Check className="h-4 w-4" />
+            ) : entryTaken === false ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
         )}
       </TableCell>
-      
+
       {/* Actions */}
       <TableCell>
         {signal.links?.openSimulator && (
@@ -327,7 +356,13 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 // Signals Table Component
 // ============================================================
 
-function UnifiedSignalsTable({ signals }: { signals: UnifiedSignal[] }) {
+function UnifiedSignalsTable({
+  signals,
+  onToggle
+}: {
+  signals: UnifiedSignal[]
+  onToggle?: (id: string, taken: boolean) => void
+}) {
   return (
     <Card>
       <CardContent className="p-0">
@@ -342,13 +377,13 @@ function UnifiedSignalsTable({ signals }: { signals: UnifiedSignal[] }) {
               <TableHead>RR</TableHead>
               <TableHead>Strategy</TableHead>
               <TableHead>Time</TableHead>
-              <TableHead>Warnings</TableHead>
+              <TableHead className="text-center">Entry</TableHead>
               <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {signals.map((signal) => (
-              <SignalRow key={signal.id} signal={signal} />
+              <SignalRow key={signal.id} signal={signal} onToggle={onToggle} />
             ))}
           </TableBody>
         </Table>
@@ -373,7 +408,7 @@ export default function SignalsPage() {
   const [oldSignals, setOldSignals] = useState<SignalPayloadPublicV1[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   const [filters, setFilters] = useState({
     symbol: "all",
     direction: "all",
@@ -385,7 +420,7 @@ export default function SignalsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       // Fetch all in parallel
       const [statusRes, resultsRes, signalsData] = await Promise.all([
@@ -397,13 +432,38 @@ export default function SignalsPage() {
       setScannerStatus(statusRes)
       setScannerResults(resultsRes.results || [])
       setOldSignals(signalsData)
-      
+
     } catch (e: any) {
       setError(e.message || "Алдаа гарлаа")
     } finally {
       setLoading(false)
     }
   }, [])
+
+  // Handle entry toggle
+  const handleEntryToggle = useCallback(async (signalId: string, taken: boolean) => {
+    try {
+      // Optimistic update
+      setOldSignals((prev) =>
+        prev.map((s) => s.signal_id === signalId ? { ...s, entry_taken: taken } : s)
+      )
+
+      await api.updateSignalEntry(signalId, taken)
+
+      toast({
+        title: taken ? "Entry Taken ✅" : "Entry Removed ❌",
+        description: "Signal tracking updated"
+      })
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to update tracking",
+        variant: "destructive"
+      })
+      // Revert on error (fetch fresh data)
+      fetchData()
+    }
+  }, [fetchData, toast])
 
   useEffect(() => {
     fetchData()
@@ -447,12 +507,12 @@ export default function SignalsPage() {
   }, [unifiedSignals, activeTab, filters])
 
   // Counts for tabs
-  const scannerCount = useMemo(() => 
-    unifiedSignals.filter(s => s.source === "scanner").length, 
+  const scannerCount = useMemo(() =>
+    unifiedSignals.filter(s => s.source === "scanner").length,
     [unifiedSignals]
   )
-  const signalsCount = useMemo(() => 
-    unifiedSignals.filter(s => s.source === "signals").length, 
+  const signalsCount = useMemo(() =>
+    unifiedSignals.filter(s => s.source === "signals").length,
     [unifiedSignals]
   )
 
@@ -498,8 +558,8 @@ export default function SignalsPage() {
         </div>
 
         {/* Health Strip */}
-        <ScannerHealthStrip 
-          status={scannerStatus} 
+        <ScannerHealthStrip
+          status={scannerStatus}
           loading={loading}
           onRefresh={fetchData}
         />
@@ -533,8 +593,8 @@ export default function SignalsPage() {
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-1">
                   <label className="text-xs font-medium">Symbol</label>
-                  <Select 
-                    value={filters.symbol} 
+                  <Select
+                    value={filters.symbol}
                     onValueChange={(v) => setFilters(f => ({ ...f, symbol: v }))}
                   >
                     <SelectTrigger>
@@ -551,8 +611,8 @@ export default function SignalsPage() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium">Чиглэл</label>
-                  <Select 
-                    value={filters.direction} 
+                  <Select
+                    value={filters.direction}
                     onValueChange={(v) => setFilters(f => ({ ...f, direction: v }))}
                   >
                     <SelectTrigger>
@@ -601,7 +661,8 @@ export default function SignalsPage() {
             ) : filteredSignals.length === 0 ? (
               scannerCount === 0 ? <EmptyScannerState /> : <EmptySignalsState />
             ) : (
-              <UnifiedSignalsTable signals={filteredSignals} />
+            ): (
+                <UnifiedSignalsTable signals = { filteredSignals } onToggle = { handleEntryToggle } />
             )}
           </TabsContent>
 
@@ -615,7 +676,7 @@ export default function SignalsPage() {
             ) : filteredSignals.length === 0 ? (
               <EmptyScannerState />
             ) : (
-              <UnifiedSignalsTable signals={filteredSignals} />
+              <UnifiedSignalsTable signals={filteredSignals} onToggle={handleEntryToggle} />
             )}
           </TabsContent>
 
@@ -629,7 +690,7 @@ export default function SignalsPage() {
             ) : filteredSignals.length === 0 ? (
               <EmptySignalsState />
             ) : (
-              <UnifiedSignalsTable signals={filteredSignals} />
+              <UnifiedSignalsTable signals={filteredSignals} onToggle={handleEntryToggle} />
             )}
           </TabsContent>
         </Tabs>
