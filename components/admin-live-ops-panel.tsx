@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Check, AlertTriangle, X, Activity, Clock, Radio, TrendingUp, TrendingDown, Shield } from "lucide-react"
+import { Check, AlertTriangle, X, Clock, Radio, Shield } from "lucide-react"
 
 // All 15 supported symbols (Forex + Metals + Crypto)
 export const ALL_SYMBOLS = [
@@ -57,12 +57,15 @@ interface AdminLiveOpsPanelProps {
       rootCause?: string
     }
   } | null
+  // Direct candle timestamps per symbol (unix seconds)
+  allSymbolsCandles?: Record<string, number | null>
   nowTs: number
 }
 
 export function AdminLiveOpsPanel({
   feedStatus,
   engineStatus247,
+  allSymbolsCandles = {},
   nowTs,
 }: AdminLiveOpsPanelProps) {
   // Get status for each symbol
@@ -78,22 +81,50 @@ export function AdminLiveOpsPanel({
         (i) => i.symbol?.toUpperCase() === symbol.toUpperCase()
       )
       
-      // Determine status
-      let status: "live" | "delayed" | "closed" | "unknown" = "unknown"
-      let lagSec = effSym?.lagSec ?? feedItem?.lagSec ?? null
+      // Get lastCandleTs from allSymbolsCandles (direct fetch), feedStatus, or engineStatus247
       let lastCandleTs = effSym?.lastCandleTs ?? feedItem?.lastCandleTs ?? null
-      let lastScanTs = effSym?.lastScanTs ?? null
-      let setupsFound24h = effSym?.setupsFound24h ?? 0
-      let isMapped = effSym?.isMapped ?? false
-      let strategyName = effSym?.strategyNameUsed ?? null
       let rootCause = effSym?.delayReason ?? feedItem?.rootCause ?? null
+      
+      // Calculate lag from lastCandleTs if available
+      let lagSec: number | null = null
+      let lastCandleUnix: number | null = null
+      
+      // Priority: allSymbolsCandles (direct fetch) > feedStatus > engineStatus247
+      const directCandleTs = allSymbolsCandles[symbol]
+      if (directCandleTs !== undefined && directCandleTs !== null) {
+        lastCandleUnix = directCandleTs
+        lagSec = Math.max(0, nowTs - lastCandleUnix)
+      } else if (lastCandleTs) {
+        try {
+          lastCandleUnix = Math.floor(new Date(lastCandleTs).getTime() / 1000)
+          lagSec = Math.max(0, nowTs - lastCandleUnix)
+        } catch {
+          lagSec = effSym?.lagSec ?? feedItem?.lagSec ?? null
+        }
+      } else {
+        lagSec = effSym?.lagSec ?? feedItem?.lagSec ?? null
+      }
+      
+      // Calculate next M5 candle time (M5 = 300 seconds)
+      let nextCandleIn: number | null = null
+      if (lastCandleUnix) {
+        const nextCandleTs = lastCandleUnix + 300
+        nextCandleIn = nextCandleTs - nowTs
+      }
+      
+      // Determine status
+      let status: "live" | "delayed" | "closed" = "delayed"
       
       if (rootCause === "MARKET_CLOSED") {
         status = "closed"
-      } else if (lagSec && lagSec > 300) {
-        status = "delayed"
-      } else if (lagSec !== null || lastCandleTs) {
-        status = "live"
+      } else if (lagSec !== null) {
+        // Live = candle arrived within 5min + 60sec grace (360 sec)
+        // Delayed = more than that
+        if (lagSec <= 360) {
+          status = "live"
+        } else {
+          status = "delayed"
+        }
       }
       
       return {
@@ -101,58 +132,59 @@ export function AdminLiveOpsPanel({
         status,
         lagSec,
         lastCandleTs,
-        lastScanTs,
-        setupsFound24h,
-        isMapped,
-        strategyName,
+        lastCandleUnix,
+        nextCandleIn,
         rootCause,
       }
     })
-  }, [feedStatus, engineStatus247])
+  }, [feedStatus, engineStatus247, allSymbolsCandles, nowTs])
 
-  // Aggregate stats
+  // Aggregate stats - only LIVE, DELAYED, CLOSED
   const stats = useMemo(() => {
     let live = 0
     let delayed = 0
     let closed = 0
-    let unknown = 0
-    let totalMapped = 0
-    let totalSetups = 0
     
     symbolStatuses.forEach((s) => {
       if (s.status === "live") live++
       else if (s.status === "delayed") delayed++
       else if (s.status === "closed") closed++
-      else unknown++
-      
-      if (s.isMapped) totalMapped++
-      totalSetups += s.setupsFound24h
     })
     
-    return { live, delayed, closed, unknown, totalMapped, totalSetups }
+    return { live, delayed, closed }
   }, [symbolStatuses])
 
-  const formatLag = (lagSec: number | null | undefined) => {
+  // Format lag as "Xm Ys ago"
+  const formatLagAgo = (lagSec: number | null | undefined) => {
     if (lagSec === null || lagSec === undefined) return "—"
-    if (lagSec < 60) return `${Math.round(lagSec)}s`
     const mins = Math.floor(lagSec / 60)
-    const secs = Math.round(lagSec % 60)
+    const secs = Math.floor(lagSec % 60)
     if (mins >= 60) {
       const hours = Math.floor(mins / 60)
       const remainMins = mins % 60
-      return `${hours}h ${remainMins}m`
+      return `${hours}h ${remainMins}m ago`
     }
-    return `${mins}m ${secs}s`
+    if (mins > 0) {
+      return `${mins}m ${secs}s ago`
+    }
+    return `${secs}s ago`
   }
 
-  const formatTime = (ts: string | null | undefined) => {
-    if (!ts) return "—"
-    try {
-      const date = new Date(ts)
-      return date.toLocaleTimeString("mn-MN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-    } catch {
-      return "—"
+  // Format next candle countdown as "M:SS"
+  const formatNextCandle = (nextIn: number | null | undefined) => {
+    if (nextIn === null || nextIn === undefined) return "—"
+    
+    if (nextIn <= 0) {
+      // Overdue - candle should have arrived
+      const overdue = Math.abs(nextIn)
+      const mins = Math.floor(overdue / 60)
+      const secs = Math.floor(overdue % 60)
+      return `overdue ${mins}m ${secs}s`
     }
+    
+    const mins = Math.floor(nextIn / 60)
+    const secs = Math.floor(nextIn % 60)
+    return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
   const formatRelative = (ts: string | null | undefined) => {
@@ -183,31 +215,19 @@ export function AdminLiveOpsPanel({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Stats Summary */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
+        {/* Stats Summary - Only LIVE, DELAYED, CLOSED */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="text-center p-2 rounded-md bg-green-500/10 border border-green-500/30">
-            <div className="text-xl font-bold text-green-500">{stats.live}</div>
+            <div className="text-2xl font-bold text-green-500">{stats.live}</div>
             <div className="text-[10px] text-muted-foreground">LIVE</div>
           </div>
           <div className="text-center p-2 rounded-md bg-amber-500/10 border border-amber-500/30">
-            <div className="text-xl font-bold text-amber-500">{stats.delayed}</div>
+            <div className="text-2xl font-bold text-amber-500">{stats.delayed}</div>
             <div className="text-[10px] text-muted-foreground">DELAYED</div>
           </div>
           <div className="text-center p-2 rounded-md bg-blue-500/10 border border-blue-500/30">
-            <div className="text-xl font-bold text-blue-500">{stats.closed}</div>
+            <div className="text-2xl font-bold text-blue-500">{stats.closed}</div>
             <div className="text-[10px] text-muted-foreground">CLOSED</div>
-          </div>
-          <div className="text-center p-2 rounded-md bg-muted/30 border border-muted-foreground/30">
-            <div className="text-xl font-bold text-muted-foreground">{stats.unknown}</div>
-            <div className="text-[10px] text-muted-foreground">UNKNOWN</div>
-          </div>
-          <div className="text-center p-2 rounded-md bg-primary/10 border border-primary/30">
-            <div className="text-xl font-bold text-primary">{stats.totalMapped}</div>
-            <div className="text-[10px] text-muted-foreground">MAPPED</div>
-          </div>
-          <div className="text-center p-2 rounded-md bg-primary/10 border border-primary/30">
-            <div className="text-xl font-bold text-primary">{stats.totalSetups}</div>
-            <div className="text-[10px] text-muted-foreground">24h SETUPS</div>
           </div>
         </div>
 
@@ -218,16 +238,6 @@ export function AdminLiveOpsPanel({
               <Radio className={`h-3 w-3 ${engineStatus247.engineRunning ? "text-green-500 animate-pulse" : "text-muted-foreground"}`} />
               Engine: {engineStatus247.engineRunning ? "Running" : "Stopped"}
             </span>
-            {engineStatus247.lastOutcome && (
-              <>
-                <span>|</span>
-                <span>Cycle #{engineStatus247.lastOutcome.cycle}</span>
-                <span>|</span>
-                <span>Scanned: {engineStatus247.lastOutcome.symbolsScanned}</span>
-                <span>|</span>
-                <span>Setups: {engineStatus247.lastOutcome.setupsFound}</span>
-              </>
-            )}
             {engineStatus247.lastCycleTs && (
               <>
                 <span>|</span>
@@ -247,75 +257,56 @@ export function AdminLiveOpsPanel({
                 ${item.status === "live" ? "border-green-500/30 bg-green-500/5" : ""}
                 ${item.status === "delayed" ? "border-amber-500/30 bg-amber-500/5" : ""}
                 ${item.status === "closed" ? "border-blue-500/30 bg-blue-500/5" : ""}
-                ${item.status === "unknown" ? "border-muted-foreground/30 bg-muted/10" : ""}
               `}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-sm font-bold">{item.symbol}</span>
                 <div className="flex items-center gap-1">
                   {item.status === "live" && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 text-green-500 border-green-500 gap-0.5">
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-green-500 border-green-500 gap-0.5">
                       <Check className="h-2.5 w-2.5" />
                       LIVE
                     </Badge>
                   )}
                   {item.status === "delayed" && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 text-amber-500 border-amber-500 gap-0.5">
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-amber-500 border-amber-500 gap-0.5">
                       <AlertTriangle className="h-2.5 w-2.5" />
                       DELAY
                     </Badge>
                   )}
                   {item.status === "closed" && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 text-blue-500 border-blue-500 gap-0.5">
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 text-blue-500 border-blue-500 gap-0.5">
                       <X className="h-2.5 w-2.5" />
                       CLOSED
-                    </Badge>
-                  )}
-                  {item.status === "unknown" && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 text-muted-foreground border-muted-foreground/50 gap-0.5">
-                      ?
                     </Badge>
                   )}
                 </div>
               </div>
 
-              {/* Details */}
-              <div className="text-[10px] text-muted-foreground space-y-0.5">
-                {/* Data Lag */}
-                <div className="flex items-center gap-1">
-                  <Clock className="h-2.5 w-2.5" />
-                  <span>Lag: {formatLag(item.lagSec)}</span>
-                  {item.lastCandleTs && (
-                    <span className="text-muted-foreground/70">
-                      (Last: {formatTime(item.lastCandleTs)})
-                    </span>
-                  )}
+              {/* Last M5 and Next In */}
+              <div className="text-[11px] space-y-1">
+                {/* Last M5 */}
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Last M5:</span>
+                  <span className={`font-mono ${item.status === "live" ? "text-green-500" : item.status === "delayed" ? "text-amber-500" : "text-blue-500"}`}>
+                    {formatLagAgo(item.lagSec)}
+                  </span>
                 </div>
 
-                {/* Strategy Mapping */}
-                {item.isMapped && item.strategyName && (
-                  <div className="flex items-center gap-1 text-primary">
-                    <Activity className="h-2.5 w-2.5" />
-                    <span className="truncate">{item.strategyName}</span>
-                  </div>
-                )}
-
-                {/* Setups Found */}
-                {item.setupsFound24h > 0 && (
-                  <div className="flex items-center gap-1 text-green-500">
-                    <TrendingUp className="h-2.5 w-2.5" />
-                    <span>{item.setupsFound24h} setups (24h)</span>
-                  </div>
-                )}
-
-                {/* Last Scan */}
-                {item.lastScanTs && (
-                  <div className="flex items-center gap-1">
-                    <Radio className="h-2.5 w-2.5" />
-                    <span>Scan: {formatRelative(item.lastScanTs)}</span>
-                  </div>
-                )}
+                {/* Next In */}
+                <div className="flex items-center gap-1.5">
+                  <Radio className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Next in:</span>
+                  <span className={`font-mono ${
+                    item.nextCandleIn !== null && item.nextCandleIn <= 0 
+                      ? "text-amber-500" 
+                      : "text-foreground"
+                  }`}>
+                    {item.status === "closed" ? "—" : formatNextCandle(item.nextCandleIn)}
+                  </span>
+                </div>
               </div>
             </div>
           ))}

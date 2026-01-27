@@ -15,7 +15,7 @@ import type { SignalPayloadPublicV1 } from "@/lib/types"
 import { DETECTOR_CATALOG } from "@/lib/detectors/catalog"
 import { ActiveStrategiesPanel } from "@/components/active-strategies-panel"
 import { SignalsHistoryPanel } from "@/components/signals-history-panel"
-import { AdminLiveOpsPanel } from "@/components/admin-live-ops-panel"
+import { AdminLiveOpsPanel, ALL_SYMBOLS } from "@/components/admin-live-ops-panel"
 import {
   Select,
   SelectContent,
@@ -131,6 +131,9 @@ export default function DashboardPage() {
   // Feed status from backend (anti-drift)
   const [feedStatus, setFeedStatus] = useState<any>(null)
   const [refreshingFeed, setRefreshingFeed] = useState(false)
+  
+  // Admin: All 15 symbols candle data for Live Ops
+  const [allSymbolsCandles, setAllSymbolsCandles] = useState<Record<string, number | null>>({})
 
   const detectorMetaMap = useMemo(() => {
     return new Map(DETECTOR_CATALOG.map((d) => [d.id, d]))
@@ -421,6 +424,46 @@ export default function DashboardPage() {
     }
   }, [status, liveOpsSymbol])
 
+  // Admin: Fetch all 15 symbols' candle data for Live Ops panel
+  useEffect(() => {
+    if (!isAdmin) return
+    
+    const fetchAllSymbolsCandles = async () => {
+      const results: Record<string, number | null> = {}
+      
+      // Fetch candles for all symbols in parallel
+      await Promise.all(
+        ALL_SYMBOLS.map(async (symbol) => {
+          try {
+            const res = await api.candles(symbol, "M5", 1)
+            const candles = (res as any)?.candles || res || []
+            if (candles.length > 0) {
+              const candleTs = candles[0].time || candles[0].t || 0
+              const ts = typeof candleTs === "number" 
+                ? candleTs 
+                : Math.floor(new Date(candleTs).getTime() / 1000)
+              results[symbol] = ts
+            } else {
+              results[symbol] = null
+            }
+          } catch {
+            results[symbol] = null
+          }
+        })
+      )
+      
+      setAllSymbolsCandles(results)
+    }
+    
+    // Initial fetch
+    fetchAllSymbolsCandles()
+    
+    // Poll every 30 seconds
+    const interval = setInterval(fetchAllSymbolsCandles, 30_000)
+    
+    return () => clearInterval(interval)
+  }, [isAdmin])
+
   const handleManualScan = async () => {
     setLoading(true)
     try {
@@ -594,6 +637,7 @@ export default function DashboardPage() {
           <AdminLiveOpsPanel
             feedStatus={feedStatus}
             engineStatus247={engineStatus247}
+            allSymbolsCandles={allSymbolsCandles}
             nowTs={nowTs}
           />
         )}
