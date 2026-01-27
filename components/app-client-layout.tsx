@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppTopbar } from "@/components/app-topbar"
 import { useSession } from "next-auth/react"
+import { SignalsProvider } from "@/context/SignalsContext"
 
 export function AppClientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -21,12 +22,15 @@ export function AppClientLayout({ children }: { children: React.ReactNode }) {
   if (status !== "authenticated") return null
 
   return (
-    <div className="flex h-screen">
-      <AppSidebar />
-      <div className="flex flex-1 flex-col">
-        <AppTopbar />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+    <SignalsProvider>
+      <div className="flex h-screen">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col">
+          <AppTopbar />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </div>
       </div>
-    </div>
+    </SignalsProvider>
   )
 }
+
