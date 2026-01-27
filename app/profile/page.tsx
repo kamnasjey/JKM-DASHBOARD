@@ -54,8 +54,8 @@ export default function ProfilePage() {
     if (!profile) return
     setSaving(true)
     try {
-      await api.updateProfile({ profile })
       const rawChatId = typeof profile?.telegram_chat_id === "string" ? profile.telegram_chat_id.trim() : ""
+      // Save telegram prefs to Firestore directly (no backend needed)
       await api.updateUserPrefs({
         telegram_chat_id: rawChatId || null,
         telegram_enabled: Boolean(rawChatId),
