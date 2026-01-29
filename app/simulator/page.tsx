@@ -593,22 +593,31 @@ export default function SimulatorPage() {
         })
         const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."
         const patched = addDemoWarning(demoRes, warning)
-        setResult(patched as MultiTFResult)
-        if (!patched.ok && patched.error) {
-          setError(normalizeMessage(patched.error))
+
+        // Extract trades from multiple possible locations (single-TF vs multi-TF response)
+        const patchedTrades = patched.trades || patched.combined?.tradesSample || []
+        const normalizedPatched = { ...patched, trades: patchedTrades } as MultiTFResult
+
+        setResult(normalizedPatched)
+        if (!normalizedPatched.ok && normalizedPatched.error) {
+          setError(normalizeMessage(normalizedPatched.error))
         }
         // Animate trades if available
-        if (patched.trades && patched.trades.length > 0) {
-          animateTradesStream(patched.trades)
+        if (patchedTrades.length > 0) {
+          animateTradesStream(patchedTrades)
         }
         return
       }
 
-      setResult(res as MultiTFResult)
-      
+      // Extract trades from multiple possible locations (single-TF vs multi-TF response)
+      const trades = res.trades || res.combined?.tradesSample || []
+      const normalizedRes = { ...res, trades } as MultiTFResult
+
+      setResult(normalizedRes)
+
       // Animate trades if available
-      if (res.trades && res.trades.length > 0) {
-        animateTradesStream(res.trades)
+      if (trades.length > 0) {
+        animateTradesStream(trades)
       }
 
       if (!res.ok && res.error) {
@@ -695,17 +704,26 @@ export default function SimulatorPage() {
         })
         const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."
         const patched = addDemoWarning(demoRes, warning)
-        setResult(patched as MultiTFResult)
-        if (!patched.ok && patched.error) {
-          setError(normalizeMessage(patched.error))
+
+        // Extract trades from multiple possible locations (single-TF vs multi-TF response)
+        const patchedTrades = patched.trades || patched.combined?.tradesSample || []
+        const normalizedPatched = { ...patched, trades: patchedTrades } as MultiTFResult
+
+        setResult(normalizedPatched)
+        if (!normalizedPatched.ok && normalizedPatched.error) {
+          setError(normalizeMessage(normalizedPatched.error))
         }
         return
       }
 
-      setResult(res as MultiTFResult)
+      // Extract trades from multiple possible locations (single-TF vs multi-TF response)
+      const trades = res.trades || res.combined?.tradesSample || []
+      const normalizedRes = { ...res, trades } as MultiTFResult
 
-      if (!res.ok && res.error) {
-        setError(normalizeMessage(res.error))
+      setResult(normalizedRes)
+
+      if (!normalizedRes.ok && normalizedRes.error) {
+        setError(normalizeMessage(normalizedRes.error))
       }
     } catch (err: any) {
       setError(normalizeMessage(err?.message || "Quick fix simulation failed"))

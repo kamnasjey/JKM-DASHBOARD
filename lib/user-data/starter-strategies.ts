@@ -22,7 +22,7 @@ const USERS_COLLECTION = "users"
 const STRATEGIES_SUBCOLLECTION = "strategies"
 
 /** Current starter seed version - increment to reseed all users */
-export const STARTER_SEED_VERSION = "v1"
+export const STARTER_SEED_VERSION = "v2"
 
 const DISABLE_STARTER_STRATEGIES = ["1", "true", "yes"].includes(
   String(process.env.DISABLE_STARTER_STRATEGIES || "").trim().toLowerCase(),
@@ -72,7 +72,53 @@ export interface StarterStrategyTemplate {
   }
 }
 
-export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = []
+export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
+  {
+    id: "starter_EDGE_1",
+    name: "EDGE #1 - Trend Continuation",
+    description: "BOS + FVG trend follow strategy. Best for clear trending markets.",
+    detectors: ["GATE_REGIME", "BOS", "FVG", "FLAG_PENNANT", "TREND_FIBO"],
+    gates: ["GATE_REGIME"],
+    triggers: ["BOS", "FVG"],
+    confluence: ["FLAG_PENNANT", "TREND_FIBO"],
+    starterKey: "edge_continuation_v1",
+    risk: {
+      minRR: 3.0,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 2,
+    },
+  },
+  {
+    id: "starter_EDGE_2",
+    name: "EDGE #2 - Reversal Trap",
+    description: "SWEEP + SFP liquidity grab reversal. Catches stop hunts.",
+    detectors: ["GATE_REGIME", "GATE_VOLATILITY", "SWEEP", "SFP", "ENGULF_AT_LEVEL", "PINBAR_AT_LEVEL"],
+    gates: ["GATE_REGIME", "GATE_VOLATILITY"],
+    triggers: ["SWEEP", "SFP"],
+    confluence: ["ENGULF_AT_LEVEL", "PINBAR_AT_LEVEL"],
+    starterKey: "edge_reversal_v1",
+    risk: {
+      minRR: 3.0,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 2,
+    },
+  },
+  {
+    id: "starter_EDGE_3",
+    name: "EDGE #3 - Order Block",
+    description: "OB + Break Retest institutional flow. Smart money entry.",
+    detectors: ["GATE_REGIME", "GATE_DRIFT_SENTINEL", "OB", "BREAKOUT_RETEST_ENTRY", "SR_ROLE_REVERSAL", "FIBO_RETRACE_CONFLUENCE"],
+    gates: ["GATE_REGIME", "GATE_DRIFT_SENTINEL"],
+    triggers: ["OB", "BREAKOUT_RETEST_ENTRY"],
+    confluence: ["SR_ROLE_REVERSAL", "FIBO_RETRACE_CONFLUENCE"],
+    starterKey: "edge_institutional_v1",
+    risk: {
+      minRR: 3.0,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 2,
+    },
+  },
+]
 
 // ============================================================
 // Seed Function
