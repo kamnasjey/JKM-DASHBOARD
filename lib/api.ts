@@ -941,4 +941,116 @@ export const api = {
       }>
       error?: string
     }>(`/api/proxy/engine-status/${uid}`),
+
+  // ========== CHART DRAWINGS APIs ==========
+  // User chart drawings (stored in Firestore)
+
+  drawings: {
+    /**
+     * List drawings for a symbol/timeframe
+     */
+    list: (symbol: string, timeframe: string, limit: number = 100) =>
+      apiFetch<{
+        ok: boolean
+        drawings: Array<{
+          id: string
+          symbol: string
+          timeframe: string
+          tool: "horizontal_line" | "trend_line" | "fibonacci" | "rectangle"
+          color: string
+          lineWidth: number
+          lineStyle: "solid" | "dashed" | "dotted"
+          label?: string | null
+          visible: boolean
+          locked: boolean
+          price?: number
+          startTime?: number
+          startPrice?: number
+          endTime?: number
+          endPrice?: number
+          levels?: number[]
+          fillColor?: string | null
+          createdAt: string
+          updatedAt: string
+        }>
+        count: number
+      }>(`/api/user-drawings?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}&limit=${limit}`),
+
+    /**
+     * Create a new drawing
+     */
+    create: (drawing: {
+      symbol: string
+      timeframe: string
+      tool: "horizontal_line" | "trend_line" | "fibonacci" | "rectangle"
+      color: string
+      lineWidth: number
+      lineStyle: "solid" | "dashed" | "dotted"
+      label?: string
+      visible?: boolean
+      locked?: boolean
+      price?: number
+      startTime?: number
+      startPrice?: number
+      endTime?: number
+      endPrice?: number
+      levels?: number[]
+      fillColor?: string
+    }) =>
+      apiFetch<{
+        ok: boolean
+        drawing: any
+      }>("/api/user-drawings", {
+        method: "POST",
+        body: JSON.stringify(drawing),
+      }),
+
+    /**
+     * Update a drawing
+     */
+    update: (drawingId: string, updates: Partial<{
+      color: string
+      lineWidth: number
+      lineStyle: "solid" | "dashed" | "dotted"
+      label: string | null
+      visible: boolean
+      locked: boolean
+      price: number
+      startTime: number
+      startPrice: number
+      endTime: number
+      endPrice: number
+      levels: number[]
+      fillColor: string | null
+    }>) =>
+      apiFetch<{
+        ok: boolean
+        drawing: any
+      }>(`/api/user-drawings/${encodeURIComponent(drawingId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      }),
+
+    /**
+     * Delete a drawing
+     */
+    delete: (drawingId: string) =>
+      apiFetch<{
+        ok: boolean
+        deleted: string
+      }>(`/api/user-drawings/${encodeURIComponent(drawingId)}`, {
+        method: "DELETE",
+      }),
+
+    /**
+     * Clear all drawings for a symbol/timeframe
+     */
+    clearAll: (symbol: string, timeframe: string) =>
+      apiFetch<{
+        ok: boolean
+        deletedCount: number
+      }>(`/api/user-drawings?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`, {
+        method: "DELETE",
+      }),
+  },
 }

@@ -108,7 +108,10 @@ export async function POST(request: NextRequest) {
   }
   
   const { strategyId, symbols, from, to, timeframe, mode, demoMode: clientDemoMode } = validation.data
-  
+
+  // Debug: Log received strategyId
+  console.log(`[${requestId}] Received strategyId: "${strategyId}" (type: ${typeof strategyId}, length: ${strategyId?.length})`)
+
   // --- 3. Check access (owner bypass) ---
   const isOwner = isOwnerEmail(userEmail)
   const hasPaidAccess = isOwner ? true : await checkUserAccess(userId)
@@ -142,11 +145,14 @@ export async function POST(request: NextRequest) {
   }
   
   // --- 4. Load strategy from Firestore ---
+  console.log(`[${requestId}] Looking up strategy for userId: ${userId}, strategyId: "${strategyId}"`)
   const strategy = await getStrategy(userId, strategyId)
-  
+  console.log(`[${requestId}] Strategy lookup result: ${strategy ? `found (${strategy.name})` : 'NOT FOUND'}`)
+
   if (!strategy) {
+    console.error(`[${requestId}] Strategy not found - userId: ${userId}, strategyId: "${strategyId}"`)
     return NextResponse.json(
-      { ok: false, error: "STRATEGY_NOT_FOUND", message: `Strategy ${strategyId} not found` },
+      { ok: false, error: "STRATEGY_NOT_FOUND", message: `Strategy '${strategyId}' not found` },
       { status: 404 }
     )
   }
