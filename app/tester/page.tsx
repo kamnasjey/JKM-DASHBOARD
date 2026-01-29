@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import { normalizeDetectorList } from "@/lib/detector-utils"
+import { normalizeDetectorList } from "@/lib/detectors/normalize"
 import Link from "next/link"
 
 // Extended detector info with Cyrillic labels

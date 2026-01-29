@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, Wand2, LayoutGrid } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,9 +17,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
-import { normalizeDetectorList } from "@/lib/detector-utils"
+import { normalizeDetectorList } from "@/lib/detectors/normalize"
 import { DetectorSelect, validateSelection, ensureRequiredDetectors, getUnknownDetectors } from "@/components/detectors/detector-select"
-import { CATEGORY_INFO, DETECTOR_BY_ID } from "@/lib/detectors/catalog"
+import { CATEGORY_INFO, DETECTOR_BY_ID, DETECTOR_PRESETS, type DetectorPreset } from "@/lib/detectors/catalog"
+import { StrategyWizard } from "@/components/strategy-wizard"
+import { TemplateGallery } from "@/components/strategy-templates"
+import type { TradingStyle } from "@/lib/detectors/trading-styles"
 
 const MAX_STRATEGIES = 30
 
@@ -106,6 +109,8 @@ export default function StrategiesPage() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editForm, setEditForm] = useState<Omit<Strategy, 'strategy_id'> & { strategy_id?: string }>(defaultStrategy)
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
+  const [showWizard, setShowWizard] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
 
   // Debug: log editForm.detectors changes
   useEffect(() => {
@@ -204,6 +209,107 @@ export default function StrategiesPage() {
     setEditForm({ ...defaultStrategy })
     setEditingIndex(null)
     setShowCreateDialog(true)
+  }
+
+  // Handle wizard completion
+  const handleWizardComplete = async (wizardResult: {
+    name: string
+    detectors: string[]
+    minRR: number
+    style: TradingStyle | null
+  }) => {
+    if (strategies.length >= MAX_STRATEGIES) {
+      toast({
+        title: "Хязгаарлалт",
+        description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSaving(true)
+    try {
+      const normalizedDetectors = normalizeDetectorList(wizardResult.detectors)
+      const result = await api.strategiesV2.create({
+        name: wizardResult.name,
+        enabled: true,
+        detectors: normalizedDetectors,
+        description: wizardResult.style ? `${wizardResult.style} style strategy` : undefined,
+        config: {
+          min_score: 1.0,
+          min_rr: wizardResult.minRR,
+        },
+      })
+
+      if (!result.ok) {
+        throw new Error("Failed to create")
+      }
+
+      toast({
+        title: "Амжилттай",
+        description: "Wizard-ээр шинэ стратеги үүсгэлээ",
+      })
+
+      await loadData()
+      setShowWizard(false)
+    } catch (err: any) {
+      console.error("[strategies] wizard save error:", err)
+      toast({
+        title: "Алдаа",
+        description: err.message || "Стратеги үүсгэхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Handle template use
+  const handleUseTemplate = async (preset: DetectorPreset) => {
+    if (strategies.length >= MAX_STRATEGIES) {
+      toast({
+        title: "Хязгаарлалт",
+        description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSaving(true)
+    try {
+      const normalizedDetectors = normalizeDetectorList(preset.detectors)
+      const result = await api.strategiesV2.create({
+        name: `${preset.nameEn} - Copy`,
+        enabled: true,
+        detectors: normalizedDetectors,
+        description: preset.descEn,
+        config: {
+          min_score: 1.0,
+          min_rr: preset.recommendedSettings?.minRR || 2.7,
+        },
+      })
+
+      if (!result.ok) {
+        throw new Error("Failed to create")
+      }
+
+      toast({
+        title: "Амжилттай",
+        description: `"${preset.nameEn}" template-ээс стратеги үүсгэлээ`,
+      })
+
+      await loadData()
+      setShowTemplates(false)
+    } catch (err: any) {
+      console.error("[strategies] template save error:", err)
+      toast({
+        title: "Алдаа",
+        description: err.message || "Стратеги үүсгэхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const openEditDialog = (index: number) => {
@@ -383,20 +489,36 @@ export default function StrategiesPage() {
               Таны trading стратегиуд ({strategies.length}/{MAX_STRATEGIES})
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
-              variant={view === "maker" ? "default" : "outline"}
+              variant="default"
+              onClick={() => setShowWizard(true)}
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              Wizard
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowTemplates(!showTemplates)}
+            >
+              <LayoutGrid className="mr-2 h-4 w-4" />
+              Templates
+            </Button>
+            <Button
+              variant={view === "maker" ? "secondary" : "outline"}
               onClick={() => setView((v) => (v === "maker" ? "list" : "maker"))}
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {view === "maker" ? "Жагсаалт" : "Strategy Maker"}
+              {view === "maker" ? "Жагсаалт" : "AI Maker"}
             </Button>
             <Button onClick={openCreateDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
-              Шинэ Strategy
+              Manual
             </Button>
-            <Button onClick={() => loadData()} disabled={loading} variant="outline">
-              {loading ? "Ачаалж байна..." : "Шинэчлэх"}
+            <Button onClick={() => loadData()} disabled={loading} variant="ghost" size="icon">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
             </Button>
           </div>
         </div>
@@ -412,10 +534,28 @@ export default function StrategiesPage() {
           />
         ) : (
           <>
+            {/* Template Gallery (collapsible) */}
+            {showTemplates && (
+              <Card>
+                <CardContent className="p-4">
+                  <TemplateGallery
+                    onUseTemplate={handleUseTemplate}
+                    disabled={saving}
+                    compact
+                    showControls={false}
+                    title="Strategy Templates"
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү. Хамгийн ихдээ {MAX_STRATEGIES} стратеги үүсгэх боломжтой.
+                <strong>Wizard</strong> - 4 алхамаар хялбар стратеги үүсгэх |{" "}
+                <strong>Templates</strong> - Backtest-тэй бэлэн template |{" "}
+                <strong>AI Maker</strong> - AI туслах |{" "}
+                <strong>Manual</strong> - Гараар үүсгэх
               </AlertDescription>
             </Alert>
 
@@ -758,6 +898,14 @@ export default function StrategiesPage() {
             </Dialog>
           </>
         )}
+
+        {/* Strategy Wizard Dialog */}
+        <StrategyWizard
+          open={showWizard}
+          onOpenChange={setShowWizard}
+          onComplete={handleWizardComplete}
+          disabled={saving}
+        />
       </div>
     </DashboardLayout>
   )

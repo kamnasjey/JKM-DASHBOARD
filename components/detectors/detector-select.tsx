@@ -20,11 +20,24 @@ import {
   type DetectorPreset,
 } from "@/lib/detectors/catalog"
 import { normalizeDetectorList } from "@/lib/detectors/normalize"
+import {
+  ESSENTIAL_DETECTOR_SET,
+  ESSENTIAL_COUNTS,
+  SIMPLE_MODE_INFO,
+  isEssentialDetector,
+} from "@/lib/detectors/essential"
+import {
+  getHighSynergyDetectors,
+  getConflictingDetectors,
+  getPopularCombinations,
+} from "@/lib/detectors/synergies"
 
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -57,6 +70,10 @@ interface DetectorSelectProps {
   disabled?: boolean
   /** Optional callback for "Fix & Save" (when editing existing strategy) */
   onFixAndSave?: (normalized: string[]) => void
+  /** Initial mode: simple (14 detectors) or advanced (31 detectors) */
+  initialMode?: "simple" | "advanced"
+  /** Show synergy hints */
+  showSynergyHints?: boolean
 }
 
 // ============================================================
@@ -69,16 +86,25 @@ function DetectorItem({
   isRequired,
   onToggle,
   disabled,
+  synergyWith,
+  conflictsWith,
+  showSynergyHints = false,
 }: {
   detector: DetectorMeta
   isSelected: boolean
   isRequired: boolean
   onToggle: () => void
   disabled?: boolean
+  synergyWith?: string[]
+  conflictsWith?: string[]
+  showSynergyHints?: boolean
 }) {
   const categoryInfo = CATEGORY_INFO[detector.category]
   const impactBadge = IMPACT_BADGES[detector.impact]
   const costBadge = COST_BADGES[detector.cost]
+
+  const hasSynergy = showSynergyHints && synergyWith && synergyWith.length > 0
+  const hasConflict = showSynergyHints && conflictsWith && conflictsWith.length > 0
 
   return (
     <div
@@ -88,7 +114,9 @@ function DetectorItem({
           ? "bg-primary/5 border-primary/30"
           : "bg-card/50 border-border/50 hover:border-border hover:bg-muted/30",
         disabled && "opacity-50 cursor-not-allowed",
-        isRequired && isSelected && "border-yellow-500/30 bg-yellow-500/5"
+        isRequired && isSelected && "border-yellow-500/30 bg-yellow-500/5",
+        hasSynergy && !isSelected && "border-green-500/20 bg-green-500/5",
+        hasConflict && !isSelected && "border-yellow-500/20"
       )}
       onClick={() => !disabled && !isRequired && onToggle()}
     >
@@ -126,6 +154,16 @@ function DetectorItem({
               Required
             </Badge>
           )}
+          {hasSynergy && !isSelected && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-500/30 text-green-600">
+              ✨ Synergy
+            </Badge>
+          )}
+          {hasConflict && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-yellow-500/30 text-yellow-600">
+              ⚠️
+            </Badge>
+          )}
         </div>
         {detector.labelMn && detector.labelMn !== detector.labelEn && (
           <p className="text-xs text-muted-foreground/70 mt-0.5">
@@ -135,6 +173,11 @@ function DetectorItem({
         <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
           {detector.descEn}
         </p>
+        {hasSynergy && !isSelected && synergyWith && (
+          <p className="text-[10px] text-green-600 mt-1">
+            Works well with: {synergyWith.slice(0, 2).join(", ")}
+          </p>
+        )}
       </div>
 
       {/* Badges */}
@@ -157,6 +200,9 @@ function CategorySection({
   onToggle,
   disabled,
   searchQuery,
+  synergyMap,
+  conflictMap,
+  showSynergyHints,
 }: {
   category: DetectorCategory
   detectors: DetectorMeta[]
@@ -164,11 +210,14 @@ function CategorySection({
   onToggle: (id: string) => void
   disabled?: boolean
   searchQuery: string
+  synergyMap?: Map<string, string[]>
+  conflictMap?: Map<string, string[]>
+  showSynergyHints?: boolean
 }) {
   const info = CATEGORY_INFO[category]
   const selectedCount = detectors.filter(d => selected.includes(d.id)).length
   const totalCount = detectors.length
-  
+
   // Filter by search (search in both EN and MN)
   const filteredDetectors = searchQuery
     ? detectors.filter(d =>
@@ -180,6 +229,15 @@ function CategorySection({
     : detectors
 
   if (filteredDetectors.length === 0) return null
+
+  // Sort: synergy hints first, then conflicts, then rest
+  const sortedDetectors = [...filteredDetectors].sort((a, b) => {
+    const aHasSynergy = synergyMap?.has(a.id) && !selected.includes(a.id)
+    const bHasSynergy = synergyMap?.has(b.id) && !selected.includes(b.id)
+    if (aHasSynergy && !bHasSynergy) return -1
+    if (!aHasSynergy && bHasSynergy) return 1
+    return 0
+  })
 
   return (
     <div className="space-y-2">
@@ -199,7 +257,7 @@ function CategorySection({
         {info.descEn}
       </p>
       <div className="space-y-1.5">
-        {filteredDetectors.map(detector => (
+        {sortedDetectors.map(detector => (
           <DetectorItem
             key={detector.id}
             detector={detector}
@@ -207,6 +265,9 @@ function CategorySection({
             isRequired={detector.required || false}
             onToggle={() => onToggle(detector.id)}
             disabled={disabled}
+            synergyWith={synergyMap?.get(detector.id)}
+            conflictsWith={conflictMap?.get(detector.id)}
+            showSynergyHints={showSynergyHints}
           />
         ))}
       </div>
@@ -360,10 +421,13 @@ export function DetectorSelect({
   maxHeight = "500px",
   disabled = false,
   onFixAndSave,
+  initialMode = "simple",
+  showSynergyHints = true,
 }: DetectorSelectProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"all" | DetectorCategory>("all")
   const [showPresets, setShowPresets] = useState(false)
+  const [isAdvancedMode, setIsAdvancedMode] = useState(initialMode === "advanced")
 
   // Ensure required detectors are always in selection
   const normalizedSelected = useMemo(
@@ -424,22 +488,73 @@ export function DetectorSelect({
     onFixAndSave?.(fixed)
   }, [selected, onChange, onFixAndSave])
 
-  // Filter detectors based on tab and search
+  // Calculate synergies for selected detectors
+  const synergyMap = useMemo(() => {
+    if (!showSynergyHints) return new Map<string, string[]>()
+
+    const map = new Map<string, string[]>()
+    for (const detectorId of normalizedSelected) {
+      const synergies = getHighSynergyDetectors(detectorId, 75)
+      for (const synergyId of synergies) {
+        if (!normalizedSelected.includes(synergyId)) {
+          const existing = map.get(synergyId) || []
+          if (!existing.includes(detectorId)) {
+            map.set(synergyId, [...existing, detectorId])
+          }
+        }
+      }
+    }
+    return map
+  }, [normalizedSelected, showSynergyHints])
+
+  // Calculate conflicts for selected detectors
+  const conflictMap = useMemo(() => {
+    if (!showSynergyHints) return new Map<string, string[]>()
+
+    const map = new Map<string, string[]>()
+    for (const detectorId of normalizedSelected) {
+      const conflicts = getConflictingDetectors(detectorId)
+      for (const conflictId of conflicts) {
+        const existing = map.get(conflictId) || []
+        if (!existing.includes(detectorId)) {
+          map.set(conflictId, [...existing, detectorId])
+        }
+      }
+    }
+    return map
+  }, [normalizedSelected, showSynergyHints])
+
+  // Filter detectors based on tab, search, and mode
   const filteredDetectors = useMemo(() => {
     let detectors = DETECTOR_CATALOG
-    
+
+    // Filter by mode (simple vs advanced)
+    if (!isAdvancedMode) {
+      detectors = detectors.filter(d => isEssentialDetector(d.id))
+    }
+
     // Filter by search
     if (searchQuery) {
-      detectors = searchDetectors(searchQuery)
+      const searchResults = searchDetectors(searchQuery)
+      detectors = detectors.filter(d => searchResults.some(s => s.id === d.id))
     }
-    
+
     // Filter by category tab
     if (activeTab !== "all") {
       detectors = detectors.filter(d => d.category === activeTab)
     }
-    
+
     return detectors
-  }, [searchQuery, activeTab])
+  }, [searchQuery, activeTab, isAdvancedMode])
+
+  // Get filtered detectors by category for display
+  const filteredByCategory = useMemo(() => {
+    return {
+      gate: filteredDetectors.filter(d => d.category === "gate"),
+      trigger: filteredDetectors.filter(d => d.category === "trigger"),
+      confluence: filteredDetectors.filter(d => d.category === "confluence"),
+    }
+  }, [filteredDetectors])
 
   return (
     <div className="space-y-3">
@@ -477,6 +592,37 @@ export function DetectorSelect({
 
         {/* Count Meter */}
         <CountMeter counts={validation.counts} totals={DETECTOR_COUNTS} />
+
+        {/* Mode Toggle */}
+        <div className="flex items-center justify-between px-1 py-2 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="advanced-mode"
+              checked={isAdvancedMode}
+              onCheckedChange={setIsAdvancedMode}
+              disabled={disabled}
+            />
+            <Label htmlFor="advanced-mode" className="text-xs cursor-pointer">
+              {isAdvancedMode ? "Advanced" : "Simple"} Mode
+            </Label>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="secondary" className="text-[10px]">
+                  {isAdvancedMode ? DETECTOR_COUNTS.total : ESSENTIAL_COUNTS.total} detectors
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">
+                  {isAdvancedMode
+                    ? "Бүх 31 detector харуулж байна"
+                    : "Эхлэгчдэд зориулсан 14 үндсэн detector"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       {/* Presets (collapsible) */}
@@ -553,11 +699,14 @@ export function DetectorSelect({
               <CategorySection
                 key={category}
                 category={category}
-                detectors={DETECTORS_BY_CATEGORY[category]}
+                detectors={filteredByCategory[category]}
                 selected={normalizedSelected}
                 onToggle={handleToggle}
                 disabled={disabled}
                 searchQuery={searchQuery}
+                synergyMap={synergyMap}
+                conflictMap={conflictMap}
+                showSynergyHints={showSynergyHints}
               />
             ))}
           </TabsContent>
@@ -566,11 +715,14 @@ export function DetectorSelect({
             <TabsContent key={category} value={category} className="mt-0">
               <CategorySection
                 category={category}
-                detectors={DETECTORS_BY_CATEGORY[category]}
+                detectors={filteredByCategory[category]}
                 selected={normalizedSelected}
                 onToggle={handleToggle}
                 disabled={disabled}
                 searchQuery={searchQuery}
+                synergyMap={synergyMap}
+                conflictMap={conflictMap}
+                showSynergyHints={showSynergyHints}
               />
             </TabsContent>
           ))}

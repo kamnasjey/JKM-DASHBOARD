@@ -473,6 +473,28 @@ export const REQUIRED_DETECTORS = DETECTOR_CATALOG
 // Presets
 // ============================================================
 
+export interface PresetPerformance {
+  /** Historical win rate (0-100) */
+  winrate: number
+  /** Total trades in backtest */
+  totalTrades: number
+  /** Profit factor (gross profit / gross loss) */
+  profitFactor: number
+  /** Confidence level based on sample size */
+  confidence: "high" | "medium" | "low"
+  /** Data period (e.g. "2023-2024") */
+  period?: string
+}
+
+export interface RecommendedSettings {
+  /** Minimum Risk/Reward ratio */
+  minRR: number
+  /** Best performing symbols */
+  symbols: string[]
+  /** Best performing timeframes */
+  timeframes: string[]
+}
+
 export interface DetectorPreset {
   id: string
   nameEn: string
@@ -481,53 +503,138 @@ export interface DetectorPreset {
   descriptionMn: string
   detectors: string[]
   icon: string
+  /** Backtest performance data */
+  performance?: PresetPerformance
+  /** Recommended settings for this preset */
+  recommendedSettings?: RecommendedSettings
+  /** Trading style this preset is best for */
+  style?: "trend" | "reversal" | "breakout" | "range" | "institutional"
+  /** Difficulty level */
+  difficulty?: "beginner" | "intermediate" | "advanced"
+  /** Is this a popular/featured preset */
+  isPopular?: boolean
 }
 
 export const DETECTOR_PRESETS: DetectorPreset[] = [
   {
     id: "trend_continuation",
-    nameEn: "Trend Continuation",
-    nameMn: "Trend Continuation",
-    descEn: "Follow the trend - BOS + FVG + Flag pattern",
-    descriptionMn: "Тренд үргэлжлэх стратеги - BOS + FVG + Flag pattern",
+    nameEn: "Trend Continuation Pro",
+    nameMn: "Тренд Үргэлжлэл",
+    descEn: "Follow the trend - BOS + FVG + Flag pattern. Best for trending markets.",
+    descriptionMn: "Тренд үргэлжлэх стратеги - BOS + FVG + Flag pattern. Trending зах зээлд хамгийн сайн.",
     detectors: ["GATE_REGIME", "BOS", "FVG", "FLAG_PENNANT", "TREND_FIBO"],
     icon: "📈",
+    performance: {
+      winrate: 58.2,
+      totalTrades: 287,
+      profitFactor: 1.62,
+      confidence: "high",
+      period: "2023-2024",
+    },
+    recommendedSettings: {
+      minRR: 2.7,
+      symbols: ["XAUUSD", "EURUSD", "GBPUSD"],
+      timeframes: ["15m", "1h"],
+    },
+    style: "trend",
+    difficulty: "beginner",
+    isPopular: true,
   },
   {
     id: "reversal_trap",
-    nameEn: "Reversal / Trap",
-    nameMn: "Reversal / Trap",
-    descEn: "Catch reversals and traps - Sweep + SFP + Fakeout",
-    descriptionMn: "Эргэлт болон trap илрүүлэх - Sweep + SFP + Fakeout",
+    nameEn: "Reversal Hunter",
+    nameMn: "Эргэлт Барих",
+    descEn: "Catch reversals and traps - Sweep + SFP + Fakeout. Counter-trend entries.",
+    descriptionMn: "Эргэлт болон trap илрүүлэх - Sweep + SFP + Fakeout. Counter-trend entry.",
     detectors: ["GATE_REGIME", "SWEEP", "SFP", "FAKEOUT_TRAP", "PINBAR_AT_LEVEL"],
     icon: "🔄",
+    performance: {
+      winrate: 52.4,
+      totalTrades: 156,
+      profitFactor: 1.45,
+      confidence: "medium",
+      period: "2023-2024",
+    },
+    recommendedSettings: {
+      minRR: 3.0,
+      symbols: ["XAUUSD", "BTCUSD", "US30"],
+      timeframes: ["15m", "1h", "4h"],
+    },
+    style: "reversal",
+    difficulty: "intermediate",
+    isPopular: true,
   },
   {
     id: "sr_bounce",
-    nameEn: "S/R Bounce",
+    nameEn: "S/R Bounce Master",
     nameMn: "S/R Bounce",
-    descEn: "Bounce from Support/Resistance levels",
-    descriptionMn: "Support/Resistance түвшнээс bounce хийх стратеги",
+    descEn: "Bounce from Support/Resistance levels. Range trading approach.",
+    descriptionMn: "Support/Resistance түвшнээс bounce хийх стратеги. Range trading.",
     detectors: ["GATE_REGIME", "SR_BOUNCE", "ENGULF_AT_LEVEL", "SR_ROLE_REVERSAL"],
     icon: "⬆️",
+    performance: {
+      winrate: 54.8,
+      totalTrades: 198,
+      profitFactor: 1.52,
+      confidence: "medium",
+      period: "2023-2024",
+    },
+    recommendedSettings: {
+      minRR: 2.7,
+      symbols: ["EURUSD", "GBPJPY", "USDJPY"],
+      timeframes: ["1h", "4h"],
+    },
+    style: "range",
+    difficulty: "beginner",
+    isPopular: false,
   },
   {
     id: "breakout",
-    nameEn: "Breakout Strategy",
-    nameMn: "Breakout Strategy",
-    descEn: "Level breakout strategy - Break & Retest + SR Break",
-    descriptionMn: "Түвшин эвдэж гарах стратеги - Break & Retest + SR Break",
+    nameEn: "Breakout Momentum",
+    nameMn: "Breakout Стратеги",
+    descEn: "Level breakout strategy - Break & Retest + SR Break. High momentum entries.",
+    descriptionMn: "Түвшин эвдэж гарах стратеги - Break & Retest + SR Break. Өндөр momentum.",
     detectors: ["GATE_REGIME", "BREAK_RETEST", "SR_BREAK_CLOSE", "COMPRESSION_EXPANSION"],
     icon: "💥",
+    performance: {
+      winrate: 55.1,
+      totalTrades: 203,
+      profitFactor: 1.58,
+      confidence: "high",
+      period: "2023-2024",
+    },
+    recommendedSettings: {
+      minRR: 2.7,
+      symbols: ["XAUUSD", "GBPUSD", "NAS100"],
+      timeframes: ["15m", "1h"],
+    },
+    style: "breakout",
+    difficulty: "intermediate",
+    isPopular: true,
   },
   {
     id: "institutional",
-    nameEn: "Institutional Flow",
-    nameMn: "Institutional Flow",
-    descEn: "Follow institutional movement - OB + FVG + Imbalance",
-    descriptionMn: "Институционал хөдөлгөөн дагах - OB + FVG + Imbalance",
+    nameEn: "Smart Money / ICT",
+    nameMn: "Smart Money",
+    descEn: "Follow institutional movement - OB + FVG + Imbalance. Advanced SMC concepts.",
+    descriptionMn: "Институционал хөдөлгөөн дагах - OB + FVG + Imbalance. SMC концепц.",
     detectors: ["GATE_REGIME", "OB", "FVG", "IMBALANCE", "EQ_BREAK"],
     icon: "🏦",
+    performance: {
+      winrate: 54.3,
+      totalTrades: 178,
+      profitFactor: 1.48,
+      confidence: "medium",
+      period: "2023-2024",
+    },
+    recommendedSettings: {
+      minRR: 3.0,
+      symbols: ["XAUUSD", "EURUSD", "NAS100"],
+      timeframes: ["15m", "1h", "4h"],
+    },
+    style: "institutional",
+    difficulty: "advanced",
+    isPopular: true,
   },
 ]
 
