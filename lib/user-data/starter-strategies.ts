@@ -24,6 +24,10 @@ const STRATEGIES_SUBCOLLECTION = "strategies"
 /** Current starter seed version - increment to reseed all users */
 export const STARTER_SEED_VERSION = "v1"
 
+const DISABLE_STARTER_STRATEGIES = ["1", "true", "yes"].includes(
+  String(process.env.DISABLE_STARTER_STRATEGIES || "").trim().toLowerCase(),
+)
+
 // ============================================================
 // Starter Strategy Templates
 // ============================================================
@@ -68,100 +72,7 @@ export interface StarterStrategyTemplate {
   }
 }
 
-export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
-  // ============================================================
-  // EDGE Starter #1 — Trend Pullback
-  // Follow the trend, enter on pullbacks
-  // ============================================================
-  {
-    id: "starter_EDGE_1",
-    name: "EDGE Starter #1 — Trend Pullback",
-    description: "Follow the trend and enter on pullbacks to key levels. Good for trending markets.",
-    starterKey: "EDGE_1",
-    // Detectors composition:
-    // Gate: GATE_REGIME (required, trend filter)
-    // Triggers: BOS (structure break), MOMENTUM_CONTINUATION (trend continuation)
-    // Confluence: FIBO_RETRACE_CONFLUENCE (pullback zone), FLAG_PENNANT (continuation pattern)
-    gates: ["GATE_REGIME"],
-    triggers: ["BOS", "MOMENTUM_CONTINUATION"],
-    confluence: ["FIBO_RETRACE_CONFLUENCE", "FLAG_PENNANT"],
-    detectors: [
-      "GATE_REGIME",
-      "BOS",
-      "MOMENTUM_CONTINUATION",
-      "FIBO_RETRACE_CONFLUENCE",
-      "FLAG_PENNANT",
-    ],
-    risk: {
-      minRR: 1.8,
-      maxRiskPercent: 2.0,
-      minConfirmHits: 1,
-    },
-  },
-
-  // ============================================================
-  // EDGE Starter #2 — Balanced Core
-  // Balanced mix for trend + range + sideways
-  // ============================================================
-  {
-    id: "starter_EDGE_2",
-    name: "EDGE Starter #2 — Balanced Core",
-    description: "Balanced core for trend, range, and sideways conditions. Combines breakout, bounce, and mean-reversion triggers.",
-    starterKey: "EDGE_2",
-    // Detectors composition:
-    // Gates: GATE_VOLATILITY, GATE_DRIFT_SENTINEL (avoid extreme conditions)
-    // Triggers: BREAK_RETEST (trend), SR_BOUNCE (range), MEAN_REVERSION_SNAPBACK (sideways)
-    // Confluence: SR_ROLE_REVERSAL, PINBAR_AT_LEVEL (confirmation)
-    gates: ["GATE_VOLATILITY", "GATE_DRIFT_SENTINEL"],
-    triggers: ["BREAK_RETEST", "SR_BOUNCE", "MEAN_REVERSION_SNAPBACK"],
-    confluence: ["SR_ROLE_REVERSAL", "PINBAR_AT_LEVEL"],
-    detectors: [
-      "GATE_VOLATILITY",
-      "GATE_DRIFT_SENTINEL",
-      "BREAK_RETEST",
-      "SR_BOUNCE",
-      "MEAN_REVERSION_SNAPBACK",
-      "SR_ROLE_REVERSAL",
-      "PINBAR_AT_LEVEL",
-    ],
-    risk: {
-      minRR: 1.7,
-      maxRiskPercent: 1.5,
-      minConfirmHits: 1,
-    },
-  },
-
-  // ============================================================
-  // EDGE Starter #3 — Mean Reversion
-  // Fade overextended moves, enter on snapback
-  // ============================================================
-  {
-    id: "starter_EDGE_3",
-    name: "EDGE Starter #3 — Mean Reversion",
-    description: "Enter counter-trend when price is overextended and snaps back to the mean.",
-    starterKey: "EDGE_3",
-    // Detectors composition:
-    // Gate: GATE_REGIME (avoid choppy), GATE_DRIFT_SENTINEL (confirm overextension)
-    // Triggers: MEAN_REVERSION_SNAPBACK (main entry), SFP (swing failure)
-    // Confluence: PINBAR_AT_LEVEL (rejection candle), PRICE_MOMENTUM_WEAKENING (divergence)
-    gates: ["GATE_REGIME", "GATE_DRIFT_SENTINEL"],
-    triggers: ["MEAN_REVERSION_SNAPBACK", "SFP"],
-    confluence: ["PINBAR_AT_LEVEL", "PRICE_MOMENTUM_WEAKENING"],
-    detectors: [
-      "GATE_REGIME",
-      "GATE_DRIFT_SENTINEL",
-      "MEAN_REVERSION_SNAPBACK",
-      "SFP",
-      "PINBAR_AT_LEVEL",
-      "PRICE_MOMENTUM_WEAKENING",
-    ],
-    risk: {
-      minRR: 1.5,
-      maxRiskPercent: 1.0,
-      minConfirmHits: 1,
-    },
-  },
-]
+export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = []
 
 // ============================================================
 // Seed Function
@@ -194,6 +105,12 @@ export async function seedStarterStrategiesForUser(
   db: Firestore,
   userId: string
 ): Promise<SeedResult> {
+  if (DISABLE_STARTER_STRATEGIES) {
+    return { seeded: false, reason: "DISABLED" }
+  }
+  if (STARTER_STRATEGIES_V1.length === 0) {
+    return { seeded: false, reason: "NO_TEMPLATES" }
+  }
   if (!userId) {
     return { seeded: false, reason: "INVALID_USER_ID" }
   }

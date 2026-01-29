@@ -137,8 +137,10 @@ const ROLE_COLORS: Record<DetectorRole, string> = {
   confluence: "bg-green-500/15 border-green-500/40 text-green-200",
 }
 
+const MIN_RR = 2.7
+
 // Preset Strategy Templates - Based on 7-day backtest (Jan 2026)
-// All presets: 60%+ WR, 4+ entries, RR 2.5+
+// All presets: 60%+ WR, 4+ entries, RR 2.7+
 const STRATEGY_PRESETS = [
   // =====================================================
   // TOP PERFORMERS (70%+ WR)
@@ -146,30 +148,30 @@ const STRATEGY_PRESETS = [
   {
     id: "btcusd_bos_pinbar",
     name: "🏆 BTCUSD BOS+PINBAR (83.3% WR)",
-    description: "7 хоногийн тестэд 83.3% WR (5W/1L), 6 trades, RR 2.5. BTCUSD 15m дээр BOS trigger + PINBAR confluence.",
+    description: "7 хоногийн тестэд 83.3% WR (5W/1L), 6 trades, RR 2.7+. BTCUSD 15m дээр BOS trigger + PINBAR confluence.",
     detectors: ["bos", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
   },
   {
     id: "btcusd_choch_pinbar",
     name: "💎 BTCUSD CHOCH+PINBAR (80% WR)",
-    description: "7 хоногийн тестэд 80% WR (4W/1L), 5 trades, RR 2.5-3.0. BTCUSD 15m дээр CHOCH trigger + PINBAR confluence.",
+    description: "7 хоногийн тестэд 80% WR (4W/1L), 5 trades, RR 2.7+. BTCUSD 15m дээр CHOCH trigger + PINBAR confluence.",
     detectors: ["choch", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
   },
   {
     id: "btcusd_triple_combo",
     name: "🎯 BTCUSD BOS+CHOCH+PINBAR (77.8% WR)",
-    description: "7 хоногийн тестэд 77.8% WR (7W/2L), 9 trades, RR 2.5. Хамгийн олон trade-тай combo.",
+    description: "7 хоногийн тестэд 77.8% WR (7W/2L), 9 trades, RR 2.7+. Хамгийн олон trade-тай combo.",
     detectors: ["bos", "choch", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
   },
   {
     id: "btcusdt_ob",
     name: "💰 BTCUSDT OB (75% WR)",
-    description: "7 хоногийн тестэд 75% WR (3W/1L), 4 trades, RR 2.5. BTCUSDT 15m дээр Order Block trigger.",
+    description: "7 хоногийн тестэд 75% WR (3W/1L), 4 trades, RR 2.7+. BTCUSDT 15m дээр Order Block trigger.",
     detectors: ["ob"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "BTCUSDT", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSDT", recommended_tf: "15m" }
   },
   
   // =====================================================
@@ -178,30 +180,30 @@ const STRATEGY_PRESETS = [
   {
     id: "usdchf_ob_doji",
     name: "🔥 USDCHF OB+DOJI (66.7% WR)",
-    description: "7 хоногийн тестэд 66.7% WR (4W/2L), 6 trades, RR 2.5. USDCHF 15m дээр OB trigger + DOJI confluence.",
+    description: "7 хоногийн тестэд 66.7% WR (4W/2L), 6 trades, RR 2.7+. USDCHF 15m дээр OB trigger + DOJI confluence.",
     detectors: ["ob", "doji"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "USDCHF", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "USDCHF", recommended_tf: "15m" }
   },
   {
     id: "usdchf_ob_pinbar",
     name: "📊 USDCHF OB+PINBAR (64.3% WR)",
-    description: "7 хоногийн тестэд 64.3% WR (9W/5L), 14 trades, RR 2.5. Хамгийн олон trade: USDCHF 15m OB+PINBAR.",
+    description: "7 хоногийн тестэд 64.3% WR (9W/5L), 14 trades, RR 2.7+. Хамгийн олон trade: USDCHF 15m OB+PINBAR.",
     detectors: ["ob", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "USDCHF", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "USDCHF", recommended_tf: "15m" }
   },
   {
     id: "xauusd_sr_bounce_pinbar",
     name: "🥇 XAUUSD SR_BOUNCE+PINBAR (62.5% WR)",
-    description: "7 хоногийн тестэд 62.5% WR (5W/3L), 8 trades, RR 2.5. XAUUSD 15m дээр S/R bounce + PINBAR.",
+    description: "7 хоногийн тестэд 62.5% WR (5W/3L), 8 trades, RR 2.7+. XAUUSD 15m дээр S/R bounce + PINBAR.",
     detectors: ["sr_bounce", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "XAUUSD", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "XAUUSD", recommended_tf: "15m" }
   },
   {
     id: "audusd_break_retest",
     name: "📈 AUDUSD BREAK_RETEST (61.5% WR)",
-    description: "7 хоногийн тестэд 61.5% WR (8W/5L), 13 trades, RR 2.5. Хамгийн идэвхтэй: AUDUSD 15m Break & Retest.",
+    description: "7 хоногийн тестэд 61.5% WR (8W/5L), 13 trades, RR 2.7+. Хамгийн идэвхтэй: AUDUSD 15m Break & Retest.",
     detectors: ["break_retest"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "AUDUSD", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "AUDUSD", recommended_tf: "15m" }
   },
   
   // =====================================================
@@ -210,16 +212,16 @@ const STRATEGY_PRESETS = [
   {
     id: "usdjpy_sweep_dbl_top",
     name: "🌊 USDJPY SWEEP+DBL_TOP (60% WR)",
-    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.5. USDJPY 15m дээр Liquidity Sweep + Double Top/Bottom.",
+    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.7+. USDJPY 15m дээр Liquidity Sweep + Double Top/Bottom.",
     detectors: ["sweep", "double_top_bottom"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.5, recommended_symbol: "USDJPY", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "USDJPY", recommended_tf: "15m" }
   },
   {
     id: "nzdusd_bos_pinbar",
     name: "🌿 NZDUSD BOS+PINBAR (60% WR)",
-    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.5. NZDUSD 15m дээр BOS trigger + PINBAR confluence.",
+    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.7+. NZDUSD 15m дээр BOS trigger + PINBAR confluence.",
     detectors: ["bos", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5, recommended_symbol: "NZDUSD", recommended_tf: "15m" }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "NZDUSD", recommended_tf: "15m" }
   },
   
   // =====================================================
@@ -230,14 +232,14 @@ const STRATEGY_PRESETS = [
     name: "🌐 Universal BOS+PINBAR",
     description: "BOS+PINBAR combo нь олон pair дээр тогтвортой ажилладаг (BTCUSD 83%, NZDUSD 60%). Бүх pair дээр ашиглах боломжтой.",
     detectors: ["bos", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5 }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7 }
   },
   {
     id: "universal_ob_pinbar",
     name: "🌐 Universal OB+PINBAR",
     description: "OB+PINBAR combo (USDCHF 64.3%, BTCUSDT 75%). Order Block + Pinbar бол найдвартай combo.",
     detectors: ["ob", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.5 }
+    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7 }
   }
 ]
 
@@ -273,7 +275,7 @@ export function StrategyMakerPanel(props: {
   
   // NEW: Risk/Exit settings
   const [riskSettings, setRiskSettings] = useState({
-    rr: 3.0,
+    rr: MIN_RR,
     timeExitBars: 12,
     cooldownBars: 3,
   })
@@ -290,7 +292,7 @@ export function StrategyMakerPanel(props: {
     setSelectedDetectors(preset.detectors)
     setStrategyName(preset.name.replace(/[🔥💎📊]/g, "").trim())
     if (preset.config) {
-      setRiskSettings(prev => ({ ...prev, rr: preset.config.rr || 2.0 }))
+      setRiskSettings(prev => ({ ...prev, rr: MIN_RR }))
       setContextSettings(prev => ({
         ...prev,
         htfBias: preset.config.htf_bias || "ANY",
@@ -698,16 +700,8 @@ export function StrategyMakerPanel(props: {
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">Risk:Reward</label>
-                <Input 
-                  type="number" 
-                  step="0.5" 
-                  min="1" 
-                  max="5"
-                  value={riskSettings.rr} 
-                  onChange={(e) => setRiskSettings(prev => ({ ...prev, rr: parseFloat(e.target.value) || 2.0 }))}
-                  className="mt-1"
-                />
+                <label className="text-xs text-muted-foreground">Risk:Reward (Fixed)</label>
+                <div className="mt-2 text-sm font-medium text-foreground">{MIN_RR}+</div>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Time Exit (bars)</label>

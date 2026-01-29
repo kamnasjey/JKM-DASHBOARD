@@ -86,7 +86,7 @@ const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
   enabled: true,
   detectors: [],
   min_score: 1.0,
-  min_rr: 2.0,
+  min_rr: 2.7,
   notes: "",
 }
 
@@ -214,7 +214,7 @@ export default function StrategiesPage() {
       enabled: strategy.enabled,
       detectors: ensureRequiredDetectors([...strategy.detectors]),
       min_score: strategy.min_score || strategy.config?.min_score || 1.0,
-      min_rr: strategy.min_rr || strategy.config?.min_rr || 2.0,
+      min_rr: Math.max(2.7, (strategy.min_rr || strategy.config?.min_rr || 2.7)),
       description: strategy.description,
       notes: strategy.notes || "",
     })
@@ -264,7 +264,7 @@ export default function StrategiesPage() {
           description: editForm.description,
           config: {
             min_score: editForm.min_score,
-            min_rr: editForm.min_rr,
+            min_rr: Math.max(2.7, editForm.min_rr || 2.7),
           },
         })
         
@@ -285,7 +285,7 @@ export default function StrategiesPage() {
           description: editForm.description,
           config: {
             min_score: editForm.min_score,
-            min_rr: editForm.min_rr,
+            min_rr: Math.max(2.7, editForm.min_rr || 2.7),
           },
         })
         
@@ -552,7 +552,7 @@ export default function StrategiesPage() {
 
                 {/* Params */}
                 <div className="flex gap-4 text-xs text-muted-foreground">
-                  <span>Min RR: {strategy.min_rr || 2.0}</span>
+                  <span>Min RR: {strategy.min_rr || 2.7}</span>
                   <span>Min Score: {strategy.min_score || 1.0}</span>
                 </div>
 
@@ -660,9 +660,9 @@ export default function StrategiesPage() {
                   <span className="text-sm font-medium">{editForm.min_rr?.toFixed(1)}</span>
                 </div>
                 <Slider
-                  value={[editForm.min_rr || 2.0]}
+                  value={[editForm.min_rr || 2.7]}
                   onValueChange={([value]) => setEditForm({ ...editForm, min_rr: value })}
-                  min={1}
+                  min={2.7}
                   max={5}
                   step={0.5}
                 />

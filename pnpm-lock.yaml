@@ -198,15 +198,42 @@ importers:
       '@types/bcryptjs':
         specifier: ^3.0.0
         version: 3.0.0
+      '@types/caseless':
+        specifier: ^0.12.5
+        version: 0.12.5
+      '@types/connect':
+        specifier: ^3.4.38
+        version: 3.4.38
+      '@types/json5':
+        specifier: ^0.0.29
+        version: 0.0.29
+      '@types/mysql':
+        specifier: ^2.15.26
+        version: 2.15.26
       '@types/node':
         specifier: ^22
         version: 22.0.0
+      '@types/pg':
+        specifier: ^8.15.2
+        version: 8.16.0
+      '@types/pg-pool':
+        specifier: ^2.0.6
+        version: 2.0.6
       '@types/react':
         specifier: ^19
         version: 19.0.0
       '@types/react-dom':
         specifier: ^19
         version: 19.0.0
+      '@types/request':
+        specifier: ^2.48.12
+        version: 2.48.13
+      '@types/shimmer':
+        specifier: ^1.0.5
+        version: 1.2.0
+      '@types/tough-cookie':
+        specifier: ^4.0.5
+        version: 4.0.5
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -2167,6 +2194,9 @@ packages:
 
   '@types/pg-pool@2.0.6':
     resolution: {integrity: sha512-TaAUE5rq2VQYxab5Ts7WZhKNmuN78Q6PiFonTDdpbx8a1H0M1vhy3rhiMjl+e2iHmogyMw7jZF4FrE6eJUy5HQ==}
+
+  '@types/pg@8.16.0':
+    resolution: {integrity: sha512-RmhMd/wD+CF8Dfo+cVIy3RR5cl8CyfXQ0tGgW6XBL8L4LM/UTEbNXYRbLwU6w+CgrKBNbrQWt4FUtTfaU5jSYQ==}
 
   '@types/pg@8.6.1':
     resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
@@ -6830,8 +6860,7 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/node': 22.19.6
 
-  '@types/caseless@0.12.5':
-    optional: true
+  '@types/caseless@0.12.5': {}
 
   '@types/connect@3.4.36':
     dependencies:
@@ -6925,7 +6954,13 @@ snapshots:
 
   '@types/pg-pool@2.0.6':
     dependencies:
-      '@types/pg': 8.6.1
+      '@types/pg': 8.16.0
+
+  '@types/pg@8.16.0':
+    dependencies:
+      '@types/node': 22.19.6
+      pg-protocol: 1.11.0
+      pg-types: 2.2.0
 
   '@types/pg@8.6.1':
     dependencies:
@@ -6951,7 +6986,6 @@ snapshots:
       '@types/node': 22.19.6
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.5
-    optional: true
 
   '@types/send@0.17.6':
     dependencies:
@@ -6974,8 +7008,7 @@ snapshots:
     dependencies:
       '@types/node': 22.19.6
 
-  '@types/tough-cookie@4.0.5':
-    optional: true
+  '@types/tough-cookie@4.0.5': {}
 
   '@typescript-eslint/eslint-plugin@8.52.0(@typescript-eslint/parser@8.52.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
@@ -7355,8 +7388,7 @@ snapshots:
       retry: 0.13.1
     optional: true
 
-  asynckit@0.4.0:
-    optional: true
+  asynckit@0.4.0: {}
 
   autoprefixer@10.4.20(postcss@8.5.0):
     dependencies:
@@ -7497,7 +7529,6 @@ snapshots:
   combined-stream@1.0.8:
     dependencies:
       delayed-stream: 1.0.0
-    optional: true
 
   commander@2.20.3: {}
 
@@ -7605,8 +7636,7 @@ snapshots:
       has-property-descriptors: 1.0.2
       object-keys: 1.1.1
 
-  delayed-stream@1.0.0:
-    optional: true
+  delayed-stream@1.0.0: {}
 
   detect-libc@2.1.2: {}
 
@@ -8123,7 +8153,6 @@ snapshots:
       hasown: 2.0.2
       mime-types: 2.1.35
       safe-buffer: 5.2.1
-    optional: true
 
   forwarded-parse@2.1.2: {}
 

@@ -84,7 +84,7 @@ export default function StrategyTesterPage() {
   const [initialCapital, setInitialCapital] = useState(10000)
   const [riskPerTrade, setRiskPerTrade] = useState(1.0)
   const [intrabarPolicy, setIntrabarPolicy] = useState("sl_first")
-  const [minRr, setMinRr] = useState(2.0)
+  const [minRr, setMinRr] = useState(2.7)
   const [maxTradesPerDay, setMaxTradesPerDay] = useState(10)
   
   useEffect(() => {
@@ -372,7 +372,7 @@ export default function StrategyTesterPage() {
                         <Slider
                           value={[minRr]}
                           onValueChange={([v]) => setMinRr(v)}
-                          min={1}
+                          min={2.7}
                           max={5}
                           step={0.5}
                         />

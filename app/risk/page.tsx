@@ -24,7 +24,7 @@ export default function RiskPage() {
     riskPerTrade: 1,
     maxDailyLoss: 3,
     maxOpenPositions: 3,
-    preferredRRMin: 2,
+    preferredRRMin: 2.7,
   })
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export default function RiskPage() {
                   id="preferredRRMin"
                   type="number"
                   step="0.5"
-                  min="1"
+                  min="2.7"
                   max="5"
                   value={settings.preferredRRMin}
                   onChange={(e) => setSettings({ ...settings, preferredRRMin: Number.parseFloat(e.target.value) })}
