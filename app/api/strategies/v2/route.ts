@@ -88,7 +88,12 @@ export async function GET(request: NextRequest) {
     const cursor = searchParams.get("cursor") || undefined
     
     const result = await listStrategies(userId, { limit, cursor })
-    
+
+    // Debug: log strategy IDs being returned
+    console.log(`[${requestId}] Returning ${result.strategies.length} strategies:`,
+      result.strategies.map(s => ({ id: s.id, name: s.name }))
+    )
+
     return NextResponse.json({
       ok: true,
       strategies: result.strategies,
