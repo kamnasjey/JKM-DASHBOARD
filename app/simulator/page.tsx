@@ -464,12 +464,19 @@ export default function SimulatorPage() {
       }
 
       if (strategiesRes.strategies) {
+        // Debug: log all strategies to see their IDs
+        console.log("[simulator] Raw strategies from API:", strategiesRes.strategies.map((s: any) => ({ id: s.id, name: s.name })))
+
         // Filter out strategies with invalid/empty IDs to prevent Select issues
         const validStrategies = strategiesRes.strategies.filter(
           (s: Strategy) => s.id && typeof s.id === "string" && s.id.trim() !== ""
         )
+
+        console.log("[simulator] Valid strategies after filter:", validStrategies.map((s: Strategy) => ({ id: s.id, name: s.name })))
+
         setStrategies(validStrategies)
         if (validStrategies.length > 0 && !strategyId) {
+          console.log("[simulator] Auto-selecting first strategy:", validStrategies[0].id)
           setStrategyId(validStrategies[0].id)  // Use 'id' for Firestore v2
         }
       }
@@ -562,20 +569,27 @@ export default function SimulatorPage() {
   }
 
   async function runSimulation() {
+    // Debug logging
+    console.log("[simulator] runSimulation called with:", { symbol, strategyId, strategiesCount: strategies.length })
+    console.log("[simulator] Current strategies in state:", strategies.map(s => ({ id: s.id, name: s.name })))
+
     if (!symbol) {
       setError("Please select a symbol")
       return
     }
     if (!strategyId || strategyId.trim() === "") {
+      console.error("[simulator] strategyId is empty!", { strategyId })
       setError("Please select a strategy. If no strategies appear, create one on the Strategies page first.")
       return
     }
     // Verify selected strategy still exists in loaded list
     const strategy = strategies.find(s => s.id === strategyId)
     if (!strategy) {
+      console.error("[simulator] Strategy not found in list!", { strategyId, availableIds: strategies.map(s => s.id) })
       setError(`Selected strategy not found. Please refresh and try again.`)
       return
     }
+    console.log("[simulator] Found strategy:", { id: strategy.id, name: strategy.name })
 
     setRunning(true)
     setError(null)
@@ -871,7 +885,14 @@ export default function SimulatorPage() {
               {/* Strategy */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Strategy</label>
-                <Select value={strategyId} onValueChange={setStrategyId} disabled={loading || strategies.length === 0}>
+                <Select
+                  value={strategyId}
+                  onValueChange={(value) => {
+                    console.log("[simulator] Strategy selected:", { value, type: typeof value })
+                    setStrategyId(value)
+                  }}
+                  disabled={loading || strategies.length === 0}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={strategies.length === 0 ? "No strategies found" : "Select strategy..."} />
                   </SelectTrigger>
