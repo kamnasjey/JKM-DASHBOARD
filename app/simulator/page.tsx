@@ -464,9 +464,13 @@ export default function SimulatorPage() {
       }
 
       if (strategiesRes.strategies) {
-        setStrategies(strategiesRes.strategies)
-        if (strategiesRes.strategies.length > 0 && !strategyId) {
-          setStrategyId(strategiesRes.strategies[0].id)  // Use 'id' for Firestore v2
+        // Filter out strategies with invalid/empty IDs to prevent Select issues
+        const validStrategies = strategiesRes.strategies.filter(
+          (s: Strategy) => s.id && typeof s.id === "string" && s.id.trim() !== ""
+        )
+        setStrategies(validStrategies)
+        if (validStrategies.length > 0 && !strategyId) {
+          setStrategyId(validStrategies[0].id)  // Use 'id' for Firestore v2
         }
       }
     } catch (err: any) {
@@ -558,8 +562,18 @@ export default function SimulatorPage() {
   }
 
   async function runSimulation() {
-    if (!symbol || !strategyId) {
-      setError("Please select a symbol and strategy")
+    if (!symbol) {
+      setError("Please select a symbol")
+      return
+    }
+    if (!strategyId || strategyId.trim() === "") {
+      setError("Please select a strategy. If no strategies appear, create one on the Strategies page first.")
+      return
+    }
+    // Verify selected strategy still exists in loaded list
+    const strategy = strategies.find(s => s.id === strategyId)
+    if (!strategy) {
+      setError(`Selected strategy not found. Please refresh and try again.`)
       return
     }
 
@@ -857,16 +871,22 @@ export default function SimulatorPage() {
               {/* Strategy */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Strategy</label>
-                <Select value={strategyId} onValueChange={setStrategyId} disabled={loading}>
+                <Select value={strategyId} onValueChange={setStrategyId} disabled={loading || strategies.length === 0}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select strategy..." />
+                    <SelectValue placeholder={strategies.length === 0 ? "No strategies found" : "Select strategy..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {strategies.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name || s.id}
-                      </SelectItem>
-                    ))}
+                    {strategies.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        No strategies. Create one first.
+                      </div>
+                    ) : (
+                      strategies.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name || s.id}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
