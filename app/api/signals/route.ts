@@ -10,8 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getFirestore } from "firebase-admin/firestore"
-import { initFirebaseAdmin } from "@/lib/firebase-admin"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { verifyIdToken } from "@/lib/auth"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
@@ -79,8 +78,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     // Parse query params
     const url = new URL(req.url)
@@ -142,8 +140,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     // Check if batch create
     if (Array.isArray(body.signals)) {

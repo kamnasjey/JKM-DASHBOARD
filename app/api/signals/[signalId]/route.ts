@@ -7,8 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getFirestore } from "firebase-admin/firestore"
-import { initFirebaseAdmin } from "@/lib/firebase-admin"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { verifyIdToken } from "@/lib/auth"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
@@ -82,8 +81,7 @@ export async function GET(
       return NextResponse.json({ error: "Missing signalId" }, { status: 400 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     const signal = await getSignal(db, userId, signalId)
 
@@ -130,8 +128,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     const updateInput: SignalUpdateInput = {}
 
@@ -182,8 +179,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Missing signalId" }, { status: 400 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     const deleted = await deleteSignal(db, userId, signalId)
 

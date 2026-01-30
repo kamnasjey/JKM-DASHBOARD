@@ -9,8 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getFirestore } from "firebase-admin/firestore"
-import { initFirebaseAdmin } from "@/lib/firebase-admin"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { verifyIdToken } from "@/lib/auth"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
@@ -79,8 +78,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     const url = new URL(req.url)
     const action = url.searchParams.get("action")
@@ -148,8 +146,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     const action = body.action
 
@@ -233,8 +230,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 })
     }
 
-    initFirebaseAdmin()
-    const db = getFirestore()
+    const db = getFirebaseAdminDb()
 
     const cleared = await clearAllState(db, userId)
 
