@@ -41,7 +41,6 @@ import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { TradesTable } from "@/components/simulator/trades-table"
 import { LiveTradesStream } from "@/components/simulator/live-trades-stream"
-import { SimulationProgress } from "@/components/simulator/simulation-progress"
 
 // ============================================
 // Types
@@ -1063,15 +1062,32 @@ export default function SimulatorPage() {
           </Card>
         )}
 
-        {/* Loading State with Trading Vibe Progress */}
+        {/* Loading State with Live Trades Stream */}
         {running && (
           <div className="space-y-4">
-            <SimulationProgress
-              symbol={symbol}
-              timeframes={TIMEFRAMES}
-              isRunning={running}
-            />
-
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Zap className="h-6 w-6 text-primary animate-pulse" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Running Multi-Timeframe Simulation
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Analyzing {symbol} across 5 timeframes...
+                  </p>
+                  <div className="flex gap-2 mt-4">
+                    {TIMEFRAMES.map((tf) => (
+                      <Badge key={tf} variant="outline" className="animate-pulse">
+                        {tf}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
             {/* Live Trades Stream Preview */}
             {streamingTrades.length > 0 && (
               <LiveTradesStream trades={streamingTrades} isRunning={true} />
