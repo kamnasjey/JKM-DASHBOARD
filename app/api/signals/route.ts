@@ -1,126 +1,191 @@
 /**
- * SIGNALS API ROUTE (PUBLIC)
- * ==========================
- * Proxies to backend /signals endpoint
- * Returns scanner-published signals from signals.jsonl
- * 
- * NOTE: This endpoint is PUBLIC (no auth required).
- * It only returns non-sensitive scanner signals (symbol, tf, rr, confidence).
- * No user PII is exposed.
+ * Signals API Routes
+ *
+ * GET /api/signals - List signals (requires auth or API key)
+ * POST /api/signals - Create signal (requires API key for scanner)
+ *
+ * Used by:
+ * - Dashboard frontend (via user auth)
+ * - VPS Scanner (via API key)
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server"
+import { getFirestore } from "firebase-admin/firestore"
+import { initFirebaseAdmin } from "@/lib/firebase-admin"
+import { verifyIdToken } from "@/lib/auth"
+import {
+  createSignal,
+  querySignals,
+  batchCreateSignals,
+  type SignalCreateInput,
+  type SignalQueryOptions,
+} from "@/lib/user-data/signals-firestore-store"
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// ============================================================
+// API Key Auth (for VPS Scanner)
+// ============================================================
 
-const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com";
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || "";
+const SCANNER_API_KEY = process.env.SCANNER_API_KEY
 
-const querySchema = z.object({
-  limit: z.coerce.number().min(1).max(500).optional().default(50),
-  symbol: z.string().optional(),
-  strategy_id: z.string().optional(),
-  hours: z.coerce.number().min(1).max(168).optional(),
-});
+function verifyApiKey(req: NextRequest): boolean {
+  if (!SCANNER_API_KEY) return false
 
-export async function GET(req: NextRequest) {
-  // PUBLIC endpoint - no auth required
-  // Parse query params
-  const url = new URL(req.url);
-  const params = Object.fromEntries(url.searchParams);
+  const authHeader = req.headers.get("authorization")
+  if (!authHeader?.startsWith("Bearer ")) return false
 
-  const parsed = querySchema.safeParse(params);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { ok: false, error: "INVALID_PARAMS", details: parsed.error.issues },
-      { status: 400 }
-    );
+  const token = authHeader.slice(7)
+  return token === SCANNER_API_KEY
+}
+
+async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
+  // Try API key first (for scanner)
+  if (verifyApiKey(req)) {
+    // For scanner, userId comes from query or body
+    const url = new URL(req.url)
+    const userId = url.searchParams.get("userId")
+    if (userId) return userId
+    return null
   }
 
-  const { limit, symbol, strategy_id, hours } = parsed.data;
+  // Try Firebase auth token
+  const authHeader = req.headers.get("authorization")
+  if (!authHeader?.startsWith("Bearer ")) return null
 
-  // Build backend URL
-  const backendUrl = new URL(`${BACKEND_ORIGIN}/api/signals`);
-  backendUrl.searchParams.set("limit", String(limit));
-  if (symbol) backendUrl.searchParams.set("symbol", symbol);
-  if (strategy_id) backendUrl.searchParams.set("strategy_id", strategy_id);
-  if (hours) backendUrl.searchParams.set("hours", String(hours));
+  const token = authHeader.slice(7)
+  const decoded = await verifyIdToken(token)
+  return decoded?.uid || null
+}
 
+// ============================================================
+// GET /api/signals
+// ============================================================
+
+export async function GET(req: NextRequest) {
   try {
-    const resp = await fetch(backendUrl.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        ...(INTERNAL_API_KEY ? { "x-internal-api-key": INTERNAL_API_KEY } : {}),
-      },
-      next: { revalidate: 0 },
-    });
-
-    if (!resp.ok) {
-      return NextResponse.json(
-        { ok: false, error: "BACKEND_ERROR", status: resp.status },
-        { status: 502 }
-      );
+    const userId = await getUserIdFromRequest(req)
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const data = await resp.json();
+    initFirebaseAdmin()
+    const db = getFirestore()
 
-    const rawSignals = Array.isArray(data) ? data : data.signals || []
-
-    const toEpochSeconds = (value?: unknown) => {
-      if (!value || typeof value !== "string") return undefined
-      const ts = Date.parse(value)
-      return Number.isFinite(ts) ? Math.floor(ts / 1000) : undefined
+    // Parse query params
+    const url = new URL(req.url)
+    const options: SignalQueryOptions = {
+      symbol: url.searchParams.get("symbol") || undefined,
+      strategy_id: url.searchParams.get("strategy_id") || undefined,
+      status: (url.searchParams.get("status") as any) || undefined,
+      limit: parseInt(url.searchParams.get("limit") || "50"),
+      orderBy: "created_at",
+      orderDir: "desc",
     }
 
-    // Map to frontend format (full signal shape)
-    const signals = rawSignals.map((sig: Record<string, unknown>) => {
-      const ts = typeof sig.ts === "string" ? sig.ts : undefined
-      const createdAt = (sig.created_at as number | undefined) ?? toEpochSeconds(ts)
-      return {
-        signal_id: sig.signal_id || String(Math.random()).slice(2, 10),
-        ts,
-        created_at: createdAt ?? 0,
-        symbol: sig.symbol,
-        timeframe: sig.timeframe,
-        tf: sig.tf || sig.timeframe,
-        direction: sig.direction,
-        status: sig.status || "FOUND",
-        entry: sig.entry,
-        sl: sig.sl,
-        tp: sig.tp,
-        rr: sig.rr,
-        confidence: sig.confidence,
-        outcome: sig.outcome,
-        resolved_at: sig.resolved_at,
-        resolved_price: sig.resolved_price,
-        strategy_id: sig.strategy_id,
-        strategy_name: sig.strategy_name,
-        detectors_normalized: sig.detectors_normalized || [],
-        hits_per_detector: sig.hits_per_detector || {},
-        explain: sig.explain || {},
-        evidence: sig.evidence || {},
-        chart_drawings: sig.chart_drawings || [],
-        engine_annotations: sig.engine_annotations || {},
-        source: sig.source || "scanner",
-        simVersion: sig.simVersion,
-      }
-    })
+    const startDate = url.searchParams.get("startDate")
+    const endDate = url.searchParams.get("endDate")
+    if (startDate) options.startDate = parseInt(startDate)
+    if (endDate) options.endDate = parseInt(endDate)
+
+    const signals = await querySignals(db, userId, options)
 
     return NextResponse.json({
       ok: true,
-      count: signals.length,
-      total: (Array.isArray(data) ? signals.length : (data.total || signals.length)),
       signals,
-      source: "backend_signals",
-    });
-  } catch (err) {
-    console.error("[signals/route] Fetch error:", err);
+      count: signals.length,
+    })
+  } catch (error: any) {
+    console.error("[signals API] GET error:", error?.message)
     return NextResponse.json(
-      { ok: false, error: "FETCH_FAILED", message: String(err) },
+      { error: "Failed to fetch signals" },
       { status: 500 }
-    );
+    )
+  }
+}
+
+// ============================================================
+// POST /api/signals
+// ============================================================
+
+export async function POST(req: NextRequest) {
+  try {
+    // Must have API key or auth
+    const userId = await getUserIdFromRequest(req)
+
+    // For scanner, userId might be in body
+    let body: any
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+
+    const targetUserId = userId || body.userId
+    if (!targetUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Verify API key for scanner requests
+    const hasApiKey = verifyApiKey(req)
+    if (!userId && !hasApiKey) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    initFirebaseAdmin()
+    const db = getFirestore()
+
+    // Check if batch create
+    if (Array.isArray(body.signals)) {
+      // Batch create
+      const result = await batchCreateSignals(db, targetUserId, body.signals)
+      return NextResponse.json({
+        ok: true,
+        ...result,
+      })
+    }
+
+    // Single create
+    const signalInput: SignalCreateInput = {
+      signal_id: body.signal_id,
+      symbol: body.symbol,
+      timeframe: body.timeframe,
+      direction: body.direction,
+      entry: body.entry,
+      sl: body.sl,
+      tp: body.tp,
+      rr: body.rr,
+      strategy_id: body.strategy_id,
+      strategy_name: body.strategy_name,
+      detectors: body.detectors,
+      created_at: body.created_at,
+      status: body.status,
+      source: body.source || "scanner",
+    }
+
+    if (!signalInput.signal_id || !signalInput.symbol || !signalInput.entry) {
+      return NextResponse.json(
+        { error: "Missing required fields: signal_id, symbol, entry" },
+        { status: 400 }
+      )
+    }
+
+    const signal = await createSignal(db, targetUserId, signalInput)
+
+    if (!signal) {
+      return NextResponse.json(
+        { error: "Failed to create signal" },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      ok: true,
+      signal,
+    })
+  } catch (error: any) {
+    console.error("[signals API] POST error:", error?.message)
+    return NextResponse.json(
+      { error: "Failed to create signal" },
+      { status: 500 }
+    )
   }
 }
