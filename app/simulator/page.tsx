@@ -599,7 +599,7 @@ export default function SimulatorPage() {
 
     try {
       // Call v2 API which loads strategy from Firestore and proxies to backend
-      const res = await api.simulatorV2.run({
+      const requestPayload = {
         strategyId,
         symbols: [symbol],
         from: rangeDates.from,
@@ -607,7 +607,11 @@ export default function SimulatorPage() {
         timeframe: "auto",  // Let backend decide TF based on range
         mode: "winrate",
         demoMode: false,
-      })
+      }
+      console.log("[simulator] API request payload:", JSON.stringify(requestPayload, null, 2))
+      console.log("[simulator] strategyId value:", strategyId, "type:", typeof strategyId, "length:", strategyId?.length)
+
+      const res = await api.simulatorV2.run(requestPayload)
 
       if (!res.ok && isGapError(res)) {
         const demoRes = await api.simulatorV2.run({
@@ -708,7 +712,7 @@ export default function SimulatorPage() {
           break
       }
 
-      const res = await api.simulatorV2.run({
+      const quickFixPayload = {
         strategyId,
         symbols: [symbol],
         from: customFrom,
@@ -716,9 +720,11 @@ export default function SimulatorPage() {
         timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
         mode: "winrate",
         demoMode: false,
-        // Note: customDetectors not passed - server always uses strategy detectors
-        // For disable_gates, we'd need a backend feature to override
-      })
+      }
+      console.log("[simulator] QuickFix API payload:", JSON.stringify(quickFixPayload, null, 2))
+      console.log("[simulator] QuickFix strategyId:", strategyId, "type:", typeof strategyId)
+
+      const res = await api.simulatorV2.run(quickFixPayload)
 
       if (!res.ok && isGapError(res)) {
         const demoRes = await api.simulatorV2.run({

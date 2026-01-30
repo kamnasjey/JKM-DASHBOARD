@@ -93,7 +93,11 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     )
   }
-  
+
+  // Debug: Log raw body to see what was received
+  console.log(`[${requestId}] Raw body received:`, JSON.stringify(body, null, 2))
+  console.log(`[${requestId}] Body strategyId raw:`, (body as any)?.strategyId, "type:", typeof (body as any)?.strategyId)
+
   const validation = validateSimulatorRequest(body)
   if (!validation.success) {
     return NextResponse.json(
