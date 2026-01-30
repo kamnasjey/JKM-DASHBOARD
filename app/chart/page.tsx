@@ -18,9 +18,15 @@ export default function ChartPage() {
   const { signals } = useSignals({ limit: 50 })
 
   // Get symbol list with fallback
+  // Available symbols from VPS: AUDJPY, AUDUSD, BTCUSD, EURAUD, EURCHF, EURGBP, EURJPY, EURUSD, GBPJPY, GBPUSD, NZDUSD, USDCAD, USDCHF, USDJPY, XAUUSD
+  const ALLOWED_SYMBOLS = [
+    "XAUUSD", "BTCUSD", "EURUSD", "GBPUSD", "USDJPY", "EURJPY", "GBPJPY",
+    "AUDUSD", "AUDJPY", "NZDUSD", "USDCAD", "USDCHF", "EURCHF", "EURGBP", "EURAUD"
+  ]
+
   const symbolList = symbols.length > 0
-    ? symbols
-    : ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "BTCUSD"]
+    ? symbols.filter(s => ALLOWED_SYMBOLS.includes(s))
+    : ALLOWED_SYMBOLS.slice(0, 5)
 
   // Filter recent signals (for display below chart)
   const recentSignals = signals

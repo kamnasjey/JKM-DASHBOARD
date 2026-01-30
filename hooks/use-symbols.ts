@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import { api } from "@/lib/api"
 
-// Fallback symbols if backend doesn't have /symbols endpoint
+// Fallback symbols - only include available symbols from VPS
+// Available: AUDJPY, AUDUSD, BTCUSD, EURAUD, EURCHF, EURGBP, EURJPY, EURUSD, GBPJPY, GBPUSD, NZDUSD, USDCAD, USDCHF, USDJPY, XAUUSD
 const FALLBACK_SYMBOLS = [
-  "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
-  "USDCAD", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY",
-  "XAUUSD", "BTCUSD", "ETHUSD", "US30", "NAS100"
+  "XAUUSD", "BTCUSD", "EURUSD", "GBPUSD", "USDJPY",
+  "EURJPY", "GBPJPY", "AUDUSD", "AUDJPY", "NZDUSD",
+  "USDCAD", "USDCHF", "EURCHF", "EURGBP", "EURAUD"
 ]
 
 export function useSymbols() {

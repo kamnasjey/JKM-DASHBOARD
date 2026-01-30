@@ -66,8 +66,8 @@ export function ChartCanvas({
         ? response
         : response?.candles ?? []
 
-      // Normalize candle data
-      const normalized: Candle[] = candleArray
+      // Normalize and validate candle data
+      const rawCandles: Candle[] = candleArray
         .map((c: any) => {
           let time: number
           if (typeof c.time === "number") {
@@ -82,19 +82,52 @@ export function ChartCanvas({
             return null
           }
 
+          const open = Number(c.open || c.o)
+          const high = Number(c.high || c.h)
+          const low = Number(c.low || c.l)
+          const close = Number(c.close || c.c)
+
+          // Skip invalid candles
+          if (isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close)) return null
+          if (open <= 0 || high <= 0 || low <= 0 || close <= 0) return null
+          if (high < low || high < open || high < close) return null
+          if (low > open || low > close) return null
+
           return {
             time,
-            open: Number(c.open || c.o),
-            high: Number(c.high || c.h),
-            low: Number(c.low || c.l),
-            close: Number(c.close || c.c),
+            open,
+            high,
+            low,
+            close,
             volume: Number(c.volume || c.v || 0),
           }
         })
         .filter((c: Candle | null): c is Candle => c !== null)
         .sort((a: Candle, b: Candle) => a.time - b.time)
 
-      setM5Candles(normalized)
+      // Filter out abnormal price jumps (>30% from previous candle)
+      const validated: Candle[] = []
+      for (let i = 0; i < rawCandles.length; i++) {
+        const candle = rawCandles[i]
+        if (i === 0) {
+          validated.push(candle)
+          continue
+        }
+
+        const prev = validated[validated.length - 1]
+        const priceDiff = Math.abs(candle.close - prev.close) / prev.close
+
+        // Skip if price jumped more than 30% (likely data error)
+        if (priceDiff > 0.30) {
+          console.warn(`[ChartCanvas] Skipping candle with abnormal jump: ${prev.close} -> ${candle.close}`)
+          continue
+        }
+
+        validated.push(candle)
+      }
+
+      console.log(`[ChartCanvas] Loaded ${rawCandles.length} candles, validated ${validated.length}`)
+      setM5Candles(validated)
     } catch (err: any) {
       console.error("[ChartCanvas] Failed to fetch candles:", err)
       setError(err?.message || "Failed to load chart data")
