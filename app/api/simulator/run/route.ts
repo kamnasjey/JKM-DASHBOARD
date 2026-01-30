@@ -124,8 +124,12 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  // Debug: Log strategyId BEFORE validation
+  console.log(`[${requestId}] BEFORE validation - rawStrategyId: "${rawStrategyId}" (type: ${typeof rawStrategyId}, len: ${rawStrategyId?.length})`)
+
   const validation = validateSimulatorRequest(body)
   if (!validation.success) {
+    console.log(`[${requestId}] VALIDATION FAILED:`, JSON.stringify(formatZodErrors(validation.error)))
     return NextResponse.json(
       {
         ok: false,
@@ -141,11 +145,11 @@ export async function POST(request: NextRequest) {
       { status: 422 }
     )
   }
-  
+
   const { strategyId, symbols, from, to, timeframe, mode, demoMode: clientDemoMode } = validation.data
 
-  // Debug: Log received strategyId
-  console.log(`[${requestId}] Received strategyId: "${strategyId}" (type: ${typeof strategyId}, length: ${strategyId?.length})`)
+  // Debug: Log strategyId AFTER validation
+  console.log(`[${requestId}] AFTER validation - strategyId: "${strategyId}" (type: ${typeof strategyId}, len: ${strategyId?.length})`)
 
   // --- 3. Check access (owner bypass) ---
   const isOwner = isOwnerEmail(userEmail)
@@ -180,21 +184,34 @@ export async function POST(request: NextRequest) {
   }
   
   // --- 4. Load strategy from Firestore ---
-  console.log(`[${requestId}] Looking up strategy for userId: ${userId}, strategyId: "${strategyId}"`)
+  // CRITICAL DEBUG: Compare raw vs validated strategyId
+  if (rawStrategyId !== strategyId) {
+    console.error(`[${requestId}] ⚠️ MISMATCH! rawStrategyId="${rawStrategyId}" vs strategyId="${strategyId}"`)
+  }
+  console.log(`[${requestId}] Looking up strategy for userId: ${userId}, strategyId: "${strategyId}" (raw was: "${rawStrategyId}")`)
   const strategy = await getStrategy(userId, strategyId)
-  console.log(`[${requestId}] Strategy lookup result: ${strategy ? `found (${strategy.name})` : 'NOT FOUND'}`)
+  console.log(`[${requestId}] Strategy lookup result: ${strategy ? `found (id=${strategy.id}, name=${strategy.name})` : 'NOT FOUND'}`)
 
   if (!strategy) {
-    console.error(`[${requestId}] Strategy not found - userId: ${userId}, strategyId: "${strategyId}"`)
+    // CRITICAL DEBUG: This is where "Strategy not found" error originates
+    console.error(`[${requestId}] ❌❌❌ STRATEGY NOT FOUND IN DASHBOARD ❌❌❌`)
+    console.error(`[${requestId}] userId: ${userId}`)
+    console.error(`[${requestId}] strategyId (from validation): "${strategyId}" (len: ${strategyId?.length})`)
+    console.error(`[${requestId}] rawStrategyId (from body): "${rawStrategyId}" (len: ${rawStrategyId?.length})`)
+    console.error(`[${requestId}] Are they equal? ${rawStrategyId === strategyId}`)
     return NextResponse.json(
       {
         ok: false,
         error: "STRATEGY_NOT_FOUND",
         message: `Strategy '${strategyId}' not found`,
         debug: {
+          source: "DASHBOARD_ROUTE_LINE_197",  // Mark origin
           receivedStrategyId: strategyId,
+          rawStrategyId,
           strategyIdType: typeof strategyId,
           strategyIdLength: strategyId?.length,
+          rawStrategyIdLength: rawStrategyId?.length,
+          idsMatch: rawStrategyId === strategyId,
           userId: userId.slice(0, 8) + "...",
           requestId,
         }
@@ -231,7 +248,8 @@ export async function POST(request: NextRequest) {
   const backendPayload = {
     uid: userId,
     requestId,
-    strategyId: strategy.id,  // Root level for backend compatibility
+    strategyId: strategy.id,  // camelCase for backend compatibility
+    strategy_id: strategy.id, // snake_case for backend compatibility
     symbols: effectiveSymbols,
     from: effectiveFrom,
     to: effectiveTo,
