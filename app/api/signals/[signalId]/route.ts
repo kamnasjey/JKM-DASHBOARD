@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getFirestore } from "firebase-admin/firestore"
 import { initFirebaseAdmin } from "@/lib/firebase-admin"
 import { verifyIdToken } from "@/lib/auth"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth-options"
 import {
   getSignal,
   updateSignal,
@@ -40,6 +42,16 @@ async function getUserIdFromRequest(req: NextRequest): Promise<string | null> {
     const userId = url.searchParams.get("userId")
     if (userId) return userId
     return null
+  }
+
+  // Try NextAuth session (for dashboard frontend)
+  try {
+    const session = await getServerSession(authOptions)
+    if (session?.user && (session.user as any).id) {
+      return (session.user as any).id
+    }
+  } catch {
+    // Session check failed, continue to Firebase token
   }
 
   // Try Firebase auth token
