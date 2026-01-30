@@ -18,11 +18,12 @@ const navItems = [
     href: "/dashboard",
     icon: LayoutDashboard,
   },
-  {
-    label: "Chart",
-    href: "/chart",
-    icon: LineChart,
-  },
+  // Chart hidden for now - will develop later
+  // {
+  //   label: "Chart",
+  //   href: "/chart",
+  //   icon: LineChart,
+  // },
   {
     label: "Scanner Config",
     href: "/dashboard/scanner-config",
