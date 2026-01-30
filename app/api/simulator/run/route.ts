@@ -95,8 +95,9 @@ export async function POST(request: NextRequest) {
   }
 
   // Debug: Log raw body to see what was received
+  const rawStrategyId = (body as any)?.strategyId
   console.log(`[${requestId}] Raw body received:`, JSON.stringify(body, null, 2))
-  console.log(`[${requestId}] Body strategyId raw:`, (body as any)?.strategyId, "type:", typeof (body as any)?.strategyId)
+  console.log(`[${requestId}] Body strategyId raw:`, rawStrategyId, "type:", typeof rawStrategyId, "length:", rawStrategyId?.length)
 
   const validation = validateSimulatorRequest(body)
   if (!validation.success) {
@@ -106,6 +107,11 @@ export async function POST(request: NextRequest) {
         error: "VALIDATION_ERROR",
         message: "Invalid request data",
         details: formatZodErrors(validation.error),
+        debug: {
+          rawStrategyId,
+          rawStrategyIdType: typeof rawStrategyId,
+          bodyKeys: Object.keys(body as object || {}),
+        }
       },
       { status: 422 }
     )
@@ -156,7 +162,18 @@ export async function POST(request: NextRequest) {
   if (!strategy) {
     console.error(`[${requestId}] Strategy not found - userId: ${userId}, strategyId: "${strategyId}"`)
     return NextResponse.json(
-      { ok: false, error: "STRATEGY_NOT_FOUND", message: `Strategy '${strategyId}' not found` },
+      {
+        ok: false,
+        error: "STRATEGY_NOT_FOUND",
+        message: `Strategy '${strategyId}' not found`,
+        debug: {
+          receivedStrategyId: strategyId,
+          strategyIdType: typeof strategyId,
+          strategyIdLength: strategyId?.length,
+          userId: userId.slice(0, 8) + "...",
+          requestId,
+        }
+      },
       { status: 404 }
     )
   }
