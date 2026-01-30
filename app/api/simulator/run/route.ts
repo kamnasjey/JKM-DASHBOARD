@@ -310,7 +310,20 @@ export async function POST(request: NextRequest) {
         { status: 502 }
       )
     }
-    
+
+    // DEBUG: Log backend response
+    console.log(`[${requestId}] Backend response status: ${backendResponse.status}`)
+    console.log(`[${requestId}] Backend response ok: ${backendJson?.ok}`)
+    if (!backendJson?.ok) {
+      console.error(`[${requestId}] 🔴 Backend returned error:`, JSON.stringify({
+        ok: backendJson?.ok,
+        error: backendJson?.error,
+        message: backendJson?.message,
+        errorCode: backendJson?.error?.code,
+        errorMessage: backendJson?.error?.message,
+      }))
+    }
+
     // --- 8. Retry on DATA_GAP with demoMode=true (allow gaps without demo limits) ---
     if (!backendResponse.ok && backendJson?.error?.code === "DATA_GAP" && !demoMode) {
       const retryPayload = { ...backendPayload, demoMode: true }
