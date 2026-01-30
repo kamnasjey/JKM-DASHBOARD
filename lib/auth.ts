@@ -4,7 +4,7 @@
  * Provides ID token verification for API routes.
  */
 
-import { initFirebaseAdmin } from "@/lib/firebase-admin"
+import { getFirebaseAdminApp } from "@/lib/firebase-admin"
 import { getAuth } from "firebase-admin/auth"
 
 /**
@@ -13,7 +13,8 @@ import { getAuth } from "firebase-admin/auth"
  */
 export async function verifyIdToken(token: string): Promise<{ uid: string } | null> {
   try {
-    initFirebaseAdmin()
+    // Initialize Firebase Admin (if not already initialized)
+    getFirebaseAdminApp()
     const auth = getAuth()
     const decoded = await auth.verifyIdToken(token)
     return { uid: decoded.uid }
