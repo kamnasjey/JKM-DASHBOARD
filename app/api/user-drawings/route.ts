@@ -64,6 +64,27 @@ export async function GET(request: NextRequest) {
     })
   } catch (err: any) {
     console.error("[user-drawings] GET error:", err?.message || err)
+
+    // Handle Firestore NOT_FOUND (new user with no drawings yet)
+    const errCode = err?.code || ""
+    const errMsg = (err?.message || "").toLowerCase()
+
+    if (
+      errCode === 5 ||
+      errCode === "NOT_FOUND" ||
+      errMsg.includes("not_found") ||
+      errMsg.includes("not found") ||
+      errMsg.includes("no document")
+    ) {
+      return NextResponse.json({
+        ok: true,
+        drawings: [],
+        count: 0,
+        maxPerChart: MAX_DRAWINGS_PER_CHART,
+        maxTotal: MAX_DRAWINGS_PER_USER,
+      })
+    }
+
     return NextResponse.json(
       { ok: false, error: "Failed to list drawings" },
       { status: 500 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react"
 import {
   createChart,
+  CandlestickSeries,
   type ISeriesApi,
   type CandlestickData,
   type Time,
@@ -179,15 +180,15 @@ export function ChartCanvas({
 
     chartRef.current = chart
 
-    // Create candlestick series (type assertion for lightweight-charts v5 compatibility)
-    const candleSeries = (chart as any).addCandlestickSeries({
+    // Create candlestick series using lightweight-charts v5 API
+    const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: "#22c55e",
       downColor: "#ef4444",
       borderUpColor: "#22c55e",
       borderDownColor: "#ef4444",
       wickUpColor: "#22c55e",
       wickDownColor: "#ef4444",
-    }) as ISeriesApi<"Candlestick">
+    })
 
     seriesRef.current = candleSeries
 

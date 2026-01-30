@@ -40,18 +40,42 @@ export async function listDrawings(
   const limit = Math.min(options.limit || DEFAULT_LIMIT, 200)
   const ref = getDrawingsRef(userId)
 
-  const query = ref
-    .where("symbol", "==", options.symbol)
-    .where("timeframe", "==", options.timeframe)
-    .orderBy("createdAt", "desc")
-    .limit(limit)
+  try {
+    // Try with composite index (symbol + timeframe + createdAt)
+    const query = ref
+      .where("symbol", "==", options.symbol)
+      .where("timeframe", "==", options.timeframe)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
 
-  const snapshot = await query.get()
+    const snapshot = await query.get()
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...normalizeDrawing(doc.data()),
-  })) as DrawingDoc[]
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...normalizeDrawing(doc.data()),
+    })) as DrawingDoc[]
+  } catch (err: any) {
+    // If composite index doesn't exist, fall back to simpler query
+    console.warn("[drawings] Composite index not available, using fallback query:", err?.message)
+
+    // Fallback: get all drawings for symbol, filter in-memory
+    const query = ref
+      .where("symbol", "==", options.symbol)
+      .limit(limit * 2)  // Get more to account for timeframe filter
+
+    const snapshot = await query.get()
+
+    const filtered = snapshot.docs
+      .map(doc => ({
+        id: doc.id,
+        ...normalizeDrawing(doc.data()),
+      }))
+      .filter(d => d.timeframe === options.timeframe)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit)
+
+    return filtered as DrawingDoc[]
+  }
 }
 
 /**
