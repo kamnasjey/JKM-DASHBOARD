@@ -94,62 +94,21 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Debug: Log raw body to see what was received
-  const rawStrategyId = (body as any)?.strategyId
-  console.log(`[${requestId}] Raw body received:`, JSON.stringify(body, null, 2))
-  console.log(`[${requestId}] Body strategyId raw:`, rawStrategyId, "type:", typeof rawStrategyId, "length:", rawStrategyId?.length)
-
-  // TEMPORARY DEBUG: Return raw body to see what server received
-  if ((body as any)?._debug === true) {
-    // Also test getStrategy to see if it finds the strategy
-    const testStrategy = await getStrategy(userId, rawStrategyId)
-
-    return NextResponse.json({
-      ok: false,
-      _debugResponse: true,
-      rawBody: body,
-      rawStrategyId,
-      rawStrategyIdType: typeof rawStrategyId,
-      rawStrategyIdLength: rawStrategyId?.length,
-      bodyKeys: Object.keys(body as object || {}),
-      requestId,
-      // Debug: auth info
-      userId: userId,
-      userIdLength: userId?.length,
-      userEmail: userEmail,
-      // Debug: strategy lookup result
-      strategyFound: !!testStrategy,
-      strategyName: testStrategy?.name || null,
-      strategyId: testStrategy?.id || null,
-    })
-  }
-
-  // Debug: Log strategyId BEFORE validation
-  console.log(`[${requestId}] BEFORE validation - rawStrategyId: "${rawStrategyId}" (type: ${typeof rawStrategyId}, len: ${rawStrategyId?.length})`)
 
   const validation = validateSimulatorRequest(body)
   if (!validation.success) {
-    console.log(`[${requestId}] VALIDATION FAILED:`, JSON.stringify(formatZodErrors(validation.error)))
     return NextResponse.json(
       {
         ok: false,
         error: "VALIDATION_ERROR",
         message: "Invalid request data",
         details: formatZodErrors(validation.error),
-        debug: {
-          rawStrategyId,
-          rawStrategyIdType: typeof rawStrategyId,
-          bodyKeys: Object.keys(body as object || {}),
-        }
       },
       { status: 422 }
     )
   }
 
   const { strategyId, symbols, from, to, timeframe, mode, demoMode: clientDemoMode } = validation.data
-
-  // Debug: Log strategyId AFTER validation
-  console.log(`[${requestId}] AFTER validation - strategyId: "${strategyId}" (type: ${typeof strategyId}, len: ${strategyId?.length})`)
 
   // --- 3. Check access (owner bypass) ---
   const isOwner = isOwnerEmail(userEmail)
@@ -184,37 +143,14 @@ export async function POST(request: NextRequest) {
   }
   
   // --- 4. Load strategy from Firestore ---
-  // CRITICAL DEBUG: Compare raw vs validated strategyId
-  if (rawStrategyId !== strategyId) {
-    console.error(`[${requestId}] ⚠️ MISMATCH! rawStrategyId="${rawStrategyId}" vs strategyId="${strategyId}"`)
-  }
-  console.log(`[${requestId}] Looking up strategy for userId: ${userId}, strategyId: "${strategyId}" (raw was: "${rawStrategyId}")`)
   const strategy = await getStrategy(userId, strategyId)
-  console.log(`[${requestId}] Strategy lookup result: ${strategy ? `found (id=${strategy.id}, name=${strategy.name})` : 'NOT FOUND'}`)
 
   if (!strategy) {
-    // CRITICAL DEBUG: This is where "Strategy not found" error originates
-    console.error(`[${requestId}] ❌❌❌ STRATEGY NOT FOUND IN DASHBOARD ❌❌❌`)
-    console.error(`[${requestId}] userId: ${userId}`)
-    console.error(`[${requestId}] strategyId (from validation): "${strategyId}" (len: ${strategyId?.length})`)
-    console.error(`[${requestId}] rawStrategyId (from body): "${rawStrategyId}" (len: ${rawStrategyId?.length})`)
-    console.error(`[${requestId}] Are they equal? ${rawStrategyId === strategyId}`)
     return NextResponse.json(
       {
         ok: false,
         error: "STRATEGY_NOT_FOUND",
         message: `Strategy '${strategyId}' not found`,
-        debug: {
-          source: "DASHBOARD_ROUTE_LINE_197",  // Mark origin
-          receivedStrategyId: strategyId,
-          rawStrategyId,
-          strategyIdType: typeof strategyId,
-          strategyIdLength: strategyId?.length,
-          rawStrategyIdLength: rawStrategyId?.length,
-          idsMatch: rawStrategyId === strategyId,
-          userId: userId.slice(0, 8) + "...",
-          requestId,
-        }
       },
       { status: 404 }
     )
@@ -311,17 +247,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // DEBUG: Log backend response
-    console.log(`[${requestId}] Backend response status: ${backendResponse.status}`)
-    console.log(`[${requestId}] Backend response ok: ${backendJson?.ok}`)
+    // Log backend errors for troubleshooting
     if (!backendJson?.ok) {
-      console.error(`[${requestId}] 🔴 Backend returned error:`, JSON.stringify({
-        ok: backendJson?.ok,
-        error: backendJson?.error,
-        message: backendJson?.message,
-        errorCode: backendJson?.error?.code,
-        errorMessage: backendJson?.error?.message,
-      }))
+      console.error(`[${requestId}] Backend error:`, backendJson?.error?.code || backendJson?.error, backendJson?.message)
     }
 
     // --- 8. Retry on DATA_GAP with demoMode=true (allow gaps without demo limits) ---

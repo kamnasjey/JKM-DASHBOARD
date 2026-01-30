@@ -1098,12 +1098,12 @@ export default function SimulatorPage() {
         {/* Results */}
         {result?.ok && combinedResult && !running && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {/* Combined Summary Cards - Use trades array as single source of truth */}
+            {/* Combined Summary Cards - Use summary as source of truth (trades is just a sample) */}
             {(() => {
-              // Single source of truth: use trades array if available, otherwise summary
-              const totalTrades = result.trades?.length || combinedResult.summary.entries
-              const tpHits = result.trades?.filter(t => t.outcome === "TP").length ?? combinedResult.summary.tp
-              const slHits = result.trades?.filter(t => t.outcome === "SL").length ?? combinedResult.summary.sl
+              // Use summary for totals (trades array is only a 30-trade sample, not all trades)
+              const totalTrades = combinedResult.summary.entries ?? 0
+              const tpHits = combinedResult.summary.tp ?? 0
+              const slHits = combinedResult.summary.sl ?? 0
               const winRate = tpHits + slHits > 0 ? (tpHits / (tpHits + slHits)) * 100 : 0
               
               return (
@@ -1201,22 +1201,24 @@ export default function SimulatorPage() {
                           <CardContent>
                             <div className="grid grid-cols-5 gap-3">
                               {TIMEFRAMES.map((tf) => {
-                                const tfTrades = result.trades?.filter(t => t.tf === tf) || []
-                                const tfTP = tfTrades.filter(t => t.outcome === "TP").length
-                                const tfSL = tfTrades.filter(t => t.outcome === "SL").length
+                                // Use byTimeframe for accurate counts (trades is only a sample)
+                                const tfData = result.byTimeframe?.[tf]?.summary
+                                const tfEntries = tfData?.entries ?? 0
+                                const tfTP = tfData?.tp ?? 0
+                                const tfSL = tfData?.sl ?? 0
                                 const tfWR = tfTP + tfSL > 0 ? (tfTP / (tfTP + tfSL)) * 100 : 0
-                                
+
                                 return (
                                   <div key={tf} className={cn(
                                     "p-3 rounded-lg border text-center transition-colors",
-                                    tfTrades.length > 0 
-                                      ? "border-primary/30 bg-primary/5" 
+                                    tfEntries > 0
+                                      ? "border-primary/30 bg-primary/5"
                                       : "border-border bg-muted/30"
                                   )}>
                                     <p className="text-sm font-semibold mb-1">{tf.toUpperCase()}</p>
-                                    <p className="text-2xl font-bold">{tfTrades.length}</p>
+                                    <p className="text-2xl font-bold">{tfEntries}</p>
                                     <p className="text-xs text-muted-foreground">entries</p>
-                                    {tfTrades.length > 0 && (
+                                    {tfEntries > 0 && (
                                       <div className="mt-2 text-xs">
                                         <span className="text-green-500">{tfTP}W</span>
                                         <span className="mx-1">/</span>
@@ -1247,18 +1249,18 @@ export default function SimulatorPage() {
                           <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               <div className="text-center p-3 bg-muted/30 rounded-lg">
-                                <p className="text-3xl font-bold">{result.trades.length}</p>
+                                <p className="text-3xl font-bold">{combinedResult.summary.entries ?? 0}</p>
                                 <p className="text-xs text-muted-foreground">Нийт Trade</p>
                               </div>
                               <div className="text-center p-3 bg-green-500/10 rounded-lg">
                                 <p className="text-3xl font-bold text-green-500">
-                                  {result.trades.filter(t => t.outcome === "TP").length}
+                                  {combinedResult.summary.tp ?? 0}
                                 </p>
                                 <p className="text-xs text-muted-foreground">TP Hit</p>
                               </div>
                               <div className="text-center p-3 bg-red-500/10 rounded-lg">
                                 <p className="text-3xl font-bold text-red-500">
-                                  {result.trades.filter(t => t.outcome === "SL").length}
+                                  {combinedResult.summary.sl ?? 0}
                                 </p>
                                 <p className="text-xs text-muted-foreground">SL Hit</p>
                               </div>
@@ -1290,10 +1292,11 @@ export default function SimulatorPage() {
                           </CardHeader>
                           <CardContent>
                             {(() => {
-                              const totalTrades = result.trades?.length || 0
-                              const tpCount = result.trades?.filter(t => t.outcome === "TP").length || 0
-                              const slCount = result.trades?.filter(t => t.outcome === "SL").length || 0
-                              const timeExitCount = combinedResult?.summary?.timeExit || 0
+                              // Use summary for totals (trades array is only a 30-trade sample)
+                              const totalTrades = combinedResult?.summary?.entries ?? 0
+                              const tpCount = combinedResult?.summary?.tp ?? 0
+                              const slCount = combinedResult?.summary?.sl ?? 0
+                              const timeExitCount = combinedResult?.summary?.timeExit ?? 0
                               const resolvedCount = tpCount + slCount + timeExitCount
                               
                               // Calculate entries per week based on date range
@@ -1465,15 +1468,15 @@ export default function SimulatorPage() {
                           <div>
                             <h3 className="text-base font-medium">Бүх Trade-ийн жагсаалт</h3>
                             <p className="text-sm text-muted-foreground">
-                              Нийт {result.trades.length} trade
+                              Нийт {combinedResult.summary.entries ?? 0} trade {result.trades.length < (combinedResult.summary.entries ?? 0) && `(${result.trades.length} sample харуулж байна)`}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Badge variant="outline" className="text-green-500 border-green-500/30">
-                              TP: {result.trades.filter(t => t.outcome === "TP").length}
+                              TP: {combinedResult.summary.tp ?? 0}
                             </Badge>
                             <Badge variant="outline" className="text-red-500 border-red-500/30">
-                              SL: {result.trades.filter(t => t.outcome === "SL").length}
+                              SL: {combinedResult.summary.sl ?? 0}
                             </Badge>
                           </div>
                         </div>
