@@ -101,6 +101,9 @@ export async function POST(request: NextRequest) {
 
   // TEMPORARY DEBUG: Return raw body to see what server received
   if ((body as any)?._debug === true) {
+    // Also test getStrategy to see if it finds the strategy
+    const testStrategy = await getStrategy(userId, rawStrategyId)
+
     return NextResponse.json({
       ok: false,
       _debugResponse: true,
@@ -110,6 +113,14 @@ export async function POST(request: NextRequest) {
       rawStrategyIdLength: rawStrategyId?.length,
       bodyKeys: Object.keys(body as object || {}),
       requestId,
+      // Debug: auth info
+      userId: userId,
+      userIdLength: userId?.length,
+      userEmail: userEmail,
+      // Debug: strategy lookup result
+      strategyFound: !!testStrategy,
+      strategyName: testStrategy?.name || null,
+      strategyId: testStrategy?.id || null,
     })
   }
 
