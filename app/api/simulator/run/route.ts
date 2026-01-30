@@ -231,6 +231,7 @@ export async function POST(request: NextRequest) {
   const backendPayload = {
     uid: userId,
     requestId,
+    strategyId: strategy.id,  // Root level for backend compatibility
     symbols: effectiveSymbols,
     from: effectiveFrom,
     to: effectiveTo,
