@@ -99,6 +99,20 @@ export async function POST(request: NextRequest) {
   console.log(`[${requestId}] Raw body received:`, JSON.stringify(body, null, 2))
   console.log(`[${requestId}] Body strategyId raw:`, rawStrategyId, "type:", typeof rawStrategyId, "length:", rawStrategyId?.length)
 
+  // TEMPORARY DEBUG: Return raw body to see what server received
+  if ((body as any)?._debug === true) {
+    return NextResponse.json({
+      ok: false,
+      _debugResponse: true,
+      rawBody: body,
+      rawStrategyId,
+      rawStrategyIdType: typeof rawStrategyId,
+      rawStrategyIdLength: rawStrategyId?.length,
+      bodyKeys: Object.keys(body as object || {}),
+      requestId,
+    })
+  }
+
   const validation = validateSimulatorRequest(body)
   if (!validation.success) {
     return NextResponse.json(
