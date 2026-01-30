@@ -22,7 +22,7 @@ const USERS_COLLECTION = "users"
 const STRATEGIES_SUBCOLLECTION = "strategies"
 
 /** Current starter seed version - increment to reseed all users */
-export const STARTER_SEED_VERSION = "v2"
+export const STARTER_SEED_VERSION = "v3"
 
 const DISABLE_STARTER_STRATEGIES = ["1", "true", "yes"].includes(
   String(process.env.DISABLE_STARTER_STRATEGIES || "").trim().toLowerCase(),
@@ -70,6 +70,8 @@ export interface StarterStrategyTemplate {
     maxRiskPercent: number
     minConfirmHits: number
   }
+  /** Cooldown in minutes between same signals */
+  cooldownMinutes: number
 }
 
 export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
@@ -87,6 +89,7 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       maxRiskPercent: 1.0,
       minConfirmHits: 2,
     },
+    cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
   },
   {
     id: "starter_EDGE_2",
@@ -102,6 +105,7 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       maxRiskPercent: 1.0,
       minConfirmHits: 2,
     },
+    cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
   },
   {
     id: "starter_EDGE_3",
@@ -117,6 +121,7 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       maxRiskPercent: 1.0,
       minConfirmHits: 2,
     },
+    cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
   },
 ]
 
@@ -211,23 +216,26 @@ export async function seedStarterStrategiesForUser(
           // Identity
           name: template.name,
           description: template.description,
-          
+
           // Detectors - canonical IDs only
           detectors: normalizedDetectors,
           gates: template.gates,
           triggers: template.triggers,
           confluence: template.confluence,
           confirms: [], // Legacy field compatibility
-          
+
           // Risk config
           risk: template.risk,
-          
+
+          // Cooldown to prevent duplicate signals (snake_case for backend compatibility)
+          cooldown_minutes: template.cooldownMinutes || 60,
+
           // Metadata
           enabled: true,
           isStarter: true,
           starterKey: template.starterKey,
           version: 1,
-          
+
           // Timestamps
           createdAt: now,
           updatedAt: now,
