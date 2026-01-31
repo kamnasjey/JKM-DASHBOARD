@@ -318,6 +318,16 @@ export default function SimulatorMVPPage() {
       return
     }
 
+    // Check if strategy has detectors
+    if (!selectedStrategy?.detectors || selectedStrategy.detectors.length === 0) {
+      toast({
+        title: "No Detectors",
+        description: "This strategy has no detectors. Please edit the strategy and add detectors first.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setRunning(true)
     setResult(null)
 
@@ -439,11 +449,18 @@ export default function SimulatorMVPPage() {
                 </Select>
                 {selectedStrategy && (
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {selectedStrategy.detectors.map((d) => (
-                      <Badge key={d} variant="secondary" className="text-xs">
-                        {d}
-                      </Badge>
-                    ))}
+                    {selectedStrategy.detectors.length === 0 ? (
+                      <span className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        No detectors - edit strategy to add
+                      </span>
+                    ) : (
+                      selectedStrategy.detectors.map((d) => (
+                        <Badge key={d} variant="secondary" className="text-xs">
+                          {d}
+                        </Badge>
+                      ))
+                    )}
                   </div>
                 )}
               </div>

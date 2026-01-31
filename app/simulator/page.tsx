@@ -591,6 +591,12 @@ export default function SimulatorPage() {
     }
     console.log("[simulator] Found strategy:", { id: strategy.id, name: strategy.name })
 
+    // Check if strategy has detectors
+    if (!strategy.detectors || strategy.detectors.length === 0) {
+      setError("This strategy has no detectors configured. Please edit the strategy in the Strategies page and add at least one detector.")
+      return
+    }
+
     setRunning(true)
     setError(null)
     setResult(null)
@@ -940,6 +946,19 @@ export default function SimulatorPage() {
             </div>
 
             {/* Requested Detectors - show ALL detectors from strategy grouped by category */}
+            {selectedStrategy && requestedDetectors.length === 0 && (
+              <div className="pt-4 border-t border-border">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  <div>
+                    <p className="text-sm font-medium text-red-500">No detectors configured</p>
+                    <p className="text-xs text-muted-foreground">
+                      This strategy has no detectors. Edit the strategy in the Strategies page to add detectors.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             {requestedDetectors.length > 0 && (
               <div className="pt-4 border-t border-border">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">

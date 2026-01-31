@@ -155,6 +155,21 @@ export async function POST(request: NextRequest) {
       { status: 404 }
     )
   }
+
+  // Validate strategy has detectors
+  if (!strategy.detectors || strategy.detectors.length === 0) {
+    console.warn(`[${requestId}] Strategy '${strategyId}' has no detectors`)
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "NO_DETECTORS",
+        message: "This strategy has no detectors configured. Please edit the strategy and add at least one detector.",
+        strategyId,
+        strategyName: strategy.name,
+      },
+      { status: 422 }
+    )
+  }
   
   // --- 5. Check internal API key ---
   if (!INTERNAL_API_KEY) {
