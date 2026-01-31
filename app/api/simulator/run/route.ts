@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
   const dashboardVersion = getDashboardVersion()
   
   // STEP 5: Add timeout to prevent long-running requests
-  const BACKEND_TIMEOUT_MS = 60_000 // 60 seconds
+  const BACKEND_TIMEOUT_MS = 120_000 // 120 seconds (2 minutes) - increased for complex multi-TF simulations
   const abortController = new AbortController()
   const timeoutId = setTimeout(() => abortController.abort(), BACKEND_TIMEOUT_MS)
   

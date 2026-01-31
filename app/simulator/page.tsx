@@ -1,5 +1,5 @@
 "use client"
-
+// Force recompile v2 - 2026-01-31
 import { useState, useEffect, useMemo } from "react"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -205,6 +205,13 @@ const RANGE_PRESETS = [
 ]
 
 const TIMEFRAMES = ["5m", "15m", "30m", "1h", "4h"]
+
+// Fallback symbols when API fails or returns empty
+const FALLBACK_SYMBOLS = [
+  "EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCAD",
+  "USDCHF", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY",
+  "AUDJPY", "EURAUD", "EURCHF", "XAUUSD", "BTCUSD"
+]
 
 const GAP_ERROR_PATTERN = /missing bars|data quality|gaps|demoMode=true/i
 
@@ -456,11 +463,19 @@ export default function SimulatorPage() {
         api.strategiesV2.list().catch(() => ({ ok: false, strategies: [] })),  // Use Firestore v2 API
       ])
 
-      if (symbolsRes.ok && symbolsRes.symbols) {
-        setSymbols(symbolsRes.symbols)
-        if (symbolsRes.symbols.length > 0 && !symbol) {
-          setSymbol(symbolsRes.symbols[0])
-        }
+      // Use API symbols if available, otherwise fallback to hardcoded list
+      const availableSymbols = (symbolsRes.ok && symbolsRes.symbols && symbolsRes.symbols.length > 0)
+        ? symbolsRes.symbols
+        : FALLBACK_SYMBOLS
+
+      setSymbols(availableSymbols)
+      if (availableSymbols.length > 0 && !symbol) {
+        setSymbol(availableSymbols[0])
+      }
+
+      // Log for debugging
+      if (!symbolsRes.ok || !symbolsRes.symbols || symbolsRes.symbols.length === 0) {
+        console.log("[simulator] API symbols unavailable, using fallback symbols:", FALLBACK_SYMBOLS.length)
       }
 
       if (strategiesRes.strategies) {
@@ -616,7 +631,7 @@ export default function SimulatorPage() {
         from: rangeDates.from,
         to: rangeDates.to,
         timeframe: "auto",  // Let backend decide TF based on range
-        mode: "winrate",
+        mode: "detailed",   // Request all trades (not just sample)
         demoMode: false,
       }
       console.log("[simulator] API request payload:", JSON.stringify(requestPayload, null, 2))
@@ -624,11 +639,17 @@ export default function SimulatorPage() {
 
       const res = await api.simulatorV2.run(requestPayload)
 
-      // Debug: Log full response
+      // Debug: Log full response with trades info
       console.log("[simulator] API response:", JSON.stringify({
         ok: res.ok,
         error: res.error,
         tradesCount: res.combined?.summary?.entries ?? res.summary?.entries ?? 0,
+        tradesArrayLength: res.trades?.length ?? 0,
+        tradesSampleLength: res.combined?.tradesSample?.length ?? 0,
+        hasTrades: !!res.trades,
+        hasTradesSample: !!res.combined?.tradesSample,
+        combinedSummary: res.combined?.summary,
+        summary: res.summary,
         detectorsRequested: res.meta?.detectorsRequested,
         detectorsImplemented: res.meta?.detectorsImplemented,
         detectorsUnknown: res.meta?.detectorsUnknown,
@@ -642,7 +663,7 @@ export default function SimulatorPage() {
           from: rangeDates.from,
           to: rangeDates.to,
           timeframe: "auto",
-          mode: "winrate",
+          mode: "detailed",
           demoMode: true,
         })
         const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."
@@ -664,7 +685,14 @@ export default function SimulatorPage() {
       }
 
       // Extract trades from multiple possible locations (single-TF vs multi-TF response)
-      const trades = res.trades || res.combined?.tradesSample || []
+      const trades = res.trades || res.combined?.tradesSample || (res as any).tradesSample || []
+      console.log("[simulator] Extracted trades:", {
+        fromTrades: res.trades?.length ?? 0,
+        fromCombinedSample: res.combined?.tradesSample?.length ?? 0,
+        fromTradesSample: (res as any).tradesSample?.length ?? 0,
+        finalCount: trades.length,
+        firstTrade: trades[0] || null,
+      })
       const normalizedRes = { ...res, trades } as MultiTFResult
 
       setResult(normalizedRes)
@@ -740,7 +768,7 @@ export default function SimulatorPage() {
         from: customFrom,
         to: customTo,
         timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
-        mode: "winrate",
+        mode: "detailed",
         demoMode: false,
       }
       console.log("[simulator] QuickFix API payload:", JSON.stringify(quickFixPayload, null, 2))
@@ -755,7 +783,7 @@ export default function SimulatorPage() {
           from: customFrom,
           to: customTo,
           timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
-          mode: "winrate",
+          mode: "detailed",
           demoMode: true,
         })
         const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."
@@ -1333,9 +1361,11 @@ export default function SimulatorPage() {
                               const slCount = combinedResult?.summary?.sl ?? 0
                               const timeExitCount = combinedResult?.summary?.timeExit ?? 0
                               const resolvedCount = tpCount + slCount + timeExitCount
-                              
-                              // Calculate entries per week based on date range
-                              const weeks = Math.max(1, Math.ceil((selectedRange || 30) / 7))
+
+                              // Calculate entries per week based on date range preset
+                              const rangePresetObj = RANGE_PRESETS.find(r => r.value === rangePreset)
+                              const rangeDays = rangePresetObj?.days ?? 30
+                              const weeks = Math.max(1, Math.ceil(rangeDays / 7))
                               const entriesPerWeek = totalTrades / weeks
                               
                               // Resolution rate: how many trades completed vs total
@@ -1438,9 +1468,121 @@ export default function SimulatorPage() {
                             </div>
                           </CardContent>
                         </Card>
+
+                        {/* Strategy Дүгнэлт - AI-generated Summary */}
+                        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              📝 Strategy Дүгнэлт
+                            </CardTitle>
+                            <CardDescription>
+                              Simulation үр дүнгийн товч тайлбар
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            {(() => {
+                              const totalTrades = combinedResult?.summary?.entries ?? 0
+                              const tpCount = combinedResult?.summary?.tp ?? 0
+                              const slCount = combinedResult?.summary?.sl ?? 0
+                              const winRate = combinedResult?.summary?.winrate ?? 0
+                              const bestTf = combinedResult?.bestTf?.toUpperCase() || "N/A"
+                              const bestWr = combinedResult?.bestWinrate ?? 0
+
+                              // Calculate profit in R
+                              const totalR = (result.trades || []).reduce((sum, t) => sum + (t.r || 0), 0)
+                              const avgR = totalTrades > 0 ? totalR / totalTrades : 0
+
+                              // Determine performance level
+                              const performanceLevel = winRate >= 55 ? "excellent" : winRate >= 50 ? "good" : winRate >= 45 ? "moderate" : "poor"
+                              const performanceEmoji = performanceLevel === "excellent" ? "🏆" : performanceLevel === "good" ? "✅" : performanceLevel === "moderate" ? "⚠️" : "❌"
+                              const performanceText = performanceLevel === "excellent" ? "Маш сайн" : performanceLevel === "good" ? "Сайн" : performanceLevel === "moderate" ? "Дунд зэрэг" : "Сайжруулах шаардлагатай"
+
+                              // Build recommendation
+                              const recommendations: string[] = []
+                              if (winRate < 50) {
+                                recommendations.push("Win rate 50%-аас доогуур байна - detector тохиргоо эсвэл entry logic засварлах")
+                              }
+                              if (totalTrades < 20) {
+                                recommendations.push("Trade тоо цөөн - илүү урт хугацаа эсвэл илүү олон symbol сонгох")
+                              }
+                              if (bestTf && bestWr > winRate + 5) {
+                                recommendations.push(`${bestTf} timeframe илүү сайн үзүүлэлттэй (${bestWr.toFixed(1)}%) - энэ TF-д анхаарах`)
+                              }
+
+                              return (
+                                <div className="space-y-4">
+                                  {/* Main Summary */}
+                                  <div className="p-4 rounded-lg bg-background/50 border">
+                                    <p className="text-sm leading-relaxed">
+                                      <span className="font-semibold">{symbol}</span> дээр{" "}
+                                      <span className="font-semibold">{rangeDates.from}</span> -{" "}
+                                      <span className="font-semibold">{rangeDates.to}</span> хооронд{" "}
+                                      <span className="text-primary font-bold">{totalTrades}</span> trade олдлоо.{" "}
+                                      Үүнээс <span className="text-green-500 font-semibold">{tpCount} TP</span>,{" "}
+                                      <span className="text-red-500 font-semibold">{slCount} SL</span> хүрсэн.
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-3">
+                                      <span className="text-lg">{performanceEmoji}</span>
+                                      <span className="text-sm font-medium">
+                                        Гүйцэтгэл: <span className={winRate >= 50 ? "text-green-500" : "text-red-500"}>{performanceText}</span>
+                                      </span>
+                                      <span className="text-muted-foreground">•</span>
+                                      <span className="text-sm">
+                                        Win Rate: <span className={winRate >= 50 ? "text-green-500" : "text-red-500"}>{winRate.toFixed(1)}%</span>
+                                      </span>
+                                      {totalR !== 0 && (
+                                        <>
+                                          <span className="text-muted-foreground">•</span>
+                                          <span className="text-sm">
+                                            Нийт: <span className={totalR >= 0 ? "text-green-500" : "text-red-500"}>
+                                              {totalR >= 0 ? "+" : ""}{totalR.toFixed(1)}R
+                                            </span>
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Best Timeframe Highlight */}
+                                  {bestTf && bestTf !== "N/A" && (
+                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                        <TrendingUp className="h-5 w-5 text-green-500" />
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium">Хамгийн сайн Timeframe</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          <span className="text-green-500 font-bold">{bestTf}</span> timeframe{" "}
+                                          <span className="text-green-500 font-semibold">{bestWr.toFixed(1)}%</span> win rate-тэй
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Recommendations */}
+                                  {recommendations.length > 0 && (
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        💡 Зөвлөмж
+                                      </p>
+                                      <ul className="space-y-1">
+                                        {recommendations.map((rec, idx) => (
+                                          <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
+                                            <span className="text-yellow-500 mt-0.5">•</span>
+                                            <span>{rec}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })()}
+                          </CardContent>
+                        </Card>
                       </>
                     )}
-                    
+
                     {/* Tag Attribution Tables - only if tags exist */}
                     {((combinedResult.tagsAny && combinedResult.tagsAny.length > 0) || 
                       (combinedResult.tagsPrimary && combinedResult.tagsPrimary.length > 0)) && (

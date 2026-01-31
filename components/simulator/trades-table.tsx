@@ -41,6 +41,14 @@ function formatDate(ts: number) {
   })
 }
 
+function formatDateFull(ts: number) {
+  const date = new Date(ts * 1000)
+  return {
+    date: date.toLocaleDateString("mn-MN", { month: "short", day: "numeric" }),
+    time: date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }),
+  }
+}
+
 function formatPrice(price: number) {
   if (price > 100) return price.toFixed(2)
   if (price > 1) return price.toFixed(4)
@@ -119,13 +127,19 @@ export function TradesTable({ trades, className }: TradesTableProps) {
         <thead>
           <tr className="border-b border-[#1E2749] bg-[#0A0E27]">
             <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
-              Date
+              #
+            </th>
+            <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
+              Нээсэн
+            </th>
+            <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
+              Хаасан
             </th>
             <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
               TF
             </th>
             <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
-              Direction
+              Чиглэл
             </th>
             <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
               Entry
@@ -137,7 +151,7 @@ export function TradesTable({ trades, className }: TradesTableProps) {
               TP
             </th>
             <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
-              Outcome
+              Үр дүн
             </th>
             <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-[#6C7BA8]">
               <TooltipProvider>
@@ -174,8 +188,33 @@ export function TradesTable({ trades, className }: TradesTableProps) {
                 "hover:bg-[#1E2749]/50"
               )}
             >
-              <td className="px-4 py-3 text-xs text-[#A0A8C0] whitespace-nowrap">
-                {formatDate(trade.entry_ts)}
+              {/* Row number */}
+              <td className="px-4 py-3 text-xs text-[#6C7BA8] font-mono">
+                {index + 1}
+              </td>
+              {/* Open date */}
+              <td className="px-4 py-3 text-xs whitespace-nowrap">
+                {(() => {
+                  const { date, time } = formatDateFull(trade.entry_ts)
+                  return (
+                    <div>
+                      <span className="text-[#F0F4FF] font-medium">{date}</span>
+                      <span className="text-[#6C7BA8] ml-1">{time}</span>
+                    </div>
+                  )
+                })()}
+              </td>
+              {/* Close date */}
+              <td className="px-4 py-3 text-xs whitespace-nowrap">
+                {(() => {
+                  const { date, time } = formatDateFull(trade.exit_ts)
+                  return (
+                    <div>
+                      <span className="text-[#A0A8C0]">{date}</span>
+                      <span className="text-[#6C7BA8] ml-1">{time}</span>
+                    </div>
+                  )
+                })()}
               </td>
               <td className="px-4 py-3 text-center">
                 {trade.tf ? (
