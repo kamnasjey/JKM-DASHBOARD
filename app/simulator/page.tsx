@@ -589,7 +589,12 @@ export default function SimulatorPage() {
       setError(`Selected strategy not found. Please refresh and try again.`)
       return
     }
-    console.log("[simulator] Found strategy:", { id: strategy.id, name: strategy.name })
+    console.log("[simulator] Found strategy:", {
+      id: strategy.id,
+      name: strategy.name,
+      detectors: strategy.detectors,
+      detectorsCount: strategy.detectors?.length ?? 0
+    })
 
     // Check if strategy has detectors
     if (!strategy.detectors || strategy.detectors.length === 0) {
@@ -618,6 +623,17 @@ export default function SimulatorPage() {
       console.log("[simulator] strategyId value:", strategyId, "type:", typeof strategyId, "length:", strategyId?.length)
 
       const res = await api.simulatorV2.run(requestPayload)
+
+      // Debug: Log full response
+      console.log("[simulator] API response:", JSON.stringify({
+        ok: res.ok,
+        error: res.error,
+        tradesCount: res.combined?.summary?.entries ?? res.summary?.entries ?? 0,
+        detectorsRequested: res.meta?.detectorsRequested,
+        detectorsImplemented: res.meta?.detectorsImplemented,
+        detectorsUnknown: res.meta?.detectorsUnknown,
+        explainability: res.explainability,
+      }, null, 2))
 
       if (!res.ok && isGapError(res)) {
         const demoRes = await api.simulatorV2.run({
