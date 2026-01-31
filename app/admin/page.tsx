@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Play, Square, Zap, Activity, FileText, Users, Check, X } from "lucide-react"
+import { Play, Square, Zap, Activity, FileText, Users, Check, X, Calendar, Plus, Trash2 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,6 +47,13 @@ type UserInfo = {
   createdAt: string
 }
 
+type ForexHoliday = {
+  date: string
+  name: string
+  added_by?: string
+  added_at?: string
+}
+
 export default function AdminPage() {
   useAuthGuard(true)
 
@@ -67,6 +74,12 @@ export default function AdminPage() {
   // Users list
   const [users, setUsers] = useState<UserInfo[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
+
+  // Forex Holidays
+  const [forexHolidays, setForexHolidays] = useState<ForexHoliday[]>([])
+  const [holidaysLoading, setHolidaysLoading] = useState(false)
+  const [newHolidayDate, setNewHolidayDate] = useState("")
+  const [newHolidayName, setNewHolidayName] = useState("")
 
   useEffect(() => {
     let mounted = true
@@ -101,6 +114,7 @@ export default function AdminPage() {
     loadLogs()
     loadManualRequests()
     loadUsers()
+    loadForexHolidays()
   }, [])
 
   const loadUsers = async () => {
@@ -114,6 +128,80 @@ export default function AdminPage() {
       console.error("[admin] loadUsers failed:", err)
     } finally {
       setUsersLoading(false)
+    }
+  }
+
+  // Forex Holidays functions
+  const loadForexHolidays = async () => {
+    setHolidaysLoading(true)
+    try {
+      const res = await fetch("/api/admin/forex-holidays", { cache: "no-store" })
+      if (!res.ok) return
+      const data = await res.json()
+      setForexHolidays(data?.holidays ?? [])
+    } catch (err) {
+      console.error("[admin] loadForexHolidays failed:", err)
+    } finally {
+      setHolidaysLoading(false)
+    }
+  }
+
+  const addForexHoliday = async () => {
+    if (!newHolidayDate || !newHolidayName.trim()) {
+      toast({
+        title: "Алдаа",
+        description: "Огноо болон нэр оруулна уу",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setLoadingAction("add-holiday")
+    try {
+      const res = await fetch("/api/admin/forex-holidays", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ date: newHolidayDate, name: newHolidayName }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        throw new Error(data?.message || "Failed to add holiday")
+      }
+      toast({ title: "Амжилттай", description: `Holiday нэмэгдлээ: ${newHolidayDate}` })
+      setNewHolidayDate("")
+      setNewHolidayName("")
+      await loadForexHolidays()
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Holiday нэмэхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
+  const removeForexHoliday = async (date: string) => {
+    setLoadingAction(`remove-holiday-${date}`)
+    try {
+      const res = await fetch(`/api/admin/forex-holidays/${date}`, {
+        method: "DELETE",
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        throw new Error(data?.message || "Failed to remove holiday")
+      }
+      toast({ title: "Амжилттай", description: `Holiday устгагдлаа: ${date}` })
+      await loadForexHolidays()
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Holiday устгахад алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingAction(null)
     }
   }
 
@@ -605,6 +693,87 @@ export default function AdminPage() {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Forex Holidays */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Forex Holidays
+            </CardTitle>
+            <CardDescription>
+              Forex market-ийн баярын өдрүүд. Эдгээр өдрүүдэд Data Ingestor Forex символуудын data татахгүй.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Add new holiday */}
+            <div className="flex flex-wrap gap-3 items-end p-3 rounded-md border bg-muted/30">
+              <div className="space-y-1">
+                <Label className="text-xs">Огноо</Label>
+                <Input
+                  type="date"
+                  value={newHolidayDate}
+                  onChange={(e) => setNewHolidayDate(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="space-y-1 flex-1 min-w-[150px]">
+                <Label className="text-xs">Баярын нэр</Label>
+                <Input
+                  placeholder="Christmas, New Year..."
+                  value={newHolidayName}
+                  onChange={(e) => setNewHolidayName(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={addForexHoliday}
+                disabled={loadingAction === "add-holiday" || !newHolidayDate || !newHolidayName.trim()}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {loadingAction === "add-holiday" ? "..." : "Нэмэх"}
+              </Button>
+            </div>
+
+            {/* Holidays list */}
+            <div className="flex items-center justify-between">
+              <Button variant="outline" size="sm" onClick={loadForexHolidays} disabled={holidaysLoading}>
+                {holidaysLoading ? "Ачааллаж байна..." : "Шинэчлэх"}
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                Нийт: {forexHolidays.length} holiday
+              </div>
+            </div>
+
+            {forexHolidays.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Holiday байхгүй</p>
+            ) : (
+              <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                {forexHolidays.map((holiday) => (
+                  <div
+                    key={holiday.date}
+                    className="flex items-center justify-between p-2 rounded-md border bg-background hover:bg-muted/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="font-mono">
+                        {holiday.date}
+                      </Badge>
+                      <span className="text-sm">{holiday.name}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeForexHoliday(holiday.date)}
+                      disabled={loadingAction === `remove-holiday-${holiday.date}`}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
