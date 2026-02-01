@@ -153,9 +153,12 @@ export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
 
 /**
  * Map old signal (SignalPayloadPublicV1) to UnifiedSignal
+ * Note: Also handles StoredSignal format which uses signal_key instead of signal_id
  */
 export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSignal {
-  const id = `signals:${item.signal_id}`
+  // Handle both signal_id (API format) and signal_key (Firestore format)
+  const signalId = item.signal_id || (item as any).signal_key || "unknown"
+  const id = `signals:${signalId}`
 
   // Map direction
   let direction: "long" | "short" | "neutral" = "neutral"
