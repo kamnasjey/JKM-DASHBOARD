@@ -109,6 +109,9 @@ export async function listUserSignals(
       meta: data.meta,
       updatedAt: data.updatedAt ? String(data.updatedAt) : undefined,
       createdAt: data.createdAt ? String(data.createdAt) : undefined,
+      // Entry tracking fields
+      entry_taken: data.entry_taken === true ? true : data.entry_taken === false ? false : null,
+      outcome: data.outcome ? String(data.outcome) as StoredSignal["outcome"] : null,
     })
   }
 
