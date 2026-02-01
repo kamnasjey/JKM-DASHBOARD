@@ -88,6 +88,12 @@ interface TradeDetail {
   detector: string
   symbol?: string
   tf?: string // 5m, 15m, 30m, 1h, 4h
+  // Backend may return these alternative field names
+  holdingBars?: number
+  tEntry?: string
+  tExit?: string
+  side?: string
+  reasonTags?: string[]
 }
 
 // Helper: Convert bars to human readable duration
@@ -1447,9 +1453,9 @@ export default function SimulatorPage() {
                                 {(() => {
                                   const tpTrades = result.trades?.filter(t => t.outcome === "TP") || []
                                   if (tpTrades.length === 0) return <p className="text-lg font-bold">—</p>
-                                  const avgBars = Math.round(tpTrades.reduce((sum, t) => sum + t.duration_bars, 0) / tpTrades.length)
+                                  const avgBars = Math.round(tpTrades.reduce((sum, t) => sum + (t.duration_bars || t.holdingBars || 0), 0) / tpTrades.length)
                                   const commonTf = tpTrades[0]?.tf || "15m"
-                                  return <p className="text-lg font-bold">{formatDuration(avgBars, commonTf)}</p>
+                                  return <p className="text-lg font-bold">{isNaN(avgBars) ? "—" : formatDuration(avgBars, commonTf)}</p>
                                 })()}
                               </div>
                               <div className="p-3 bg-red-500/10 rounded-lg">
@@ -1460,9 +1466,9 @@ export default function SimulatorPage() {
                                 {(() => {
                                   const slTrades = result.trades?.filter(t => t.outcome === "SL") || []
                                   if (slTrades.length === 0) return <p className="text-lg font-bold">—</p>
-                                  const avgBars = Math.round(slTrades.reduce((sum, t) => sum + t.duration_bars, 0) / slTrades.length)
+                                  const avgBars = Math.round(slTrades.reduce((sum, t) => sum + (t.duration_bars || t.holdingBars || 0), 0) / slTrades.length)
                                   const commonTf = slTrades[0]?.tf || "15m"
-                                  return <p className="text-lg font-bold">{formatDuration(avgBars, commonTf)}</p>
+                                  return <p className="text-lg font-bold">{isNaN(avgBars) ? "—" : formatDuration(avgBars, commonTf)}</p>
                                 })()}
                               </div>
                             </div>
