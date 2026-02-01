@@ -46,7 +46,8 @@ export default function PerformancePage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const signalsRes = await api.signals({ limit: 500 }).catch(() => [])
+      // Use userSignals (Firestore) instead of signals (VPS backend)
+      const signalsRes = await api.userSignals({ limit: 500 }).catch(() => [])
       setOldSignals((signalsRes as SignalPayloadPublicV1[]) || [])
     } catch (err: any) {
       toast({
