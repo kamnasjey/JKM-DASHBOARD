@@ -193,6 +193,27 @@ const rangeOptions = [
   { label: "Бүгд", value: "all" },
 ]
 
+// Strategy ID to friendly name mapping
+const STRATEGY_NAMES: Record<string, string> = {
+  "kIXzyNaLjMj7Lhu3B5Cc": "EDGE Trend Continuation",
+}
+
+function getStrategyDisplayName(signal: UnifiedSignal): string {
+  // First try strategy name
+  if (signal.strategyName && signal.strategyName !== signal.strategyId) {
+    return signal.strategyName
+  }
+  // Then try known ID mapping
+  if (signal.strategyId && STRATEGY_NAMES[signal.strategyId]) {
+    return STRATEGY_NAMES[signal.strategyId]
+  }
+  // Fallback to shortened ID
+  if (signal.strategyId) {
+    return `Strategy ${signal.strategyId.slice(0, 6)}...`
+  }
+  return "Unknown"
+}
+
 export default function PerformancePage() {
   useAuthGuard(true)
 
@@ -260,7 +281,7 @@ export default function PerformancePage() {
   const setupSummaries = useMemo<SetupSummary[]>(() => {
     const map = new Map<string, SetupSummary>()
     for (const signal of filteredSignals) {
-      const name = signal.strategyName || signal.strategyId || "Unknown"
+      const name = getStrategyDisplayName(signal)
       const summary = map.get(name) || { name, total: 0, tp: 0, sl: 0, pending: 0 }
       summary.total += 1
 
@@ -277,6 +298,27 @@ export default function PerformancePage() {
     return Array.from(map.values()).sort((a, b) => b.total - a.total)
   }, [filteredSignals])
 
+  // Taken entries only (entry_taken = true)
+  const takenEntries = useMemo(() => {
+    return filteredSignals.filter(s => s.entry_taken === true)
+  }, [filteredSignals])
+
+  // Stats based on taken entries only
+  const takenStats = useMemo(() => {
+    const tp = takenEntries.filter(s => s.outcome === "win").length
+    const sl = takenEntries.filter(s => s.outcome === "loss").length
+    const pending = takenEntries.filter(s => s.outcome !== "win" && s.outcome !== "loss").length
+    return { total: takenEntries.length, tp, sl, pending }
+  }, [takenEntries])
+
+  // Win rate from taken entries only
+  const winRate = useMemo(() => {
+    const decided = takenStats.tp + takenStats.sl
+    if (decided === 0) return null
+    return (takenStats.tp / decided) * 100
+  }, [takenStats])
+
+  // All signals stats (for reference)
   const totals = useMemo(() => {
     return setupSummaries.reduce(
       (acc, item) => {
@@ -289,12 +331,6 @@ export default function PerformancePage() {
       { total: 0, tp: 0, sl: 0, pending: 0 },
     )
   }, [setupSummaries])
-
-  const winRate = useMemo(() => {
-    const decided = totals.tp + totals.sl
-    if (decided === 0) return null
-    return (totals.tp / decided) * 100
-  }, [totals])
 
   const recentSignals = useMemo(() => {
     return [...filteredSignals]
@@ -337,7 +373,7 @@ export default function PerformancePage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription className="text-xs sm:text-sm">Нийт setup</CardDescription>
@@ -347,6 +383,9 @@ export default function PerformancePage() {
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xl sm:text-2xl font-bold">{totals.total}</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Орсон: {takenStats.total}
+              </p>
             </CardContent>
           </Card>
 
@@ -357,8 +396,11 @@ export default function PerformancePage() {
             <CardContent>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span className="text-xl sm:text-2xl font-bold">{totals.tp}</span>
+                <span className="text-xl sm:text-2xl font-bold text-green-500">{takenStats.tp}</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Орсон entry‑ээс
+              </p>
             </CardContent>
           </Card>
 
@@ -369,8 +411,11 @@ export default function PerformancePage() {
             <CardContent>
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4 text-red-500" />
-                <span className="text-xl sm:text-2xl font-bold">{totals.sl}</span>
+                <span className="text-xl sm:text-2xl font-bold text-red-500">{takenStats.sl}</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Орсон entry‑ээс
+              </p>
             </CardContent>
           </Card>
 
@@ -380,11 +425,27 @@ export default function PerformancePage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xl sm:text-2xl font-bold">{totals.pending}</span>
+                <Clock className="h-4 w-4 text-yellow-500" />
+                <span className="text-xl sm:text-2xl font-bold">{takenStats.pending}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                TP rate: {winRate !== null ? `${winRate.toFixed(1)}%` : "—"}
+                Орсон, үр дүн хүлээгдэж буй
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/5 border-primary/20">
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs sm:text-sm font-medium">Win Rate</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <span className="text-xl sm:text-2xl font-bold">
+                  {winRate !== null ? `${winRate.toFixed(1)}%` : "—"}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {takenStats.tp + takenStats.sl} trade‑ээс
               </p>
             </CardContent>
           </Card>
@@ -442,9 +503,101 @@ export default function PerformancePage() {
           </CardContent>
         </Card>
 
+        {/* Taken Entries Section */}
+        <Card className="border-green-500/30">
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-500" />
+              Орсон арилжаа
+            </CardTitle>
+            <CardDescription>
+              Entry авсан signal‑ууд — Win Rate зөвхөн эндээс тооцогдоно
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {takenEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Одоогоор орсон арилжаа байхгүй. Доорх жагсаалтаас &quot;Орсон&quot; товч дарж тэмдэглэнэ үү.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Symbol</TableHead>
+                    <TableHead>TF</TableHead>
+                    <TableHead>Чиглэл</TableHead>
+                    <TableHead className="text-right">Entry</TableHead>
+                    <TableHead className="text-right">SL</TableHead>
+                    <TableHead className="text-right">TP</TableHead>
+                    <TableHead className="text-right">RR</TableHead>
+                    <TableHead>Үр дүн</TableHead>
+                    <TableHead>Огноо</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {takenEntries
+                    .sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime())
+                    .map(signal => (
+                    <TableRow key={signal.id}>
+                      <TableCell className="font-mono">{signal.symbol}</TableCell>
+                      <TableCell>{signal.timeframe}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            signal.direction === "long"
+                              ? "default"
+                              : signal.direction === "short"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                        >
+                          {signal.direction === "long"
+                            ? "LONG"
+                            : signal.direction === "short"
+                              ? "SHORT"
+                              : "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {signal.entry !== undefined && signal.entry !== 0
+                          ? signal.entry > 100 ? signal.entry.toFixed(2) : signal.entry.toFixed(5)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-red-400">
+                        {signal.sl !== undefined && signal.sl !== 0
+                          ? signal.sl > 100 ? signal.sl.toFixed(2) : signal.sl.toFixed(5)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-green-400">
+                        {signal.tp !== undefined && signal.tp !== 0
+                          ? signal.tp > 100 ? signal.tp.toFixed(2) : signal.tp.toFixed(5)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {signal.rr !== undefined ? signal.rr.toFixed(2) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <OutcomeCell
+                          signalId={signal.id.replace("signals:", "")}
+                          outcome={signal.outcome}
+                          entryTaken={signal.entry_taken}
+                          onUpdate={fetchData}
+                        />
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatTimestamp(signal.ts)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Сүүлийн setup‑ууд</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Бүх setup‑ууд</CardTitle>
             <CardDescription>Symbol, TF, чиглэл, RR, outcome‑ийг дэлгэрэнгүй харуулна</CardDescription>
           </CardHeader>
           <CardContent>
