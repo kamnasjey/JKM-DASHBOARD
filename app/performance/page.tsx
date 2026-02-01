@@ -169,22 +169,20 @@ const rangeOptions = [
   { label: "Бүгд", value: "all" },
 ]
 
-// Strategy ID to friendly name mapping
-const STRATEGY_NAMES: Record<string, string> = {
-  "kIXzyNaLjMj7Lhu3B5Cc": "EDGE Trend Continuation",
-}
-
 // Check if a string looks like a Firestore document ID (random alphanumeric)
 function looksLikeId(str: string): boolean {
   return /^[a-zA-Z0-9]{15,}$/.test(str)
 }
 
-function getStrategyDisplayName(signal: UnifiedSignal): string {
-  // Try known ID mappings first (check both strategyId and strategyName as potential IDs)
+function getStrategyDisplayName(
+  signal: UnifiedSignal,
+  strategyMap: Record<string, string>
+): string {
+  // Try dynamic ID mappings from Firestore strategies
   const possibleIds = [signal.strategyId, signal.strategyName].filter(Boolean)
   for (const id of possibleIds) {
-    if (id && STRATEGY_NAMES[id]) {
-      return STRATEGY_NAMES[id]
+    if (id && strategyMap[id]) {
+      return strategyMap[id]
     }
   }
 
@@ -208,13 +206,29 @@ export default function PerformancePage() {
   const [loading, setLoading] = useState(true)
   const [rangeDays, setRangeDays] = useState("30")
   const [oldSignals, setOldSignals] = useState<SignalPayloadPublicV1[]>([])
+  const [strategyMap, setStrategyMap] = useState<Record<string, string>>({})
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      // Use userSignals (Firestore) instead of signals (VPS backend)
-      const signalsRes = await api.userSignals({ limit: 500 }).catch(() => [])
+      // Fetch signals and strategies in parallel
+      const [signalsRes, strategiesRes] = await Promise.all([
+        api.userSignals({ limit: 500 }).catch(() => []),
+        api.strategies().catch(() => ({ strategies: [] })),
+      ])
       setOldSignals((signalsRes as SignalPayloadPublicV1[]) || [])
+
+      // Build strategy ID → name mapping
+      const strategies = (strategiesRes as any)?.strategies || []
+      const mapping: Record<string, string> = {}
+      for (const s of strategies) {
+        const id = s.id || s.strategy_id
+        const name = s.name || s.strategy_name
+        if (id && name) {
+          mapping[id] = name
+        }
+      }
+      setStrategyMap(mapping)
     } catch (err: any) {
       toast({
         title: "Алдаа",
@@ -268,7 +282,7 @@ export default function PerformancePage() {
   const setupSummaries = useMemo<SetupSummary[]>(() => {
     const map = new Map<string, SetupSummary>()
     for (const signal of filteredSignals) {
-      const name = getStrategyDisplayName(signal)
+      const name = getStrategyDisplayName(signal, strategyMap)
       const summary = map.get(name) || {
         name, total: 0, tp: 0, sl: 0, pending: 0,
         takenTotal: 0, takenTp: 0, takenSl: 0, takenPending: 0
@@ -294,7 +308,7 @@ export default function PerformancePage() {
       map.set(name, summary)
     }
     return Array.from(map.values()).sort((a, b) => b.total - a.total)
-  }, [filteredSignals])
+  }, [filteredSignals, strategyMap])
 
   // Taken entries only (entry_taken = true)
   const takenEntries = useMemo(() => {
