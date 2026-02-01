@@ -13,6 +13,29 @@ import {
 } from "@/components/ui/tooltip"
 import { useToast } from "@/hooks/use-toast"
 
+// Backend trade format (from to_debug_dict)
+interface BackendTrade {
+  tEntry?: string // ISO timestamp
+  tExit?: string | null
+  entry_ts?: number // Unix timestamp
+  exit_ts?: number | null
+  side?: "long" | "short"
+  direction?: "BUY" | "SELL"
+  entry: number
+  sl: number
+  tp: number
+  exit?: number | null
+  outcome: string // "TP" | "SL" | "OPEN" | "TIME_EXIT"
+  horizon?: string
+  holdingBars?: number
+  duration_bars?: number
+  reasonTags?: string[]
+  detector?: string
+  tf?: string // 5m, 15m, 30m, 1h, 4h
+  r?: number // R-multiple (may be missing)
+}
+
+// Normalized trade for display
 interface Trade {
   entry_ts: number
   exit_ts: number
@@ -20,15 +43,74 @@ interface Trade {
   entry: number
   sl: number
   tp: number
-  outcome: "TP" | "SL"
+  outcome: string
   r: number
   duration_bars: number
   detector: string
-  tf?: string // 5m, 15m, 30m, 1h, 4h
+  tf?: string
+}
+
+// Normalize backend trade to frontend format
+function normalizeTrade(t: BackendTrade): Trade {
+  // Parse entry timestamp
+  let entry_ts = t.entry_ts || 0
+  if (!entry_ts && t.tEntry) {
+    entry_ts = Math.floor(new Date(t.tEntry).getTime() / 1000)
+  }
+
+  // Parse exit timestamp
+  let exit_ts = t.exit_ts || 0
+  if (!exit_ts && t.tExit) {
+    exit_ts = Math.floor(new Date(t.tExit).getTime() / 1000)
+  }
+
+  // Normalize direction
+  let direction: "BUY" | "SELL" = "BUY"
+  if (t.direction) {
+    direction = t.direction
+  } else if (t.side) {
+    direction = t.side === "long" ? "BUY" : "SELL"
+  }
+
+  // Calculate R-multiple if not provided
+  let r = t.r
+  if (r === undefined || r === null) {
+    const risk = Math.abs(t.entry - t.sl)
+    if (risk > 0 && t.exit) {
+      const pnl = direction === "BUY" ? (t.exit - t.entry) : (t.entry - t.exit)
+      r = pnl / risk
+    } else if (t.outcome === "TP") {
+      r = Math.abs(t.tp - t.entry) / Math.abs(t.entry - t.sl)
+    } else if (t.outcome === "SL") {
+      r = -1
+    } else {
+      r = 0
+    }
+  }
+
+  // Normalize detector
+  let detector = t.detector || ""
+  if (!detector && t.reasonTags && t.reasonTags.length > 0) {
+    detector = t.reasonTags[0]
+  }
+
+  return {
+    entry_ts,
+    exit_ts: exit_ts || entry_ts,
+    direction,
+    entry: t.entry,
+    sl: t.sl,
+    tp: t.tp,
+    outcome: t.outcome,
+    r: r || 0,
+    duration_bars: t.duration_bars || t.holdingBars || 0,
+    detector,
+    tf: t.tf,
+  }
 }
 
 interface TradesTableProps {
-  trades: Trade[]
+  trades: BackendTrade[]
   className?: string
 }
 
@@ -81,9 +163,12 @@ function formatDuration(bars: number, tf?: string): string {
   }
 }
 
-export function TradesTable({ trades, className }: TradesTableProps) {
+export function TradesTable({ trades: rawTrades, className }: TradesTableProps) {
   const { toast } = useToast()
   const [copiedIndex, setCopiedIndex] = React.useState<number | null>(null)
+
+  // Normalize backend trades to frontend format
+  const trades = React.useMemo(() => rawTrades.map(normalizeTrade), [rawTrades])
 
   const copyToClipboard = async (text: string, index: number) => {
     try {
