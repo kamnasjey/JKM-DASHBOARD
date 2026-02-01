@@ -174,18 +174,29 @@ const STRATEGY_NAMES: Record<string, string> = {
   "kIXzyNaLjMj7Lhu3B5Cc": "EDGE Trend Continuation",
 }
 
+// Check if a string looks like a Firestore document ID (random alphanumeric)
+function looksLikeId(str: string): boolean {
+  return /^[a-zA-Z0-9]{15,}$/.test(str)
+}
+
 function getStrategyDisplayName(signal: UnifiedSignal): string {
-  // First try strategy name
-  if (signal.strategyName && signal.strategyName !== signal.strategyId) {
+  // Try known ID mappings first (check both strategyId and strategyName as potential IDs)
+  const possibleIds = [signal.strategyId, signal.strategyName].filter(Boolean)
+  for (const id of possibleIds) {
+    if (id && STRATEGY_NAMES[id]) {
+      return STRATEGY_NAMES[id]
+    }
+  }
+
+  // If strategyName exists and doesn't look like an ID, use it
+  if (signal.strategyName && !looksLikeId(signal.strategyName)) {
     return signal.strategyName
   }
-  // Then try known ID mapping
-  if (signal.strategyId && STRATEGY_NAMES[signal.strategyId]) {
-    return STRATEGY_NAMES[signal.strategyId]
-  }
+
   // Fallback to shortened ID
-  if (signal.strategyId) {
-    return `Strategy ${signal.strategyId.slice(0, 6)}...`
+  const fallbackId = signal.strategyId || signal.strategyName
+  if (fallbackId) {
+    return `Strategy ${fallbackId.slice(0, 6)}...`
   }
   return "Unknown"
 }
