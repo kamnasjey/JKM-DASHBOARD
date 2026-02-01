@@ -117,44 +117,22 @@ function EntryTrackingCell({
   )
 }
 
-// Outcome cell component
+// Outcome cell component - displays automatic outcome (no manual buttons)
 function OutcomeCell({
-  signalId,
   outcome,
   entryTaken,
-  onUpdate,
 }: {
-  signalId: string
   outcome?: "win" | "loss" | "expired" | "pending" | null
   entryTaken?: boolean | null
-  onUpdate: () => void
 }) {
-  const [loading, setLoading] = useState(false)
-
-  // Only show outcome options if entry was taken
+  // Only show outcome if entry was taken
   if (entryTaken !== true) {
     return <span className="text-muted-foreground">—</span>
   }
 
-  const handleClick = async (value: "win" | "loss" | "pending" | null) => {
-    setLoading(true)
-    try {
-      await api.updateSignalEntry(signalId, true, value)
-      onUpdate()
-    } catch (e) {
-      console.error("Failed to update outcome:", e)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   if (outcome === "win") {
     return (
-      <Badge
-        variant="default"
-        className="cursor-pointer bg-green-600 hover:bg-green-700"
-        onClick={() => handleClick(null)}
-      >
+      <Badge variant="default" className="bg-green-600">
         TP
       </Badge>
     )
@@ -162,37 +140,18 @@ function OutcomeCell({
 
   if (outcome === "loss") {
     return (
-      <Badge
-        variant="destructive"
-        className="cursor-pointer"
-        onClick={() => handleClick(null)}
-      >
+      <Badge variant="destructive">
         SL
       </Badge>
     )
   }
 
+  // Pending - waiting for automatic outcome detection
   return (
-    <div className="flex gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-6 px-2 text-xs hover:text-green-500 hover:bg-green-500/10"
-        onClick={() => handleClick("win")}
-        disabled={loading}
-      >
-        TP
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-6 px-2 text-xs hover:text-red-500 hover:bg-red-500/10"
-        onClick={() => handleClick("loss")}
-        disabled={loading}
-      >
-        SL
-      </Button>
-    </div>
+    <span className="inline-flex items-center gap-1 text-yellow-500 text-sm">
+      <Clock className="h-3.5 w-3.5" />
+      Pending
+    </span>
   )
 }
 
@@ -590,10 +549,8 @@ export default function PerformancePage() {
                       </TableCell>
                       <TableCell>
                         <OutcomeCell
-                          signalId={signal.id.replace("signals:", "")}
                           outcome={signal.outcome}
                           entryTaken={signal.entry_taken}
-                          onUpdate={fetchData}
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -680,10 +637,8 @@ export default function PerformancePage() {
                       </TableCell>
                       <TableCell>
                         <OutcomeCell
-                          signalId={signal.id.replace("signals:", "")}
                           outcome={signal.outcome}
                           entryTaken={signal.entry_taken}
-                          onUpdate={fetchData}
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
