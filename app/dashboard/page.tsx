@@ -16,6 +16,7 @@ import { DETECTOR_CATALOG } from "@/lib/detectors/catalog"
 import { ActiveStrategiesPanel } from "@/components/active-strategies-panel"
 import { SignalsHistoryPanel } from "@/components/signals-history-panel"
 import { AdminLiveOpsPanel, ALL_SYMBOLS } from "@/components/admin-live-ops-panel"
+import { mapOldSignalToUnified, type UnifiedSignal } from "@/lib/signals/unified"
 import {
   Select,
   SelectContent,
@@ -47,6 +48,33 @@ const formatStrategyName = (name: string | null | undefined, id: string) => {
   const raw = String(name || "").trim()
   if (!raw) return id
   return raw.replace(STRATEGY_NAME_PREFIX, "").trim() || raw
+}
+
+// Deduplicate signals: same symbol + direction within 60 minutes = duplicate
+function deduplicateSignals(signals: UnifiedSignal[]): UnifiedSignal[] {
+  // Sort by ts descending (newest first)
+  const sorted = [...signals].sort((a, b) => {
+    const ta = new Date(a.ts).getTime()
+    const tb = new Date(b.ts).getTime()
+    return tb - ta
+  })
+
+  const deduped: UnifiedSignal[] = []
+  for (const signal of sorted) {
+    const ts = new Date(signal.ts).getTime()
+    const duplicate = deduped.find(d => {
+      if (d.symbol !== signal.symbol) return false
+      const dDir = (d.direction || "").toLowerCase()
+      const sDir = (signal.direction || "").toLowerCase()
+      if (dDir !== sDir) return false
+      const dTs = new Date(d.ts).getTime()
+      return Math.abs(dTs - ts) < 3600000 // 60 minutes
+    })
+    if (!duplicate) {
+      deduped.push(signal)
+    }
+  }
+  return deduped
 }
 
 // Helper: Classify symbols for market hours detection
@@ -106,8 +134,8 @@ export default function DashboardPage() {
     clearNewSignals 
   } = useWebSocketSignals()
 
-  const [outcomeStats, setOutcomeStats] = useState<any>(null)
   const [recentSignals, setRecentSignals] = useState<SignalPayloadPublicV1[]>([])
+  const [firestoreSignals, setFirestoreSignals] = useState<UnifiedSignal[]>([])
   const [engineStatus, setEngineStatus] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   
@@ -231,27 +259,23 @@ export default function DashboardPage() {
     }
   }, [toast])
 
+  // Calculate win rate from Firestore signals (entry_taken only, deduplicated)
   const winRateText = useMemo(() => {
-    const raw = outcomeStats?.win_rate ?? outcomeStats?.winrate
-    if (raw === null || raw === undefined) return "—"
-    const num = Number(raw)
-    if (!Number.isFinite(num)) return "—"
-
-    // Backend may return 0..1 or 0..100
-    const pct = num <= 1 ? num * 100 : num
+    // Only count signals where entry was taken
+    const takenSignals = firestoreSignals.filter(s => s.entry_taken === true)
+    const wins = takenSignals.filter(s => s.outcome === "win").length
+    const losses = takenSignals.filter(s => s.outcome === "loss").length
+    const decided = wins + losses
+    if (decided === 0) return "—"
+    const pct = (wins / decided) * 100
     return `${pct.toFixed(1)}%`
-  }, [outcomeStats])
+  }, [firestoreSignals])
 
+  // Total signals from Firestore (deduplicated)
   const totalSignalsText = useMemo(() => {
-    const direct = outcomeStats?.total_signals ?? outcomeStats?.total
-    if (direct !== null && direct !== undefined) return String(direct)
-
-    const wins = Number(outcomeStats?.wins ?? 0)
-    const losses = Number(outcomeStats?.losses ?? 0)
-    const pending = Number(outcomeStats?.pending ?? 0)
-    const sum = wins + losses + pending
-    return sum > 0 ? String(sum) : "—"
-  }, [outcomeStats])
+    if (firestoreSignals.length === 0) return "—"
+    return String(firestoreSignals.length)
+  }, [firestoreSignals])
 
   const lastScanText = useMemo(() => {
     const raw = (engineStatus as any)?.last_scan_ts
@@ -279,17 +303,21 @@ export default function DashboardPage() {
     if (!uid) return
     setLoading(true)
     try {
-      // Load backend strategies with symbol-strategy mapping
-      const [o, backendData, sigs, eng, syms, eng247] = await Promise.all([
-        api.outcomes(30),
+      // Load backend strategies with symbol-strategy mapping + Firestore signals
+      const [backendData, sigs, eng, syms, eng247, userSigsRes] = await Promise.all([
         api.backendStrategies.get(uid).catch(() => ({ ok: false, strategies: [], activeStrategyMap: {}, symbolEnabled: {} })),
         api.signals({ limit: 20 }),
         api.engineStatus(),
         api.symbols().catch(() => ({ ok: true, symbols: [] })),
         api.engineStatus247(uid).catch(() => null),
+        api.userSignals({ limit: 500 }).catch(() => ({ ok: false, signals: [] })),
       ])
 
-      setOutcomeStats(o)
+      // Map Firestore signals to UnifiedSignal and deduplicate
+      const rawUserSignals = (userSigsRes as any)?.signals || []
+      const unifiedSignals = rawUserSignals.map((s: any) => mapOldSignalToUnified(s))
+      const dedupedSignals = deduplicateSignals(unifiedSignals)
+      setFirestoreSignals(dedupedSignals)
 
       // Parse symbols
       const symbolList = (syms as any)?.symbols || syms || []
