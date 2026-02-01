@@ -1,12 +1,13 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { BarChart3, Calendar, CheckCircle2, Clock, XCircle } from "lucide-react"
+import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
@@ -24,6 +25,163 @@ interface SetupSummary {
   sl: number
   pending: number
   lastTs?: string
+}
+
+// Entry tracking cell component
+function EntryTrackingCell({
+  signalId,
+  entryTaken,
+  onUpdate,
+}: {
+  signalId: string
+  entryTaken?: boolean | null
+  onUpdate: () => void
+}) {
+  const [loading, setLoading] = useState(false)
+
+  const handleClick = async (value: boolean | null) => {
+    setLoading(true)
+    try {
+      await api.updateSignalEntry(signalId, value)
+      onUpdate()
+    } catch (e) {
+      console.error("Failed to update entry tracking:", e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (entryTaken === true) {
+    return (
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2 text-green-500 hover:text-red-500"
+        onClick={() => handleClick(null)}
+        disabled={loading}
+      >
+        <Check className="h-4 w-4" />
+      </Button>
+    )
+  }
+
+  if (entryTaken === false) {
+    return (
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2 text-red-500 hover:text-green-500"
+        onClick={() => handleClick(null)}
+        disabled={loading}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    )
+  }
+
+  return (
+    <div className="flex gap-1">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 w-7 p-0 hover:text-green-500 hover:bg-green-500/10"
+        onClick={() => handleClick(true)}
+        disabled={loading}
+        title="Орсон"
+      >
+        <Check className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 w-7 p-0 hover:text-red-500 hover:bg-red-500/10"
+        onClick={() => handleClick(false)}
+        disabled={loading}
+        title="Алгассан"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  )
+}
+
+// Outcome cell component
+function OutcomeCell({
+  signalId,
+  outcome,
+  entryTaken,
+  onUpdate,
+}: {
+  signalId: string
+  outcome?: "win" | "loss" | "expired" | "pending" | null
+  entryTaken?: boolean | null
+  onUpdate: () => void
+}) {
+  const [loading, setLoading] = useState(false)
+
+  // Only show outcome options if entry was taken
+  if (entryTaken !== true) {
+    return <span className="text-muted-foreground">—</span>
+  }
+
+  const handleClick = async (value: "win" | "loss" | "pending" | null) => {
+    setLoading(true)
+    try {
+      await api.updateSignalEntry(signalId, true, value)
+      onUpdate()
+    } catch (e) {
+      console.error("Failed to update outcome:", e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (outcome === "win") {
+    return (
+      <Badge
+        variant="default"
+        className="cursor-pointer bg-green-600 hover:bg-green-700"
+        onClick={() => handleClick(null)}
+      >
+        TP
+      </Badge>
+    )
+  }
+
+  if (outcome === "loss") {
+    return (
+      <Badge
+        variant="destructive"
+        className="cursor-pointer"
+        onClick={() => handleClick(null)}
+      >
+        SL
+      </Badge>
+    )
+  }
+
+  return (
+    <div className="flex gap-1">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 px-2 text-xs hover:text-green-500 hover:bg-green-500/10"
+        onClick={() => handleClick("win")}
+        disabled={loading}
+      >
+        TP
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 px-2 text-xs hover:text-red-500 hover:bg-red-500/10"
+        onClick={() => handleClick("loss")}
+        disabled={loading}
+      >
+        SL
+      </Button>
+    </div>
+  )
 }
 
 const rangeOptions = [
@@ -69,14 +227,34 @@ export default function PerformancePage() {
   }, [oldSignals])
 
   const filteredSignals = useMemo(() => {
-    if (rangeDays === "all") return unifiedSignals
-    const days = Number(rangeDays)
-    if (!Number.isFinite(days)) return unifiedSignals
-    const since = Date.now() - days * 24 * 60 * 60 * 1000
-    return unifiedSignals.filter(signal => {
+    let signals = unifiedSignals
+
+    // Filter by date range
+    if (rangeDays !== "all") {
+      const days = Number(rangeDays)
+      if (Number.isFinite(days)) {
+        const since = Date.now() - days * 24 * 60 * 60 * 1000
+        signals = signals.filter(signal => {
+          const ts = new Date(signal.ts).getTime()
+          return Number.isFinite(ts) ? ts >= since : false
+        })
+      }
+    }
+
+    // Deduplicate: same symbol+direction within 60 minutes = duplicate
+    const deduped: typeof signals = []
+    for (const signal of signals) {
       const ts = new Date(signal.ts).getTime()
-      return Number.isFinite(ts) ? ts >= since : false
-    })
+      const isDupe = deduped.some(d => {
+        if (d.symbol !== signal.symbol) return false
+        if ((d.direction || "").toLowerCase() !== (signal.direction || "").toLowerCase()) return false
+        const dTs = new Date(d.ts).getTime()
+        return Math.abs(dTs - ts) < 3600000 // 60 minutes
+      })
+      if (!isDupe) deduped.push(signal)
+    }
+
+    return deduped
   }, [unifiedSignals, rangeDays])
 
   const setupSummaries = useMemo<SetupSummary[]>(() => {
@@ -279,11 +457,12 @@ export default function PerformancePage() {
                     <TableHead>Symbol</TableHead>
                     <TableHead>TF</TableHead>
                     <TableHead>Чиглэл</TableHead>
-                    <TableHead className="text-right">RR</TableHead>
+                    <TableHead className="text-right">Entry</TableHead>
                     <TableHead className="text-right">SL</TableHead>
                     <TableHead className="text-right">TP</TableHead>
-                    <TableHead>Outcome</TableHead>
-                    <TableHead>Strategy</TableHead>
+                    <TableHead className="text-right">RR</TableHead>
+                    <TableHead>Орсон</TableHead>
+                    <TableHead>Үр дүн</TableHead>
                     <TableHead>Огноо</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -309,34 +488,38 @@ export default function PerformancePage() {
                               : "—"}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {signal.entry !== undefined && signal.entry !== 0
+                          ? signal.entry > 100 ? signal.entry.toFixed(2) : signal.entry.toFixed(5)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-red-400">
+                        {signal.sl !== undefined && signal.sl !== 0
+                          ? signal.sl > 100 ? signal.sl.toFixed(2) : signal.sl.toFixed(5)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-green-400">
+                        {signal.tp !== undefined && signal.tp !== 0
+                          ? signal.tp > 100 ? signal.tp.toFixed(2) : signal.tp.toFixed(5)
+                          : "—"}
+                      </TableCell>
                       <TableCell className="text-right">
                         {signal.rr !== undefined ? signal.rr.toFixed(2) : "—"}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {signal.sl !== undefined && signal.sl !== 0 ? signal.sl : "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {signal.tp !== undefined && signal.tp !== 0 ? signal.tp : "—"}
+                      <TableCell>
+                        <EntryTrackingCell
+                          signalId={signal.id.replace("signals:", "")}
+                          entryTaken={signal.entry_taken}
+                          onUpdate={fetchData}
+                        />
                       </TableCell>
                       <TableCell>
-                        {signal.outcome ? (
-                          <Badge
-                            variant={
-                              signal.outcome === "win"
-                                ? "default"
-                                : signal.outcome === "loss"
-                                  ? "destructive"
-                                  : "secondary"
-                            }
-                          >
-                            {signal.outcome.toUpperCase()}
-                          </Badge>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-[160px] truncate">
-                        {signal.strategyName || signal.strategyId || "—"}
+                        <OutcomeCell
+                          signalId={signal.id.replace("signals:", "")}
+                          outcome={signal.outcome}
+                          entryTaken={signal.entry_taken}
+                          onUpdate={fetchData}
+                        />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatTimestamp(signal.ts)}
