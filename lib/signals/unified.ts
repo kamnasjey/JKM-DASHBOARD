@@ -190,14 +190,18 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
     ? String(item.outcome).toLowerCase()
     : undefined
 
+  // Get strategy ID from multiple possible locations
+  const strategyId = item.strategy_id || item.explain?.strategy_id || (item as any).strategyId
+  const strategyName = item.strategy_name || item.explain?.strategy_name || (item as any).strategyName
+
   return {
     id,
     source: "signals",
     ts,
     symbol: item.symbol,
     timeframe: tf || "—",
-    strategyId: item.strategy_id,
-    strategyName: item.strategy_name,
+    strategyId,
+    strategyName,
     direction,
     rr: item.rr,
     confidence: item.confidence,

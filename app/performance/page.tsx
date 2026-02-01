@@ -24,6 +24,11 @@ interface SetupSummary {
   tp: number
   sl: number
   pending: number
+  // Taken entries stats (for win rate calculation)
+  takenTotal: number
+  takenTp: number
+  takenSl: number
+  takenPending: number
   lastTs?: string
 }
 
@@ -253,12 +258,23 @@ export default function PerformancePage() {
     const map = new Map<string, SetupSummary>()
     for (const signal of filteredSignals) {
       const name = getStrategyDisplayName(signal)
-      const summary = map.get(name) || { name, total: 0, tp: 0, sl: 0, pending: 0 }
+      const summary = map.get(name) || {
+        name, total: 0, tp: 0, sl: 0, pending: 0,
+        takenTotal: 0, takenTp: 0, takenSl: 0, takenPending: 0
+      }
       summary.total += 1
 
       if (signal.outcome === "win") summary.tp += 1
       else if (signal.outcome === "loss") summary.sl += 1
       else summary.pending += 1
+
+      // Track taken entries separately
+      if (signal.entry_taken === true) {
+        summary.takenTotal += 1
+        if (signal.outcome === "win") summary.takenTp += 1
+        else if (signal.outcome === "loss") summary.takenSl += 1
+        else summary.takenPending += 1
+      }
 
       if (!summary.lastTs || new Date(signal.ts).getTime() > new Date(summary.lastTs).getTime()) {
         summary.lastTs = signal.ts
@@ -425,7 +441,7 @@ export default function PerformancePage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">Setup түүх</CardTitle>
-            <CardDescription>Strategy бүрийн TP/SL тоо болон сүүлийн огноо</CardDescription>
+            <CardDescription>Strategy бүрийн орсон арилжаа, TP/SL тоо, Win Rate</CardDescription>
           </CardHeader>
           <CardContent>
             {setupSummaries.length === 0 ? (
@@ -434,40 +450,44 @@ export default function PerformancePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Setup</TableHead>
+                    <TableHead>Strategy</TableHead>
                     <TableHead className="text-right">Нийт</TableHead>
+                    <TableHead className="text-right">Орсон</TableHead>
                     <TableHead className="text-right">TP</TableHead>
                     <TableHead className="text-right">SL</TableHead>
-                    <TableHead className="text-right">Pending</TableHead>
+                    <TableHead className="text-right">Win Rate</TableHead>
                     <TableHead>Сүүлд</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {setupSummaries.map(item => (
-                    <TableRow key={item.name}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {item.name}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">{item.total}</TableCell>
-                      <TableCell className="text-right text-green-500">{item.tp}</TableCell>
-                      <TableCell className="text-right text-red-500">{item.sl}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">{item.pending}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {item.lastTs ? (
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatTimestamp(item.lastTs)}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {setupSummaries.map(item => {
+                    const decidedCount = item.takenTp + item.takenSl
+                    const itemWinRate = decidedCount > 0 ? (item.takenTp / decidedCount) * 100 : null
+                    return (
+                      <TableRow key={item.name}>
+                        <TableCell>
+                          <span className="font-medium">{item.name}</span>
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">{item.total}</TableCell>
+                        <TableCell className="text-right font-medium">{item.takenTotal}</TableCell>
+                        <TableCell className="text-right text-green-500">{item.takenTp}</TableCell>
+                        <TableCell className="text-right text-red-500">{item.takenSl}</TableCell>
+                        <TableCell className="text-right font-bold">
+                          {itemWinRate !== null ? `${itemWinRate.toFixed(0)}%` : "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.lastTs ? (
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatTimestamp(item.lastTs)}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             )}
