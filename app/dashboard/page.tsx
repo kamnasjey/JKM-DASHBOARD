@@ -314,7 +314,8 @@ export default function DashboardPage() {
       ])
 
       // Map Firestore signals to UnifiedSignal and deduplicate
-      const rawUserSignals = (userSigsRes as any)?.signals || []
+      // api.userSignals returns array directly (not { signals: [] })
+      const rawUserSignals = Array.isArray(userSigsRes) ? userSigsRes : []
       const unifiedSignals = rawUserSignals.map((s: any) => mapOldSignalToUnified(s))
       const dedupedSignals = deduplicateSignals(unifiedSignals)
       setFirestoreSignals(dedupedSignals)
