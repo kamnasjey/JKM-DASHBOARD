@@ -37,15 +37,27 @@ function EntryTrackingCell({
   entryTaken?: boolean | null
   onUpdate: () => void
 }) {
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
   const handleClick = async (value: boolean | null) => {
+    console.log("[EntryTracking] Updating signal:", signalId, "value:", value)
     setLoading(true)
     try {
-      await api.updateSignalEntry(signalId, value)
+      const result = await api.updateSignalEntry(signalId, value)
+      console.log("[EntryTracking] Result:", result)
+      toast({
+        title: "Хадгалагдлаа",
+        description: `Signal ${signalId.slice(0, 20)}... updated`,
+      })
       onUpdate()
-    } catch (e) {
-      console.error("Failed to update entry tracking:", e)
+    } catch (e: any) {
+      console.error("[EntryTracking] Failed:", e)
+      toast({
+        title: "Алдаа",
+        description: e?.message || "Failed to update",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
