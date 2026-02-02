@@ -887,13 +887,20 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Signals History with Entry Tracking (last 20) */}
+        {/* Signals History with Entry Tracking (last 20) - uses firestoreSignals for deduplication + entry tracking */}
         <SignalsHistoryPanel
-          signals={displaySignals.map((s) => ({
-            ...s,
-            signal_id: s.signal_id || `${s.symbol}_${s.direction}_${s.entry}_${s.created_at || Date.now()}`,
-            entry_taken: (s as any).entry_taken ?? null,
-            outcome: (s as any).outcome ?? null,
+          signals={firestoreSignals.slice(0, 20).map((s) => ({
+            // Extract actual signal_key from UnifiedSignal.id (format: "signals:ACTUAL_KEY")
+            signal_id: s.id.startsWith("signals:") ? s.id.slice(8) : s.id,
+            symbol: s.symbol,
+            direction: s.direction === "long" ? "BUY" : s.direction === "short" ? "SELL" : "—",
+            entry: s.entry ?? 0,
+            tp: s.tp,
+            sl: s.sl,
+            rr: s.rr,
+            timestamp: s.ts,
+            entry_taken: s.entry_taken ?? null,
+            outcome: s.outcome === "expired" ? "pending" : s.outcome ?? null,
           }))}
           onEntryToggle={handleEntryToggle}
           showWinRate={true}
