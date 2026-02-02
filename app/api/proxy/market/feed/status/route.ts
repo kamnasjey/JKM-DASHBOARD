@@ -12,6 +12,6 @@ export async function GET(request: Request) {
 
   return forwardInternalRequest(request, {
     method: "GET",
-    path: "/api/feed/status",  // Changed from /api/market/feed/status to avoid route conflict
+    path: "/api/market/feed/status",
   })
 }

@@ -104,6 +104,15 @@ export interface ScannerResult {
 // ============================================================
 
 /**
+ * Safely parse a date, returning null if invalid
+ */
+function safeParseDate(value: unknown): Date | null {
+  if (!value) return null
+  const d = new Date(value as string | number)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/**
  * Map scanner result to UnifiedSignal
  */
 export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
@@ -115,10 +124,13 @@ export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
   if (item.bias === "bullish" || item.bias === "long") direction = "long"
   if (item.bias === "bearish" || item.bias === "short") direction = "short"
 
-  // Build simulator link
-  const to = new Date(item.ts)
-  const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000) // 90 days back
-  const simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(item.tf)}&strategyId=${encodeURIComponent(item.strategyId)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
+  // Build simulator link (safely handle invalid dates)
+  let simulatorLink: string | undefined
+  const to = safeParseDate(item.ts)
+  if (to) {
+    const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000) // 90 days back
+    simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(item.tf)}&strategyId=${encodeURIComponent(item.strategyId)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
+  }
 
   return {
     id,
@@ -145,9 +157,7 @@ export function mapScannerResultToUnified(item: ScannerResult): UnifiedSignal {
       hitsPerDetector: item.hitsPerDetector,
     },
     explain: item.explain,
-    links: {
-      openSimulator: simulatorLink,
-    },
+    links: simulatorLink ? { openSimulator: simulatorLink } : undefined,
   }
 }
 
@@ -170,15 +180,22 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
   }
 
   // Convert epoch to ISO (fallback if ts not provided)
-  const ts = item.ts || new Date(item.created_at * 1000).toISOString()
+  let ts = item.ts
+  if (!ts && item.created_at) {
+    const parsed = safeParseDate(item.created_at * 1000)
+    ts = parsed ? parsed.toISOString() : new Date().toISOString()
+  }
+  if (!ts) {
+    ts = new Date().toISOString()
+  }
 
-  // Build simulator link if possible
+  // Build simulator link if possible (safely handle invalid dates)
   let simulatorLink: string | undefined
   const tf = item.timeframe || item.tf
-  if (item.symbol && tf) {
-    const to = new Date(ts)
-    const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000)
-    simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(tf)}&from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`
+  const toDate = safeParseDate(ts)
+  if (item.symbol && tf && toDate) {
+    const from = new Date(toDate.getTime() - 90 * 24 * 60 * 60 * 1000)
+    simulatorLink = `/simulator?symbol=${encodeURIComponent(item.symbol)}&tf=${encodeURIComponent(tf)}&from=${from.toISOString().split("T")[0]}&to=${toDate.toISOString().split("T")[0]}`
   }
 
   // Extract fail reasons as note
@@ -256,10 +273,10 @@ export function mergeSignals(
   // Combine all signals
   const all = [...scannerResults, ...oldSignals]
 
-  // Sort by ts descending (Newest first)
+  // Sort by ts descending (Newest first), with fallback for invalid dates
   all.sort((a, b) => {
-    const ta = new Date(a.ts).getTime()
-    const tb = new Date(b.ts).getTime()
+    const ta = safeParseDate(a.ts)?.getTime() ?? 0
+    const tb = safeParseDate(b.ts)?.getTime() ?? 0
     return tb - ta
   })
 
@@ -267,7 +284,7 @@ export function mergeSignals(
   const deduped: UnifiedSignal[] = []
 
   for (const signal of all) {
-    const ts = new Date(signal.ts).getTime()
+    const ts = safeParseDate(signal.ts)?.getTime() ?? 0
 
     // Check if we already have a similar signal within 60 minutes
     const duplicate = deduped.find(d => {
@@ -280,8 +297,8 @@ export function mergeSignals(
       if (dDir !== sDir) return false
 
       // Check time difference (60 minutes = 3600000 ms)
-      const dTs = new Date(d.ts).getTime()
-      return Math.abs(dTs - ts) < 3600000
+      const dTs = safeParseDate(d.ts)?.getTime() ?? 0
+      return ts > 0 && dTs > 0 && Math.abs(dTs - ts) < 3600000
     })
 
     // If no duplicate found (or if this is the first/newest), keep it
