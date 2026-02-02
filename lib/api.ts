@@ -259,10 +259,10 @@ export const api = {
   annotations: (symbol: string) =>
     apiFetch<any>(`/api/proxy/annotations?symbol=${encodeURIComponent(symbol)}`),
 
-  // Profile
-  profile: () => apiFetch<any>("/api/proxy/profile"),
+  // Profile (reads from Firestore directly)
+  profile: () => apiFetch<any>("/api/profile"),
   updateProfile: (payload: any) =>
-    apiFetch<any>("/api/proxy/profile", {
+    apiFetch<any>("/api/user-prefs", {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
