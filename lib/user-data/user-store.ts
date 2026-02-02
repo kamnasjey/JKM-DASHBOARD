@@ -31,6 +31,7 @@ export type UserIdentity = {
   user_id: string
   email?: string | null
   name?: string | null
+  display_name?: string | null
   has_paid_access?: boolean
   plan?: string | null
   plan_status?: string | null
@@ -69,6 +70,7 @@ export async function getUserDoc(userId: string): Promise<UserDoc | null> {
     user_id: String(data.user_id || userId),
     email: data.email !== undefined ? (data.email as string | null) : null,
     name: data.name !== undefined ? (data.name as string | null) : null,
+    display_name: data.display_name !== undefined ? (data.display_name as string | null) : null,
     has_paid_access: Boolean(data.has_paid_access),
     plan: data.plan !== undefined ? (data.plan as string | null) : null,
     plan_status: data.plan_status !== undefined ? (data.plan_status as string | null) : null,
@@ -97,6 +99,7 @@ export async function upsertUserIdentity(userId: string, identity: Partial<UserI
 
   if (identity.email !== undefined) update.email = identity.email
   if (identity.name !== undefined) update.name = identity.name
+  if (identity.display_name !== undefined) update.display_name = identity.display_name
   if (identity.has_paid_access !== undefined) update.has_paid_access = Boolean(identity.has_paid_access)
   if (identity.plan !== undefined) update.plan = identity.plan
   if (identity.plan_status !== undefined) update.plan_status = identity.plan_status
@@ -159,6 +162,7 @@ export async function listUsersFromFirestore(options?: {
       user_id: String(data.user_id || doc.id),
       email: data.email !== undefined ? (data.email as string | null) : null,
       name: data.name !== undefined ? (data.name as string | null) : null,
+      display_name: data.display_name !== undefined ? (data.display_name as string | null) : null,
       has_paid_access: Boolean(data.has_paid_access),
       plan: data.plan !== undefined ? (data.plan as string | null) : null,
       plan_status: data.plan_status !== undefined ? (data.plan_status as string | null) : null,
@@ -202,6 +206,7 @@ export async function ensureUserInFirestore(userId: string, identity: Partial<Us
 
   if (identity.email !== undefined) update.email = identity.email
   if (identity.name !== undefined) update.name = identity.name
+  if (identity.display_name !== undefined) update.display_name = identity.display_name
   if (identity.has_paid_access !== undefined) update.has_paid_access = Boolean(identity.has_paid_access)
   if (identity.plan !== undefined) update.plan = identity.plan
   if (identity.plan_status !== undefined) update.plan_status = identity.plan_status

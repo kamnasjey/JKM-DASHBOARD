@@ -266,7 +266,7 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
-  updateUserPrefs: (payload: { telegram_chat_id?: string | null; telegram_enabled?: boolean }) =>
+  updateUserPrefs: (payload: { telegram_chat_id?: string | null; telegram_enabled?: boolean; display_name?: string | null }) =>
     apiFetch<any>("/api/user-prefs", {
       method: "PUT",
       body: JSON.stringify(payload),

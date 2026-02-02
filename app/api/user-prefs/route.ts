@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { updateUserPrefs } from "@/lib/user-data/user-store"
+import { updateUserPrefs, upsertUserIdentity } from "@/lib/user-data/user-store"
 
 export const runtime = "nodejs"
 
@@ -22,13 +22,30 @@ export async function PUT(request: NextRequest) {
   }
 
   const prefs: Record<string, unknown> = {}
+  const identity: Record<string, unknown> = {}
+
+  // Prefs (telegram settings)
   if ("telegram_chat_id" in body) prefs.telegram_chat_id = body.telegram_chat_id
   if ("telegram_enabled" in body) prefs.telegram_enabled = body.telegram_enabled
 
-  if (Object.keys(prefs).length === 0) {
-    return NextResponse.json({ ok: false, message: "No writable prefs" }, { status: 400 })
+  // Identity (display_name)
+  if ("display_name" in body) identity.display_name = body.display_name
+
+  if (Object.keys(prefs).length === 0 && Object.keys(identity).length === 0) {
+    return NextResponse.json({ ok: false, message: "No writable fields" }, { status: 400 })
   }
 
-  await updateUserPrefs(userId, prefs)
-  return NextResponse.json({ ok: true, updated: Object.keys(prefs) })
+  const updated: string[] = []
+
+  if (Object.keys(prefs).length > 0) {
+    await updateUserPrefs(userId, prefs)
+    updated.push(...Object.keys(prefs))
+  }
+
+  if (Object.keys(identity).length > 0) {
+    await upsertUserIdentity(userId, identity)
+    updated.push(...Object.keys(identity))
+  }
+
+  return NextResponse.json({ ok: true, updated })
 }
