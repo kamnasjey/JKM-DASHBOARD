@@ -52,6 +52,7 @@ export async function upsertUserSignal(userId: string, signalKey: string, payloa
       user_id: userId,
       signal_key: signalKey,
       signal_id: signalKey, // Alias for signals-firestore-store compatibility
+      generated_at: createdAtISO, // Ensure generated_at is always saved
       updatedAt: new Date().toISOString(),
       updated_at: Math.floor(Date.now() / 1000), // Epoch for query compatibility
       createdAt: createdAtISO,
