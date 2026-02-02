@@ -76,22 +76,57 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  await upsertUserSignal(userId, signalKey, {
+  // Build payload with only non-empty values to avoid overwriting existing data
+  const payload: Record<string, unknown> = {
     signal_key: signalKey,
     user_id: userId,
-    symbol: String((signal as any).symbol || (signal as any).pair || ""),
-    direction: String((signal as any).direction || ""),
-    timeframe: String((signal as any).timeframe || ""),
-    entry: Number((signal as any).entry || 0),
-    sl: Number((signal as any).sl || 0),
-    tp: Number((signal as any).tp || 0),
-    rr: Number((signal as any).rr || 0),
-    strategy_name: (signal as any).strategy_name ? String((signal as any).strategy_name) : undefined,
-    generated_at: (signal as any).generated_at ? String((signal as any).generated_at) : undefined,
-    status: (signal as any).status ? String((signal as any).status) : undefined,
-    evidence: (signal as any).evidence,
-    meta: (signal as any).meta,
-  })
+  }
+
+  // Only add fields that have actual values
+  if ((signal as any).symbol || (signal as any).pair) {
+    payload.symbol = String((signal as any).symbol || (signal as any).pair)
+  }
+  if ((signal as any).direction) {
+    payload.direction = String((signal as any).direction)
+  }
+  if ((signal as any).timeframe) {
+    payload.timeframe = String((signal as any).timeframe)
+  }
+  if ((signal as any).entry) {
+    payload.entry = Number((signal as any).entry)
+  }
+  if ((signal as any).sl) {
+    payload.sl = Number((signal as any).sl)
+  }
+  if ((signal as any).tp) {
+    payload.tp = Number((signal as any).tp)
+  }
+  if ((signal as any).rr) {
+    payload.rr = Number((signal as any).rr)
+  }
+  if ((signal as any).strategy_name) {
+    payload.strategy_name = String((signal as any).strategy_name)
+  }
+  if ((signal as any).generated_at) {
+    payload.generated_at = String((signal as any).generated_at)
+  }
+  if ((signal as any).status) {
+    payload.status = String((signal as any).status)
+  }
+  if ((signal as any).outcome) {
+    payload.outcome = String((signal as any).outcome)
+  }
+  if ((signal as any).entry_taken !== undefined) {
+    payload.entry_taken = Boolean((signal as any).entry_taken)
+  }
+  if ((signal as any).evidence) {
+    payload.evidence = (signal as any).evidence
+  }
+  if ((signal as any).meta) {
+    payload.meta = (signal as any).meta
+  }
+
+  await upsertUserSignal(userId, signalKey, payload as any)
 
   return NextResponse.json({ ok: true })
 }
