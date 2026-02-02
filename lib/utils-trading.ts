@@ -4,15 +4,42 @@ import type { SignalPayloadPublicV1 } from "./types"
 // Ulaanbaatar timezone (UTC+8)
 const UB_TIMEZONE = "Asia/Ulaanbaatar"
 
-export function formatTimestamp(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleString("mn-MN", {
-    timeZone: UB_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+export function formatTimestamp(timestamp: number | string | null | undefined): string {
+  if (timestamp === null || timestamp === undefined) return "—"
+
+  try {
+    let date: Date
+
+    if (typeof timestamp === "string") {
+      // ISO string format
+      date = new Date(timestamp)
+    } else if (typeof timestamp === "number") {
+      // Check if it's in seconds (before year 2100) or milliseconds
+      if (timestamp < 4102444800) {
+        // Unix seconds (before year 2100)
+        date = new Date(timestamp * 1000)
+      } else {
+        // Already in milliseconds
+        date = new Date(timestamp)
+      }
+    } else {
+      return "—"
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "Invalid Date"
+
+    return date.toLocaleString("mn-MN", {
+      timeZone: UB_TIMEZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  } catch {
+    return "—"
+  }
 }
 
 export function formatTimestampFull(timestamp: number): string {
