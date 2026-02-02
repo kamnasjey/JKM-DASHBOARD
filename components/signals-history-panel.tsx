@@ -34,6 +34,8 @@ interface SignalWithEntry {
   rr?: number
   created_at?: string | number
   timestamp?: string | number
+  generated_at?: string // Signal generation timestamp
+  ts?: string // Alias for generated_at
   // Entry tracking
   entry_taken?: boolean | null
   outcome?: "win" | "loss" | "pending" | null
@@ -184,7 +186,7 @@ export function SignalsHistoryPanel({
                     <TableCell className="text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {formatTime(signal.timestamp || signal.created_at)}
+                        {formatTime(signal.generated_at || signal.ts || signal.timestamp || signal.created_at)}
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
