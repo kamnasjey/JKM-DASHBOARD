@@ -93,7 +93,7 @@ export function AIExplainDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            OpenAI-ийн тусламжтай энэ сигналын тайлбар
+            OpenAI-ийн тусламжтай энэ setup-ийн тайлбар
           </DialogDescription>
         </DialogHeader>
 

@@ -5,7 +5,7 @@ export function TargetAudience() {
   const audiences = [
     {
       icon: AlertCircle,
-      title: '"Signal авч ядарсан" хүмүүст',
+      title: '"Setup авч ядарсан" хүмүүст',
       description:
         "Олон signal-service туршсан ч тогтвортой ашиггүй байна уу? JKM зөвхөн BUY/SELL биш, яагаад гэдгийг тайлбарлана.",
       color: "text-red-400",

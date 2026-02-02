@@ -79,11 +79,11 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Сүүлийн дохио</CardTitle>
+          <CardTitle>Сүүлийн setup</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-muted-foreground">Сүүлийн 7 хоногт дохио олдсонгүй.</p>
+            <p className="text-muted-foreground">Сүүлийн 7 хоногт setup олдсонгүй.</p>
             <p className="text-sm text-muted-foreground">Scanner Config хуудаснаас strategy тохируулна уу.</p>
           </div>
         </CardContent>
@@ -94,7 +94,7 @@ export function SignalsTable({ signals, limit }: SignalsTableProps) {
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle>Сүүлийн дохио</CardTitle>
+        <CardTitle>Сүүлийн setup</CardTitle>
         <div className="flex items-center gap-2">
           <Button variant={view === "table" ? "secondary" : "ghost"} size="sm" onClick={() => setView("table")}>
             Table

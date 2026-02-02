@@ -51,7 +51,7 @@ export default function ChartPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Target className="h-4 w-4" />
-                Сүүлийн дохионууд
+                Сүүлийн setup-ууд
                 <Badge variant="secondary" className="ml-2">
                   {recentSignals.length}
                 </Badge>

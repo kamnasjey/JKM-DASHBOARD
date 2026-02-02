@@ -213,7 +213,7 @@ export default function DashboardPage() {
     if (has("PINBAR_AT_LEVEL")) notes.push("Key level дээрх pinbar нь rejection‑ийг батална")
     if (has("PRICE_MOMENTUM_WEAKENING")) notes.push("Momentum‑ын суларлыг барьж reversal эрсдэлийг илрүүлнэ")
 
-    const base = "AI тайлбар: Gate detectors нь зах зээлийг шүүж, trigger detectors нь оролтын дохиог өгч, confluence нь баталгаажуулалтыг нэмэгдүүлдэг."
+    const base = "AI тайлбар: Gate detectors нь зах зээлийг шүүж, trigger detectors нь оролтын setup өгч, confluence нь баталгаажуулалтыг нэмэгдүүлдэг."
     const extra = notes.length ? ` ${notes.join(". ")}.` : ""
     return `${base}${extra}`
   }, [])

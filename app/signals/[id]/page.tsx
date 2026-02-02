@@ -165,7 +165,7 @@ export default function SignalDetailPage() {
                   <div className="rounded-lg bg-muted/50 p-3">
                     <h4 className="mb-2 text-sm font-semibold">3. Plan бичих</h4>
                     <p className="text-xs text-muted-foreground">
-                      Энэ дохиог хэрхэн trade хийхээ тэмдэглэлдээ бичээрэй.
+                      Энэ setup-ийг хэрхэн trade хийхээ тэмдэглэлдээ бичээрэй.
                     </p>
                   </div>
                 </div>

@@ -24,8 +24,8 @@ const missions = [
   {
     id: "review_signal",
     stage: "Beginner",
-    title: "1 сигнал дээр plan бичих",
-    description: "Signal detail хуудас руу орж, replay mode-г унших",
+    title: "1 setup дээр plan бичих",
+    description: "Setup detail хуудас руу орж, replay mode-г унших",
     xp: 15,
   },
   {

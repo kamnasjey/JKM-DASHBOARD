@@ -229,8 +229,8 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
       newIssues.push({
         id: "duplicate-signals",
         severity: "warning",
-        title: `${duplicates.length} төрлийн давтагдсан сигнал`,
-        description: `Ижил entry/sl/tp-тай сигналууд олон удаа бүртгэгдсэн: ${duplicates.map(d => d.key.split("|")[0]).join(", ")}`,
+        title: `${duplicates.length} төрлийн давтагдсан setup`,
+        description: `Ижил entry/sl/tp-тай setup-ууд олон удаа бүртгэгдсэн: ${duplicates.map(d => d.key.split("|")[0]).join(", ")}`,
         suggestion: "Backend cooldown логик шалгах. scanner_service.py дотор deduplication зөв ажиллаж байгаа эсэхийг шалгах"
       })
     }
@@ -509,10 +509,10 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-yellow-600">
               <AlertTriangle className="h-5 w-5" />
-              Давтагдсан сигналууд
+              Давтагдсан setup-ууд
             </CardTitle>
             <CardDescription>
-              Ижил entry/sl/tp-тай сигналууд олон удаа бүртгэгдсэн
+              Ижил entry/sl/tp-тай setup-ууд олон удаа бүртгэгдсэн
             </CardDescription>
           </CardHeader>
           <CardContent>

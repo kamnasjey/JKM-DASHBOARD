@@ -527,7 +527,7 @@ export default function PerformancePage() {
               Орсон арилжаа
             </CardTitle>
             <CardDescription>
-              Entry авсан signal‑ууд — Win Rate зөвхөн эндээс тооцогдоно
+              Entry авсан setup‑ууд — Win Rate зөвхөн эндээс тооцогдоно
             </CardDescription>
           </CardHeader>
           <CardContent>

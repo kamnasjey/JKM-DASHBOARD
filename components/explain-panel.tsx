@@ -17,7 +17,7 @@ export function ExplainPanel({ signal, annotations }: ExplainPanelProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Яагаад энэ дохио гарсан бэ?
+          Яагаад энэ setup гарсан бэ?
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

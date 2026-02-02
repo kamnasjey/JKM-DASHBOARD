@@ -3,8 +3,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 export function FaqSection() {
   const faqs = [
     {
-      q: "Энэ чинь сигнал өгдөг үү?",
-      a: "Үгүй. JKMCOPILOT бол сигнал зардаг бот биш — таны дүрмээр setup илрүүлдэг туслах.",
+      q: "Энэ чинь setup өгдөг үү?",
+      a: "Үгүй. JKMCOPILOT бол setup зардаг бот биш — таны дүрмээр setup илрүүлдэг туслах.",
     },
     {
       q: "BUY/SELL шийдвэрийг өөрөө гаргах уу?",

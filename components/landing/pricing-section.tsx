@@ -6,7 +6,7 @@ import Link from "next/link"
 export function PricingSection() {
   const comparison = [
     {
-      feature: "BUY/SELL дохио",
+      feature: "BUY/SELL setup",
       jkm: true,
       others: true,
     },
@@ -108,7 +108,7 @@ export function PricingSection() {
           </CardHeader>
           <CardContent>
             <ul className="mb-6 space-y-3">
-              {["Өдөрт 5 дохио", "Үндсэн тайлбар", "Эрсдэлийн зөвлөмж", "Community дэмжлэг"].map((feature, i) => (
+              {["Өдөрт 5 setup", "Үндсэн тайлбар", "Эрсдэлийн зөвлөмж", "Community дэмжлэг"].map((feature, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <Check className="mt-0.5 h-4 w-4 text-primary" />
                   <span>{feature}</span>
@@ -136,7 +136,7 @@ export function PricingSection() {
           <CardContent>
             <ul className="mb-6 space-y-3">
               {[
-                "Хязгааргүй дохио",
+                "Хязгааргүй setup",
                 "Дэлгэрэнгүй AI тайлбар",
                 "Advanced эрсдэл менежмент",
                 "Chart тэмдэглэл + Replay",
