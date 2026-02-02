@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User } from "lucide-react"
+import { User, CheckCircle, XCircle, MessageCircle } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
@@ -32,12 +33,12 @@ export default function ProfilePage() {
       setProfile(data)
     } catch (err: any) {
       console.error("[profile] Failed to load profile:", err)
-      // Fall back to session info so Google users still see their name/email.
       setProfile({
         name: session?.user?.name ?? "",
         email: session?.user?.email ?? "",
         display_name: "",
         telegram_chat_id: "",
+        telegram_enabled: false,
       })
       toast({
         title: "Алдаа",
@@ -56,15 +57,23 @@ export default function ProfilePage() {
       const rawChatId = typeof profile?.telegram_chat_id === "string" ? profile.telegram_chat_id.trim() : ""
       const displayName = typeof profile?.display_name === "string" ? profile.display_name.trim() : ""
 
-      // Save to Firestore
       await api.updateUserPrefs({
         telegram_chat_id: rawChatId || null,
         telegram_enabled: Boolean(rawChatId),
         display_name: displayName || null,
       })
+
+      // Update local state to reflect saved status
+      setProfile((prev: any) => ({
+        ...prev,
+        telegram_enabled: Boolean(rawChatId),
+      }))
+
       toast({
         title: "Амжилттай",
-        description: "Profile хадгалагдлаа",
+        description: rawChatId
+          ? "Profile хадгалагдлаа. Telegram мэдэгдэл идэвхжлээ!"
+          : "Profile хадгалагдлаа",
       })
     } catch (err: any) {
       toast({
@@ -76,6 +85,9 @@ export default function ProfilePage() {
       setSaving(false)
     }
   }
+
+  const hasTelegramId = Boolean(profile?.telegram_chat_id?.trim())
+  const telegramEnabled = hasTelegramId && profile?.telegram_enabled
 
   if (loading) {
     return (
@@ -134,18 +146,65 @@ export default function ProfilePage() {
               <p className="text-xs text-muted-foreground">Имэйл солих боломжгүй</p>
             </div>
 
+            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+              {saving ? "Хадгалж байна..." : "Хадгалах"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Telegram Settings Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5" />
+                Telegram мэдэгдэл
+              </CardTitle>
+              {telegramEnabled ? (
+                <Badge variant="default" className="bg-green-600">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Идэвхтэй
+                </Badge>
+              ) : (
+                <Badge variant="secondary">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Идэвхгүй
+                </Badge>
+              )}
+            </div>
+            <CardDescription>
+              Signal илэрсэн үед Telegram-аар мэдэгдэл авах
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="telegram_chat_id">Telegram ID</Label>
+              <Label htmlFor="telegram_chat_id">Telegram Chat ID</Label>
               <Input
                 id="telegram_chat_id"
                 value={profile?.telegram_chat_id || ""}
                 onChange={(e) => setProfile({ ...profile!, telegram_chat_id: e.target.value })}
                 placeholder="123456789"
               />
-              <p className="text-xs text-muted-foreground">
-                Telegram Bot-д /start илгээгээд авсан ID-гаа энд оруулна.
-              </p>
             </div>
+
+            {/* Instructions */}
+            <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+              <p className="text-sm font-medium">Telegram ID хэрхэн авах вэ?</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Telegram дээр <code className="bg-muted px-1 rounded">@userinfobot</code> хайж ол</li>
+                <li>Bot-д ямар ч мессеж бич</li>
+                <li>Bot таны <strong>ID</strong>-г хариулна (жишээ: 123456789)</li>
+                <li>Тэр ID-г энд оруул</li>
+              </ol>
+            </div>
+
+            {telegramEnabled && (
+              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Telegram мэдэгдэл идэвхтэй байна. Signal илэрсэн үед танд Telegram-аар мэдэгдэл очно.
+                </p>
+              </div>
+            )}
 
             <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
               {saving ? "Хадгалж байна..." : "Хадгалах"}
