@@ -311,17 +311,68 @@ export async function querySignals(
   } catch (error: any) {
     console.error(`[signals-store] querySignals failed:`, error?.message)
 
-    // Fallback: simple query without complex filters
-    try {
+    // Fallback: try different field orderings and normalize results
+    const tryQuery = async (orderField: string) => {
       const snap = await db
         .collection(USERS_COLLECTION)
         .doc(userId)
         .collection(SIGNALS_SUBCOLLECTION)
-        .orderBy("created_at", "desc")
+        .orderBy(orderField, "desc")
         .limit(options.limit || 100)
         .get()
+      return snap.docs.map(doc => doc.data())
+    }
 
-      let results = snap.docs.map(doc => doc.data() as SignalData)
+    try {
+      // Try created_at first, then createdAt as fallback
+      let rawResults: DocumentData[] = []
+      try {
+        rawResults = await tryQuery("created_at")
+      } catch {
+        try {
+          rawResults = await tryQuery("createdAt")
+        } catch {
+          // Last resort: unordered query
+          const snap = await db
+            .collection(USERS_COLLECTION)
+            .doc(userId)
+            .collection(SIGNALS_SUBCOLLECTION)
+            .limit(options.limit || 100)
+            .get()
+          rawResults = snap.docs.map(doc => doc.data())
+        }
+      }
+
+      // Normalize fields from different stores
+      let results = rawResults.map(doc => {
+        // Handle created_at from either ISO string or epoch
+        let created_at = doc.created_at
+        if (!created_at && doc.createdAt) {
+          try {
+            created_at = Math.floor(new Date(doc.createdAt).getTime() / 1000)
+          } catch {
+            created_at = Math.floor(Date.now() / 1000)
+          }
+        }
+
+        return {
+          signal_id: doc.signal_id || doc.signal_key || "",
+          symbol: doc.symbol || "",
+          timeframe: doc.timeframe || doc.tf || "",
+          direction: doc.direction || "BUY",
+          entry: doc.entry || 0,
+          sl: doc.sl || 0,
+          tp: doc.tp || 0,
+          rr: doc.rr,
+          strategy_id: doc.strategy_id || doc.strategyId,
+          strategy_name: doc.strategy_name || doc.strategyName,
+          detectors: doc.detectors,
+          created_at: created_at || Math.floor(Date.now() / 1000),
+          updated_at: doc.updated_at,
+          status: doc.status || "pending",
+          source: doc.source || "scanner",
+        } as SignalData
+      })
 
       // Apply filters in memory
       if (options.symbol) {
@@ -333,6 +384,9 @@ export async function querySignals(
       if (options.status) {
         results = results.filter(s => s.status === options.status)
       }
+
+      // Sort by created_at desc
+      results.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
 
       return results
     } catch {

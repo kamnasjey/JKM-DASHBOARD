@@ -37,13 +37,25 @@ export async function upsertUserSignal(userId: string, signalKey: string, payloa
     .collection("signals")
     .doc(signalKey)
 
+  // Parse createdAt for both ISO and epoch formats (for query compatibility)
+  const createdAtISO = payload.generated_at || new Date().toISOString()
+  let createdAtEpoch: number
+  try {
+    createdAtEpoch = Math.floor(new Date(createdAtISO).getTime() / 1000)
+  } catch {
+    createdAtEpoch = Math.floor(Date.now() / 1000)
+  }
+
   await ref.set(
     {
       ...payload,
       user_id: userId,
       signal_key: signalKey,
+      signal_id: signalKey, // Alias for signals-firestore-store compatibility
       updatedAt: new Date().toISOString(),
-      createdAt: payload.generated_at || new Date().toISOString(),
+      updated_at: Math.floor(Date.now() / 1000), // Epoch for query compatibility
+      createdAt: createdAtISO,
+      created_at: createdAtEpoch, // Epoch for query compatibility
     },
     { merge: true },
   )
