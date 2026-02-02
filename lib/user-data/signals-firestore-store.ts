@@ -260,6 +260,39 @@ export async function deleteSignal(
 }
 
 /**
+ * Normalize a document from either signals-store or signals-firestore-store format
+ */
+function normalizeSignalDoc(doc: DocumentData): SignalData {
+  // Handle created_at from either ISO string (createdAt) or epoch (created_at)
+  let created_at = doc.created_at
+  if (!created_at && doc.createdAt) {
+    try {
+      created_at = Math.floor(new Date(doc.createdAt).getTime() / 1000)
+    } catch {
+      created_at = Math.floor(Date.now() / 1000)
+    }
+  }
+
+  return {
+    signal_id: doc.signal_id || doc.signal_key || "",
+    symbol: doc.symbol || "",
+    timeframe: doc.timeframe || doc.tf || "",
+    direction: doc.direction || "BUY",
+    entry: doc.entry || 0,
+    sl: doc.sl || 0,
+    tp: doc.tp || 0,
+    rr: doc.rr,
+    strategy_id: doc.strategy_id || doc.strategyId,
+    strategy_name: doc.strategy_name || doc.strategyName,
+    detectors: doc.detectors,
+    created_at: created_at || Math.floor(Date.now() / 1000),
+    updated_at: doc.updated_at,
+    status: doc.status || "pending",
+    source: doc.source || "scanner",
+  }
+}
+
+/**
  * Query signals with filters
  */
 export async function querySignals(
@@ -270,44 +303,51 @@ export async function querySignals(
   if (!userId) return []
 
   try {
-    let query: Query<DocumentData> = db
+    // Fetch without ordering to get ALL documents regardless of field names
+    // This handles signals from both stores (createdAt vs created_at)
+    const signalsRef = db
       .collection(USERS_COLLECTION)
       .doc(userId)
       .collection(SIGNALS_SUBCOLLECTION)
 
-    // Apply filters
+    // Get all signals up to limit * 2 (to allow for in-memory filtering)
+    const fetchLimit = Math.min((options.limit || 50) * 2, 500)
+    const snap = await signalsRef.limit(fetchLimit).get()
+
+    // Normalize all documents
+    let results = snap.docs.map(doc => normalizeSignalDoc(doc.data()))
+
+    // Apply filters in memory
     if (options.symbol) {
-      query = query.where("symbol", "==", options.symbol)
+      results = results.filter(s => s.symbol === options.symbol)
     }
-
     if (options.strategy_id) {
-      query = query.where("strategy_id", "==", options.strategy_id)
+      results = results.filter(s => s.strategy_id === options.strategy_id)
     }
-
     if (options.status) {
-      query = query.where("status", "==", options.status)
+      results = results.filter(s => s.status === options.status)
     }
-
     if (options.startDate) {
-      query = query.where("created_at", ">=", options.startDate)
+      results = results.filter(s => s.created_at >= (options.startDate || 0))
     }
-
     if (options.endDate) {
-      query = query.where("created_at", "<=", options.endDate)
+      results = results.filter(s => s.created_at <= (options.endDate || Infinity))
     }
 
-    // Order
-    const orderField = options.orderBy || "created_at"
+    // Sort by created_at (or specified field)
     const orderDir = options.orderDir || "desc"
-    query = query.orderBy(orderField, orderDir)
+    results.sort((a, b) => {
+      const aVal = a.created_at || 0
+      const bVal = b.created_at || 0
+      return orderDir === "desc" ? bVal - aVal : aVal - bVal
+    })
 
-    // Limit
-    if (options.limit) {
-      query = query.limit(options.limit)
+    // Apply limit
+    if (options.limit && results.length > options.limit) {
+      results = results.slice(0, options.limit)
     }
 
-    const snap = await query.get()
-    return snap.docs.map(doc => doc.data() as SignalData)
+    return results
   } catch (error: any) {
     console.error(`[signals-store] querySignals failed:`, error?.message)
 
