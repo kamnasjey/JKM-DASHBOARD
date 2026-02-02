@@ -22,6 +22,7 @@ const WRITABLE_PREFS_KEYS = [
   "scan_enabled",
   "plan",
   "plan_status",
+  "strategies", // Allow clearing legacy strategies from prefs
 ] as const
 
 /**
