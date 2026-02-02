@@ -272,6 +272,12 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  // Telegram test message
+  telegramTest: () =>
+    apiFetch<{ ok: boolean; message: string }>("/api/telegram/test", {
+      method: "POST",
+    }),
+
   // Engine controls
   engineStatus: () => apiFetch<any>("/api/proxy/engine/status"),
   manualScan: () => apiFetch<any>("/api/proxy/engine/manual-scan", { method: "POST" }),

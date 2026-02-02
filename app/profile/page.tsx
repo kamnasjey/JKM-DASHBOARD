@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User, CheckCircle, XCircle, MessageCircle } from "lucide-react"
+import { User, CheckCircle, XCircle, MessageCircle, Send } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [testing, setTesting] = useState(false)
   const [profile, setProfile] = useState<any | null>(null)
 
   useEffect(() => {
@@ -83,6 +84,25 @@ export default function ProfilePage() {
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleTestTelegram = async () => {
+    setTesting(true)
+    try {
+      const result = await api.telegramTest()
+      toast({
+        title: "Амжилттай",
+        description: result.message || "Тест мессеж илгээгдлээ! Telegram-аа шалгана уу.",
+      })
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Telegram тест илгээхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -191,10 +211,10 @@ export default function ProfilePage() {
             <div className="rounded-lg bg-muted/50 p-4 space-y-2">
               <p className="text-sm font-medium">Telegram ID хэрхэн авах вэ?</p>
               <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                <li>Telegram дээр <code className="bg-muted px-1 rounded">@userinfobot</code> хайж ол</li>
-                <li>Bot-д ямар ч мессеж бич</li>
-                <li>Bot таны <strong>ID</strong>-г хариулна (жишээ: 123456789)</li>
-                <li>Тэр ID-г энд оруул</li>
+                <li>Telegram дээр <code className="bg-muted px-1 rounded">@RawDataBot</code> хайж олоод нээ</li>
+                <li><code className="bg-muted px-1 rounded">/start</code> команд ажиллуул</li>
+                <li>Bot таны <strong>Chat ID</strong>-г харуулна (жишээ: 123456789)</li>
+                <li>Тэр ID-г хуулж аваад энд оруул</li>
               </ol>
             </div>
 
@@ -206,9 +226,22 @@ export default function ProfilePage() {
               </div>
             )}
 
-            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
-              {saving ? "Хадгалж байна..." : "Хадгалах"}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveProfile} disabled={saving} className="flex-1">
+                {saving ? "Хадгалж байна..." : "Хадгалах"}
+              </Button>
+              {telegramEnabled && (
+                <Button
+                  variant="outline"
+                  onClick={handleTestTelegram}
+                  disabled={testing}
+                  className="flex items-center gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  {testing ? "Илгээж байна..." : "Тест"}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -180,7 +180,14 @@ export function mapOldSignalToUnified(item: SignalPayloadPublicV1): UnifiedSigna
   }
 
   // Convert epoch to ISO (fallback if ts not provided)
+  // Priority: ts > generated_at > createdAt > created_at (epoch) > now
   let ts = item.ts
+  if (!ts && (item as any).generated_at) {
+    ts = (item as any).generated_at
+  }
+  if (!ts && (item as any).createdAt) {
+    ts = (item as any).createdAt
+  }
   if (!ts && item.created_at) {
     const parsed = safeParseDate(item.created_at * 1000)
     ts = parsed ? parsed.toISOString() : new Date().toISOString()
