@@ -41,6 +41,7 @@ import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { TradesTable } from "@/components/simulator/trades-table"
 import { LiveTradesStream } from "@/components/simulator/live-trades-stream"
+import { SimulatorProgress } from "@/components/simulator/simulator-progress"
 
 // ============================================
 // Types
@@ -1131,37 +1132,27 @@ export default function SimulatorPage() {
           </Card>
         )}
 
-        {/* Loading State with Live Trades Stream */}
+        {/* Loading State with Step-by-Step Progress */}
         {running && (
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="py-8">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <Zap className="h-6 w-6 text-primary animate-pulse" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    Running Multi-Timeframe Simulation
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Analyzing {symbol} across 5 timeframes...
-                  </p>
-                  <div className="flex gap-2 mt-4">
-                    {TIMEFRAMES.map((tf) => (
-                      <Badge key={tf} variant="outline" className="animate-pulse">
-                        {tf}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Live Trades Stream Preview */}
+          <>
+            {/* Modal Overlay with Progress Steps */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+              <div className="bg-card border rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+                <h3 className="text-lg font-semibold mb-4 text-center">
+                  Симуляци ажиллаж байна
+                </h3>
+                <SimulatorProgress isRunning={running} />
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  {symbol} • 5 timeframe
+                </p>
+              </div>
+            </div>
+
+            {/* Live Trades Stream Preview (behind modal) */}
             {streamingTrades.length > 0 && (
               <LiveTradesStream trades={streamingTrades} isRunning={true} />
             )}
-          </div>
+          </>
         )}
 
         {/* Results */}
