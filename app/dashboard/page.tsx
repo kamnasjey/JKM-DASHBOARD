@@ -223,7 +223,7 @@ export default function DashboardPage() {
     if (newSignals.length > 0) {
       newSignals.forEach((signal) => {
         toast({
-          title: `🔔 Шинэ дохио: ${signal.symbol}`,
+          title: `🔔 Шинэ setup: ${signal.symbol}`,
           description: `${signal.direction} @ ${signal.entry} | RR: ${signal.rr?.toFixed(2) || "N/A"}`,
         })
       })
@@ -651,7 +651,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <MetricCard title="Нийт дохио" value={totalSignalsText} subtitle="Сүүлийн статистик" icon={BarChart3} />
+          <MetricCard title="Нийт setup" value={totalSignalsText} subtitle="Сүүлийн статистик" icon={BarChart3} />
           <MetricCard title="Win rate" value={winRateText} subtitle="Ялалтын хувь" icon={Activity} />
           <MetricCard
             title="Идэвхтэй стратеги"

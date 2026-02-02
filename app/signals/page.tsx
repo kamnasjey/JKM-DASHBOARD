@@ -216,7 +216,7 @@ function SignalRow({
           {signal.source === "scanner" ? (
             <><Zap className="h-3 w-3 mr-1" />Scanner</>
           ) : (
-            "Signal"
+            "Setup"
           )}
         </Badge>
       </TableCell>
@@ -330,7 +330,7 @@ function EmptySignalsState() {
   return (
     <Card className="border-dashed">
       <CardContent className="py-12 text-center">
-        <p className="text-muted-foreground">Дохио олдсонгүй</p>
+        <p className="text-muted-foreground">Setup олдсонгүй</p>
       </CardContent>
     </Card>
   )
@@ -452,7 +452,7 @@ export default function SignalsPage() {
 
       toast({
         title: taken ? "Entry Taken ✅" : "Entry Removed ❌",
-        description: "Signal tracking updated"
+        description: "Setup tracking updated"
       })
     } catch (e: any) {
       toast({
@@ -526,7 +526,7 @@ export default function SignalsPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Signals & Setups</h1>
+          <h1 className="text-3xl font-bold">Setups</h1>
           <ErrorState message={error} onRetry={fetchData} />
         </div>
       </DashboardLayout>
@@ -541,10 +541,10 @@ export default function SignalsPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Zap className="h-8 w-8 text-yellow-500" />
-              Signals & Setups
+              Setups
             </h1>
             <p className="text-muted-foreground">
-              Scanner setup болон бусад дохионууд
+              Scanner-ээс олдсон setup-үүд
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -576,7 +576,7 @@ export default function SignalsPage() {
                 Scanner ({scannerCount})
               </TabsTrigger>
               <TabsTrigger value="signals">
-                Signals ({signalsCount})
+                Setups ({signalsCount})
               </TabsTrigger>
             </TabsList>
           </div>

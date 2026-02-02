@@ -11,7 +11,7 @@ import { signOut } from "next-auth/react"
 const navItems = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard },
   { href: "/app/setups", label: "Setup-ууд", icon: Target },
-  { href: "/app/signals", label: "Илэрцүүд", icon: ListFilter },
+  { href: "/app/signals", label: "Setups", icon: ListFilter },
   { href: "/app/logs", label: "Logs", icon: FileText },
   { href: "/app/settings", label: "Тохиргоо", icon: Settings },
 ]

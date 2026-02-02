@@ -88,7 +88,7 @@ export function SignalsHistoryPanel({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Signals History
+            Setups History
           </CardTitle>
           <CardDescription>Олдсон setup-үүд энд харагдана</CardDescription>
         </CardHeader>
@@ -108,7 +108,7 @@ export function SignalsHistoryPanel({
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5" />
-              Signals History ({signals.length})
+              Setups History ({signals.length})
             </CardTitle>
             <CardDescription>Олдсон setup-үүд • Entry орсон/алгассан</CardDescription>
           </div>
