@@ -62,6 +62,11 @@ function normalizeSignals(input: any[]): Signal[] {
     .filter(Boolean) as Signal[]
 }
 
+// Fallback HTTP polling interval (5 seconds)
+const POLL_INTERVAL_MS = 5000
+// Max WebSocket reconnect attempts before switching to polling
+const MAX_WS_ATTEMPTS = 3
+
 export function useWebSocketSignals() {
   const [signals, setSignals] = useState<Signal[]>([])
   const [newSignals, setNewSignals] = useState<Signal[]>([])
@@ -70,20 +75,84 @@ export function useWebSocketSignals() {
   const [error, setError] = useState<string | null>(null)
   const [totalCount, setTotalCount] = useState(0)
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
+  const [mode, setMode] = useState<"websocket" | "polling">("websocket")
+
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const shouldReconnectRef = useRef(true)
-  const maxReconnectAttempts = 10
+  const lastSignalCountRef = useRef(0)
 
+  // HTTP Polling fallback
+  const pollSignals = useCallback(async () => {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_VPS_API_URL || "https://api.jkmcopilot.com"
+      const res = await fetch(`${apiBase}/api/signals?limit=50`, {
+        headers: { "Content-Type": "application/json" },
+      })
+
+      if (!res.ok) {
+        console.warn("[signals-poll] HTTP error:", res.status)
+        return
+      }
+
+      const data = await res.json()
+      const signalsList = Array.isArray(data) ? data : (data.signals || [])
+      const normalized = normalizeSignals(signalsList)
+
+      // Check for new signals
+      if (normalized.length > lastSignalCountRef.current && lastSignalCountRef.current > 0) {
+        const newCount = normalized.length - lastSignalCountRef.current
+        const newOnes = normalized.slice(-newCount)
+        setNewSignals(newOnes)
+        setTimeout(() => setNewSignals([]), 10000)
+      }
+
+      lastSignalCountRef.current = normalized.length
+      setSignals(normalized)
+      setTotalCount(normalized.length)
+      setLastUpdate(new Date())
+      setConnected(true) // Mark as "connected" even in polling mode
+      setError(null)
+
+    } catch (err) {
+      console.warn("[signals-poll] Fetch error:", err)
+      // Don't set error - just skip this poll cycle
+    }
+  }, [])
+
+  // Start polling mode
+  const startPolling = useCallback(() => {
+    if (pollIntervalRef.current) return // Already polling
+
+    console.log("[signals] Switching to HTTP polling mode")
+    setMode("polling")
+
+    // Initial fetch
+    pollSignals()
+
+    // Set up interval
+    pollIntervalRef.current = setInterval(pollSignals, POLL_INTERVAL_MS)
+  }, [pollSignals])
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+  }, [])
+
+  // WebSocket connection
   const connect = useCallback(() => {
     const envBase = process.env.NEXT_PUBLIC_WS_URL
     const isBrowser = typeof window !== "undefined"
     const isLocalhost = isBrowser && window.location.hostname === "localhost"
 
-    // In production, skip if WS URL not configured
+    // If no WS URL configured, go straight to polling
     if (!envBase && !isLocalhost) {
-      setConnected(false)
-      setError(null)
+      console.log("[signals-ws] No WS URL configured, using HTTP polling")
+      startPolling()
       return
     }
 
@@ -92,76 +161,97 @@ export function useWebSocketSignals() {
 
     console.log("[signals-ws] Connecting to:", wsUrl)
 
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
+    try {
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
 
-    ws.onopen = () => {
-      console.log("[signals-ws] Connected")
-      setConnected(true)
-      setError(null)
-    }
-
-    ws.onmessage = (event) => {
-      try {
-        const data: WebSocketMessage = JSON.parse(event.data)
-        
-        if (data.type === "initial") {
-          console.log("[signals-ws] Received initial signals:", data.signals?.length)
-          setSignals(normalizeSignals(data.signals || []))
-          setTotalCount(data.total || 0)
-          setLastUpdate(new Date())
-          setReconnectAttempts(0) // Reset after first successful payload
-        } else if (data.type === "new_signals") {
-          console.log("[signals-ws] Received new signals:", data.signals?.length)
-          const normalized = normalizeSignals(data.signals || [])
-          setSignals(prev => [...prev, ...normalized])
-          setNewSignals(normalized)
-          setTotalCount(data.total || 0)
-          setLastUpdate(new Date())
-          setReconnectAttempts(0) // Reset after stable data
-          
-          // Clear newSignals after 10 seconds (for notification purposes)
-          setTimeout(() => setNewSignals([]), 10000)
-        } else if (data.type === "heartbeat") {
-          // Heartbeat received, connection is alive
-          setLastUpdate(new Date())
-          setReconnectAttempts(0) // Reset after stable heartbeat
+      // Connection timeout - if not connected in 5 seconds, try polling
+      const connectTimeout = setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          console.log("[signals-ws] Connection timeout, switching to polling")
+          ws.close()
+          startPolling()
         }
-      } catch (err) {
-        console.error("[signals-ws] Failed to parse message:", err)
+      }, 5000)
+
+      ws.onopen = () => {
+        clearTimeout(connectTimeout)
+        console.log("[signals-ws] Connected")
+        setConnected(true)
+        setError(null)
+        setMode("websocket")
+        setReconnectAttempts(0)
+        stopPolling() // Stop polling if it was running
       }
-    }
 
-    ws.onerror = (error) => {
-      console.error("[signals-ws] Error:", error)
-      setConnected(false)
-      setError("WebSocket холболтын алдаа")
-    }
+      ws.onmessage = (event) => {
+        try {
+          const data: WebSocketMessage = JSON.parse(event.data)
 
-    ws.onclose = (event) => {
-      console.log("[signals-ws] Closed")
-      setConnected(false)
+          if (data.type === "initial") {
+            console.log("[signals-ws] Received initial signals:", data.signals?.length)
+            setSignals(normalizeSignals(data.signals || []))
+            setTotalCount(data.total || 0)
+            setLastUpdate(new Date())
+            setReconnectAttempts(0)
+          } else if (data.type === "new_signals") {
+            console.log("[signals-ws] Received new signals:", data.signals?.length)
+            const normalized = normalizeSignals(data.signals || [])
+            setSignals(prev => [...prev, ...normalized])
+            setNewSignals(normalized)
+            setTotalCount(data.total || 0)
+            setLastUpdate(new Date())
+            setReconnectAttempts(0)
 
-      if (!shouldReconnectRef.current) return
-      if (event.code === 1000) return
-      
-      // Exponential backoff reconnect (5s, 10s, 20s, 40s... max 5min)
-      setReconnectAttempts(prev => {
-        const attempts = prev + 1
-        if (attempts <= maxReconnectAttempts) {
-          const delay = Math.min(5000 * Math.pow(2, attempts - 1), 300000)
+            setTimeout(() => setNewSignals([]), 10000)
+          } else if (data.type === "heartbeat") {
+            setLastUpdate(new Date())
+            setReconnectAttempts(0)
+          }
+        } catch (err) {
+          console.error("[signals-ws] Failed to parse message:", err)
+        }
+      }
+
+      ws.onerror = (error) => {
+        clearTimeout(connectTimeout)
+        console.error("[signals-ws] Error:", error)
+        setConnected(false)
+      }
+
+      ws.onclose = (event) => {
+        clearTimeout(connectTimeout)
+        console.log("[signals-ws] Closed, code:", event.code)
+        setConnected(false)
+
+        if (!shouldReconnectRef.current) return
+        if (event.code === 1000) return
+
+        setReconnectAttempts(prev => {
+          const attempts = prev + 1
+
+          // After MAX_WS_ATTEMPTS, switch to polling permanently
+          if (attempts >= MAX_WS_ATTEMPTS) {
+            console.log("[signals-ws] Max attempts reached, switching to HTTP polling")
+            startPolling()
+            return attempts
+          }
+
+          // Exponential backoff reconnect
+          const delay = Math.min(2000 * Math.pow(2, attempts - 1), 30000)
           console.log(`[signals-ws] Reconnect attempt ${attempts} in ${delay/1000}s...`)
           reconnectTimeoutRef.current = setTimeout(() => {
             connect()
           }, delay)
-        } else {
-          console.log("[signals-ws] Max reconnect attempts reached")
-          setError("Холболт тасарсан. Хуудсыг дахин ачаална уу.")
-        }
-        return attempts
-      })
+
+          return attempts
+        })
+      }
+    } catch (err) {
+      console.error("[signals-ws] Failed to create WebSocket:", err)
+      startPolling()
     }
-  }, [])
+  }, [startPolling, stopPolling])
 
   useEffect(() => {
     shouldReconnectRef.current = true
@@ -169,6 +259,7 @@ export function useWebSocketSignals() {
 
     return () => {
       shouldReconnectRef.current = false
+      stopPolling()
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
       }
@@ -176,9 +267,8 @@ export function useWebSocketSignals() {
         wsRef.current.close()
       }
     }
-  }, [connect])
+  }, [connect, stopPolling])
 
-  // Function to clear new signals notification
   const clearNewSignals = useCallback(() => {
     setNewSignals([])
   }, [])
@@ -191,5 +281,7 @@ export function useWebSocketSignals() {
     error,
     totalCount,
     clearNewSignals,
+    mode, // "websocket" or "polling" - UI can show this
+    reconnectAttempts, // How many times we've tried to reconnect
   }
 }
