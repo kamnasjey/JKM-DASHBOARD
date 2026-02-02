@@ -152,3 +152,80 @@
 .animate-pulse-glow {
   animation: pulse-glow 2s infinite;
 }
+
+/* ============================================
+   Landing Page Styles
+   ============================================ */
+
+/* Landing page color variables */
+.landing-page {
+  --lp-primary: #0df269;
+  --lp-primary-hover: #0be360;
+  --lp-bg-dark: #0a0a0a;
+  --lp-surface-dark: #111111;
+  --lp-surface-light: #1c1c1c;
+  --lp-border-subtle: #28392f;
+  --lp-text-muted: #9cbaa8;
+}
+
+/* Glass panel effect */
+.landing-page .glass-panel {
+  background: rgba(17, 24, 20, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Grid background */
+.landing-page .grid-bg {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Scan line animation */
+@keyframes scan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.5; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.landing-page .scan-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--lp-primary);
+  box-shadow: 0 0 15px var(--lp-primary);
+  animation: scan 4s linear infinite;
+  opacity: 0.5;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Sparkline SVG */
+.landing-page .sparkline {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Neon shadow */
+.landing-page .shadow-neon {
+  box-shadow: 0 0 10px rgba(13, 242, 105, 0.2);
+}
+
+.landing-page .shadow-neon-strong {
+  box-shadow: 0 0 20px rgba(13, 242, 105, 0.4);
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
