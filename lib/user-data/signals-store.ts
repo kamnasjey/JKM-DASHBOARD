@@ -104,6 +104,12 @@ export async function listUserSignals(
 
   for (const doc of snap.docs) {
     const data = doc.data() as Record<string, unknown>
+    // Use generated_at as the canonical timestamp, fall back to createdAt
+    const timestamp = data.generated_at
+      ? String(data.generated_at)
+      : data.createdAt
+        ? String(data.createdAt)
+        : undefined
     signals.push({
       signal_key: String(data.signal_key || doc.id),
       user_id: String(data.user_id || userId),
@@ -115,7 +121,8 @@ export async function listUserSignals(
       tp: Number(data.tp || 0),
       rr: Number(data.rr || 0),
       strategy_name: data.strategy_name ? String(data.strategy_name) : undefined,
-      generated_at: data.generated_at ? String(data.generated_at) : undefined,
+      generated_at: timestamp,
+      ts: timestamp, // Add ts alias for unified.ts compatibility
       status: data.status ? String(data.status) : undefined,
       evidence: data.evidence,
       meta: data.meta,
@@ -124,7 +131,7 @@ export async function listUserSignals(
       // Entry tracking fields
       entry_taken: data.entry_taken === true ? true : data.entry_taken === false ? false : null,
       outcome: data.outcome ? String(data.outcome) as StoredSignal["outcome"] : null,
-    })
+    } as StoredSignal & { ts?: string })
   }
 
   return signals
