@@ -129,17 +129,23 @@ export async function updateUserPrefs(userId: string, prefs: Partial<UserPrefs>)
 
   // Handle strategies field deletion (strategies should be in subcollection, not here)
   const { FieldValue } = await import("firebase-admin/firestore")
+  let deleteStrategies = false
   if ((prefs as any).strategies !== undefined) {
     const strats = (prefs as any).strategies
     if (strats === null || (Array.isArray(strats) && strats.length === 0)) {
-      // Delete the field if null or empty array
-      update.strategies = FieldValue.delete()
+      // Delete the field - must use update() not set()
+      deleteStrategies = true
     } else {
       update.strategies = strats
     }
   }
 
   await ref.set(update, { merge: true })
+
+  // FieldValue.delete() only works with update(), not set()
+  if (deleteStrategies) {
+    await ref.update({ strategies: FieldValue.delete() })
+  }
 }
 
 /**
