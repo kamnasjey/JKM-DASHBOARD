@@ -44,12 +44,14 @@ interface SignalWithEntry {
 interface SignalsHistoryPanelProps {
   signals: SignalWithEntry[]
   onEntryToggle?: (signalId: string, taken: boolean) => void
+  onOutcomeSet?: (signalId: string, outcome: "win" | "loss" | null) => void
   showWinRate?: boolean
 }
 
 export function SignalsHistoryPanel({
   signals,
   onEntryToggle,
+  onOutcomeSet,
   showWinRate = true,
 }: SignalsHistoryPanelProps) {
   const stats = useMemo(() => {
@@ -64,8 +66,27 @@ export function SignalsHistoryPanel({
   const formatTime = (ts: string | number | undefined) => {
     if (!ts) return "—"
     try {
-      const date = new Date(typeof ts === "number" ? ts * 1000 : ts)
+      let timestamp: number
+      if (typeof ts === "string") {
+        // Check if it's a numeric string (Unix timestamp) or ISO string
+        const parsed = parseInt(ts, 10)
+        if (!isNaN(parsed) && ts.match(/^\d+$/)) {
+          // Unix timestamp as string - need to convert to milliseconds
+          timestamp = parsed < 4102444800 ? parsed * 1000 : parsed
+        } else {
+          // ISO date string
+          timestamp = new Date(ts).getTime()
+        }
+      } else {
+        // Number - check if seconds or milliseconds
+        timestamp = ts < 4102444800 ? ts * 1000 : ts
+      }
+
+      const date = new Date(timestamp)
+      if (isNaN(date.getTime())) return "—"
+
       return date.toLocaleString("mn-MN", {
+        timeZone: "Asia/Ulaanbaatar",
         month: "numeric",
         day: "numeric",
         hour: "2-digit",
@@ -226,19 +247,52 @@ export function SignalsHistoryPanel({
                       </Button>
                     </TableCell>
                     <TableCell className="text-center">
-                      {signal.outcome === "win" && (
-                        <Badge className="bg-green-600 text-white">WIN</Badge>
-                      )}
-                      {signal.outcome === "loss" && (
-                        <Badge className="bg-red-600 text-white">LOSS</Badge>
-                      )}
-                      {signal.outcome === "pending" && (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Pending
-                        </Badge>
-                      )}
-                      {!signal.outcome && (
-                        <span className="text-muted-foreground">—</span>
+                      {onOutcomeSet ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant={signal.outcome === "win" ? "default" : "ghost"}
+                            size="sm"
+                            className={`h-6 px-2 text-xs ${
+                              signal.outcome === "win"
+                                ? "bg-green-600 hover:bg-green-700 text-white"
+                                : "text-green-600 hover:bg-green-100"
+                            }`}
+                            onClick={() => onOutcomeSet(signalId, signal.outcome === "win" ? null : "win")}
+                            title="TP цохисон"
+                          >
+                            TP
+                          </Button>
+                          <Button
+                            variant={signal.outcome === "loss" ? "default" : "ghost"}
+                            size="sm"
+                            className={`h-6 px-2 text-xs ${
+                              signal.outcome === "loss"
+                                ? "bg-red-600 hover:bg-red-700 text-white"
+                                : "text-red-600 hover:bg-red-100"
+                            }`}
+                            onClick={() => onOutcomeSet(signalId, signal.outcome === "loss" ? null : "loss")}
+                            title="SL цохисон"
+                          >
+                            SL
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          {signal.outcome === "win" && (
+                            <Badge className="bg-green-600 text-white">WIN</Badge>
+                          )}
+                          {signal.outcome === "loss" && (
+                            <Badge className="bg-red-600 text-white">LOSS</Badge>
+                          )}
+                          {signal.outcome === "pending" && (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              Pending
+                            </Badge>
+                          )}
+                          {!signal.outcome && (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </>
                       )}
                     </TableCell>
                   </TableRow>

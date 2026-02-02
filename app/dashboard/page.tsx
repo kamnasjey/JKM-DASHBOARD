@@ -259,6 +259,23 @@ export default function DashboardPage() {
     }
   }, [toast])
 
+  // Handle manual outcome setting (TP/SL hit)
+  const handleOutcomeSet = useCallback(async (signalKey: string, outcome: "win" | "loss" | null) => {
+    try {
+      await api.updateSignalEntry(signalKey, null, outcome)
+      toast({
+        title: outcome === "win" ? "✓ TP цохисон" : outcome === "loss" ? "✗ SL цохисон" : "↺ Үр дүн арилгав",
+        description: `Signal ${signalKey.slice(0, 8)}...`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Үр дүн хадгалж чадсангүй",
+        variant: "destructive",
+      })
+    }
+  }, [toast])
+
   // Calculate win rate from Firestore signals (entry_taken only, deduplicated)
   const winRateText = useMemo(() => {
     // Only count signals where entry was taken
@@ -903,6 +920,7 @@ export default function DashboardPage() {
             outcome: s.outcome === "expired" ? "pending" : s.outcome ?? null,
           }))}
           onEntryToggle={handleEntryToggle}
+          onOutcomeSet={handleOutcomeSet}
           showWinRate={true}
         />
       </div>
