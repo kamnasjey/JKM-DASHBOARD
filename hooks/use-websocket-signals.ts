@@ -180,7 +180,8 @@ export function useWebSocketSignals() {
         setConnected(true)
         setError(null)
         setMode("websocket")
-        setReconnectAttempts(0)
+        // NOTE: Don't reset reconnectAttempts here - only reset after receiving actual data
+        // This prevents infinite loops when connection opens but immediately closes (code 1006)
         stopPolling() // Stop polling if it was running
       }
 
