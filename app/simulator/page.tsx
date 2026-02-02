@@ -993,6 +993,11 @@ export default function SimulatorPage() {
                 <p className="text-xs text-muted-foreground">
                   {formatDateShort(rangeDates.from)} → {formatDateShort(rangeDates.to)}
                 </p>
+                {(rangePreset === "90D" || rangePreset === "6M" || rangePreset === "1Y") && (
+                  <p className="text-xs text-yellow-500 mt-1">
+                    ⚠️ Урт хугацаа = удаан scan (~1-3 мин)
+                  </p>
+                )}
               </div>
             </div>
 

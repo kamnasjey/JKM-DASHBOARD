@@ -35,6 +35,7 @@ import { getDashboardVersion } from "@/lib/version"
 import { getDetectorById } from "@/lib/detectors/catalog"
 
 export const runtime = "nodejs"
+export const maxDuration = 300 // 5 minutes - for long simulations (30/90 days)
 
 // Backend configuration
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || "https://api.jkmcopilot.com"
@@ -229,7 +230,7 @@ export async function POST(request: NextRequest) {
   const dashboardVersion = getDashboardVersion()
   
   // STEP 5: Add timeout to prevent long-running requests
-  const BACKEND_TIMEOUT_MS = 120_000 // 120 seconds (2 minutes) - increased for complex multi-TF simulations
+  const BACKEND_TIMEOUT_MS = 300_000 // 300 seconds (5 minutes) - for 30/90 day simulations
   const abortController = new AbortController()
   const timeoutId = setTimeout(() => abortController.abort(), BACKEND_TIMEOUT_MS)
   
