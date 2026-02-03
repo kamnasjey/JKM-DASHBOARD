@@ -55,7 +55,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <AccessDeniedGuard>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-screen overflow-hidden bg-background dashboard-grid-bg">
         {/* Desktop Sidebar */}
         <DashboardSidebar isAdmin={isOwner} />
         

@@ -167,7 +167,7 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
   }
 
   return (
-    <header className="flex h-14 sm:h-16 items-center justify-between border-b border-border bg-card px-3 sm:px-4 lg:px-6">
+    <header className="flex h-14 sm:h-16 items-center justify-between border-b border-primary/20 bg-card/80 backdrop-blur-sm px-3 sm:px-4 lg:px-6">
       <div className="flex items-center gap-2 sm:gap-4">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuToggle}>
           <Menu className="h-5 w-5" />
@@ -183,7 +183,7 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary border border-primary/40 font-semibold">
                 {user?.name?.[0]?.toUpperCase() || "U"}
               </div>
               <span className="hidden md:inline">{user?.name || "User"}</span>

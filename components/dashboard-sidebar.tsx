@@ -69,9 +69,16 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
     >
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-sidebar-border px-6 py-4">
-          <div>
-            <h1 className="text-xl font-bold text-sidebar-foreground">JKM Trading AI</h1>
-            <p className="text-xs text-muted-foreground">Command Center</p>
+          <div className="flex items-center gap-3">
+            <div className="size-9 bg-primary/10 border border-primary/30 rounded-lg flex items-center justify-center text-primary neon-glow">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">JKM Copilot</h1>
+              <p className="text-[10px] text-primary/70 font-mono tracking-wider">TRADING AI</p>
+            </div>
           </div>
           {isMobile && (
             <Button variant="ghost" size="icon" onClick={onNavigate} className="lg:hidden">
@@ -89,10 +96,10 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
                 href={item.href}
                 onClick={handleClick}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                    ? "bg-primary/15 text-primary border border-primary/30 neon-glow"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-primary/80",
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -107,8 +114,8 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 pathname === "/repair"
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                  ? "bg-primary/15 text-primary border border-primary/30 neon-glow"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-primary/80",
               )}
             >
               <Wrench className="h-5 w-5 flex-shrink-0" />
@@ -122,8 +129,8 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                 pathname === "/admin"
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                  ? "bg-primary/15 text-primary border border-primary/30 neon-glow"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-primary/80",
               )}
             >
               <Settings className="h-5 w-5 flex-shrink-0" />
