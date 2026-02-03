@@ -247,8 +247,8 @@ export default function DashboardPage() {
     try {
       await api.updateSignalEntry(signalKey, taken)
       toast({
-        title: taken ? "✓ Entry бүртгэгдлээ" : "✗ Entry хасагдлаа",
-        description: `Signal ${signalKey.slice(0, 8)}...`,
+        title: taken ? "✓ Entry жагсаалтад орлоо" : "✗ Entry жагсаалтаас хасагдлаа",
+        description: `Signal ${signalKey.slice(0, 8)}... амжилттай хадгалагдлаа`,
       })
     } catch (err: any) {
       toast({
