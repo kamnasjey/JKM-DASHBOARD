@@ -488,7 +488,7 @@ export default function LandingPage() {
                   <p className="text-gray-400 text-sm leading-relaxed mb-4">
                     {t(
                       "1 detector combination = 1 strategy. 15 combinations = 15 separate strategies running in the scanner. Why? Because each combination is designed for its own market behavior — some markets trend smoothly, others are choppy and volatile. A Trend strategy (BOS + FVG) catches clean moves, while a Reversal strategy (SWEEP + CHoCH) thrives in ranging conditions. Build strategies that match different market movements — the scanner runs each one independently.",
-                      "1 detector хослол = 1 стратеги. 15 хослол = 15 тусдаа стратеги scanner-т ажиллана. Яагаад гэвэл хослол бүр өөрийн зах зээлийн хөдөлгөөнд зориулагдсан — зарим зах зээл тайван trend хийдэг, зарим нь савлагаатай, хэлбэлзэлтэй байдаг. Trend стратеги (BOS + FVG) цэвэрхэн хөдөлгөөнийг барьдаг бол Reversal стратеги (SWEEP + CHoCH) range нөхцөлд илүү сайн ажилладаг. Өөр өөр зах зээлийн хөдөлгөөнд тохирсон стратегиуд бүтээ — scanner тус бүрийг бие даан ажиллуулна."
+                      "1 detector хослол = 1 стратеги. 15 хослол = 15 тусдаа стратеги scanner-т ажиллана. Яагаад гэвэл хослол бүр өөрийн зах зээлийн хөдөлгөөнд зориулагдсан — зарим зах зээл тайван trend хийдэг, зарим нь савлагаатай, хэлбэлзэлтэй байдаг. Trend стратеги (BOS + FVG) цэвэрхэн хөдөлгөөнийг барьдаг бол Reversal стратеги (SWEEP + CHoCH) range нөхцөлд илүү сайн ажилладаг. Өөр өөр зах зээлийн хөдөлгөөнд тохирсон стратегиуд бүтээ — scanner хослол бүр дээр бие даасан ажиллана."
                     )}
                   </p>
                   <div className="flex flex-wrap gap-2">
