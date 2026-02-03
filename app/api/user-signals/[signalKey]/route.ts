@@ -15,10 +15,12 @@ export async function PATCH(
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
 
-  const { signalKey } = await params
-  if (!signalKey) {
+  const { signalKey: rawSignalKey } = await params
+  if (!rawSignalKey) {
     return NextResponse.json({ ok: false, error: "Missing signalKey" }, { status: 400 })
   }
+  // Sanitize signal key - Firestore doc IDs cannot contain "/"
+  const signalKey = rawSignalKey.replace(/\//g, "_")
 
   const body = await request.json().catch(() => null)
   if (!body || typeof body !== "object") {
