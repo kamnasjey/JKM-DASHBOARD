@@ -151,8 +151,17 @@ export async function DELETE(request: Request) {
   try {
     const db = getFirebaseAdminDb()
 
-    // Delete user's subcollections (signals, strategies, etc.)
-    const subcollections = ["signals", "strategies", "drawings"]
+    // Delete user's subcollections (all user data)
+    const subcollections = [
+      "signals",
+      "strategies",
+      "drawings",
+      "scanner-state",
+      "outcomes",
+      "prefs",
+      "notifications",
+      "activity"
+    ]
     for (const subcol of subcollections) {
       const subcolRef = db.collection("users").doc(userId).collection(subcol)
       const subcolDocs = await subcolRef.listDocuments()
