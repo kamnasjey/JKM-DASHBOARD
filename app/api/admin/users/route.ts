@@ -1,13 +1,12 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { isOwnerEmail } from "@/lib/owner"
-import { getPrisma, prismaAvailable } from "@/lib/db"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-// GET - List all users
+// GET - List all users (from Firestore - canonical source)
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -19,29 +18,7 @@ export async function GET() {
     return NextResponse.json({ ok: false, message: "Admin only" }, { status: 403 })
   }
 
-  // Try Prisma first
-  const prisma = getPrisma()
-  if (prisma) {
-    try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          image: true,
-          provider: true,
-          hasPaidAccess: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      })
-      return NextResponse.json({ ok: true, users, source: "prisma" })
-    } catch (err) {
-      console.error("[admin/users] Prisma error:", err)
-    }
-  }
-
-  // Fallback to Firestore
+  // Load from Firestore (canonical source)
   try {
     const db = getFirebaseAdminDb()
     const snapshot = await db.collection("users").limit(100).get()
@@ -64,7 +41,7 @@ export async function GET() {
   }
 }
 
-// POST - Update user access
+// POST - Update user access (Firestore only)
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -83,39 +60,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "userId required" }, { status: 400 })
   }
 
-  // Update in both Prisma and Firestore
-  const prisma = getPrisma()
-  if (prisma) {
-    try {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { hasPaidAccess: Boolean(hasAccess) },
-      })
-    } catch (err) {
-      console.error("[admin/users] Prisma update error:", err)
-    }
-  }
-
-  // Always update Firestore (canonical)
   try {
     const db = getFirebaseAdminDb()
     await db.collection("users").doc(userId).set(
-      { 
+      {
         hasPaidAccess: Boolean(hasAccess),
         has_paid_access: Boolean(hasAccess),
         updatedAt: new Date().toISOString()
       },
       { merge: true }
     )
+    return NextResponse.json({ ok: true, message: hasAccess ? "Access granted" : "Access revoked" })
   } catch (err) {
     console.error("[admin/users] Firestore update error:", err)
     return NextResponse.json({ ok: false, message: "Firestore update failed" }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true, message: hasAccess ? "Access granted" : "Access revoked" })
 }
 
-// DELETE - Delete user account
+// DELETE - Delete user account (Firestore only)
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -134,94 +96,42 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: false, message: "userId required" }, { status: 400 })
   }
 
-  let prismaDeleted = false
-  let prismaError: string | null = null
-  let firestoreDeleted = false
-
-  // Delete from Prisma (don't fail if Prisma has issues)
-  const prisma = getPrisma()
-  if (prisma) {
-    try {
-      // Check if user exists in Prisma
-      const existingUser = await prisma.user.findUnique({ where: { id: userId } })
-      if (existingUser) {
-        // Delete related data first
-        await prisma.account.deleteMany({ where: { userId } })
-        await prisma.session.deleteMany({ where: { userId } })
-        await prisma.user.delete({ where: { id: userId } })
-        prismaDeleted = true
-        console.log(`[admin/users] Prisma: User ${userId} deleted`)
-      }
-    } catch (err: any) {
-      console.error("[admin/users] Prisma delete error:", err)
-      prismaError = err.message || "Prisma delete failed"
-      // Continue to try Firestore deletion
-    }
-  }
-
-  // Delete from Firestore
   try {
     const db = getFirebaseAdminDb()
 
-    // Check if user exists in Firestore
+    // Check if user exists
     const userDoc = await db.collection("users").doc(userId).get()
-    if (userDoc.exists) {
-      // Delete user's subcollections (all user data)
-      const subcollections = [
-        "signals",
-        "strategies",
-        "drawings",
-        "scanner-state",
-        "outcomes",
-        "prefs",
-        "notifications",
-        "activity"
-      ]
-      for (const subcol of subcollections) {
-        const subcolRef = db.collection("users").doc(userId).collection(subcol)
-        const subcolDocs = await subcolRef.listDocuments()
-        for (const doc of subcolDocs) {
-          await doc.delete()
-        }
-      }
-
-      // Delete user document
-      await db.collection("users").doc(userId).delete()
-      firestoreDeleted = true
-      console.log(`[admin/users] Firestore: User ${userId} deleted`)
+    if (!userDoc.exists) {
+      return NextResponse.json({ ok: false, message: "User not found" }, { status: 404 })
     }
+
+    // Delete user's subcollections (all user data)
+    const subcollections = [
+      "signals",
+      "strategies",
+      "drawings",
+      "scanner-state",
+      "outcomes",
+      "prefs",
+      "notifications",
+      "activity"
+    ]
+
+    for (const subcol of subcollections) {
+      const subcolRef = db.collection("users").doc(userId).collection(subcol)
+      const subcolDocs = await subcolRef.listDocuments()
+      for (const doc of subcolDocs) {
+        await doc.delete()
+      }
+    }
+
+    // Delete user document
+    await db.collection("users").doc(userId).delete()
+    console.log(`[admin/users] User ${userId} deleted from Firestore`)
+
+    return NextResponse.json({ ok: true, message: "User deleted" })
   } catch (err) {
-    console.error("[admin/users] Firestore delete error:", err)
-    return NextResponse.json({ ok: false, message: "Firestore delete failed" }, { status: 500 })
+    console.error("[admin/users] Delete error:", err)
+    return NextResponse.json({ ok: false, message: "Failed to delete user" }, { status: 500 })
   }
-
-  // If neither worked and we have no error, user not found
-  if (!prismaDeleted && !firestoreDeleted && !prismaError) {
-    return NextResponse.json({ ok: false, message: "User not found in any database" }, { status: 404 })
-  }
-
-  // If at least Firestore worked, consider it success
-  if (firestoreDeleted) {
-    return NextResponse.json({
-      ok: true,
-      message: "User deleted",
-      deletedFrom: { prisma: prismaDeleted, firestore: firestoreDeleted },
-      prismaError: prismaError || undefined
-    })
-  }
-
-  // If only Prisma worked
-  if (prismaDeleted) {
-    return NextResponse.json({
-      ok: true,
-      message: "User deleted from Prisma",
-      deletedFrom: { prisma: prismaDeleted, firestore: firestoreDeleted }
-    })
-  }
-
-  // Both failed
-  return NextResponse.json({
-    ok: false,
-    message: prismaError || "Failed to delete user"
-  }, { status: 500 })
 }
