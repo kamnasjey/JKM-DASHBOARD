@@ -213,10 +213,10 @@ export default function PerformancePage() {
     try {
       // Fetch signals and strategies in parallel
       const [signalsRes, strategiesRes] = await Promise.all([
-        api.userSignals({ limit: 500 }).catch(() => []),
+        api.userSignals({ limit: 500 }).catch(() => ({ ok: false, signals: [] })),
         api.strategiesV2.list({ limit: 100 }).catch(() => ({ strategies: [] })),
       ])
-      setOldSignals((signalsRes as SignalPayloadPublicV1[]) || [])
+      setOldSignals((signalsRes as any)?.signals || [])
 
       // Build strategy ID → name mapping from Firestore strategies
       const strategies = (strategiesRes as any)?.strategies || []
