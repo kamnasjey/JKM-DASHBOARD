@@ -1,11 +1,11 @@
 import Link from "next/link"
 
-// Live Feed Data (demo)
+// Live Feed Data - Polygon.io Forex data
 const liveFeedData = [
-  { symbol: "BTC/USDT", tf: "5m", regime: "TREND UP", regimeColor: "green", confidence: "94%", trend: "up" },
-  { symbol: "ETH/USDT", tf: "15m", regime: "DIVERGENCE", regimeColor: "red", confidence: "87%", trend: "down" },
-  { symbol: "SOL/USDT", tf: "1h", regime: "RANGE", regimeColor: "yellow", confidence: "62%", trend: "neutral" },
-  { symbol: "LINK/USDT", tf: "5m", regime: "BREAKOUT", regimeColor: "green", confidence: "78%", trend: "up" },
+  { symbol: "XAUUSD", tf: "M5", regime: "TREND UP", regimeColor: "green", confidence: "87%", trend: "up" },
+  { symbol: "EURUSD", tf: "M5", regime: "RANGE", regimeColor: "yellow", confidence: "72%", trend: "neutral" },
+  { symbol: "GBPUSD", tf: "M5", regime: "BREAKOUT", regimeColor: "green", confidence: "81%", trend: "up" },
+  { symbol: "USDJPY", tf: "M5", regime: "PULLBACK", regimeColor: "red", confidence: "68%", trend: "down" },
 ]
 
 // Sparkline component
@@ -58,9 +58,9 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400 font-mono">
-            <a className="hover:text-[#0df269] transition-colors" href="#features">Features</a>
-            <a className="hover:text-[#0df269] transition-colors" href="#simulator">Simulator</a>
-            <a className="hover:text-[#0df269] transition-colors" href="#pricing">Pricing</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#features">Яаж ажиллах</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#simulator">Симулятор</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#faq">FAQ</a>
           </div>
 
           <div className="flex items-center gap-5">
@@ -98,16 +98,16 @@ export default function LandingPage() {
               </div>
 
               <h1 className="text-4xl md:text-6xl font-black leading-[1.1] tracking-tight">
-                AI Scanner + Strategy Simulator
+                Таны хувийн Trading Copilot
                 <span className="block text-xl md:text-3xl mt-4 text-gray-500 font-medium font-mono leading-tight">
-                  AI Сканнер + Стратеги Симулятор
+                  24/7 Автомат Scanner + Simulator
                 </span>
               </h1>
 
               <p className="text-[#9cbaa8] text-base md:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed border-l-2 border-[#0df269]/30 pl-4">
-                Detect high-probability setups in real-time. Backtest strategies instantly before execution.
+                Polygon.io-оос 5 минут тутам бодит дата татаж, <span className="text-[#0df269]">таны өөрийн стратегиар</span> 24/7 scan хийнэ.
                 <span className="block mt-2 text-sm text-gray-500 font-mono">
-                  Бодит цагаанд өндөр магадлалтай арилжааг илрүүлнэ.
+                  Trader орлохгүй — таны ажлыг хөнгөвчилж, сахилга баттай арилжаа хийхэд туслана.
                 </span>
               </p>
 
@@ -144,17 +144,17 @@ export default function LandingPage() {
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    Deterministic pipeline
+                    Өөрийн стратеги, өөрийн дүрэм
                   </span>
                   <span className="flex items-center gap-1.5">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
-                    No wallet connection required
+                    Тайлбартай setup илрүүлэлт
                   </span>
                 </div>
                 <p className="mt-3 text-[10px] text-gray-600 font-mono">
-                  *Simulation only. Not financial advice. Past performance is not indicative of future results.
+                  ⚠️ Санхүүгийн зөвлөгөө биш. Эцсийн шийдвэрийг хэрэглэгч өөрөө гаргана.
                 </p>
               </div>
             </div>
@@ -225,9 +225,9 @@ export default function LandingPage() {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Low-latency scanning (provider-dependent)
+                    Polygon.io дата (5 минут тутам)
                   </span>
-                  <span className="text-[9px] font-mono text-[#0df269] animate-pulse">● Connected</span>
+                  <span className="text-[9px] font-mono text-[#0df269] animate-pulse">● 24/7 Scan</span>
                 </div>
               </div>
             </div>
@@ -239,10 +239,10 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="flex flex-wrap justify-center gap-4 md:gap-8">
               {[
-                { value: "15", label: "Symbols Default" },
-                { value: "5m", label: "Candles" },
-                { icon: "brain", label: "Explainable Reason Codes" },
-                { icon: "server", label: "VPS-Friendly" },
+                { value: "15+", label: "Forex хос + XAUUSD, BTCUSD" },
+                { value: "5 мин", label: "Polygon.io бодит дата" },
+                { icon: "brain", label: "Тайлбартай setup илрүүлэлт" },
+                { icon: "server", label: "24/7 автомат scan" },
               ].map((stat, idx) => (
                 <div
                   key={idx}
@@ -270,9 +270,9 @@ export default function LandingPage() {
         <section className="py-20 md:py-24 px-6" id="features">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">Signal to Strategy</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">Яаж ажилладаг вэ?</h2>
               <p className="text-[#9cbaa8] text-sm md:text-base">
-                Three steps from chaos to clarity. / <span className="text-xs text-gray-500">Эмх замбараагүй байдлаас тодорхой байдал руу.</span>
+                Таны стратеги + Бодит дата + 24/7 скан = Оновчтой setup
               </p>
             </div>
 
@@ -280,21 +280,21 @@ export default function LandingPage() {
               {[
                 {
                   icon: "radar",
-                  title: "1. Real-time Scanning",
-                  desc: "Engine monitors 15+ symbols. Detects volatility clusters and trend shifts instantly.",
-                  descMn: "Бодит цагаанд 15+ сүмдүгийг хянаж, тогтворгүй байдлыг илрүүлнэ.",
+                  title: "1. Стратегиа бүтээ",
+                  desc: "30+ detector-оос сонгож өөрийн арга барилыг тохируулна: Gate, Trigger, Confluence.",
+                  descMn: "Таны стратеги, таны арга барил.",
                 },
                 {
                   icon: "ai",
-                  title: "2. AI Verification",
-                  desc: "Proprietary AI filters noise. Confidence scores explain \"why\" the setup is valid.",
-                  descMn: "Хиймэл оюун ухаан дүн шимтүг шүүж, \"яагаад\" гэдгийг тайлбарлана.",
+                  title: "2. Bot 24/7 скан хийнэ",
+                  desc: "Polygon.io-оос 5 минут тутам бодит дата татаж, таны стратегиар 15+ валютын хосыг scan хийнэ.",
+                  descMn: "Та унтаж байхад ч bot ажиллана.",
                 },
                 {
                   icon: "chart",
-                  title: "3. Strategy Simulator",
-                  desc: "Backtest instantly. Visualize PnL before risking capital on live markets.",
-                  descMn: "Бодит зах зээлд оролцохоос өмнө стратеги туршиж үзээрэй.",
+                  title: "3. Тайлбартай мэдэгдэл",
+                  desc: "Setup олдоход Telegram + Web мэдэгдэл. Яагаад trigger болсныг тайлбарлана, та өөрөө шийдвэр гаргана.",
+                  descMn: "Зүгээр л BUY/SELL биш — яагаад гэдгийг мэднэ.",
                 },
               ].map((feature, idx) => (
                 <div key={idx} className="group p-8 rounded-xl bg-[#111111] border border-white/5 hover:border-[#0df269]/50 transition-colors">
@@ -328,11 +328,11 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="flex justify-between items-end mb-12">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold">Preset Detectors</h2>
-                <p className="text-[#9cbaa8] mt-2 text-sm">Choose your edge from pre-configured models.</p>
+                <h2 className="text-2xl md:text-3xl font-bold">30+ Detector-ууд</h2>
+                <p className="text-[#9cbaa8] mt-2 text-sm">Gate, Trigger, Confluence — өөрийн стратегиа бүтээ.</p>
               </div>
               <Link href="/strategies" className="hidden md:flex items-center text-[#0df269] hover:text-[#0be360] font-mono text-xs gap-1 border-b border-[#0df269]/50 pb-0.5">
-                VIEW ALL MODELS
+                БҮГДИЙГ ХАРАХ
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -341,10 +341,10 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { name: "Trend Rider", type: "MOMENTUM", desc: "Catches strong directional moves in high volatility sessions.", tags: ["EMA Cross", "ADX > 25"], isNew: false },
-                { name: "Volatility Guard", type: "PROTECTION", desc: "Filters trades during extreme chop or news events.", tags: ["ATR Filter", "Volume Gap"], isNew: false },
-                { name: "Range Sniper", type: "MEAN REV", desc: "Identifies overbought conditions in established ranges.", tags: ["Bollinger", "Stoch RSI"], isNew: false },
-                { name: "Alt Season", type: "MACRO", desc: "Detects capital rotation from BTC to mid-caps.", tags: ["Dominance", "Flow"], isNew: true },
+                { name: "Trend Continuation", type: "TRIGGER", desc: "BOS + FVG ашиглан тренд үргэлжлэлийг барина.", tags: ["BOS", "FVG", "OB"], isNew: false },
+                { name: "Reversal Hunter", type: "TRIGGER", desc: "Sweep, CHoCH, SFP ашиглан эргэлтийг илрүүлнэ.", tags: ["SWEEP", "CHOCH", "SFP"], isNew: false },
+                { name: "Smart Money", type: "CONFLUENCE", desc: "Order Block + Imbalance дээр оролт хайна.", tags: ["OB", "FVG", "EQ_BREAK"], isNew: false },
+                { name: "Regime Gate", type: "GATE", desc: "Зөв зах зээлийн нөхцөлд л trade нээнэ.", tags: ["GATE_REGIME", "GATE_VOLATILITY"], isNew: true },
               ].map((detector, idx) => (
                 <div
                   key={idx}
@@ -380,11 +380,11 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto">
             <div className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
               <div>
-                <h2 className="text-3xl font-bold mb-2">Strategy Simulator</h2>
+                <h2 className="text-3xl font-bold mb-2">Стратеги Симулятор</h2>
                 <p className="text-[#9cbaa8] text-sm max-w-2xl">
-                  Don&apos;t guess. Know. Replay parameters against 10,000 candles instantly.
+                  Стратегиа өнгөрсөн дата дээр туршиж, win rate болон үр дүнг урьдчилан харна.
                   <br />
-                  <span className="text-xs text-gray-500">Таамаглах хэрэггүй. 10,000 лаана дээрээ туршиж үзээрэй.</span>
+                  <span className="text-xs text-gray-500">Бодит дата дээр шалгаж, итгэлтэй арилжаа хий.</span>
                 </p>
               </div>
             </div>
@@ -393,31 +393,32 @@ export default function LandingPage() {
               {/* Settings Panel */}
               <div className="w-full lg:w-80 bg-[#111111]/95 p-6 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col gap-6">
                 <div>
-                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">ASSET CLASS</label>
+                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">SYMBOL</label>
                   <div className="relative">
                     <select className="w-full bg-[#0a0a0a] border border-white/10 rounded px-3 py-2.5 text-xs text-white focus:border-[#0df269] focus:ring-1 focus:ring-[#0df269] outline-none appearance-none font-mono">
-                      <option>BTC/USD Perpetual</option>
-                      <option>ETH/USD Perpetual</option>
-                      <option>SOL/USD Perpetual</option>
+                      <option>XAUUSD</option>
+                      <option>EURUSD</option>
+                      <option>GBPUSD</option>
+                      <option>USDJPY</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">STRATEGY MODEL</label>
+                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">СТРАТЕГИ</label>
                   <div className="relative">
                     <select className="w-full bg-[#0a0a0a] border border-white/10 rounded px-3 py-2.5 text-xs text-white focus:border-[#0df269] focus:ring-1 focus:ring-[#0df269] outline-none appearance-none font-mono">
-                      <option>Trend Following (Aggressive)</option>
-                      <option>Mean Reversion (Conservative)</option>
+                      <option>Trend Continuation (BOS + FVG)</option>
+                      <option>Reversal Hunter (SWEEP + CHoCH)</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-6 pt-4 border-t border-white/5">
                   {[
-                    { label: "LEVERAGE", value: "5x" },
-                    { label: "STOP LOSS", value: "2.5%" },
-                    { label: "TAKE PROFIT", value: "7.0%" },
+                    { label: "MIN RR", value: "2.0" },
+                    { label: "STOP LOSS", value: "1.5%" },
+                    { label: "TAKE PROFIT", value: "3.0%" },
                   ].map((slider, idx) => (
                     <div key={idx}>
                       <div className="flex justify-between text-[10px] font-mono mb-2">
@@ -509,20 +510,28 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-20 bg-[#1c1c1c]/20">
+        <section className="py-20 bg-[#1c1c1c]/20" id="faq">
           <div className="max-w-3xl mx-auto px-6">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold mb-4">FAQ / Түгээмэл Асуултууд</h2>
+              <h2 className="text-2xl font-bold mb-4">Түгээмэл асуултууд</h2>
             </div>
             <div className="space-y-4">
               {[
                 {
-                  q: "How real-time is the scanner data?",
-                  a: "Institutional-grade websockets ensure ~38ms latency. We connect directly to exchange APIs.",
+                  q: "Зах зээлийн дата хаанаас авдаг вэ?",
+                  a: "Polygon.io-оос 5 минут тутам тасралтгүй татаж, өөрсдийн серверт хадгалдаг. 15+ Forex хос + XAUUSD, BTCUSD дэмждэг.",
                 },
                 {
-                  q: "Can I customize strategy parameters?",
-                  a: "Yes. The Pro tier allows full customization of indicators and risk rules.",
+                  q: "Энэ 100% trader-ийг орлох уу?",
+                  a: "Үгүй. JKM Copilot бол таны стратегиар оновчтой setup олоход туслах хэрэгсэл. Setup олдохоор та харж, өөрөө дүн шинжилгээ хийж, шийдвэрээ гаргана.",
+                },
+                {
+                  q: "Сигнал бүр дээр тайлбар байдаг уу?",
+                  a: "Тийм. Яагаад trigger болсон, ямар detector-ууд давсан, ямар нөхцөл таарсныг тайлбарлана.",
+                },
+                {
+                  q: "Санхүүгийн зөвлөгөө үү?",
+                  a: "Үгүй. Энэ нь санхүүгийн зөвлөгөө биш, зөвхөн техникийн хэрэгсэл юм. Эцсийн шийдвэрийг та өөрөө гаргана.",
                 },
               ].map((faq, idx) => (
                 <div key={idx} className="border border-white/10 rounded-lg bg-[#111111] overflow-hidden">
@@ -547,11 +556,11 @@ export default function LandingPage() {
         <section className="py-24 px-6 relative">
           <div className="absolute inset-0 bg-gradient-to-t from-[#0df269]/10 to-transparent pointer-events-none" />
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tight">Ready to Stop Guessing?</h2>
+            <h2 className="text-3xl md:text-5xl font-black mb-6 tracking-tight">Илүү сахилга баттай арилжаа хийхэд бэлэн үү?</h2>
             <p className="text-lg text-[#9cbaa8] mb-10 max-w-xl mx-auto">
-              Join 10,000+ traders who have upgraded their workflow.
+              JKM Copilot бол таны оронд trade хийдэг бот биш.
               <br />
-              <span className="text-sm text-gray-500 mt-2 block">Арилжаагаа дараагийн түвшинд гарга.</span>
+              <span className="text-primary">Таны ажлыг хөнгөвчилж, илүү сайн trader болоход туслах хэрэгсэл юм.</span>
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
@@ -559,10 +568,12 @@ export default function LandingPage() {
                 className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex flex-col justify-center items-center"
               >
                 <span>Симулятор туршиx</span>
-                <span className="text-[10px] font-normal opacity-80">Try Simulator</span>
+                <span className="text-[10px] font-normal opacity-80">Стратегиа шалгаж үзээрэй</span>
               </Link>
-              <p className="text-xs text-gray-500 mt-4 sm:mt-0 sm:ml-4 font-mono">No credit card required for demo.</p>
             </div>
+            <p className="mt-6 text-xs text-gray-600 font-mono">
+              ⚠️ Санхүүгийн зөвлөгөө биш. Эцсийн шийдвэрийг хэрэглэгч өөрөө гаргана.
+            </p>
           </div>
         </section>
 
