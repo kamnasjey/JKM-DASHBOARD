@@ -443,7 +443,7 @@ export default function LandingPage() {
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-medium text-gray-400 uppercase">Symbol</label>
                           <div className="bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono text-white flex items-center justify-between">
-                            <span>XAUUSD</span>
+                            <span>EURJPY</span>
                             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
@@ -590,11 +590,11 @@ export default function LandingPage() {
                     {/* Trade Cards */}
                     <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
                       {[
-                        { id: 1, dir: "BUY", entry: "2048.50", sl: "2040.00", tp: "2065.00", outcome: "TP", r: "+2.8", time: "Jan 28, 14:30", detector: "BOS" },
-                        { id: 2, dir: "BUY", entry: "2032.75", sl: "2025.00", tp: "2048.00", outcome: "TP", r: "+2.4", time: "Jan 25, 09:15", detector: "FVG" },
-                        { id: 3, dir: "SELL", entry: "2055.20", sl: "2062.00", tp: "2040.00", outcome: "SL", r: "-1.0", time: "Jan 23, 16:45", detector: "BOS" },
-                        { id: 4, dir: "BUY", entry: "2015.30", sl: "2005.00", tp: "2035.00", outcome: "TP", r: "+3.2", time: "Jan 20, 11:00", detector: "OB" },
-                        { id: 5, dir: "BUY", entry: "1998.50", sl: "1990.00", tp: "2015.00", outcome: "TP", r: "+2.1", time: "Jan 18, 08:30", detector: "FVG" },
+                        { id: 1, dir: "BUY", entry: "161.450", sl: "161.150", tp: "162.100", outcome: "TP", r: "+2.2", time: "Jan 28, 14:30", detector: "BOS" },
+                        { id: 2, dir: "BUY", entry: "160.820", sl: "160.520", tp: "161.540", outcome: "TP", r: "+2.4", time: "Jan 25, 09:15", detector: "FVG" },
+                        { id: 3, dir: "SELL", entry: "162.180", sl: "162.480", tp: "161.300", outcome: "SL", r: "-1.0", time: "Jan 23, 16:45", detector: "BOS" },
+                        { id: 4, dir: "BUY", entry: "159.750", sl: "159.350", tp: "160.850", outcome: "TP", r: "+2.8", time: "Jan 20, 11:00", detector: "OB" },
+                        { id: 5, dir: "BUY", entry: "159.280", sl: "158.980", tp: "160.080", outcome: "TP", r: "+2.7", time: "Jan 18, 08:30", detector: "FVG" },
                       ].map((trade, i) => (
                         <div key={i} className={`relative p-3 rounded-lg border transition-all ${trade.outcome === "TP" ? "border-[#0df269]/30 bg-[#0df269]/5" : "border-red-500/30 bg-red-500/5"}`}>
                           {/* Trade number */}
