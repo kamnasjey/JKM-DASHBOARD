@@ -134,16 +134,27 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: false, message: "userId required" }, { status: 400 })
   }
 
+  let prismaDeleted = false
+  let firestoreDeleted = false
+
   // Delete from Prisma
   const prisma = getPrisma()
   if (prisma) {
     try {
-      // Delete related data first
-      await prisma.account.deleteMany({ where: { userId } })
-      await prisma.session.deleteMany({ where: { userId } })
-      await prisma.user.delete({ where: { id: userId } })
+      // Check if user exists in Prisma
+      const existingUser = await prisma.user.findUnique({ where: { id: userId } })
+      if (existingUser) {
+        // Delete related data first
+        await prisma.account.deleteMany({ where: { userId } })
+        await prisma.session.deleteMany({ where: { userId } })
+        await prisma.user.delete({ where: { id: userId } })
+        prismaDeleted = true
+        console.log(`[admin/users] Prisma: User ${userId} deleted`)
+      }
     } catch (err) {
       console.error("[admin/users] Prisma delete error:", err)
+      // If Prisma fails but user exists, return error
+      return NextResponse.json({ ok: false, message: "Prisma delete failed" }, { status: 500 })
     }
   }
 
@@ -151,31 +162,45 @@ export async function DELETE(request: Request) {
   try {
     const db = getFirebaseAdminDb()
 
-    // Delete user's subcollections (all user data)
-    const subcollections = [
-      "signals",
-      "strategies",
-      "drawings",
-      "scanner-state",
-      "outcomes",
-      "prefs",
-      "notifications",
-      "activity"
-    ]
-    for (const subcol of subcollections) {
-      const subcolRef = db.collection("users").doc(userId).collection(subcol)
-      const subcolDocs = await subcolRef.listDocuments()
-      for (const doc of subcolDocs) {
-        await doc.delete()
+    // Check if user exists in Firestore
+    const userDoc = await db.collection("users").doc(userId).get()
+    if (userDoc.exists) {
+      // Delete user's subcollections (all user data)
+      const subcollections = [
+        "signals",
+        "strategies",
+        "drawings",
+        "scanner-state",
+        "outcomes",
+        "prefs",
+        "notifications",
+        "activity"
+      ]
+      for (const subcol of subcollections) {
+        const subcolRef = db.collection("users").doc(userId).collection(subcol)
+        const subcolDocs = await subcolRef.listDocuments()
+        for (const doc of subcolDocs) {
+          await doc.delete()
+        }
       }
-    }
 
-    // Delete user document
-    await db.collection("users").doc(userId).delete()
+      // Delete user document
+      await db.collection("users").doc(userId).delete()
+      firestoreDeleted = true
+      console.log(`[admin/users] Firestore: User ${userId} deleted`)
+    }
   } catch (err) {
     console.error("[admin/users] Firestore delete error:", err)
     return NextResponse.json({ ok: false, message: "Firestore delete failed" }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, message: "User deleted" })
+  if (!prismaDeleted && !firestoreDeleted) {
+    return NextResponse.json({ ok: false, message: "User not found in any database" }, { status: 404 })
+  }
+
+  return NextResponse.json({
+    ok: true,
+    message: "User deleted",
+    deletedFrom: { prisma: prismaDeleted, firestore: firestoreDeleted }
+  })
 }
