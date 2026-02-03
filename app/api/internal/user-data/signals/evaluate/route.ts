@@ -25,13 +25,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "user_id required" }, { status: 400 })
   }
 
-  let limit = limitStr ? parseInt(limitStr, 10) : 100
-  if (isNaN(limit) || limit < 1) limit = 100
-  if (limit > 500) limit = 500
+  let limit = limitStr ? parseInt(limitStr, 10) : 50
+  if (isNaN(limit) || limit < 1) limit = 50
+  if (limit > 200) limit = 200
 
   try {
-    // Get all recent signals (limit higher to filter for pending)
-    const allSignals = await listUserSignals(userId, { limit: limit * 3 })
+    // Get all recent signals (limit higher to filter for pending, max 300)
+    const fetchLimit = Math.min(limit * 2, 300)
+    const allSignals = await listUserSignals(userId, { limit: fetchLimit })
 
     // Filter for pending signals (status is "pending" or null/undefined)
     const pendingSignals = allSignals.filter(s =>
