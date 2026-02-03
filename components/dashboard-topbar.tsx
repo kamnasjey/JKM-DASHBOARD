@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, LogOut, Menu, Clock } from "lucide-react"
+import { Bell, LogOut, Menu, Clock, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { BackButton } from "@/components/back-button"
+import { useLanguage } from "@/contexts/language-context"
 
 // Market sessions in UTC hours
 const SESSIONS = [
@@ -156,14 +157,19 @@ interface TopbarProps {
 export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
   const { toast } = useToast()
   const router = useRouter()
+  const { lang, setLang, t } = useLanguage()
 
   const handleLogout = async () => {
     toast({
-      title: "Гарлаа",
-      description: "Амжилттай гарлаа",
+      title: t("Logged out", "Гарлаа"),
+      description: t("Successfully logged out", "Амжилттай гарлаа"),
     })
     await signOut({ callbackUrl: "/auth/login" })
     router.push("/auth/login")
+  }
+
+  const toggleLanguage = () => {
+    setLang(lang === "en" ? "mn" : "en")
   }
 
   return (
@@ -177,6 +183,20 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Language Toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleLanguage}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 h-9 text-xs font-mono"
+          title={t("Switch language", "Хэл солих")}
+        >
+          <Globe className="h-4 w-4" />
+          <span className={lang === "en" ? "text-primary font-semibold" : "text-muted-foreground"}>EN</span>
+          <span className="text-muted-foreground/50">/</span>
+          <span className={lang === "mn" ? "text-primary font-semibold" : "text-muted-foreground"}>MN</span>
+        </Button>
+
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>
@@ -190,11 +210,11 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Миний бүртгэл</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("My Account", "Миний бүртгэл")}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Гарах</span>
+              <span>{t("Logout", "Гарах")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

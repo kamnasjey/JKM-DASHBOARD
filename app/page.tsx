@@ -382,12 +382,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Strategy Simulator Section - Redesigned */}
+        {/* Strategy Simulator Section - Exact Match to Real Simulator */}
         <section className="py-24 px-6 relative overflow-hidden" id="simulator">
           <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#0df269]/5 rounded-full blur-[150px] pointer-events-none" />
           <div className="absolute top-20 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="mb-12 text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0df269]/10 border border-[#0df269]/20 mb-6">
                 <span className="relative flex h-2 w-2">
@@ -399,209 +399,280 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-black mb-4">Strategy Simulator</h2>
               <p className="text-[#9cbaa8] text-base max-w-2xl mx-auto">
                 {t(
-                  "Test your strategy on 30 days of historical data. See real win rate, drawdown, and trade-by-trade results.",
-                  "Стратегиа 30 хоногийн түүхэн дата дээр туршина. Win rate, drawdown, trade бүрийн үр дүнг харна."
+                  "Multi-timeframe backtesting across 5m → 4h. Test your strategy on historical data.",
+                  "5m → 4h бүх timeframe дээр backtest хийнэ. Стратегиа түүхэн дата дээр туршина."
                 )}
               </p>
             </div>
 
-            {/* Main Simulator Preview */}
+            {/* Simulator Interface Preview */}
             <div className="relative">
-              {/* Glow effects */}
               <div className="absolute -inset-1 bg-gradient-to-r from-[#0df269]/20 via-transparent to-blue-500/20 rounded-2xl blur-xl opacity-50" />
 
-              <div className="relative glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-                {/* Top Bar */}
-                <div className="bg-[#0c0c0c] border-b border-white/5 px-6 py-3 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+              <div className="relative glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl bg-[#0a0a0a]">
+                {/* Header */}
+                <div className="bg-[#111111] border-b border-white/5 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-red-500/80" />
                       <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                       <div className="w-3 h-3 rounded-full bg-green-500/80" />
                     </div>
-                    <div className="text-xs font-mono text-gray-500">XAUUSD • M15 • Trend Continuation</div>
+                    <h3 className="text-lg font-bold">Strategy Simulator</h3>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-mono text-gray-600">30 {t("days", "хоног")}</span>
-                    <span className="px-2 py-1 rounded bg-[#0df269]/10 text-[#0df269] text-[10px] font-mono border border-[#0df269]/20">
-                      {t("COMPLETED", "ДУУССАН")}
-                    </span>
-                  </div>
+                  <span className="px-2.5 py-1 rounded bg-[#0df269]/10 text-[#0df269] text-xs font-mono border border-[#0df269]/20 flex items-center gap-1.5">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Multi-TF Auto
+                  </span>
                 </div>
 
                 <div className="flex flex-col lg:flex-row">
-                  {/* Chart Area */}
-                  <div className="flex-1 p-6 bg-gradient-to-br from-[#0a0a0a] to-[#050505]">
-                    {/* Price Info */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="text-2xl font-bold text-white font-mono">2,048.50</div>
-                        <div className="text-xs text-[#0df269] font-mono">+12.30 (+0.60%)</div>
+                  {/* Left: Configuration + Results */}
+                  <div className="flex-1 p-6 space-y-6">
+                    {/* Configuration Card */}
+                    <div className="bg-[#111111] rounded-xl border border-white/5 p-5">
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-white">Configuration</h4>
+                        <p className="text-xs text-gray-500">{t("Select symbol, strategy, and date range", "Symbol, стратеги, хугацаа сонгоно")}</p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-[10px] text-gray-500 font-mono">SIMULATION RESULT</div>
-                        <div className="text-xl font-bold text-[#0df269]">+$2,847</div>
+
+                      {/* Dropdowns Row */}
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-medium text-gray-400 uppercase">Symbol</label>
+                          <div className="bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono text-white flex items-center justify-between">
+                            <span>XAUUSD</span>
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-medium text-gray-400 uppercase">Strategy</label>
+                          <div className="bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white flex items-center justify-between">
+                            <span className="truncate">Trend Continuation</span>
+                            <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-medium text-gray-400 uppercase">Date Range</label>
+                          <div className="bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white flex items-center justify-between">
+                            <span>30 {t("days", "хоног")}</span>
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Active Detectors */}
+                      <div className="border-t border-white/5 pt-4 mb-4">
+                        <label className="text-[10px] font-medium text-gray-400 uppercase mb-2 block">Active Detectors (5)</label>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-yellow-400">🚦</span>
+                            <span className="text-[10px] text-gray-500">Gate:</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 border border-yellow-500/20 text-yellow-400">GATE_REGIME</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] text-green-400">🎯</span>
+                            <span className="text-[10px] text-gray-500">Trigger:</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/20 text-green-400">BOS</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/20 text-green-400">FVG</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] text-blue-400">🔗</span>
+                            <span className="text-[10px] text-gray-500">Confluence:</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400">OB</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400">PINBAR_AT_LEVEL</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeframes */}
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Running on: <strong className="text-white">5m, 15m, 30m, 1h, 4h</strong></span>
+                      </div>
+
+                      {/* Run Button */}
+                      <button className="w-full bg-[#0df269] text-[#0a0a0a] font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-[#0be360] transition-all">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Run Simulation
+                      </button>
                     </div>
 
-                    {/* Candlestick Chart */}
-                    <div className="relative h-[280px] border border-white/5 rounded-lg bg-[#0a0a0a]/50 overflow-hidden">
-                      {/* Grid lines */}
-                      <div className="absolute inset-0 opacity-20">
-                        {[...Array(5)].map((_, i) => (
-                          <div key={i} className="absolute w-full border-t border-white/10" style={{ top: `${(i + 1) * 20}%` }} />
-                        ))}
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className="absolute h-full border-l border-white/10" style={{ left: `${(i + 1) * 12.5}%` }} />
-                        ))}
-                      </div>
+                    {/* Results Summary Cards */}
+                    <div className="grid grid-cols-5 gap-3">
+                      {[
+                        { label: "Total Trades", value: "28", sub: "across all TFs" },
+                        { label: "Win Rate", value: "67.8%", sub: "19W / 9L", color: "text-[#0df269]" },
+                        { label: "TP Hits", value: "19", color: "text-[#0df269]" },
+                        { label: "SL Hits", value: "9", color: "text-red-400" },
+                        { label: "Best TF", value: "15M", sub: "71.4% WR" },
+                      ].map((stat, i) => (
+                        <div key={i} className="bg-[#111111] rounded-lg p-3 border border-white/5 text-center">
+                          <p className="text-[10px] text-gray-500 font-mono mb-1">{stat.label}</p>
+                          <p className={`text-xl font-bold ${stat.color || "text-white"}`}>{stat.value}</p>
+                          {stat.sub && <p className="text-[10px] text-gray-600">{stat.sub}</p>}
+                        </div>
+                      ))}
+                    </div>
 
-                      {/* Candlesticks */}
-                      <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
-                        <defs>
-                          <linearGradient id="greenGlow" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#0df269" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="#0df269" stopOpacity="0" />
-                          </linearGradient>
-                          <filter id="glow">
-                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                          </filter>
-                        </defs>
-
-                        {/* Candles - simplified visual representation */}
+                    {/* Timeframe Breakdown */}
+                    <div className="bg-[#111111] rounded-xl border border-white/5 p-5">
+                      <h4 className="text-sm font-semibold mb-4">{t("Timeframe Breakdown", "Timeframe тус бүрээр")}</h4>
+                      <div className="grid grid-cols-5 gap-3">
                         {[
-                          { x: 20, h: 30, y: 120, g: true }, { x: 35, h: 25, y: 110, g: true }, { x: 50, h: 35, y: 100, g: false },
-                          { x: 65, h: 20, y: 115, g: true }, { x: 80, h: 40, y: 90, g: true }, { x: 95, h: 15, y: 100, g: false },
-                          { x: 110, h: 30, y: 85, g: true }, { x: 125, h: 25, y: 75, g: true }, { x: 140, h: 35, y: 80, g: false },
-                          { x: 155, h: 45, y: 55, g: true }, { x: 170, h: 20, y: 60, g: false }, { x: 185, h: 30, y: 50, g: true },
-                          { x: 200, h: 25, y: 45, g: true }, { x: 215, h: 40, y: 55, g: false }, { x: 230, h: 35, y: 40, g: true },
-                          { x: 245, h: 20, y: 45, g: false }, { x: 260, h: 45, y: 30, g: true }, { x: 275, h: 30, y: 35, g: true },
-                          { x: 290, h: 25, y: 40, g: false }, { x: 305, h: 50, y: 20, g: true }, { x: 320, h: 20, y: 25, g: true },
-                          { x: 335, h: 35, y: 30, g: false }, { x: 350, h: 40, y: 15, g: true }, { x: 365, h: 30, y: 20, g: true },
-                        ].map((c, i) => (
-                          <g key={i}>
-                            {/* Wick */}
-                            <line x1={c.x + 4} y1={c.y - 10} x2={c.x + 4} y2={c.y + c.h + 10} stroke={c.g ? "#0df269" : "#ef4444"} strokeWidth="1" opacity="0.5" />
-                            {/* Body */}
-                            <rect x={c.x} y={c.y} width="8" height={c.h} fill={c.g ? "#0df269" : "#ef4444"} rx="1" className={c.g ? "opacity-90" : "opacity-70"} />
-                          </g>
-                        ))}
-
-                        {/* Trade markers */}
-                        {/* Entry - BUY */}
-                        <g filter="url(#glow)">
-                          <circle cx="80" cy="130" r="6" fill="#0df269" />
-                          <text x="80" y="150" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">BUY</text>
-                        </g>
-                        {/* TP Hit */}
-                        <g filter="url(#glow)">
-                          <circle cx="155" cy="55" r="6" fill="#0df269" />
-                          <text x="155" y="45" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">TP ✓</text>
-                        </g>
-                        {/* Entry - BUY */}
-                        <g filter="url(#glow)">
-                          <circle cx="230" cy="75" r="6" fill="#0df269" />
-                          <text x="230" y="95" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">BUY</text>
-                        </g>
-                        {/* TP Hit */}
-                        <g filter="url(#glow)">
-                          <circle cx="305" cy="20" r="6" fill="#0df269" />
-                          <text x="305" y="10" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">TP ✓</text>
-                        </g>
-
-                        {/* SL line example */}
-                        <line x1="80" y1="145" x2="155" y2="145" stroke="#ef4444" strokeWidth="1" strokeDasharray="4 2" opacity="0.5" />
-                        <text x="117" y="158" fill="#ef4444" fontSize="7" textAnchor="middle" fontFamily="monospace" opacity="0.7">SL</text>
-
-                        {/* TP line example */}
-                        <line x1="80" y1="55" x2="155" y2="55" stroke="#0df269" strokeWidth="1" strokeDasharray="4 2" opacity="0.5" />
-                        <text x="117" y="50" fill="#0df269" fontSize="7" textAnchor="middle" fontFamily="monospace" opacity="0.7">TP</text>
-                      </svg>
-
-                      {/* Price scale */}
-                      <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-between py-4 text-[9px] font-mono text-gray-600">
-                        <span>2,065</span>
-                        <span>2,055</span>
-                        <span>2,045</span>
-                        <span>2,035</span>
-                        <span>2,025</span>
-                      </div>
-                    </div>
-
-                    {/* Time scale */}
-                    <div className="flex justify-between mt-2 px-2 text-[9px] font-mono text-gray-600">
-                      <span>Jan 1</span>
-                      <span>Jan 8</span>
-                      <span>Jan 15</span>
-                      <span>Jan 22</span>
-                      <span>Jan 30</span>
-                    </div>
-                  </div>
-
-                  {/* Stats Panel */}
-                  <div className="w-full lg:w-80 bg-[#111111] border-t lg:border-t-0 lg:border-l border-white/5 p-6">
-                    {/* Summary Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
-                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("WIN RATE", "WIN RATE")}</div>
-                        <div className="text-2xl font-bold text-[#0df269]">67.8%</div>
-                        <div className="text-[10px] text-gray-600">19W / 9L</div>
-                      </div>
-                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
-                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("PROFIT FACTOR", "PROFIT FACTOR")}</div>
-                        <div className="text-2xl font-bold text-white">2.14</div>
-                        <div className="text-[10px] text-gray-600">{t("Excellent", "Маш сайн")}</div>
-                      </div>
-                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
-                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("MAX DRAWDOWN", "MAX DD")}</div>
-                        <div className="text-2xl font-bold text-red-400">-3.2%</div>
-                        <div className="text-[10px] text-gray-600">-$320</div>
-                      </div>
-                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
-                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("AVG RR", "ДУНДАЖ RR")}</div>
-                        <div className="text-2xl font-bold text-white">2.7</div>
-                        <div className="text-[10px] text-gray-600">{t("Risk:Reward", "Эрсдэл:Ашиг")}</div>
-                      </div>
-                    </div>
-
-                    {/* Recent Trades */}
-                    <div className="mb-6">
-                      <div className="text-[10px] text-gray-500 font-mono mb-3">{t("RECENT TRADES", "СҮҮЛИЙН TRADE")}</div>
-                      <div className="space-y-2">
-                        {[
-                          { result: "win", pips: "+45", rr: "2.8", time: "Jan 28" },
-                          { result: "win", pips: "+38", rr: "2.4", time: "Jan 25" },
-                          { result: "loss", pips: "-15", rr: "-1.0", time: "Jan 23" },
-                          { result: "win", pips: "+52", rr: "3.2", time: "Jan 20" },
-                        ].map((trade, i) => (
-                          <div key={i} className="flex items-center justify-between py-2 px-3 rounded bg-[#0a0a0a] border border-white/5">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${trade.result === "win" ? "bg-[#0df269]" : "bg-red-500"}`} />
-                              <span className="text-xs font-mono text-gray-400">{trade.time}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className={`text-xs font-mono ${trade.result === "win" ? "text-[#0df269]" : "text-red-400"}`}>{trade.pips}</span>
-                              <span className="text-[10px] font-mono text-gray-600">RR {trade.rr}</span>
+                          { tf: "5M", entries: 8, tp: 5, sl: 3, wr: 62.5 },
+                          { tf: "15M", entries: 7, tp: 5, sl: 2, wr: 71.4 },
+                          { tf: "30M", entries: 5, tp: 3, sl: 2, wr: 60.0 },
+                          { tf: "1H", entries: 5, tp: 4, sl: 1, wr: 80.0 },
+                          { tf: "4H", entries: 3, tp: 2, sl: 1, wr: 66.7 },
+                        ].map((tf, i) => (
+                          <div key={i} className={`p-3 rounded-lg border text-center ${tf.entries > 0 ? "border-[#0df269]/30 bg-[#0df269]/5" : "border-white/5 bg-white/[0.02]"}`}>
+                            <p className="text-sm font-semibold mb-1">{tf.tf}</p>
+                            <p className="text-2xl font-bold">{tf.entries}</p>
+                            <p className="text-[10px] text-gray-500">entries</p>
+                            <div className="mt-2 text-[10px]">
+                              <span className="text-[#0df269]">{tf.tp}W</span>
+                              <span className="mx-1 text-gray-600">/</span>
+                              <span className="text-red-400">{tf.sl}L</span>
+                              <span className="mx-1 text-gray-600">•</span>
+                              <span className={tf.wr >= 50 ? "text-[#0df269] font-medium" : "text-red-400 font-medium"}>{tf.wr.toFixed(0)}%</span>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
+                  </div>
 
-                    {/* CTA Button */}
-                    <Link
-                      href="/simulator"
-                      className="w-full bg-[#0df269] text-[#0a0a0a] font-bold py-4 rounded-lg text-sm hover:bg-[#0be360] transition-all shadow-neon flex justify-center items-center gap-2 group"
-                    >
-                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  {/* Right: Live Trades Stream */}
+                  <div className="w-full lg:w-96 bg-[#111111] border-t lg:border-t-0 lg:border-l border-white/5 p-5">
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <h4 className="font-medium">{t("Live Trades Stream", "Trade Stream")}</h4>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] border border-[#0df269]/30 text-[#0df269]">TP: 19</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] border border-red-500/30 text-red-400">SL: 9</span>
+                      </div>
+                    </div>
+
+                    {/* Winrate Bar */}
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-[#0a0a0a] border border-white/5 mb-4">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                      {t("TRY YOUR STRATEGY", "СТРАТЕГИА ТУРШИХ")}
-                    </Link>
-                    <p className="text-[10px] text-gray-600 text-center mt-3 font-mono">
-                      {t("Free • No signup required", "Үнэгүй • Бүртгэл шаардлагагүй")}
-                    </p>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="text-gray-400">Winrate</span>
+                          <span className="font-bold text-[#0df269]">67.8%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-[#1a1a1a] overflow-hidden">
+                          <div className="h-full bg-[#0df269] rounded-full transition-all" style={{ width: "67.8%" }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trade Cards */}
+                    <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                      {[
+                        { id: 1, dir: "BUY", entry: "2048.50", sl: "2040.00", tp: "2065.00", outcome: "TP", r: "+2.8", time: "Jan 28, 14:30", detector: "BOS" },
+                        { id: 2, dir: "BUY", entry: "2032.75", sl: "2025.00", tp: "2048.00", outcome: "TP", r: "+2.4", time: "Jan 25, 09:15", detector: "FVG" },
+                        { id: 3, dir: "SELL", entry: "2055.20", sl: "2062.00", tp: "2040.00", outcome: "SL", r: "-1.0", time: "Jan 23, 16:45", detector: "BOS" },
+                        { id: 4, dir: "BUY", entry: "2015.30", sl: "2005.00", tp: "2035.00", outcome: "TP", r: "+3.2", time: "Jan 20, 11:00", detector: "OB" },
+                        { id: 5, dir: "BUY", entry: "1998.50", sl: "1990.00", tp: "2015.00", outcome: "TP", r: "+2.1", time: "Jan 18, 08:30", detector: "FVG" },
+                      ].map((trade, i) => (
+                        <div key={i} className={`relative p-3 rounded-lg border transition-all ${trade.outcome === "TP" ? "border-[#0df269]/30 bg-[#0df269]/5" : "border-red-500/30 bg-red-500/5"}`}>
+                          {/* Trade number */}
+                          <div className="absolute -top-2 -left-2">
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${trade.outcome === "TP" ? "bg-[#0df269] text-[#0a0a0a]" : "bg-red-500 text-white"}`}>
+                              #{trade.id}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            {/* Left: Direction + Entry */}
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1.5 rounded ${trade.dir === "BUY" ? "bg-[#0df269]/20 text-[#0df269]" : "bg-red-500/20 text-red-400"}`}>
+                                {trade.dir === "BUY" ? (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium">{trade.dir} @ {trade.entry}</p>
+                                <p className="text-[10px] text-gray-500">{trade.time}</p>
+                              </div>
+                            </div>
+
+                            {/* Right: Outcome */}
+                            <div className="flex items-center gap-1">
+                              {trade.outcome === "TP" ? (
+                                <>
+                                  <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span className="text-xs font-bold text-[#0df269]">TP HIT!</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#0df269] text-[#0a0a0a] font-bold">{trade.r}R</span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  <span className="text-xs font-bold text-red-400">SL HIT</span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500 text-white font-bold">{trade.r}R</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* SL/TP + Detector */}
+                          <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500">
+                            <div className="flex items-center gap-3">
+                              <span>SL: <span className="text-red-400 font-mono">{trade.sl}</span></span>
+                              <span>TP: <span className="text-[#0df269] font-mono">{trade.tp}</span></span>
+                            </div>
+                            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">{trade.detector}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* CTA */}
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                      <Link
+                        href="/simulator"
+                        className="w-full bg-[#0df269] text-[#0a0a0a] font-bold py-3 rounded-lg text-sm hover:bg-[#0be360] transition-all shadow-neon flex justify-center items-center gap-2 group"
+                      >
+                        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        {t("TRY YOUR STRATEGY", "СТРАТЕГИА ТУРШИХ")}
+                      </Link>
+                      <p className="text-[10px] text-gray-600 text-center mt-2 font-mono">
+                        {t("Free • No signup required", "Үнэгүй • Бүртгэл шаардлагагүй")}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

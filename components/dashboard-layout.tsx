@@ -7,6 +7,7 @@ import { DashboardSidebar } from "./dashboard-sidebar"
 import { DashboardTopbar } from "./dashboard-topbar"
 import { AccessDeniedGuard } from "./access-denied-guard"
 import { useSession } from "next-auth/react"
+import { LanguageProvider } from "@/contexts/language-context"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -54,33 +55,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [])
 
   return (
-    <AccessDeniedGuard>
-      <div className="flex h-screen overflow-hidden bg-background dashboard-grid-bg">
-        {/* Desktop Sidebar */}
-        <DashboardSidebar isAdmin={isOwner} />
-        
-        {/* Mobile Sidebar Overlay */}
-        {/* Backdrop */}
-        <div
-          className={`fixed inset-0 z-40 bg-black/50 lg:hidden transition-opacity duration-300 ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-          onClick={closeMobileMenu}
-          aria-hidden="true"
-        />
-        {/* Mobile Sidebar with slide animation */}
-        <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 lg:hidden transition-transform duration-300 ease-in-out ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
-        >
-          <DashboardSidebar isAdmin={isOwner} isMobile onNavigate={closeMobileMenu} />
-        </div>
+    <LanguageProvider>
+      <AccessDeniedGuard>
+        <div className="flex h-screen overflow-hidden bg-background dashboard-grid-bg">
+          {/* Desktop Sidebar */}
+          <DashboardSidebar isAdmin={isOwner} />
 
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <DashboardTopbar
-            user={session?.user ?? null}
-            onMenuToggle={toggleMobileMenu}
+          {/* Mobile Sidebar Overlay */}
+          {/* Backdrop */}
+          <div
+            className={`fixed inset-0 z-40 bg-black/50 lg:hidden transition-opacity duration-300 ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            onClick={closeMobileMenu}
+            aria-hidden="true"
           />
-          <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">{children}</main>
+          {/* Mobile Sidebar with slide animation */}
+          <div
+            className={`fixed inset-y-0 left-0 z-50 w-64 lg:hidden transition-transform duration-300 ease-in-out ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+          >
+            <DashboardSidebar isAdmin={isOwner} isMobile onNavigate={closeMobileMenu} />
+          </div>
+
+          <div className="flex flex-1 flex-col overflow-hidden">
+            <DashboardTopbar
+              user={session?.user ?? null}
+              onMenuToggle={toggleMobileMenu}
+            />
+            <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">{children}</main>
+          </div>
         </div>
-      </div>
-    </AccessDeniedGuard>
+      </AccessDeniedGuard>
+    </LanguageProvider>
   )
 }
