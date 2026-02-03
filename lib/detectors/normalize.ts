@@ -100,6 +100,7 @@ const DETECTOR_ALIASES: Record<string, string> = {
   "order-block": "OB",
   "order_block": "OB",
   "orderblock": "OB",
+  "ORDER_BLOCK": "OB",
   
   "change-of-character": "CHOCH",
   "change_of_character": "CHOCH",
