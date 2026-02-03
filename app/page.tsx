@@ -382,135 +382,226 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Strategy Simulator Section */}
+        {/* Strategy Simulator Section - Redesigned */}
         <section className="py-24 px-6 relative overflow-hidden" id="simulator">
-          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#0df269]/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[#0df269]/5 rounded-full blur-[150px] pointer-events-none" />
+          <div className="absolute top-20 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+
           <div className="max-w-7xl mx-auto">
-            <div className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">Strategy Simulator</h2>
-                <p className="text-[#9cbaa8] text-sm max-w-2xl">
-                  {t(
-                    "Test your strategy on historical data. See win rate and results before going live.",
-                    "Стратегиа өнгөрсөн дата дээр туршиж, win rate болон үр дүнг урьдчилан харна."
-                  )}
-                </p>
+            <div className="mb-12 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0df269]/10 border border-[#0df269]/20 mb-6">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0df269] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0df269]" />
+                </span>
+                <span className="text-xs font-mono text-[#0df269]">{t("BACKTESTING ENGINE", "BACKTEST ENGINE")}</span>
               </div>
+              <h2 className="text-4xl md:text-5xl font-black mb-4">Strategy Simulator</h2>
+              <p className="text-[#9cbaa8] text-base max-w-2xl mx-auto">
+                {t(
+                  "Test your strategy on 30 days of historical data. See real win rate, drawdown, and trade-by-trade results.",
+                  "Стратегиа 30 хоногийн түүхэн дата дээр туршина. Win rate, drawdown, trade бүрийн үр дүнг харна."
+                )}
+              </p>
             </div>
 
-            <div className="glass-panel rounded-xl border border-white/10 overflow-hidden flex flex-col lg:flex-row h-auto lg:h-[550px] shadow-2xl">
-              {/* Settings Panel */}
-              <div className="w-full lg:w-80 bg-[#111111]/95 p-6 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col gap-6">
-                <div>
-                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">{t("SYMBOL", "СИМБОЛ")}</label>
-                  <div className="relative">
-                    <select className="w-full bg-[#0a0a0a] border border-white/10 rounded px-3 py-2.5 text-xs text-white focus:border-[#0df269] focus:ring-1 focus:ring-[#0df269] outline-none appearance-none font-mono">
-                      <option>XAUUSD</option>
-                      <option>EURUSD</option>
-                      <option>GBPUSD</option>
-                      <option>USDJPY</option>
-                    </select>
-                  </div>
-                </div>
+            {/* Main Simulator Preview */}
+            <div className="relative">
+              {/* Glow effects */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#0df269]/20 via-transparent to-blue-500/20 rounded-2xl blur-xl opacity-50" />
 
-                <div>
-                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">{t("STRATEGY", "СТРАТЕГИ")}</label>
-                  <div className="relative">
-                    <select className="w-full bg-[#0a0a0a] border border-white/10 rounded px-3 py-2.5 text-xs text-white focus:border-[#0df269] focus:ring-1 focus:ring-[#0df269] outline-none appearance-none font-mono">
-                      <option>Trend Continuation (BOS + FVG)</option>
-                      <option>Reversal Hunter (SWEEP + CHoCH)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-6 pt-4 border-t border-white/5">
-                  {[
-                    { label: "MIN RR", value: "2.0" },
-                    { label: "STOP LOSS", value: "1.5%" },
-                    { label: "TAKE PROFIT", value: "3.0%" },
-                  ].map((slider, idx) => (
-                    <div key={idx}>
-                      <div className="flex justify-between text-[10px] font-mono mb-2">
-                        <span className="text-gray-400">{slider.label}</span>
-                        <span className="text-[#0df269] font-bold">{slider.value}</span>
-                      </div>
-                      <input
-                        type="range"
-                        className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#0df269]"
-                        defaultValue="50"
-                      />
+              <div className="relative glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                {/* Top Bar */}
+                <div className="bg-[#0c0c0c] border-b border-white/5 px-6 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-green-500/80" />
                     </div>
-                  ))}
+                    <div className="text-xs font-mono text-gray-500">XAUUSD • M15 • Trend Continuation</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono text-gray-600">30 {t("days", "хоног")}</span>
+                    <span className="px-2 py-1 rounded bg-[#0df269]/10 text-[#0df269] text-[10px] font-mono border border-[#0df269]/20">
+                      {t("COMPLETED", "ДУУССАН")}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="mt-auto pt-6">
-                  <Link
-                    href="/simulator"
-                    className="w-full bg-[#0df269] text-[#0a0a0a] font-bold py-3.5 rounded text-sm hover:bg-[#0be360] transition-colors shadow-neon flex justify-center items-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {t("RUN SIMULATION", "СИМУЛЯЦ АЖИЛЛУУЛАХ")}
-                  </Link>
-                </div>
-              </div>
+                <div className="flex flex-col lg:flex-row">
+                  {/* Chart Area */}
+                  <div className="flex-1 p-6 bg-gradient-to-br from-[#0a0a0a] to-[#050505]">
+                    {/* Price Info */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="text-2xl font-bold text-white font-mono">2,048.50</div>
+                        <div className="text-xs text-[#0df269] font-mono">+12.30 (+0.60%)</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-gray-500 font-mono">SIMULATION RESULT</div>
+                        <div className="text-xl font-bold text-[#0df269]">+$2,847</div>
+                      </div>
+                    </div>
 
-              {/* Chart Panel */}
-              <div className="flex-1 p-8 relative flex flex-col bg-gradient-to-b from-[#0c0c0c] to-[#050505]">
-                <div className="flex flex-wrap justify-between items-start mb-8 gap-4">
-                  <div>
-                    <div className="text-xs text-gray-500 font-mono mb-1 tracking-wider">{t("PROJECTED ROI (30D)", "ТӨСӨӨЛСӨН ROI (30 хоног)")}</div>
-                    <div className="text-4xl font-black text-white flex items-baseline gap-3 tracking-tight">
-                      +24.8%
-                      <span className="text-base font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 font-mono">+$12,400</span>
+                    {/* Candlestick Chart */}
+                    <div className="relative h-[280px] border border-white/5 rounded-lg bg-[#0a0a0a]/50 overflow-hidden">
+                      {/* Grid lines */}
+                      <div className="absolute inset-0 opacity-20">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className="absolute w-full border-t border-white/10" style={{ top: `${(i + 1) * 20}%` }} />
+                        ))}
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className="absolute h-full border-l border-white/10" style={{ left: `${(i + 1) * 12.5}%` }} />
+                        ))}
+                      </div>
+
+                      {/* Candlesticks */}
+                      <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+                        <defs>
+                          <linearGradient id="greenGlow" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#0df269" stopOpacity="0.3" />
+                            <stop offset="100%" stopColor="#0df269" stopOpacity="0" />
+                          </linearGradient>
+                          <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                          </filter>
+                        </defs>
+
+                        {/* Candles - simplified visual representation */}
+                        {[
+                          { x: 20, h: 30, y: 120, g: true }, { x: 35, h: 25, y: 110, g: true }, { x: 50, h: 35, y: 100, g: false },
+                          { x: 65, h: 20, y: 115, g: true }, { x: 80, h: 40, y: 90, g: true }, { x: 95, h: 15, y: 100, g: false },
+                          { x: 110, h: 30, y: 85, g: true }, { x: 125, h: 25, y: 75, g: true }, { x: 140, h: 35, y: 80, g: false },
+                          { x: 155, h: 45, y: 55, g: true }, { x: 170, h: 20, y: 60, g: false }, { x: 185, h: 30, y: 50, g: true },
+                          { x: 200, h: 25, y: 45, g: true }, { x: 215, h: 40, y: 55, g: false }, { x: 230, h: 35, y: 40, g: true },
+                          { x: 245, h: 20, y: 45, g: false }, { x: 260, h: 45, y: 30, g: true }, { x: 275, h: 30, y: 35, g: true },
+                          { x: 290, h: 25, y: 40, g: false }, { x: 305, h: 50, y: 20, g: true }, { x: 320, h: 20, y: 25, g: true },
+                          { x: 335, h: 35, y: 30, g: false }, { x: 350, h: 40, y: 15, g: true }, { x: 365, h: 30, y: 20, g: true },
+                        ].map((c, i) => (
+                          <g key={i}>
+                            {/* Wick */}
+                            <line x1={c.x + 4} y1={c.y - 10} x2={c.x + 4} y2={c.y + c.h + 10} stroke={c.g ? "#0df269" : "#ef4444"} strokeWidth="1" opacity="0.5" />
+                            {/* Body */}
+                            <rect x={c.x} y={c.y} width="8" height={c.h} fill={c.g ? "#0df269" : "#ef4444"} rx="1" className={c.g ? "opacity-90" : "opacity-70"} />
+                          </g>
+                        ))}
+
+                        {/* Trade markers */}
+                        {/* Entry - BUY */}
+                        <g filter="url(#glow)">
+                          <circle cx="80" cy="130" r="6" fill="#0df269" />
+                          <text x="80" y="150" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">BUY</text>
+                        </g>
+                        {/* TP Hit */}
+                        <g filter="url(#glow)">
+                          <circle cx="155" cy="55" r="6" fill="#0df269" />
+                          <text x="155" y="45" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">TP ✓</text>
+                        </g>
+                        {/* Entry - BUY */}
+                        <g filter="url(#glow)">
+                          <circle cx="230" cy="75" r="6" fill="#0df269" />
+                          <text x="230" y="95" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">BUY</text>
+                        </g>
+                        {/* TP Hit */}
+                        <g filter="url(#glow)">
+                          <circle cx="305" cy="20" r="6" fill="#0df269" />
+                          <text x="305" y="10" fill="#0df269" fontSize="8" textAnchor="middle" fontFamily="monospace">TP ✓</text>
+                        </g>
+
+                        {/* SL line example */}
+                        <line x1="80" y1="145" x2="155" y2="145" stroke="#ef4444" strokeWidth="1" strokeDasharray="4 2" opacity="0.5" />
+                        <text x="117" y="158" fill="#ef4444" fontSize="7" textAnchor="middle" fontFamily="monospace" opacity="0.7">SL</text>
+
+                        {/* TP line example */}
+                        <line x1="80" y1="55" x2="155" y2="55" stroke="#0df269" strokeWidth="1" strokeDasharray="4 2" opacity="0.5" />
+                        <text x="117" y="50" fill="#0df269" fontSize="7" textAnchor="middle" fontFamily="monospace" opacity="0.7">TP</text>
+                      </svg>
+
+                      {/* Price scale */}
+                      <div className="absolute right-2 top-0 bottom-0 flex flex-col justify-between py-4 text-[9px] font-mono text-gray-600">
+                        <span>2,065</span>
+                        <span>2,055</span>
+                        <span>2,045</span>
+                        <span>2,035</span>
+                        <span>2,025</span>
+                      </div>
+                    </div>
+
+                    {/* Time scale */}
+                    <div className="flex justify-between mt-2 px-2 text-[9px] font-mono text-gray-600">
+                      <span>Jan 1</span>
+                      <span>Jan 8</span>
+                      <span>Jan 15</span>
+                      <span>Jan 22</span>
+                      <span>Jan 30</span>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    {[
-                      { label: "SHARPE RATIO", value: "1.82", color: "text-gray-300" },
-                      { label: t("WIN RATE", "WIN RATE"), value: "64%", color: "text-[#0df269]" },
-                      { label: t("MAX DD", "MAX DD"), value: "-4.2%", color: "text-red-400" },
-                    ].map((stat, idx) => (
-                      <div key={idx} className="flex flex-col items-end">
-                        <span className="text-[10px] text-gray-600 font-mono">{stat.label}</span>
-                        <span className={`text-sm font-bold ${stat.color}`}>{stat.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
-                {/* Chart */}
-                <div className="flex-1 w-full h-full relative border border-white/5 rounded-lg bg-white/[0.01]">
-                  <svg className="w-full h-full absolute inset-0 pt-4 px-4 pb-8" viewBox="0 0 100 50" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0df269" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#0df269" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M0 45 C 10 42, 20 44, 30 38 C 40 32, 50 35, 60 25 C 70 15, 80 18, 90 8 L 100 2 L 100 50 L 0 50 Z"
-                      fill="url(#chartGradient)"
-                    />
-                    <path
-                      d="M0 45 C 10 42, 20 44, 30 38 C 40 32, 50 35, 60 25 C 70 15, 80 18, 90 8 L 100 2"
-                      fill="none"
-                      stroke="#0df269"
-                      strokeWidth="0.75"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                    <circle cx="30" cy="38" r="1.5" fill="#0a0a0a" stroke="#0df269" strokeWidth="0.5" />
-                    <circle cx="60" cy="25" r="1.5" fill="#0a0a0a" stroke="#0df269" strokeWidth="0.5" />
-                    <circle cx="90" cy="8" r="1.5" fill="#0a0a0a" stroke="#0df269" strokeWidth="0.5" />
-                  </svg>
-                  <div className="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] text-gray-600 font-mono">
-                    <span>{t("Day 1", "Өдөр 1")}</span>
-                    <span>{t("Day 7", "Өдөр 7")}</span>
-                    <span>{t("Day 14", "Өдөр 14")}</span>
-                    <span>{t("Day 21", "Өдөр 21")}</span>
-                    <span>{t("Day 30", "Өдөр 30")}</span>
+                  {/* Stats Panel */}
+                  <div className="w-full lg:w-80 bg-[#111111] border-t lg:border-t-0 lg:border-l border-white/5 p-6">
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
+                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("WIN RATE", "WIN RATE")}</div>
+                        <div className="text-2xl font-bold text-[#0df269]">67.8%</div>
+                        <div className="text-[10px] text-gray-600">19W / 9L</div>
+                      </div>
+                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
+                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("PROFIT FACTOR", "PROFIT FACTOR")}</div>
+                        <div className="text-2xl font-bold text-white">2.14</div>
+                        <div className="text-[10px] text-gray-600">{t("Excellent", "Маш сайн")}</div>
+                      </div>
+                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
+                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("MAX DRAWDOWN", "MAX DD")}</div>
+                        <div className="text-2xl font-bold text-red-400">-3.2%</div>
+                        <div className="text-[10px] text-gray-600">-$320</div>
+                      </div>
+                      <div className="bg-[#0a0a0a] rounded-lg p-4 border border-white/5">
+                        <div className="text-[10px] text-gray-500 font-mono mb-1">{t("AVG RR", "ДУНДАЖ RR")}</div>
+                        <div className="text-2xl font-bold text-white">2.7</div>
+                        <div className="text-[10px] text-gray-600">{t("Risk:Reward", "Эрсдэл:Ашиг")}</div>
+                      </div>
+                    </div>
+
+                    {/* Recent Trades */}
+                    <div className="mb-6">
+                      <div className="text-[10px] text-gray-500 font-mono mb-3">{t("RECENT TRADES", "СҮҮЛИЙН TRADE")}</div>
+                      <div className="space-y-2">
+                        {[
+                          { result: "win", pips: "+45", rr: "2.8", time: "Jan 28" },
+                          { result: "win", pips: "+38", rr: "2.4", time: "Jan 25" },
+                          { result: "loss", pips: "-15", rr: "-1.0", time: "Jan 23" },
+                          { result: "win", pips: "+52", rr: "3.2", time: "Jan 20" },
+                        ].map((trade, i) => (
+                          <div key={i} className="flex items-center justify-between py-2 px-3 rounded bg-[#0a0a0a] border border-white/5">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${trade.result === "win" ? "bg-[#0df269]" : "bg-red-500"}`} />
+                              <span className="text-xs font-mono text-gray-400">{trade.time}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-xs font-mono ${trade.result === "win" ? "text-[#0df269]" : "text-red-400"}`}>{trade.pips}</span>
+                              <span className="text-[10px] font-mono text-gray-600">RR {trade.rr}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <Link
+                      href="/simulator"
+                      className="w-full bg-[#0df269] text-[#0a0a0a] font-bold py-4 rounded-lg text-sm hover:bg-[#0be360] transition-all shadow-neon flex justify-center items-center gap-2 group"
+                    >
+                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      {t("TRY YOUR STRATEGY", "СТРАТЕГИА ТУРШИХ")}
+                    </Link>
+                    <p className="text-[10px] text-gray-600 text-center mt-3 font-mono">
+                      {t("Free • No signup required", "Үнэгүй • Бүртгэл шаардлагагүй")}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -625,14 +716,6 @@ export default function LandingPage() {
               <div className="text-[10px] text-gray-600 font-mono">
                 © 2024 JKM Copilot Inc. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
               </div>
-            </div>
-            <div className="mt-6 pt-6 border-t border-white/5 text-center">
-              <p className="text-[10px] text-gray-600 max-w-2xl mx-auto">
-                {t(
-                  "Forex/Crypto market data is sourced from third-party providers for internal processing and 24/7 strategy-based scanning. No official partnership or endorsement implied.",
-                  "Forex/Crypto market data-г гуравдагч эх сурвалжаас татан авч, дотоод боловсруулалт хийж 24/7 strategy-based scanning ажиллуулдаг. Албан ёсны түншлэл/баталгаа гэсэн утга агуулахгүй."
-                )}
-              </p>
             </div>
           </div>
         </footer>
