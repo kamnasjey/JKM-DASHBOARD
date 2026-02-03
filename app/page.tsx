@@ -983,13 +983,13 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="flex gap-8 text-xs text-gray-500 font-mono">
-                <a className="hover:text-[#0df269] transition-colors" href="#">{t("Documentation", "Гарын авлага")}</a>
-                <a className="hover:text-[#0df269] transition-colors" href="#">API Status</a>
-                <a className="hover:text-[#0df269] transition-colors" href="#">{t("Terms", "Нөхцөл")}</a>
-                <a className="hover:text-[#0df269] transition-colors" href="#">{t("Privacy", "Нууцлал")}</a>
+                <Link className="hover:text-[#0df269] transition-colors" href="/docs">{t("Documentation", "Гарын авлага")}</Link>
+                <Link className="hover:text-[#0df269] transition-colors" href="/status">API Status</Link>
+                <Link className="hover:text-[#0df269] transition-colors" href="/terms">{t("Terms", "Нөхцөл")}</Link>
+                <Link className="hover:text-[#0df269] transition-colors" href="/privacy">{t("Privacy", "Нууцлал")}</Link>
               </div>
               <div className="text-[10px] text-gray-600 font-mono">
-                © 2024 JKM Copilot Inc. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
+                © 2025–2026 JKM Copilot. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
               </div>
             </div>
           </div>
