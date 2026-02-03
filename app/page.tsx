@@ -90,6 +90,7 @@ export default function LandingPage() {
             <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("Scanner", "Сканнер")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#simulator">{t("Simulator", "Симулятор")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#faq">FAQ</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#pricing">{t("Pricing", "Үнэ")}</a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -105,8 +106,8 @@ export default function LandingPage() {
             <Link href="/auth/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
               {t("Login", "Нэвтрэх")}
             </Link>
-            <Link href="/pricing" className="hidden sm:block text-sm font-medium text-[#0df269] hover:text-[#0be360] transition-colors">
-              {t("Pricing", "Үнэ")}
+            <Link href="/auth/register" className="hidden sm:block text-sm font-medium text-[#0df269] hover:text-[#0be360] transition-colors">
+              {t("Register", "Бүртгүүлэх")}
             </Link>
             <Link
               href="/simulator"
@@ -1248,6 +1249,134 @@ export default function LandingPage() {
                   </details>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className="py-20 px-6" id="pricing">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-black mb-3">{t("Pricing", "Үнийн төлөвлөгөө")}</h2>
+              <p className="text-gray-400 max-w-xl mx-auto">{t("Choose the plan that fits your trading level", "Таны арилжааны түвшинд тохирсон төлөвлөгөө сонгоорой")}</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* Free Plan */}
+              <div className="bg-[#111111] border border-white/10 rounded-xl p-6 flex flex-col">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-1">{t("Free", "Үнэгүй")}</h3>
+                  <p className="text-gray-500 text-sm">{t("Explore & learn", "Судлах, туршилт")}</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-3xl font-black">{t("Free", "Үнэгүй")}</span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("View Signals", "Signals харах")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">Documentation</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span className="text-gray-600">{t("Scanner", "Сканнер")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span className="text-gray-600">{t("Simulator", "Симулятор")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span className="text-gray-600">{t("Strategy creation", "Стратеги үүсгэх")}</span>
+                  </li>
+                </ul>
+                <Link href="/auth/register" className="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg text-center transition-colors">
+                  {t("Get Started", "Эхлэх")}
+                </Link>
+              </div>
+
+              {/* Pro Plan */}
+              <div className="bg-[#111111] border-2 border-[#0df269]/50 rounded-xl p-6 flex flex-col relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#0df269] text-[#0a0a0a] text-xs font-bold rounded-full">
+                  {t("Popular", "Түгээмэл")}
+                </div>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-1">Pro</h3>
+                  <p className="text-gray-500 text-sm">{t("For active traders", "Идэвхтэй трейдерүүдэд")}</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-3xl font-black">₮120,000</span>
+                  <span className="text-gray-500 text-sm">/сар</span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("5 strategy combinations", "5 strategy хослол")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("Simulator 5x/day", "Simulator 5 удаа/өдөр")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("Scanner access", "Scanner ажиллуулах")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("Symbol selection", "Symbol сонголт")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">Telegram alert</span>
+                  </li>
+                </ul>
+                <Link href="/pricing?plan=pro" className="w-full py-3 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded-lg text-center transition-colors shadow-neon">
+                  {t("Choose Pro", "Pro сонгох")}
+                </Link>
+              </div>
+
+              {/* Pro+ Plan */}
+              <div className="bg-[#111111] border border-white/10 rounded-xl p-6 flex flex-col relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
+                  {t("Full Access", "Бүрэн")}
+                </div>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-1">Pro+</h3>
+                  <p className="text-gray-500 text-sm">{t("Full access everything", "Бүрэн эрхтэй хандалт")}</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-3xl font-black">₮200,000</span>
+                  <span className="text-gray-500 text-sm">/сар</span>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("15 strategy combinations", "15 strategy хослол (бүгд)")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("Simulator 15x/day", "Simulator 15 удаа/өдөр")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("All Pro features", "Pro-ийн бүх feature")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("Early access to new features", "Шинэ feature түрүүлж авах")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">Priority support</span>
+                  </li>
+                </ul>
+                <Link href="/pricing?plan=pro_plus" className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-center transition-colors">
+                  {t("Choose Pro+", "Pro+ сонгох")}
+                </Link>
+              </div>
             </div>
           </div>
         </section>

@@ -30,9 +30,8 @@ export const PLANS: Plan[] = [
     price: 0,
     priceDisplay: "Үнэгүй",
     period: "",
-    description: "Dashboard харах, судлах",
+    description: "Судлах, туршилт",
     features: [
-      { text: "Dashboard харах", included: true },
       { text: "Signals харах", included: true },
       { text: "Documentation", included: true },
       { text: "Scanner ажиллуулах", included: false },
