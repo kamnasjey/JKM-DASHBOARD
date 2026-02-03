@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
-import { upsertUserSignal, listUserSignals } from "@/lib/user-data/signals-store"
+import { upsertUserSignal, listUserSignals, deleteUserSignal } from "@/lib/user-data/signals-store"
 
 export const runtime = "nodejs"
 
@@ -129,4 +129,62 @@ export async function POST(request: NextRequest) {
   await upsertUserSignal(userId, signalKey, payload as any)
 
   return NextResponse.json({ ok: true })
+}
+
+/**
+ * DELETE /api/internal/user-data/signals
+ *
+ * Delete signals for a user from Firestore.
+ *
+ * Query params:
+ *   - user_id (required): User ID
+ *   - exclude_prefixes (optional): Comma-separated strategy prefixes to KEEP (delete all others)
+ */
+export async function DELETE(request: NextRequest) {
+  const auth = requireInternalApiKey(request)
+  if (!auth.ok) return NextResponse.json({ ok: false, message: auth.message }, { status: auth.status })
+
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get("user_id")?.trim()
+  const excludePrefixesStr = searchParams.get("exclude_prefixes")?.trim()
+
+  if (!userId) {
+    return NextResponse.json({ ok: false, message: "user_id query param required" }, { status: 400 })
+  }
+
+  // Prefixes to keep - delete everything else
+  const keepPrefixes = excludePrefixesStr
+    ? excludePrefixesStr.split(",").map(p => p.trim()).filter(Boolean)
+    : []
+
+  try {
+    const signals = await listUserSignals(userId, { limit: 500 })
+    let deleted = 0
+    const deletedIds: string[] = []
+
+    for (const signal of signals) {
+      const strategyId = String(signal.strategy_id || "")
+      const shouldKeep = keepPrefixes.length === 0
+        ? false
+        : keepPrefixes.some(prefix => strategyId.startsWith(prefix))
+
+      if (!shouldKeep && signal.signal_key) {
+        await deleteUserSignal(userId, signal.signal_key)
+        deleted++
+        deletedIds.push(strategyId.slice(0, 20) || signal.signal_key.slice(0, 12))
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      user_id: userId,
+      deleted,
+      deleted_strategies: deletedIds.slice(0, 20),
+    })
+  } catch (err: unknown) {
+    return NextResponse.json(
+      { ok: false, message: `Failed to delete signals: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 },
+    )
+  }
 }
