@@ -590,11 +590,11 @@ export default function LandingPage() {
                     {/* Trade Cards */}
                     <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
                       {[
-                        { id: 1, dir: "BUY", entry: "161.450", sl: "161.150", tp: "162.100", outcome: "TP", r: "+2.2", time: "Jan 28, 14:30", detector: "BOS" },
-                        { id: 2, dir: "BUY", entry: "160.820", sl: "160.520", tp: "161.540", outcome: "TP", r: "+2.4", time: "Jan 25, 09:15", detector: "FVG" },
-                        { id: 3, dir: "SELL", entry: "162.180", sl: "162.480", tp: "161.300", outcome: "SL", r: "-1.0", time: "Jan 23, 16:45", detector: "BOS" },
-                        { id: 4, dir: "BUY", entry: "159.750", sl: "159.350", tp: "160.850", outcome: "TP", r: "+2.8", time: "Jan 20, 11:00", detector: "OB" },
-                        { id: 5, dir: "BUY", entry: "159.280", sl: "158.980", tp: "160.080", outcome: "TP", r: "+2.7", time: "Jan 18, 08:30", detector: "FVG" },
+                        { id: 1, dir: "BUY", entry: "161.450", sl: "160.650", tp: "163.850", outcome: "TP", r: "+3.0", time: "Jan 28, 14:30", detector: "BOS" },
+                        { id: 2, dir: "BUY", entry: "160.820", sl: "159.820", tp: "163.320", outcome: "TP", r: "+2.5", time: "Jan 25, 09:15", detector: "FVG" },
+                        { id: 3, dir: "SELL", entry: "162.180", sl: "162.880", tp: "160.070", outcome: "SL", r: "-1.0", time: "Jan 23, 16:45", detector: "BOS" },
+                        { id: 4, dir: "BUY", entry: "159.750", sl: "158.550", tp: "163.350", outcome: "TP", r: "+3.0", time: "Jan 20, 11:00", detector: "OB" },
+                        { id: 5, dir: "BUY", entry: "159.280", sl: "158.380", tp: "161.980", outcome: "TP", r: "+3.0", time: "Jan 18, 08:30", detector: "FVG" },
                       ].map((trade, i) => (
                         <div key={i} className={`relative p-3 rounded-lg border transition-all ${trade.outcome === "TP" ? "border-[#0df269]/30 bg-[#0df269]/5" : "border-red-500/30 bg-red-500/5"}`}>
                           {/* Trade number */}
@@ -675,6 +675,210 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Scanner Engine Section */}
+        <section className="py-20 bg-[#0a0a0a] relative overflow-hidden">
+          {/* Background Effects */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0df269]/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+          </div>
+
+          <div className="max-w-6xl mx-auto px-6 relative z-10">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-full text-xs text-blue-400 font-medium mb-4">
+                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                24/7 {t("ALWAYS MONITORING", "ТАСРАЛТГҮЙ АЖИЛЛАЖ БАЙНА")}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black mb-3">
+                {t("Scanner Engine", "Сканнер Систем")}
+              </h2>
+              <p className="text-gray-400 max-w-2xl mx-auto">
+                {t(
+                  "Your strategy runs 24/7 on our servers. When a setup matches, you get instant alerts.",
+                  "Таны стратеги манай серверт 24/7 ажиллана. Setup олдоход шууд мэдэгдэл авна."
+                )}
+              </p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
+              {/* Left: Scanner Dashboard Mock */}
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-[#0df269]/20 to-blue-500/20 rounded-2xl blur-xl opacity-50" />
+                <div className="relative bg-[#111111] rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                  {/* Scanner Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#0c0c0c]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-white">{t("Live Scanner", "Идэвхтэй Сканнер")}</div>
+                        <div className="text-[10px] text-gray-500 font-mono">scanner_v2.0</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 rounded bg-[#0df269]/20 border border-[#0df269]/40 text-[10px] text-[#0df269] font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-[#0df269] rounded-full animate-pulse" />
+                        RUNNING
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Symbols Grid */}
+                  <div className="p-4">
+                    <div className="text-xs text-gray-500 mb-3 flex items-center justify-between">
+                      <span>{t("Monitoring", "Хяналтанд")}</span>
+                      <span className="text-[#0df269]">17 {t("symbols", "хос")}</span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { symbol: "XAUUSD", status: "scanning" },
+                        { symbol: "EURUSD", status: "idle" },
+                        { symbol: "GBPUSD", status: "idle" },
+                        { symbol: "USDJPY", status: "scanning" },
+                        { symbol: "EURJPY", status: "alert" },
+                        { symbol: "GBPJPY", status: "idle" },
+                        { symbol: "AUDUSD", status: "scanning" },
+                        { symbol: "NZDUSD", status: "idle" },
+                        { symbol: "USDCAD", status: "idle" },
+                        { symbol: "USDCHF", status: "scanning" },
+                        { symbol: "EURGBP", status: "idle" },
+                        { symbol: "BTCUSD", status: "idle" },
+                      ].map((item, idx) => (
+                        <div
+                          key={idx}
+                          className={`px-2 py-1.5 rounded text-[10px] font-mono text-center transition-all ${
+                            item.status === "alert"
+                              ? "bg-[#0df269]/20 border border-[#0df269]/50 text-[#0df269] animate-pulse"
+                              : item.status === "scanning"
+                              ? "bg-blue-500/10 border border-blue-500/30 text-blue-400"
+                              : "bg-white/5 border border-white/10 text-gray-500"
+                          }`}
+                        >
+                          {item.symbol}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Live Activity Feed */}
+                  <div className="border-t border-white/10 p-4">
+                    <div className="text-xs text-gray-500 mb-3">{t("Recent Activity", "Сүүлийн үйлдлүүд")}</div>
+                    <div className="space-y-2 text-[11px] font-mono">
+                      {[
+                        { time: "14:32:05", symbol: "EURJPY", action: "SETUP FOUND", type: "alert" },
+                        { time: "14:31:58", symbol: "XAUUSD", action: "Scanning M15...", type: "scan" },
+                        { time: "14:31:52", symbol: "USDJPY", action: "Scanning H1...", type: "scan" },
+                        { time: "14:31:45", symbol: "AUDUSD", action: "Scanning M5...", type: "scan" },
+                      ].map((log, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-3 p-2 rounded ${
+                            log.type === "alert" ? "bg-[#0df269]/10 border border-[#0df269]/30" : "bg-white/5"
+                          }`}
+                        >
+                          <span className="text-gray-600">{log.time}</span>
+                          <span className={log.type === "alert" ? "text-[#0df269]" : "text-gray-400"}>{log.symbol}</span>
+                          <span className={log.type === "alert" ? "text-[#0df269] font-bold" : "text-gray-500"}>
+                            {log.action}
+                          </span>
+                          {log.type === "alert" && (
+                            <svg className="w-3 h-3 text-[#0df269] ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                            </svg>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Features */}
+              <div className="space-y-6">
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-[#111111] rounded-xl border border-white/10 p-4">
+                    <div className="text-3xl font-black text-[#0df269]">24/7</div>
+                    <div className="text-xs text-gray-400 mt-1">{t("Always Running", "Тасралтгүй")}</div>
+                  </div>
+                  <div className="bg-[#111111] rounded-xl border border-white/10 p-4">
+                    <div className="text-3xl font-black text-blue-400">5m</div>
+                    <div className="text-xs text-gray-400 mt-1">{t("Scan Interval", "Сканнер давтамж")}</div>
+                  </div>
+                  <div className="bg-[#111111] rounded-xl border border-white/10 p-4">
+                    <div className="text-3xl font-black text-white">17+</div>
+                    <div className="text-xs text-gray-400 mt-1">{t("Symbols", "Хос")}</div>
+                  </div>
+                  <div className="bg-[#111111] rounded-xl border border-white/10 p-4">
+                    <div className="text-3xl font-black text-yellow-400">31</div>
+                    <div className="text-xs text-gray-400 mt-1">{t("Detectors", "Детектор")}</div>
+                  </div>
+                </div>
+
+                {/* Feature List */}
+                <div className="space-y-4">
+                  {[
+                    {
+                      icon: (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      ),
+                      title: t("Instant Alerts", "Шууд мэдэгдэл"),
+                      desc: t("Get notified via Telegram when a setup matches your strategy", "Setup олдоход Telegram-аар шууд мэдэгдэл авна"),
+                      color: "text-[#0df269]",
+                    },
+                    {
+                      icon: (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      ),
+                      title: t("Multi-Timeframe", "Олон Timeframe"),
+                      desc: t("Scans M5, M15, M30, H1, H4 simultaneously for each symbol", "Хос бүрийг M5, M15, M30, H1, H4 дээр зэрэг сканнердана"),
+                      color: "text-blue-400",
+                    },
+                    {
+                      icon: (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      ),
+                      title: t("Your Strategy, Your Rules", "Таны стратеги, таны дүрэм"),
+                      desc: t("Configure your own detectors, risk:reward ratio, and filters", "Өөрийн detector, RR, filter тохируулна"),
+                      color: "text-yellow-400",
+                    },
+                  ].map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-4 p-4 bg-[#111111] rounded-xl border border-white/10 hover:border-white/20 transition-colors">
+                      <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${feature.color}`}>
+                        {feature.icon}
+                      </div>
+                      <div>
+                        <div className="font-bold text-white">{feature.title}</div>
+                        <div className="text-sm text-gray-400 mt-1">{feature.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <Link
+                  href="/auth/register"
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg text-sm transition-all flex justify-center items-center gap-2 group"
+                >
+                  <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {t("START YOUR SCANNER", "СКАННЕР ЭХЛҮҮЛЭХ")}
+                </Link>
               </div>
             </div>
           </div>
