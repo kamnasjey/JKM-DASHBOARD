@@ -114,3 +114,59 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true, message: hasAccess ? "Access granted" : "Access revoked" })
 }
+
+// DELETE - Delete user account
+export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
+  }
+
+  const email = (session.user as any).email
+  if (!isOwnerEmail(email)) {
+    return NextResponse.json({ ok: false, message: "Admin only" }, { status: 403 })
+  }
+
+  const { searchParams } = new URL(request.url)
+  const userId = searchParams.get("userId")
+
+  if (!userId) {
+    return NextResponse.json({ ok: false, message: "userId required" }, { status: 400 })
+  }
+
+  // Delete from Prisma
+  const prisma = getPrisma()
+  if (prisma) {
+    try {
+      // Delete related data first
+      await prisma.account.deleteMany({ where: { userId } })
+      await prisma.session.deleteMany({ where: { userId } })
+      await prisma.user.delete({ where: { id: userId } })
+    } catch (err) {
+      console.error("[admin/users] Prisma delete error:", err)
+    }
+  }
+
+  // Delete from Firestore
+  try {
+    const db = getFirebaseAdminDb()
+
+    // Delete user's subcollections (signals, strategies, etc.)
+    const subcollections = ["signals", "strategies", "drawings"]
+    for (const subcol of subcollections) {
+      const subcolRef = db.collection("users").doc(userId).collection(subcol)
+      const subcolDocs = await subcolRef.listDocuments()
+      for (const doc of subcolDocs) {
+        await doc.delete()
+      }
+    }
+
+    // Delete user document
+    await db.collection("users").doc(userId).delete()
+  } catch (err) {
+    console.error("[admin/users] Firestore delete error:", err)
+    return NextResponse.json({ ok: false, message: "Firestore delete failed" }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true, message: "User deleted" })
+}

@@ -230,6 +230,29 @@ export default function AdminPage() {
     }
   }
 
+  const deleteUser = async (userId: string, userEmail: string | null) => {
+    setLoadingAction(`delete-${userId}`)
+    try {
+      const res = await fetch(`/api/admin/users?userId=${userId}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("Failed to delete user")
+      toast({
+        title: "Амжилттай",
+        description: `${userEmail || userId} устгагдлаа`,
+      })
+      await loadUsers()
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Хэрэглэгч устгахад алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
   const loadManualRequests = async () => {
     try {
       const res = await fetch("/api/admin/manual-payments/list", { cache: "no-store" })
@@ -576,26 +599,58 @@ export default function AdminPage() {
                         </div>
                       </div>
                     </div>
-                    <Button
-                      variant={user.hasPaidAccess ? "destructive" : "default"}
-                      size="sm"
-                      onClick={() => toggleUserAccess(user.id, user.hasPaidAccess)}
-                      disabled={loadingAction === `toggle-${user.id}`}
-                    >
-                      {loadingAction === `toggle-${user.id}` ? (
-                        "..."
-                      ) : user.hasPaidAccess ? (
-                        <>
-                          <X className="h-3 w-3 mr-1" />
-                          Хаах
-                        </>
-                      ) : (
-                        <>
-                          <Check className="h-3 w-3 mr-1" />
-                          Нээх
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={user.hasPaidAccess ? "destructive" : "default"}
+                        size="sm"
+                        onClick={() => toggleUserAccess(user.id, user.hasPaidAccess)}
+                        disabled={loadingAction === `toggle-${user.id}`}
+                      >
+                        {loadingAction === `toggle-${user.id}` ? (
+                          "..."
+                        ) : user.hasPaidAccess ? (
+                          <>
+                            <X className="h-3 w-3 mr-1" />
+                            Хаах
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-3 w-3 mr-1" />
+                            Нээх
+                          </>
+                        )}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={loadingAction === `delete-${user.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Хэрэглэгч устгах уу?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              <strong>{user.email || user.name}</strong> хэрэглэгчийн бүх өгөгдөл устгагдана.
+                              Энэ үйлдлийг буцаах боломжгүй!
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Болих</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteUser(user.id, user.email)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Устгах
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 ))}
               </div>
