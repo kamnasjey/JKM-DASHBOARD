@@ -15,13 +15,22 @@ const liveFeedData = [
 // Sparkline component
 function Sparkline({ trend, color }: { trend: string; color: string }) {
   const paths = {
-    up: "M0,15 L10,12 L20,16 L30,8 L40,10 L50,5 L60,2",
-    down: "M0,5 L10,8 L20,4 L30,12 L40,10 L50,15 L60,18",
-    neutral: "M0,10 L10,5 L20,15 L30,5 L40,15 L50,8 L60,12",
+    up: "M0,22 L15,18 L30,24 L45,12 L60,15 L75,8 L90,3",
+    down: "M0,8 L15,12 L30,6 L45,18 L60,15 L75,22 L90,27",
+    neutral: "M0,15 L15,8 L30,22 L45,8 L60,22 L75,12 L90,18",
   }
   return (
-    <svg className="sparkline" width="60" height="20" style={{ stroke: color }}>
-      <path d={paths[trend as keyof typeof paths] || paths.neutral} />
+    <svg className="sparkline" width="90" height="30" style={{ stroke: color }}>
+      <defs>
+        <filter id={`glow-${trend}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <path d={paths[trend as keyof typeof paths] || paths.neutral} filter={`url(#glow-${trend})`} />
     </svg>
   )
 }
@@ -80,8 +89,11 @@ export default function LandingPage() {
               <span className="text-gray-600">/</span>
               <span className={lang === "mn" ? "text-[#0df269]" : "text-gray-500"}>MN</span>
             </button>
-            <Link href="/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
+            <Link href="/auth/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
               {t("Login", "Нэвтрэх")}
+            </Link>
+            <Link href="/auth/register" className="hidden sm:block text-sm font-medium text-[#0df269] hover:text-[#0be360] transition-colors">
+              {t("Sign Up", "Бүртгүүлэх")}
             </Link>
             <Link
               href="/simulator"
@@ -175,23 +187,26 @@ export default function LandingPage() {
             </div>
 
             {/* Live Feed Panel */}
-            <div className="flex-1 w-full max-w-[650px] mx-auto lg:mr-0">
-              <div className="relative rounded-xl border border-[#28392f] bg-[#050806] overflow-hidden shadow-2xl shadow-black ring-1 ring-white/5">
+            <div className="flex-1 w-full max-w-[720px] mx-auto lg:mr-0">
+              <div className="relative rounded-2xl border border-[#28392f] bg-[#050806] overflow-hidden shadow-2xl shadow-[#0df269]/5 ring-1 ring-[#0df269]/10">
+                {/* Glow effect */}
+                <div className="absolute -inset-[1px] bg-gradient-to-r from-[#0df269]/20 via-transparent to-[#0df269]/20 rounded-2xl blur-sm opacity-50" />
+
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#28392f] bg-[#111111]">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-2 py-1 bg-green-500/10 rounded border border-green-500/20">
-                      <span className="relative flex h-2 w-2">
+                <div className="relative flex items-center justify-between px-5 py-4 border-b border-[#28392f] bg-gradient-to-r from-[#111111] to-[#0a0a0a]">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2.5 px-3 py-1.5 bg-[#0df269]/10 rounded-lg border border-[#0df269]/30">
+                      <span className="relative flex h-2.5 w-2.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0df269] opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0df269]" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0df269]" />
                       </span>
-                      <span className="text-[10px] font-mono text-[#0df269] font-bold tracking-wider">LIVE FEED</span>
+                      <span className="text-xs font-mono text-[#0df269] font-bold tracking-wider">LIVE FEED</span>
                     </div>
-                    <span className="text-[10px] font-mono text-gray-500">Last refresh: 12s ago</span>
+                    <span className="text-xs font-mono text-gray-500">Last refresh: 12s ago</span>
                   </div>
-                  <div className="flex gap-1.5">
-                    <div className="size-2.5 rounded-full bg-[#1c1c1c] border border-white/10" />
-                    <div className="size-2.5 rounded-full bg-[#1c1c1c] border border-white/10" />
+                  <div className="flex gap-2">
+                    <div className="size-3 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
+                    <div className="size-3 rounded-full bg-green-500/20 border border-green-500/40" />
                   </div>
                 </div>
 
@@ -199,9 +214,9 @@ export default function LandingPage() {
                 <div className="scan-line" />
 
                 {/* Table */}
-                <div className="font-mono text-xs">
+                <div className="relative font-mono text-sm">
                   {/* Table Header */}
-                  <div className="grid grid-cols-12 gap-2 px-4 py-2 border-b border-white/5 bg-white/[0.02] text-gray-500 text-[10px] uppercase tracking-wider">
+                  <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-white/5 bg-white/[0.02] text-gray-400 text-xs uppercase tracking-wider font-semibold">
                     <div className="col-span-3">Symbol</div>
                     <div className="col-span-1">TF</div>
                     <div className="col-span-3">Regime</div>
@@ -213,17 +228,17 @@ export default function LandingPage() {
                   {liveFeedData.map((item, idx) => (
                     <div
                       key={item.symbol}
-                      className={`grid grid-cols-12 gap-2 px-4 py-3 border-b border-white/5 items-center hover:bg-white/5 transition-colors cursor-pointer group ${idx === liveFeedData.length - 1 ? "opacity-70" : ""}`}
+                      className={`grid grid-cols-12 gap-3 px-5 py-4 border-b border-white/5 items-center hover:bg-[#0df269]/5 transition-all duration-300 cursor-pointer group ${idx === liveFeedData.length - 1 ? "opacity-60" : ""}`}
                     >
-                      <div className="col-span-3 font-bold text-white flex items-center gap-2">
-                        <span className={`size-1.5 rounded-full ${item.regimeColor === "green" ? "bg-[#0df269]" : item.regimeColor === "red" ? "bg-red-500" : "bg-yellow-500"}`} />
+                      <div className="col-span-3 font-bold text-white flex items-center gap-2.5 text-base">
+                        <span className={`size-2 rounded-full ${item.regimeColor === "green" ? "bg-[#0df269] shadow-[0_0_8px_rgba(13,242,105,0.5)]" : item.regimeColor === "red" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]"}`} />
                         {item.symbol}
                       </div>
-                      <div className="col-span-1 text-gray-400">{item.tf}</div>
+                      <div className="col-span-1 text-gray-400 text-sm">{item.tf}</div>
                       <div className="col-span-3">
                         <RegimeBadge regime={item.regime} color={item.regimeColor} />
                       </div>
-                      <div className="col-span-2 text-white font-bold">{item.confidence}</div>
+                      <div className="col-span-2 text-white font-bold text-base">{item.confidence}</div>
                       <div className="col-span-3 flex justify-end">
                         <Sparkline
                           trend={item.trend}
@@ -235,14 +250,17 @@ export default function LandingPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="bg-[#111111] border-t border-white/5 px-4 py-2 flex justify-between items-center">
-                  <span className="text-[9px] font-mono text-gray-600 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="relative bg-gradient-to-r from-[#111111] to-[#0a0a0a] border-t border-[#28392f] px-5 py-3 flex justify-between items-center">
+                  <span className="text-xs font-mono text-gray-500 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     Бодит дата (5 минут тутам)
                   </span>
-                  <span className="text-[9px] font-mono text-[#0df269] animate-pulse">● 24/7 Scan</span>
+                  <span className="text-xs font-mono text-[#0df269] animate-pulse flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-[#0df269] animate-ping" />
+                    24/7 Scan
+                  </span>
                 </div>
               </div>
             </div>
@@ -670,9 +688,6 @@ export default function LandingPage() {
                         </svg>
                         {t("TRY YOUR STRATEGY", "СТРАТЕГИА ТУРШИХ")}
                       </Link>
-                      <p className="text-[10px] text-gray-600 text-center mt-2 font-mono">
-                        {t("Free • No signup required", "Үнэгүй • Бүртгэл шаардлагагүй")}
-                      </p>
                     </div>
                   </div>
                 </div>
