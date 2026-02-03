@@ -239,8 +239,8 @@ export default function LandingPage() {
                 {/* Scan Line */}
                 <div className="scan-line" />
 
-                {/* Table */}
-                <div className="relative font-mono text-sm">
+                {/* Desktop Table Layout */}
+                <div className="relative font-mono text-sm hidden md:block">
                   {/* Table Header */}
                   <div className="grid grid-cols-12 gap-3 px-5 py-3 border-b border-white/5 bg-white/[0.02] text-gray-400 text-xs uppercase tracking-wider font-semibold">
                     <div className="col-span-3">Symbol</div>
@@ -270,6 +270,43 @@ export default function LandingPage() {
                           trend={item.trend}
                           color={item.regimeColor === "green" ? "#22c55e" : item.regimeColor === "red" ? "#ef4444" : "#eab308"}
                         />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mobile Card Layout */}
+                <div className="md:hidden p-3 space-y-3">
+                  {liveFeedData.map((item, idx) => (
+                    <div
+                      key={item.symbol}
+                      className={`relative bg-[#111111]/80 rounded-xl border border-white/5 p-4 hover:border-[#0df269]/20 transition-all ${idx === liveFeedData.length - 1 ? "opacity-60" : ""}`}
+                    >
+                      {/* Card Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className={`size-2.5 rounded-full ${item.regimeColor === "green" ? "bg-[#0df269] shadow-[0_0_8px_rgba(13,242,105,0.5)]" : item.regimeColor === "red" ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]"}`} />
+                          <span className="font-bold text-white text-lg font-mono">{item.symbol}</span>
+                          <span className="text-xs text-gray-500 font-mono">{item.tf}</span>
+                        </div>
+                        <RegimeBadge regime={item.regime} color={item.regimeColor} />
+                      </div>
+
+                      {/* Card Body */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">{t("Confidence", "Итгэл")}</div>
+                            <div className="text-xl font-bold text-white font-mono">{item.confidence}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Trend</div>
+                          <Sparkline
+                            trend={item.trend}
+                            color={item.regimeColor === "green" ? "#22c55e" : item.regimeColor === "red" ? "#ef4444" : "#eab308"}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -479,7 +516,16 @@ export default function LandingPage() {
                   <p className="text-xs text-[#9cbaa8] mb-4">{detector.desc}</p>
                   <div className="flex flex-wrap gap-2 text-[10px] font-mono text-gray-400">
                     {detector.tags.map((tag, i) => (
-                      <span key={i} className="bg-black/60 px-2 py-1 rounded border border-white/5">{tag}</span>
+                      <span key={i} className="relative group/tag cursor-help">
+                        <span className="bg-black/60 px-2 py-1 rounded border border-white/5 hover:border-[#0df269]/30 hover:text-[#0df269] transition-colors">{tag}</span>
+                        {detectorGlossary[tag] && (
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#1a1a1a] border border-[#0df269]/20 rounded-lg text-[11px] text-gray-300 w-64 opacity-0 invisible group-hover/tag:opacity-100 group-hover/tag:visible transition-all duration-200 z-50 shadow-xl pointer-events-none">
+                            <span className="font-bold text-[#0df269] block mb-1">{tag}</span>
+                            {lang === "en" ? detectorGlossary[tag].en : detectorGlossary[tag].mn}
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1a1a1a]" />
+                          </span>
+                        )}
+                      </span>
                     ))}
                   </div>
                 </div>
