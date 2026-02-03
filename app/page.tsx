@@ -149,7 +149,7 @@ export default function LandingPage() {
                 {t(
                   "Real market data every 5 minutes. Scans 24/7 using",
                   "5 минут тутам бодит дата татаж,"
-                )} <span className="text-[#0df269]">{t("your own strategy", "таны өөрийн стратегиар")}</span> {t(".", "24/7 scan хийнэ.")}
+                )} <span className="text-[#0df269]">{t("your own strategy", "таны өөрийн стратегиар")}</span>{t(", on each configured combination.", ", тохируулагдсан хослол бүр дээр 24/7 scan хийнэ.")}
                 <span className="block mt-2 text-xs text-gray-600 font-mono">
                   {t("Doesn't replace a trader — helps you trade with more discipline.", "Trader орлохгүй — сахилга баттай арилжаа хийхэд туслана.")}
                 </span>
