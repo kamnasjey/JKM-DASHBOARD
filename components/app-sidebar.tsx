@@ -9,11 +9,11 @@ import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
 
 const navItems = [
-  { href: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/app/setups", label: "Setup-ууд", icon: Target },
-  { href: "/app/signals", label: "Setups", icon: ListFilter },
-  { href: "/app/logs", label: "Logs", icon: FileText },
-  { href: "/app/settings", label: "Тохиргоо", icon: Settings },
+  { href: "/app", label: "Dashboard", labelMn: "Хянах самбар", icon: LayoutDashboard },
+  { href: "/app/setups", label: "Setups", labelMn: "Setup-ууд", icon: Target },
+  { href: "/app/signals", label: "Signals", labelMn: "Дохионууд", icon: ListFilter },
+  { href: "/app/logs", label: "Logs", labelMn: "Бүртгэл", icon: FileText },
+  { href: "/app/settings", label: "Settings", labelMn: "Тохиргоо", icon: Settings },
 ]
 
 export function AppSidebar() {
@@ -50,7 +50,10 @@ export function AppSidebar() {
                 )}
               >
                 <Icon className="h-5 w-5" />
-                {item.label}
+                <span className="flex flex-col">
+                  <span>{item.label}</span>
+                  <span className="text-[10px] opacity-60">{item.labelMn}</span>
+                </span>
               </Link>
             )
           })}
@@ -59,7 +62,10 @@ export function AppSidebar() {
         <div className="border-t border-border p-4">
           <Button variant="outline" className="w-full bg-transparent" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
-            Гарах
+            <span className="flex flex-col items-start">
+              <span>Logout</span>
+              <span className="text-[10px] opacity-60">Гарах</span>
+            </span>
           </Button>
         </div>
       </div>

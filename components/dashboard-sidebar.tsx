@@ -15,6 +15,7 @@ interface SidebarProps {
 const navItems = [
   {
     label: "Dashboard",
+    labelMn: "Хянах самбар",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
@@ -26,26 +27,31 @@ const navItems = [
   // },
   {
     label: "Scanner Config",
+    labelMn: "Скан тохиргоо",
     href: "/dashboard/scanner-config",
     icon: Radio,
   },
   {
     label: "History",
+    labelMn: "Түүх",
     href: "/performance",
     icon: BarChart3,
   },
   {
     label: "Simulator",
+    labelMn: "Симулятор",
     href: "/simulator",
     icon: TestTube2,
   },
   {
     label: "Strategies",
+    labelMn: "Стратеги",
     href: "/strategies",
     icon: Layers,
   },
   {
     label: "Profile",
+    labelMn: "Профайл",
     href: "/profile",
     icon: User,
   },
@@ -103,7 +109,10 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                <span>{item.label}</span>
+                <span className="flex flex-col leading-tight">
+                  <span>{item.label}</span>
+                  <span className="text-[10px] opacity-60">{item.labelMn}</span>
+                </span>
               </Link>
             )
           })}
@@ -119,7 +128,10 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
               )}
             >
               <Wrench className="h-5 w-5 flex-shrink-0" />
-              <span>Засварын газар</span>
+              <span className="flex flex-col leading-tight">
+                <span>Repair</span>
+                <span className="text-[10px] opacity-60">Засварын газар</span>
+              </span>
             </Link>
           )}
           {isAdmin && (
@@ -134,7 +146,10 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
               )}
             >
               <Settings className="h-5 w-5 flex-shrink-0" />
-              <span>Admin</span>
+              <span className="flex flex-col leading-tight">
+                <span>Admin</span>
+                <span className="text-[10px] opacity-60">Админ</span>
+              </span>
             </Link>
           )}
         </nav>

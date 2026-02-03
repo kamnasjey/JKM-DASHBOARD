@@ -669,9 +669,9 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl font-bold">Dashboard <span className="text-base font-normal text-muted-foreground">/ Хянах самбар</span></h1>
             <p className="text-sm text-muted-foreground">
-              Сайн байна уу{session?.user?.email ? `, ${session.user.email}` : ""}
+              Welcome{session?.user?.email ? `, ${session.user.email}` : ""} / Сайн байна уу
             </p>
           </div>
           <div className="flex gap-2">
@@ -680,18 +680,18 @@ export default function DashboardPage() {
               Scan Now
             </Button>
             <Button variant="outline" onClick={refreshDashboard} disabled={loading}>
-              Шинэчлэх
+              Refresh / Шинэчлэх
             </Button>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <MetricCard title="Нийт setup" value={totalSignalsText} subtitle="Сүүлийн статистик" icon={BarChart3} />
-          <MetricCard title="Win rate" value={winRateText} subtitle="Ялалтын хувь" icon={Activity} />
+          <MetricCard title="Total Setups / Нийт setup" value={totalSignalsText} subtitle="Recent stats / Сүүлийн статистик" icon={BarChart3} />
+          <MetricCard title="Win Rate / Ялалтын хувь" value={winRateText} subtitle="Success rate" icon={Activity} />
           <MetricCard
-            title="Идэвхтэй стратеги"
+            title="Active Strategies / Идэвхтэй"
             value={activeSymbolCount || "—"}
-            subtitle="Идэвхтэй хослол"
+            subtitle="Symbol-strategy pairs"
             icon={Layers3}
           />
         </div>
@@ -897,7 +897,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
-              Идэвхтэй хослолууд ({activeSymbolCount})
+              Active Pairs / Идэвхтэй хослолууд ({activeSymbolCount})
               {wsConnected && (
                 <Badge className="ml-auto bg-green-600 text-xs flex items-center gap-1">
                   <Wifi className="h-3 w-3" />
@@ -905,7 +905,7 @@ export default function DashboardPage() {
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Scanner Config-оос тохируулсан symbol-strategy mapping</CardDescription>
+            <CardDescription>Symbol-strategy mapping from Scanner Config / Скан тохиргооноос</CardDescription>
           </CardHeader>
           <CardContent>
             <ActiveStrategiesPanel
