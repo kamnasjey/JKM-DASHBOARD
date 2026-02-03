@@ -17,24 +17,29 @@ export function HeroSection() {
       <div className="mx-auto max-w-4xl text-center">
         <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
           <Badge variant="secondary" className="rounded-full px-3 py-1">
-            24/7 Scan
+            5 мин тутам Live Data
           </Badge>
           <Badge variant="secondary" className="rounded-full px-3 py-1">
-            Setup олох
+            24/7 Автомат Scan
           </Badge>
           <Badge variant="secondary" className="rounded-full px-3 py-1">
-            Why / Why-not
+            Таны стратеги
           </Badge>
         </div>
 
         <h1 className="mb-6 text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-          JKMCOPILOT — Таны арилжааны AI туслах 🤝📈
+          Таны хувийн Trading Copilot
         </h1>
 
-        <p className="mb-10 text-pretty text-lg text-muted-foreground md:text-xl">
-          “Just Keep Moving” философитойгоор зах зээл зогсолтгүй хөдөлдөг шиг бид ч зогсохгүй.
-          Таны өөрийн тогтоосон дүрэм, нөхцлөөр зах зээлийг тогтмол скан хийж, таарсан үед нь “SETUP FOUND” гэж илрүүлнэ.
-          BUY/SELL тулгахгүй — зөвхөн setup-аа нотолгоо, тайлбартайгаар ойлгомжтой болгоно. ✅🧠
+        <p className="mb-6 text-pretty text-lg text-muted-foreground md:text-xl">
+          Polygon.io-оос 5 минут тутам шинэчлэгдэх жинхэнэ зах зээлийн дата дээр
+          <span className="text-primary font-medium"> таны өөрийн стратегиар </span>
+          24/7 автоматаар scan хийж, оновчтой setup-уудыг илрүүлнэ.
+        </p>
+
+        <p className="mb-10 text-pretty text-base text-muted-foreground/80">
+          Энэ нь trader-ийг орлохгүй — таны өдөр тутмын ажлыг хөнгөвчилж, илүү сахилга баттай,
+          оновчтой арилжаа хийхэд туслах хэрэгсэл юм. Та setup-ийг харж, өөрөө дүн шинжилгээ хийнэ.
         </p>
 
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">

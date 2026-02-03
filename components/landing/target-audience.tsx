@@ -5,31 +5,31 @@ export function TargetAudience() {
   const audiences = [
     {
       icon: AlertCircle,
-      title: '"Setup авч ядарсан" хүмүүст',
+      title: "Анхлан суралцаж байгаа trader-үүдэд",
       description:
-        "Олон signal-service туршсан ч тогтвортой ашиггүй байна уу? JKM зөвхөн BUY/SELL биш, яагаад гэдгийг тайлбарлана.",
-      color: "text-red-400",
+        "Сахилга баттай арилжааны дадал эзэмших, оновчтой setup илрүүлж сурахад туслана. Bot тань chart харж байхгүй үед ч ажиллана.",
+      color: "text-green-400",
     },
     {
       icon: TrendingUp,
-      title: '"Яагаад алдаад байгаагаа ойлгох" хүсэлтэй',
+      title: "Өдөр тутмын скан хийхэд цаг дутагдаж байвал",
       description:
-        "Алдаж байгаа шалтгаан нь системгүй, эрсдэлгүй арилжаа юм. JKM нь таны алдааг тодорхой харуулж, сайжруулах арга зааж өгнө.",
+        "Ажил амьдралтайгаа зэрэгцүүлж арилжаа хийдэг хүмүүст. Bot 24/7 хянаж, таарсан setup байвал мэдэгдэнэ.",
       color: "text-yellow-400",
     },
     {
       icon: Target,
-      title: "Forex-ийг мэргэжлийн түвшинд тоглох зорилготой",
+      title: "Өөрийн арга барилаа системчлэх хүсэлтэй",
       description:
-        "Pro-trader болохыг хүсч байвал зах зээлийн бүтцийг ойлгох хэрэгтэй. JKM нь indicator биш price-action logic заана.",
-      color: "text-green-400",
+        "Зүгээр л сохроор сигнал дагахгүй, өөрийн стратегиа бүтээж, түүгээрээ автоматаар скан хийлгэхийг хүсвэл.",
+      color: "text-blue-400",
     },
     {
       icon: Users,
-      title: "Copy-trading-оос залхсан хүмүүст",
+      title: "Тайлбар, нотолгоотой setup хүсвэл",
       description:
-        'JKM нь "надад л итгэ" гэдэггүй. Таныг бие даан шийдвэр гаргах чадвартай, хараат биш трейдер болгоно.',
-      color: "text-blue-400",
+        "BUY/SELL гэж хэлээд орхидог биш. Яагаад энэ setup гэдгийг тайлбарлаж, та өөрөө дүн шинжилгээ хийх боломжтой.",
+      color: "text-primary",
     },
   ]
 
@@ -65,9 +65,12 @@ export function TargetAudience() {
 
       <div className="mt-12 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center backdrop-blur md:p-8">
         <p className="text-lg font-medium md:text-xl">
-          JKM бол таны оронд trade хийдэг бот биш.
+          JKM Copilot бол таны оронд trade хийдэг бот биш.
           <br />
-          <span className="text-primary">Таныг дараагийн түвшний трейдэр болгох багаж юм.</span>
+          <span className="text-primary">Таны ажлыг хөнгөвчилж, илүү сайн trader болоход туслах хэрэгсэл юм.</span>
+        </p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Бодит дата + Таны стратеги + 24/7 автомат скан = Илүү оновчтой setup, илүү сахилга баттай арилжаа
         </p>
       </div>
     </section>

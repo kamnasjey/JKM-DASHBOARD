@@ -5,35 +5,35 @@ export function HowItWorks() {
   const steps = [
     {
       number: "01",
-      title: "Нөхцөлөө тодорхойлох",
+      title: "Стратегиа бүтээ",
       description:
-        "Setup-аа ямар үед гэж үздэгээ бичнэ: бүтэц, zone, invalidation, RR гэх мэт шалгуурууд. Жишээ нь: 'EMA 9-20 cross болоод support зураглал дээр буцаж давхцсан байх'.",
+        "30+ detector-оос сонгож өөрийн арга барилыг тохируулна: Gate (шүүлтүүр), Trigger (оролтын дохио), Confluence (баталгаа).",
       icon: FileEdit,
     },
     {
       number: "02",
-      title: "JKM Bot давтамжтай шалгана",
-      description: "Зах зээлийг (жишээ нь: 5 минут тутам) scan хийж, таны оруулсан нөхцөл таарч байгаа эсэхийг хянана.",
+      title: "Bot тасралтгүй ажиллана",
+      description: "Polygon.io-оос 5 минут тутам бодит дата татаж, таны стратегиар 15+ валютын хосыг 24/7 scan хийнэ.",
       icon: Radio,
     },
     {
       number: "03",
-      title: "Setup таарвал SETUP FOUND гэж гаргана",
+      title: "Setup илэрвэл мэдэгдэнэ",
       description:
-        "JKM нь BUY/SELL тулгахгүй. Setup-ийн зураглал, invalidation бүс, RR зэрэг шийдвэр гаргахад хэрэгтэй мэдээллийг цэгцэлж харуулна.",
+        "Таны нөхцөл таарахад Telegram + Web дээр мэдэгдэл ирнэ. Entry, SL, TP, RR бүгд тооцоолсон байна.",
       icon: Target,
     },
     {
       number: "04",
-      title: "Why / Why-not харуулна",
+      title: "Тайлбартай, нотолгоотой",
       description:
-        "Setup таарсан эсвэл таараагүй шалтгааныг товч, ойлгомжтой тэмдэглэнэ: юу нь дутуу байв (fail_reason), юугаар нотолж байна (evidence).",
+        "Setup бүр яагаад trigger болсон, ямар detector-ууд ажилласныг тайлбарлана. Та харж, өөрөө шийдвэр гаргана.",
       icon: MessageSquare,
     },
     {
       number: "05",
-      title: "Backtest болон Review",
-      description: "Арга барилаа өнгөрсөн өгөгдөл дээр шалгаад, үр дүнгээ харан засварлаж сайжруулна.",
+      title: "Simulator-ээр шалга",
+      description: "Стратегиа өнгөрсөн дата дээр туршиж, win rate болон үр дүнг урьдчилан харна.",
       icon: LineChart,
     },
   ]
