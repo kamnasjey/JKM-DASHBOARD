@@ -183,6 +183,49 @@ export default function LandingPage() {
                     <span><span className="text-[#0df269]">46%</span> {t("winrate", "winrate")}</span>
                     <span><span className="text-white">7</span> {t("strategies", "стратеги")}</span>
                   </span>
+
+                  {/* Dashboard Preview on Hover */}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 pointer-events-none">
+                    <div className="bg-[#0a0a0a] border border-white/10 rounded-lg shadow-2xl overflow-hidden">
+                      {/* Mini Header */}
+                      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 bg-[#111]">
+                        <span className="text-[10px] font-bold text-white">Dashboard</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-gray-500">EN/MN</span>
+                          <div className="flex items-center gap-1.5 bg-[#1c1c1c] px-2 py-1 rounded">
+                            <div className="w-4 h-4 rounded-full bg-[#0df269] flex items-center justify-center text-[8px] text-black font-bold">U</div>
+                            <span className="text-[10px] text-white">User</span>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Mini Stats */}
+                      <div className="grid grid-cols-3 gap-2 p-3">
+                        <div className="bg-[#111] rounded p-2">
+                          <div className="text-[8px] text-gray-500">Total Setups</div>
+                          <div className="text-sm font-bold text-white">41</div>
+                        </div>
+                        <div className="bg-[#111] rounded p-2">
+                          <div className="text-[8px] text-gray-500">Win Rate</div>
+                          <div className="text-sm font-bold text-[#0df269]">46%</div>
+                        </div>
+                        <div className="bg-[#111] rounded p-2">
+                          <div className="text-[8px] text-gray-500">Strategies</div>
+                          <div className="text-sm font-bold text-white">7</div>
+                        </div>
+                      </div>
+                      {/* Mini Live Ops */}
+                      <div className="px-3 pb-3">
+                        <div className="flex items-center justify-between text-[9px] mb-1">
+                          <span className="text-gray-400">Live Ops</span>
+                          <span className="bg-[#0df269] text-black px-1.5 py-0.5 rounded text-[8px] font-bold">Running</span>
+                        </div>
+                        <div className="h-1 bg-[#1c1c1c] rounded-full overflow-hidden">
+                          <div className="h-full w-3/4 bg-[#0df269] rounded-full"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full border-8 border-transparent border-b-[#111]"></div>
+                  </div>
                 </Link>
               </div>
 
