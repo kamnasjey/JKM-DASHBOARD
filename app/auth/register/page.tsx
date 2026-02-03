@@ -11,8 +11,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BackButton } from "@/components/back-button"
-import { PLANS, type PlanType } from "@/lib/constants/pricing"
-
 function RegisterContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -21,10 +19,6 @@ function RegisterContent() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [authErrorCode, setAuthErrorCode] = useState("")
-
-  // Get plan from URL (default to free)
-  const planParam = searchParams.get("plan") as PlanType | null
-  const selectedPlan = PLANS.find((p) => p.id === planParam) || PLANS.find((p) => p.id === "free")!
 
   // Email register state
   const [name, setName] = useState("")
@@ -98,7 +92,7 @@ function RegisterContent() {
       const res = await fetch("/api/auth/local/register-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, plan: selectedPlan.id }),
+        body: JSON.stringify({ name, email, password }),
       })
 
       const data = await res.json()
@@ -161,7 +155,7 @@ function RegisterContent() {
       const verifyRes = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp, name: phoneName, plan: selectedPlan.id }),
+        body: JSON.stringify({ phone, otp, name: phoneName }),
       })
 
       const verifyData = await verifyRes.json()
@@ -199,19 +193,7 @@ function RegisterContent() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>JKM Copilot</CardTitle>
-          <CardDescription>
-            {selectedPlan.id === "free" ? (
-              "Үнэгүй бүртгүүлэх"
-            ) : (
-              <>
-                {selectedPlan.name} төлөвлөгөөнд бүртгүүлэх
-                <br />
-                <Link href="/pricing" className="text-primary underline text-xs">
-                  Төлөвлөгөө солих
-                </Link>
-              </>
-            )}
-          </CardDescription>
+          <CardDescription>Бүртгүүлэх</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (

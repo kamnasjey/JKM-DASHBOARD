@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio, Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
@@ -56,6 +56,13 @@ const navItems = [
     href: "/profile",
     icon: User,
   },
+  {
+    label: "Plan Upgrade",
+    labelMn: "Төлөвлөгөө",
+    href: "/pricing",
+    icon: Crown,
+    highlight: true,
+  },
 ]
 
 export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps) {
@@ -100,6 +107,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const isHighlight = (item as any).highlight
             return (
               <Link
                 key={item.href}
@@ -107,12 +115,14 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
                 onClick={handleClick}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
-                  isActive
+                  isHighlight
+                    ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/30 hover:bg-yellow-500/20"
+                    : isActive
                     ? "bg-primary/15 text-primary border border-primary/30 neon-glow"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-primary/80",
                 )}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
+                <Icon className={cn("h-5 w-5 flex-shrink-0", isHighlight && "text-yellow-500")} />
                 <span>{getLabel(item.label, item.labelMn)}</span>
               </Link>
             )
