@@ -483,12 +483,12 @@ export default function LandingPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg md:text-xl font-bold text-white mb-3">
-                    {t("How Detector Combinations Work", "Detector хослолууд хэрхэн ажилладаг")}
+                    {t("One Strategy = One Scanner", "Нэг стратеги = Нэг Scanner")}
                   </h3>
                   <p className="text-gray-400 text-sm leading-relaxed mb-4">
                     {t(
-                      "Each strategy uses a unique combination of detectors tailored to specific market conditions. For example: Trend strategies use BOS + FVG to catch continuations, while Reversal strategies use SWEEP + CHoCH to spot turning points. You customize which detectors work together — the scanner runs YOUR logic on real-time data.",
-                      "Стратеги бүр тодорхой зах зээлийн нөхцөлд тохируулсан өвөрмөц detector хослолыг ашигладаг. Жишээ нь: Trend стратеги BOS + FVG ашиглан үргэлжлэлийг барьдаг, харин Reversal стратеги SWEEP + CHoCH ашиглан эргэлтийг илрүүлдэг. Та ямар detector-ууд хамтдаа ажиллахыг тохируулна — scanner ТАНЫ логикийг бодит дата дээр ажиллуулна."
+                      "Each detector combination you create becomes its own independent strategy. The scanner runs each strategy SEPARATELY — tailored to that specific market condition. Create a Trend strategy with BOS + FVG, a Reversal strategy with SWEEP + CHoCH — each runs on its own, scanning the market with YOUR unique logic.",
+                      "Таны үүсгэсэн detector хослол бүр бие даасан стратеги болно. Scanner стратеги бүрийг ТУС ТУСАД НЬ ажиллуулдаг — тухайн зах зээлийн нөхцөлд тохируулсан. Trend стратеги BOS + FVG-тэй, Reversal стратеги SWEEP + CHoCH-тэй үүсгэ — тус бүр нь өөрийн гэсэн scanner болж, ТАНЫ логикоор зах зээлийг скан хийнэ."
                     )}
                   </p>
                   <div className="flex flex-wrap gap-2">
