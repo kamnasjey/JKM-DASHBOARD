@@ -170,7 +170,7 @@ export default function LandingPage() {
                 </Link>
                 <Link
                   href="/auth/login?callbackUrl=/dashboard"
-                  className="h-14 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex flex-col items-center justify-center gap-0 transition-colors group"
+                  className="relative h-auto py-3 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex flex-col items-center justify-center gap-1 transition-colors group"
                 >
                   <span className="flex items-center gap-2 group-hover:text-[#0df269] transition-colors">
                     {t("View Dashboard", "Dashboard харах")}
@@ -178,7 +178,11 @@ export default function LandingPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </span>
-                  <span className="text-[10px] font-normal text-gray-500">{t("Login required", "Нэвтрэх шаардлагатай")}</span>
+                  <span className="flex items-center gap-3 text-[10px] font-mono text-gray-500">
+                    <span><span className="text-white">80</span> {t("trades", "trade")}</span>
+                    <span><span className="text-[#0df269]">46%</span> {t("winrate", "winrate")}</span>
+                    <span><span className="text-white">7</span> {t("strategies", "стратеги")}</span>
+                  </span>
                 </Link>
               </div>
 
