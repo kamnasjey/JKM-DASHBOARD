@@ -135,7 +135,7 @@ export default function LandingPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0df269] opacity-75" />
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#0df269]" />
                 </span>
-                SYSTEM ONLINE v2.4.0 // LOW LATENCY
+                SYSTEM ONLINE
               </div>
 
               <h1 className="text-4xl md:text-6xl font-black leading-[1.1] tracking-tight">
@@ -1205,7 +1205,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold text-gray-300 text-sm">JKM Copilot</span>
-                  <span className="text-[10px] text-gray-600">Pro Terminal v2.4</span>
+                  <span className="text-[10px] text-gray-600">AI Trading Copilot</span>
                 </div>
               </div>
               <div className="flex gap-8 text-xs text-gray-500 font-mono">
@@ -1213,6 +1213,7 @@ export default function LandingPage() {
                 <Link className="hover:text-[#0df269] transition-colors" href="/status">API Status</Link>
                 <Link className="hover:text-[#0df269] transition-colors" href="/terms">{t("Terms", "Нөхцөл")}</Link>
                 <Link className="hover:text-[#0df269] transition-colors" href="/privacy">{t("Privacy", "Нууцлал")}</Link>
+                <a className="hover:text-[#0df269] transition-colors" href="https://www.facebook.com/profile.php?id=61575434656498" target="_blank" rel="noopener noreferrer">{t("Contact", "Холбоо барих")}</a>
               </div>
               <div className="text-[10px] text-gray-600 font-mono">
                 © 2025–2026 JKM Copilot. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
