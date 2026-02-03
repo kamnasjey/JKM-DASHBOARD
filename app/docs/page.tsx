@@ -90,7 +90,7 @@ export default function DocsPage() {
               },
               {
                 step: "4",
-                title: t("View Signals/Setups", "Signal/Setup харах"),
+                title: t("View Setups", "Setup харах"),
                 desc: t("Review detected setups with explanations: why it triggered, RR ratio, risk level.", "Илэрсэн setup-уудыг тайлбартай харна: яагаад trigger болсон, RR, эрсдэл."),
               },
               {
@@ -137,7 +137,7 @@ export default function DocsPage() {
               },
               {
                 icon: AlertCircle,
-                title: "Signal/Setup",
+                title: "Setup",
                 desc: t("Potential trading opportunities found by the scanner. Final decision is yours.", "Боломжит арилжааны хувилбарууд. Эцсийн шийдвэр хэрэглэгч дээр."),
                 color: "text-purple-400",
               },
@@ -168,7 +168,7 @@ export default function DocsPage() {
                 a: t("No. This is a technical analysis tool, not financial advice.", "Үгүй. Энэ нь техникийн анализын хэрэгсэл, санхүүгийн зөвлөгөө биш."),
               },
               {
-                q: t("Why am I not getting any signals?", "Яагаад сигнал гарахгүй вэ?"),
+                q: t("Why am I not getting any setups?", "Яагаад setup гарахгүй вэ?"),
                 a: t("Your filters may be too strict, or market conditions don't match your strategy.", "Filter хэт хатуу байж болно, эсвэл зах зээлийн нөхцөл таны стратегид тохирохгүй байна."),
               },
               {
