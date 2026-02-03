@@ -135,9 +135,10 @@ export async function DELETE(request: Request) {
   }
 
   let prismaDeleted = false
+  let prismaError: string | null = null
   let firestoreDeleted = false
 
-  // Delete from Prisma
+  // Delete from Prisma (don't fail if Prisma has issues)
   const prisma = getPrisma()
   if (prisma) {
     try {
@@ -151,10 +152,10 @@ export async function DELETE(request: Request) {
         prismaDeleted = true
         console.log(`[admin/users] Prisma: User ${userId} deleted`)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("[admin/users] Prisma delete error:", err)
-      // If Prisma fails but user exists, return error
-      return NextResponse.json({ ok: false, message: "Prisma delete failed" }, { status: 500 })
+      prismaError = err.message || "Prisma delete failed"
+      // Continue to try Firestore deletion
     }
   }
 
@@ -194,13 +195,33 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: false, message: "Firestore delete failed" }, { status: 500 })
   }
 
-  if (!prismaDeleted && !firestoreDeleted) {
+  // If neither worked and we have no error, user not found
+  if (!prismaDeleted && !firestoreDeleted && !prismaError) {
     return NextResponse.json({ ok: false, message: "User not found in any database" }, { status: 404 })
   }
 
+  // If at least Firestore worked, consider it success
+  if (firestoreDeleted) {
+    return NextResponse.json({
+      ok: true,
+      message: "User deleted",
+      deletedFrom: { prisma: prismaDeleted, firestore: firestoreDeleted },
+      prismaError: prismaError || undefined
+    })
+  }
+
+  // If only Prisma worked
+  if (prismaDeleted) {
+    return NextResponse.json({
+      ok: true,
+      message: "User deleted from Prisma",
+      deletedFrom: { prisma: prismaDeleted, firestore: firestoreDeleted }
+    })
+  }
+
+  // Both failed
   return NextResponse.json({
-    ok: true,
-    message: "User deleted",
-    deletedFrom: { prisma: prismaDeleted, firestore: firestoreDeleted }
-  })
+    ok: false,
+    message: prismaError || "Failed to delete user"
+  }, { status: 500 })
 }
