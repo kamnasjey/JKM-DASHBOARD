@@ -157,24 +157,28 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
-                  href="/simulator"
-                  className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex items-center justify-center gap-2 transition-all shadow-neon hover:scale-[1.02]"
+                  href="/auth/login?callbackUrl=/simulator"
+                  className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex flex-col items-center justify-center gap-0 transition-all shadow-neon hover:scale-[1.02]"
                 >
-                  {t("Try Simulator", "Симулятор турших")}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  <span className="flex items-center gap-2">
+                    {t("Try Simulator", "Симулятор турших")}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </span>
+                  <span className="text-[10px] font-normal opacity-70">{t("Free account required", "Үнэгүй бүртгэл шаардлагатай")}</span>
                 </Link>
                 <Link
-                  href="/dashboard"
-                  className="h-14 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex items-center justify-center gap-2 transition-colors group"
+                  href="/auth/login?callbackUrl=/dashboard"
+                  className="h-14 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex flex-col items-center justify-center gap-0 transition-colors group"
                 >
-                  <span className="group-hover:text-[#0df269] transition-colors">
+                  <span className="flex items-center gap-2 group-hover:text-[#0df269] transition-colors">
                     {t("View Dashboard", "Dashboard харах")}
+                    <svg className="w-4 h-4 group-hover:text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                   </span>
-                  <svg className="w-4 h-4 group-hover:text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
+                  <span className="text-[10px] font-normal text-gray-500">{t("Login required", "Нэвтрэх шаардлагатай")}</span>
                 </Link>
               </div>
 
@@ -1216,10 +1220,11 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/simulator"
-                className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex items-center justify-center"
+                href="/auth/login?callbackUrl=/simulator"
+                className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex flex-col items-center justify-center"
               >
-                <span>{t("Try Simulator", "Симулятор туршиx")}</span>
+                <span>{t("Try Simulator", "Симулятор турших")}</span>
+                <span className="text-[10px] font-normal opacity-70">{t("Free account required", "Үнэгүй бүртгэл шаардлагатай")}</span>
               </Link>
             </div>
             <p className="mt-6 text-xs text-gray-600 font-mono">
