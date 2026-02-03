@@ -157,7 +157,7 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
-                  href="/auth/login?callbackUrl=/simulator"
+                  href="/auth/register?callbackUrl=/simulator"
                   className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex flex-col items-center justify-center gap-0 transition-all shadow-neon hover:scale-[1.02]"
                 >
                   <span className="flex items-center gap-2">
@@ -1224,7 +1224,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/auth/login?callbackUrl=/simulator"
+                href="/auth/register?callbackUrl=/simulator"
                 className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex flex-col items-center justify-center"
               >
                 <span>{t("Try Simulator", "Симулятор турших")}</span>
