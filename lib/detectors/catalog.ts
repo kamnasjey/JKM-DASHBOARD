@@ -449,6 +449,17 @@ export const DETECTOR_BY_ID = new Map<string, DetectorMeta>(
 /** Set of all canonical detector IDs */
 export const CANONICAL_IDS = new Set(DETECTOR_CATALOG.map(d => d.id))
 
+/** Alias map for legacy/alternative detector IDs */
+export const DETECTOR_ALIASES: Record<string, string> = {
+  // Legacy aliases (map to canonical IDs)
+  "ORDER_BLOCK": "OB",
+  "ORDERBLOCK": "OB",
+  "BREAKOUT_RETEST_ENTRY": "BREAK_RETEST",
+  "BREAK_RETEST_ENTRY": "BREAK_RETEST",
+  "FIBO_RETRACE": "FIBO_RETRACE_CONFLUENCE",
+  "SR_POLARITY": "SR_ROLE_REVERSAL",
+}
+
 /** Detectors grouped by category */
 export const DETECTORS_BY_CATEGORY: Record<DetectorCategory, DetectorMeta[]> = {
   gate: DETECTOR_CATALOG.filter(d => d.category === "gate"),
@@ -643,17 +654,25 @@ export const DETECTOR_PRESETS: DetectorPreset[] = [
 // ============================================================
 
 /**
- * Get detector metadata by ID
+ * Get detector metadata by ID (supports aliases)
  */
 export function getDetectorById(id: string): DetectorMeta | undefined {
-  return DETECTOR_BY_ID.get(id.toUpperCase())
+  const upperId = id.toUpperCase()
+  // Check direct match first
+  const direct = DETECTOR_BY_ID.get(upperId)
+  if (direct) return direct
+  // Check alias
+  const canonical = DETECTOR_ALIASES[upperId]
+  if (canonical) return DETECTOR_BY_ID.get(canonical)
+  return undefined
 }
 
 /**
- * Check if a detector ID exists in catalog
+ * Check if a detector ID exists in catalog (supports aliases)
  */
 export function isValidDetectorId(id: string): boolean {
-  return CANONICAL_IDS.has(id.toUpperCase())
+  const upperId = id.toUpperCase()
+  return CANONICAL_IDS.has(upperId) || upperId in DETECTOR_ALIASES
 }
 
 /**
