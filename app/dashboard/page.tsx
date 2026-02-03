@@ -327,12 +327,12 @@ export default function DashboardPage() {
         api.engineStatus(),
         api.symbols().catch(() => ({ ok: true, symbols: [] })),
         api.engineStatus247(uid).catch(() => null),
-        api.userSignals({ limit: 500 }).catch(() => ({ ok: false, signals: [] })),
+        api.userSignals({ limit: 500 }).catch(() => []),
       ])
 
       // Map Firestore signals to UnifiedSignal and deduplicate
-      // api.userSignals returns { ok, signals, count } format
-      const rawUserSignals = (userSigsRes as any)?.signals ?? []
+      // Note: api.userSignals() returns normalized array directly (not { signals: [] })
+      const rawUserSignals = Array.isArray(userSigsRes) ? userSigsRes : []
       const unifiedSignals = rawUserSignals.map((s: any) => mapOldSignalToUnified(s))
       const dedupedSignals = deduplicateSignals(unifiedSignals)
       setFirestoreSignals(dedupedSignals)
