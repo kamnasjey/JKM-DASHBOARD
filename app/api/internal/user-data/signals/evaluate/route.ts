@@ -30,11 +30,16 @@ export async function GET(request: NextRequest) {
   if (limit > 500) limit = 500
 
   try {
-    // Get pending signals (no outcome set yet)
-    const signals = await listUserSignals(userId, { limit, status: "pending" })
+    // Get all recent signals (limit higher to filter for pending)
+    const allSignals = await listUserSignals(userId, { limit: limit * 3 })
+
+    // Filter for pending signals (status is "pending" or null/undefined)
+    const pendingSignals = allSignals.filter(s =>
+      !s.status || s.status === "pending"
+    ).slice(0, limit)
 
     // Map to format expected by scanner
-    const pending = signals.map(s => ({
+    const pending = pendingSignals.map(s => ({
       signal_key: s.signal_key,
       pair: s.symbol,
       direction: s.direction,
