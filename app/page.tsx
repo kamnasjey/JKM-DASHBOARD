@@ -1104,7 +1104,7 @@ export default function LandingPage() {
               </div>
 
               <p className="text-center text-xs text-gray-500 mt-4">
-                {t("Each setup includes full explanation — no blind signals", "Setup бүр бүрэн тайлбартай — сохор signal биш")}
+                {t("Each setup includes full explanation with evidence", "Setup бүр бүрэн тайлбар, нотолгоотой")}
               </p>
             </div>
           </div>
