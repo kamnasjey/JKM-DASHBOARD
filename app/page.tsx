@@ -105,8 +105,8 @@ export default function LandingPage() {
             <Link href="/auth/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
               {t("Login", "Нэвтрэх")}
             </Link>
-            <Link href="/auth/register" className="hidden sm:block text-sm font-medium text-[#0df269] hover:text-[#0be360] transition-colors">
-              {t("Sign Up", "Бүртгүүлэх")}
+            <Link href="/pricing" className="hidden sm:block text-sm font-medium text-[#0df269] hover:text-[#0be360] transition-colors">
+              {t("Pricing", "Үнэ")}
             </Link>
             <Link
               href="/simulator"
@@ -157,16 +157,16 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
-                  href="/auth/register?callbackUrl=/simulator"
+                  href="/pricing"
                   className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex flex-col items-center justify-center gap-0 transition-all shadow-neon hover:scale-[1.02]"
                 >
                   <span className="flex items-center gap-2">
-                    {t("Try Simulator", "Симулятор турших")}
+                    {t("Get Started", "Эхлэх")}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </span>
-                  <span className="text-[10px] font-normal opacity-70">{t("Free account required", "Үнэгүй бүртгэл шаардлагатай")}</span>
+                  <span className="text-[10px] font-normal opacity-70">{t("View pricing plans", "Үнийн төлөвлөгөө харах")}</span>
                 </Link>
                 <Link
                   href="/auth/login?callbackUrl=/dashboard"
@@ -1106,13 +1106,13 @@ export default function LandingPage() {
 
                 {/* CTA */}
                 <Link
-                  href="/auth/register"
+                  href="/pricing"
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg text-sm transition-all flex justify-center items-center gap-2 group"
                 >
                   <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  {t("START YOUR SCANNER", "СКАННЕР ЭХЛҮҮЛЭХ")}
+                  {t("GET STARTED", "ЭХЛЭХ")}
                 </Link>
               </div>
             </div>
@@ -1267,11 +1267,11 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/auth/register?callbackUrl=/simulator"
+                href="/pricing"
                 className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex flex-col items-center justify-center"
               >
-                <span>{t("Try Simulator", "Симулятор турших")}</span>
-                <span className="text-[10px] font-normal opacity-70">{t("Free account required", "Үнэгүй бүртгэл шаардлагатай")}</span>
+                <span>{t("Get Started", "Эхлэх")}</span>
+                <span className="text-[10px] font-normal opacity-70">{t("View pricing plans", "Үнийн төлөвлөгөө харах")}</span>
               </Link>
             </div>
             <p className="mt-6 text-xs text-gray-600 font-mono">

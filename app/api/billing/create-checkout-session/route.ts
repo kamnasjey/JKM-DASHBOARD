@@ -1,25 +1,12 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { getPrisma, prismaAvailable } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { getStripe } from "@/lib/stripe"
 
 export const runtime = "nodejs"
 
-// Helper to check if billing is disabled
-function isBillingDisabled(): boolean {
-  return process.env.BILLING_DISABLED === "1" || !prismaAvailable()
-}
-
 export async function POST() {
-  // Check if billing is disabled
-  if (isBillingDisabled()) {
-    return NextResponse.json(
-      { ok: false, message: "Billing disabled. Contact admin for access." },
-      { status: 503 }
-    )
-  }
-
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
@@ -46,48 +33,41 @@ export async function POST() {
     )
   }
 
-  const prisma = getPrisma()
-  if (!prisma) {
-    return NextResponse.json(
-      { ok: false, message: "Database unavailable" },
-      { status: 503 }
-    )
-  }
+  try {
+    const db = getFirebaseAdminDb()
+    const userDoc = await db.collection("users").doc(userId).get()
+    const userData = userDoc.data() || {}
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, hasPaidAccess: true, stripeCustomerId: true },
-  })
+    // Check if already paid
+    if (userData.hasPaidAccess === true || userData.has_paid_access === true) {
+      return NextResponse.json({ ok: true, alreadyPaid: true })
+    }
 
-  if (!user) {
-    return NextResponse.json({ ok: false, message: "User not found" }, { status: 404 })
-  }
-
-  if (user.hasPaidAccess) {
-    return NextResponse.json({ ok: true, alreadyPaid: true })
-  }
-
-  const stripe = getStripe()
-  const checkoutSession = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer: user.stripeCustomerId ?? undefined,
-    customer_email: user.stripeCustomerId ? undefined : (user.email ?? undefined),
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/billing?success=1`,
-    cancel_url: `${appUrl}/billing?canceled=1`,
-    client_reference_id: user.id,
-    metadata: {
-      userId: user.id,
-    },
-  })
-
-  // Store checkout id for traceability (optional)
-  if (checkoutSession.id) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { stripeCheckoutId: checkoutSession.id },
+    const stripe = getStripe()
+    const checkoutSession = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer: userData.stripeCustomerId ?? undefined,
+      customer_email: userData.stripeCustomerId ? undefined : (userData.email ?? (session.user as any).email ?? undefined),
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/billing?success=1`,
+      cancel_url: `${appUrl}/billing?canceled=1`,
+      client_reference_id: userId,
+      metadata: {
+        userId: userId,
+      },
     })
-  }
 
-  return NextResponse.json({ ok: true, url: checkoutSession.url })
+    // Store checkout id for traceability
+    if (checkoutSession.id) {
+      await db.collection("users").doc(userId).set(
+        { stripeCheckoutId: checkoutSession.id },
+        { merge: true }
+      )
+    }
+
+    return NextResponse.json({ ok: true, url: checkoutSession.url })
+  } catch (err) {
+    console.error("[billing/create-checkout-session] Error:", err)
+    return NextResponse.json({ ok: false, message: "Failed to create checkout session" }, { status: 500 })
+  }
 }

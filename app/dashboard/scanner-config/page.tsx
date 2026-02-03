@@ -18,6 +18,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { AccessGate } from "@/components/access-gate"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -475,6 +476,7 @@ export default function ScannerConfigPage() {
   }
 
   return (
+    <AccessGate feature="scanner">
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
@@ -804,5 +806,6 @@ export default function ScannerConfigPage() {
         </Card>
       </div>
     </DashboardLayout>
+    </AccessGate>
   )
 }

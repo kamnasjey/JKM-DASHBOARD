@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireInternalApiKey } from "@/lib/internal-api-auth"
-import { getPrisma } from "@/lib/db"
 import { getUserDoc, upsertUserIdentity, updateUserPrefs } from "@/lib/user-data/user-store"
 
 export const runtime = "nodejs"
@@ -22,19 +21,13 @@ const WRITABLE_PREFS_KEYS = [
   "scan_enabled",
   "plan",
   "plan_status",
-  "strategies", // Allow clearing legacy strategies from prefs
+  "strategies",
 ] as const
 
 /**
- * Allowed fields for identity (synced from Prisma or set by internal API).
+ * Allowed fields for identity.
  */
-const WRITABLE_IDENTITY_KEYS = [
-  "email",
-  "name",
-  "has_paid_access",
-  "plan",
-  "plan_status",
-] as const
+const WRITABLE_IDENTITY_KEYS = ["email", "name", "has_paid_access", "plan", "plan_status"] as const
 
 function pickWritablePrefs(input: unknown): Record<string, unknown> {
   if (!input || typeof input !== "object") return {}
@@ -72,39 +65,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   // Get user doc from Firestore (canonical)
   const firestoreDoc = await getUserDoc(userId)
-
-  // Optional: include Prisma user record if present (for compatibility)
-  let prismaUser: { id: string; email: string | null; name: string | null; hasPaidAccess: boolean } | null = null
-  const prisma = getPrisma()
-  if (prisma) {
-    try {
-      prismaUser = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, email: true, name: true, hasPaidAccess: true },
-      })
-    } catch {
-      prismaUser = null
-    }
-  }
-
-  // If Firestore doc doesn't exist but Prisma user does, return Prisma data as prefs
   const prefs = firestoreDoc || {}
 
   return NextResponse.json({
     ok: true,
     user_id: userId,
-    user: prismaUser,
     prefs,
-    // Indicate where the data came from
-    source: firestoreDoc ? "firestore" : (prismaUser ? "prisma" : "none"),
+    source: firestoreDoc ? "firestore" : "none",
   })
 }
 
 /**
  * PUT /api/internal/user-data/users/{userId}
- * 
+ *
  * Update user preferences and/or identity fields in Firestore.
- * 
+ *
  * Body formats:
  *   { prefs: { telegram_chat_id, scan_enabled, ... } }  - update prefs only
  *   { identity: { email, name, has_paid_access, ... } } - update identity only

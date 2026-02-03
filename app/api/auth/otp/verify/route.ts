@@ -1,31 +1,19 @@
 import { NextResponse } from "next/server"
-import { getPrisma, prismaAvailable } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { seedStarterStrategiesForUser } from "@/lib/user-data/starter-strategies"
+import { randomUUID } from "crypto"
 
 export const runtime = "nodejs"
 
 // MVP: Accept "123456" as valid OTP
 // TODO: Compare against stored otpHash for production
 
+const OTP_COLLECTION = "otp-challenges"
+
 export async function POST(request: Request) {
-  // Check if Prisma is available (required for OTP)
-  if (!prismaAvailable()) {
-    return NextResponse.json(
-      { error: "Утасны нэвтрэлт идэвхгүй байна. Google-ээр нэвтэрнэ үү." },
-      { status: 503 }
-    )
-  }
-
-  const prisma = getPrisma()
-  if (!prisma) {
-    return NextResponse.json(
-      { error: "Database unavailable" },
-      { status: 503 }
-    )
-  }
-
   try {
     const body = await request.json()
-    const { phone, otp, name } = body
+    const { phone, otp, name, plan } = body
 
     if (!phone || !otp) {
       return NextResponse.json(
@@ -40,7 +28,6 @@ export async function POST(request: Request) {
     // MVP: Fixed OTP check
     // TODO: For production, verify against otpHash in database
     if (trimmedOtp !== "123456") {
-      // Increment attempts in DB (optional for MVP)
       const maskedPhone = `${normalizedPhone.slice(0, 2)}****${normalizedPhone.slice(-2)}`
       console.log(`[Auth] OTP verify failed: ${maskedPhone}`)
 
@@ -50,39 +37,75 @@ export async function POST(request: Request) {
       )
     }
 
-    // Find or create user by phone (unique constraint)
-    let user = await prisma.user.findUnique({
-      where: { phone: normalizedPhone },
-    })
+    const db = getFirebaseAdminDb()
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          phone: normalizedPhone,
-          name: name?.trim() || null,
-          provider: "phone",
-        },
+    // Find user by phone in Firestore
+    const userSnapshot = await db
+      .collection("users")
+      .where("phone", "==", normalizedPhone)
+      .limit(1)
+      .get()
+
+    let userId: string
+    let isNewUser = false
+
+    if (userSnapshot.empty) {
+      // Create new user with phone
+      userId = randomUUID()
+      const userPlan = plan || "free"
+      const hasPaidAccess = false // Always false until admin approves
+      await db.collection("users").doc(userId).set({
+        user_id: userId,
+        phone: normalizedPhone,
+        name: name?.trim() || null,
+        provider: "phone",
+        plan: userPlan,
+        planStatus: userPlan === "free" ? "active" : "pending",
+        hasPaidAccess,
+        has_paid_access: hasPaidAccess,
+        createdAt: new Date().toISOString(),
       })
-    } else if (name && !user.name) {
+      isNewUser = true
+
+      // Seed starter strategies for new user
+      try {
+        await seedStarterStrategiesForUser(db, userId)
+      } catch (seedErr) {
+        console.error("[Auth] Starter strategies seed failed:", seedErr)
+      }
+    } else {
+      // Use existing user
+      const userDoc = userSnapshot.docs[0]
+      userId = userDoc.id
+
       // Update name if provided and user doesn't have one
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { name: name.trim() },
-      })
+      const userData = userDoc.data()
+      if (name && !userData.name) {
+        await db.collection("users").doc(userId).update({
+          name: name.trim(),
+        })
+      }
     }
 
     // Clean up used OTP challenges
-    await prisma.otpChallenge.deleteMany({
-      where: { phone: normalizedPhone },
+    const challengeSnapshot = await db
+      .collection(OTP_COLLECTION)
+      .where("phone", "==", normalizedPhone)
+      .get()
+
+    const batch = db.batch()
+    challengeSnapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref)
     })
+    await batch.commit()
 
     const maskedPhone = `${normalizedPhone.slice(0, 2)}****${normalizedPhone.slice(-2)}`
-    console.log(`[Auth] OTP verify success: ${maskedPhone}`)
+    console.log(`[Auth] OTP verify success: ${maskedPhone}${isNewUser ? " (new user)" : ""}`)
 
     return NextResponse.json({
       success: true,
       message: "Баталгаажуулалт амжилттай",
-      userId: user.id,
+      userId,
       phone: normalizedPhone,
     })
   } catch (error) {

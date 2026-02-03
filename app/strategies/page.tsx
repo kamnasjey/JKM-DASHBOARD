@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, Wand2, LayoutGrid } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { AccessGate } from "@/components/access-gate"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -480,6 +481,7 @@ export default function StrategiesPage() {
   }
 
   return (
+    <AccessGate feature="strategies">
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -908,5 +910,6 @@ export default function StrategiesPage() {
         />
       </div>
     </DashboardLayout>
+    </AccessGate>
   )
 }

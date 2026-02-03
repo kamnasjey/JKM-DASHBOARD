@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { hash } from "bcryptjs"
-import { getPrisma, prismaAvailable } from "@/lib/db"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 
 export const runtime = "nodejs"
 
@@ -9,24 +9,9 @@ export const runtime = "nodejs"
 
 const OTP_EXPIRY_MINUTES = 5
 const OTP_RATE_LIMIT_SECONDS = 60
+const OTP_COLLECTION = "otp-challenges"
 
 export async function POST(request: Request) {
-  // Check if Prisma is available (required for OTP)
-  if (!prismaAvailable()) {
-    return NextResponse.json(
-      { error: "Утасны нэвтрэлт идэвхгүй байна. Google-ээр нэвтэрнэ үү." },
-      { status: 503 }
-    )
-  }
-
-  const prisma = getPrisma()
-  if (!prisma) {
-    return NextResponse.json(
-      { error: "Database unavailable" },
-      { status: 503 }
-    )
-  }
-
   try {
     const body = await request.json()
     const { phone } = body
@@ -47,18 +32,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // Rate limiting: check if recently requested
-    const recentChallenge = await prisma.otpChallenge.findFirst({
-      where: {
-        phone: normalizedPhone,
-        createdAt: {
-          gte: new Date(Date.now() - OTP_RATE_LIMIT_SECONDS * 1000),
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    })
+    const db = getFirebaseAdminDb()
+    const now = Date.now()
+    const rateLimitTime = new Date(now - OTP_RATE_LIMIT_SECONDS * 1000).toISOString()
 
-    if (recentChallenge) {
+    // Rate limiting: check if recently requested
+    const recentSnapshot = await db
+      .collection(OTP_COLLECTION)
+      .where("phone", "==", normalizedPhone)
+      .where("createdAt", ">=", rateLimitTime)
+      .limit(1)
+      .get()
+
+    if (!recentSnapshot.empty) {
       return NextResponse.json(
         { error: "OTP саяхан илгээсэн. Түр хүлээнэ үү." },
         { status: 429 }
@@ -69,13 +55,12 @@ export async function POST(request: Request) {
     const otp = "123456" // TODO: For production: Math.floor(100000 + Math.random() * 900000).toString()
     const otpHash = await hash(otp, 10)
 
-    // Store OTP challenge
-    await prisma.otpChallenge.create({
-      data: {
-        phone: normalizedPhone,
-        otpHash,
-        expiresAt: new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000),
-      },
+    // Store OTP challenge in Firestore
+    await db.collection(OTP_COLLECTION).add({
+      phone: normalizedPhone,
+      otpHash,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(now + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString(),
     })
 
     // Mask phone in logs

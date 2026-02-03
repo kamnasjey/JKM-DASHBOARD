@@ -1,41 +1,46 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { isOwnerEmail } from "@/lib/owner"
-import { getPrisma, prismaAvailable } from "@/lib/db"
-import { json } from "@/lib/proxy-auth"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
-  if (!session?.user) return json(401, { ok: false, message: "Unauthorized" })
+  if (!session?.user) {
+    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
+  }
 
   const adminEmail = (session.user as any).email as string | undefined
-  if (!isOwnerEmail(adminEmail)) return json(403, { ok: false, message: "Forbidden" })
-
-  // Check if billing/Prisma is available
-  if (!prismaAvailable()) {
-    return json(503, { ok: false, message: "Billing disabled (no DATABASE_URL)", requests: [] })
+  if (!isOwnerEmail(adminEmail)) {
+    return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 })
   }
 
-  const prisma = getPrisma()
-  if (!prisma) {
-    return json(503, { ok: false, message: "Database unavailable", requests: [] })
+  try {
+    const db = getFirebaseAdminDb()
+    const snapshot = await db
+      .collection("users")
+      .where("manualPaymentStatus", "==", "pending")
+      .orderBy("manualPaymentRequestedAt", "desc")
+      .get()
+
+    const requests = snapshot.docs.map((doc) => {
+      const data = doc.data()
+      return {
+        id: doc.id,
+        email: data.email || null,
+        manualPaymentPlan: data.manualPaymentPlan || null,
+        manualPaymentPayerEmail: data.manualPaymentPayerEmail || null,
+        manualPaymentTxnRef: data.manualPaymentTxnRef || null,
+        manualPaymentNote: data.manualPaymentNote || null,
+        manualPaymentRequestedAt: data.manualPaymentRequestedAt || null,
+      }
+    })
+
+    return NextResponse.json({ ok: true, requests })
+  } catch (err) {
+    console.error("[admin/manual-payments/list] Error:", err)
+    return NextResponse.json({ ok: false, message: "Failed to load requests", requests: [] }, { status: 500 })
   }
-
-  const requests = await prisma.user.findMany({
-    where: { manualPaymentStatus: "pending" },
-    orderBy: { manualPaymentRequestedAt: "desc" },
-    select: {
-      id: true,
-      email: true,
-      manualPaymentPlan: true,
-      manualPaymentPayerEmail: true,
-      manualPaymentTxnRef: true,
-      manualPaymentNote: true,
-      manualPaymentRequestedAt: true,
-    },
-  })
-
-  return json(200, { ok: true, requests })
 }

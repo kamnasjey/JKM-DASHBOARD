@@ -2,6 +2,7 @@
 // Force recompile v2 - 2026-01-31
 import { useState, useEffect, useMemo } from "react"
 import { api } from "@/lib/api"
+import { AccessGate } from "@/components/access-gate"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -860,6 +861,7 @@ export default function SimulatorPage() {
       const isNoSetups = !!combinedResult && (combinedResult.summary?.entries ?? 0) === 0
 
       return (
+        <AccessGate feature="simulator">
         <ErrorBoundary
           fallback={
             <div className="min-h-screen bg-background text-foreground">
@@ -1853,5 +1855,6 @@ export default function SimulatorPage() {
         </div>
       </div>
     </ErrorBoundary>
+    </AccessGate>
   )
 }

@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
 import { isOwnerEmail } from "@/lib/owner"
-import { getPrisma, prismaAvailable } from "@/lib/db"
-import { json } from "@/lib/proxy-auth"
+import { getFirebaseAdminDb } from "@/lib/firebase-admin"
+import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
@@ -28,19 +28,13 @@ function normalizePlan(value: unknown): "pro" | "pro_plus" | null {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
-  if (!session?.user) return json(401, { ok: false, message: "Unauthorized" })
-
-  const adminEmail = (session.user as any).email as string | undefined
-  if (!isOwnerEmail(adminEmail)) return json(403, { ok: false, message: "Forbidden" })
-
-  // Check if billing/Prisma is available
-  if (!prismaAvailable()) {
-    return json(503, { ok: false, message: "Billing disabled (no DATABASE_URL)" })
+  if (!session?.user) {
+    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   }
 
-  const prisma = getPrisma()
-  if (!prisma) {
-    return json(503, { ok: false, message: "Database unavailable" })
+  const adminEmail = (session.user as any).email as string | undefined
+  if (!isOwnerEmail(adminEmail)) {
+    return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 })
   }
 
   const body = (await request.json().catch(() => null)) as DecideBody | null
@@ -51,52 +45,76 @@ export async function POST(request: Request) {
   const plan = normalizePlan(body?.plan)
 
   if (decision !== "approve" && decision !== "reject") {
-    return json(400, { ok: false, message: "decision must be approve|reject" })
+    return NextResponse.json({ ok: false, message: "decision must be approve|reject" }, { status: 400 })
   }
 
   if (!userId && !userEmail) {
-    return json(400, { ok: false, message: "userId or userEmail required" })
+    return NextResponse.json({ ok: false, message: "userId or userEmail required" }, { status: 400 })
   }
 
-  const now = new Date()
+  const db = getFirebaseAdminDb()
+  const now = new Date().toISOString()
 
-  const where = userId ? { id: userId } : { email: userEmail }
-  const existing = await prisma.user.findUnique({
-    where,
-    select: { id: true, hasPaidAccess: true, manualPaymentPlan: true },
-  })
+  try {
+    let userDocId: string | null = null
 
-  if (!existing) {
-    return json(404, { ok: false, message: "User not found" })
-  }
+    if (userId) {
+      // Find by userId
+      const doc = await db.collection("users").doc(userId).get()
+      if (doc.exists) {
+        userDocId = doc.id
+      }
+    } else if (userEmail) {
+      // Find by email
+      const snapshot = await db
+        .collection("users")
+        .where("email", "==", userEmail)
+        .limit(1)
+        .get()
+      if (!snapshot.empty) {
+        userDocId = snapshot.docs[0].id
+      }
+    }
 
-  if (decision === "approve") {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        hasPaidAccess: true,
-        paidAt: now,
-        manualPaymentStatus: "approved",
-        manualPaymentPlan: plan ?? existing.manualPaymentPlan,
+    if (!userDocId) {
+      return NextResponse.json({ ok: false, message: "User not found" }, { status: 404 })
+    }
+
+    const userDoc = await db.collection("users").doc(userDocId).get()
+    const userData = userDoc.data() || {}
+
+    if (decision === "approve") {
+      await db.collection("users").doc(userDocId).set(
+        {
+          hasPaidAccess: true,
+          has_paid_access: true,
+          paidAt: now,
+          manualPaymentStatus: "approved",
+          manualPaymentPlan: plan ?? userData.manualPaymentPlan,
+          manualPaymentReviewedAt: now,
+          manualPaymentReviewedBy: adminEmail ?? null,
+          manualPaymentNote: note || userData.manualPaymentNote || null,
+        },
+        { merge: true }
+      )
+
+      return NextResponse.json({ ok: true, status: "approved" })
+    }
+
+    // reject
+    await db.collection("users").doc(userDocId).set(
+      {
+        manualPaymentStatus: "rejected",
         manualPaymentReviewedAt: now,
         manualPaymentReviewedBy: adminEmail ?? null,
-        manualPaymentNote: note || undefined,
+        manualPaymentNote: note || userData.manualPaymentNote || null,
       },
-    })
+      { merge: true }
+    )
 
-    return json(200, { ok: true, status: "approved" })
+    return NextResponse.json({ ok: true, status: "rejected" })
+  } catch (err) {
+    console.error("[admin/manual-payments/decide] Error:", err)
+    return NextResponse.json({ ok: false, message: "Failed to process decision" }, { status: 500 })
   }
-
-  // reject
-  await prisma.user.update({
-    where: { id: existing.id },
-    data: {
-      manualPaymentStatus: "rejected",
-      manualPaymentReviewedAt: now,
-      manualPaymentReviewedBy: adminEmail ?? null,
-      manualPaymentNote: note || undefined,
-    },
-  })
-
-  return json(200, { ok: true, status: "rejected" })
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell, TrendingUp, TrendingDown, Minus, Check, ChevronDown, Radio, Zap, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AccessGateViewOnly } from "@/components/access-gate"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DashboardLayout } from "@/components/dashboard-layout"
@@ -667,6 +668,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <AccessGateViewOnly feature="dashboard">
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -945,5 +947,6 @@ export default function DashboardPage() {
         />
       </div>
     </DashboardLayout>
+    </AccessGateViewOnly>
   )
 }

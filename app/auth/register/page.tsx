@@ -1,23 +1,30 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { signIn, useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BackButton } from "@/components/back-button"
+import { PLANS, type PlanType } from "@/lib/constants/pricing"
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { status } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [authErrorCode, setAuthErrorCode] = useState("")
+
+  // Get plan from URL (default to free)
+  const planParam = searchParams.get("plan") as PlanType | null
+  const selectedPlan = PLANS.find((p) => p.id === planParam) || PLANS.find((p) => p.id === "free")!
 
   // Email register state
   const [name, setName] = useState("")
@@ -38,8 +45,7 @@ export default function RegisterPage() {
   }, [router, status])
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get("error")
+    const code = searchParams.get("error")
     if (!code) return
 
     setAuthErrorCode(code)
@@ -64,7 +70,7 @@ export default function RegisterPage() {
         setError(`Бүртгэл хийхэд алдаа гарлаа. (${code})`)
         return
     }
-  }, [])
+  }, [searchParams])
 
   const handleGoogleRegister = () => {
     setLoading(true)
@@ -92,7 +98,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/local/register-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, plan: selectedPlan.id }),
       })
 
       const data = await res.json()
@@ -155,7 +161,7 @@ export default function RegisterPage() {
       const verifyRes = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp, name: phoneName }),
+        body: JSON.stringify({ phone, otp, name: phoneName, plan: selectedPlan.id }),
       })
 
       const verifyData = await verifyRes.json()
@@ -193,7 +199,19 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>JKM Copilot</CardTitle>
-          <CardDescription>Бүртгүүлэх</CardDescription>
+          <CardDescription>
+            {selectedPlan.id === "free" ? (
+              "Үнэгүй бүртгүүлэх"
+            ) : (
+              <>
+                {selectedPlan.name} төлөвлөгөөнд бүртгүүлэх
+                <br />
+                <Link href="/pricing" className="text-primary underline text-xs">
+                  Төлөвлөгөө солих
+                </Link>
+              </>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
@@ -376,5 +394,17 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   )
 }
