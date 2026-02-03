@@ -603,26 +603,36 @@ export default function LandingPage() {
 
         {/* Footer */}
         <footer className="bg-[#111111] border-t border-white/10 py-12 px-6">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-3">
-              <div className="size-6 bg-white/10 rounded flex items-center justify-center text-white">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="flex items-center gap-3">
+                <div className="size-6 bg-white/10 rounded flex items-center justify-center text-white">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-gray-300 text-sm">JKM Copilot</span>
+                  <span className="text-[10px] text-gray-600">Pro Terminal v2.4</span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-gray-300 text-sm">JKM Copilot</span>
-                <span className="text-[10px] text-gray-600">Pro Terminal v2.4</span>
+              <div className="flex gap-8 text-xs text-gray-500 font-mono">
+                <a className="hover:text-[#0df269] transition-colors" href="#">{t("Documentation", "Гарын авлага")}</a>
+                <a className="hover:text-[#0df269] transition-colors" href="#">API Status</a>
+                <a className="hover:text-[#0df269] transition-colors" href="#">{t("Terms", "Нөхцөл")}</a>
+                <a className="hover:text-[#0df269] transition-colors" href="#">{t("Privacy", "Нууцлал")}</a>
+              </div>
+              <div className="text-[10px] text-gray-600 font-mono">
+                © 2024 JKM Copilot Inc. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
               </div>
             </div>
-            <div className="flex gap-8 text-xs text-gray-500 font-mono">
-              <a className="hover:text-[#0df269] transition-colors" href="#">{t("Documentation", "Гарын авлага")}</a>
-              <a className="hover:text-[#0df269] transition-colors" href="#">API Status</a>
-              <a className="hover:text-[#0df269] transition-colors" href="#">{t("Terms", "Нөхцөл")}</a>
-              <a className="hover:text-[#0df269] transition-colors" href="#">{t("Privacy", "Нууцлал")}</a>
-            </div>
-            <div className="text-[10px] text-gray-600 font-mono">
-              © 2024 JKM Copilot Inc. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
+            <div className="mt-6 pt-6 border-t border-white/5 text-center">
+              <p className="text-[10px] text-gray-600 max-w-2xl mx-auto">
+                {t(
+                  "Forex/Crypto market data is sourced from third-party providers for internal processing and 24/7 strategy-based scanning. No official partnership or endorsement implied.",
+                  "Forex/Crypto market data-г гуравдагч эх сурвалжаас татан авч, дотоод боловсруулалт хийж 24/7 strategy-based scanning ажиллуулдаг. Албан ёсны түншлэл/баталгаа гэсэн утга агуулахгүй."
+                )}
+              </p>
             </div>
           </div>
         </footer>
