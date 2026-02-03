@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { Radar, ArrowRight } from "lucide-react"
 
 // Live Feed Data - Forex market data
 const liveFeedData = [
@@ -703,6 +704,14 @@ export default function LandingPage() {
                   "Таны стратеги манай серверт 24/7 ажиллана. Setup олдоход шууд мэдэгдэл авна."
                 )}
               </p>
+              <Link
+                href="/scanner"
+                className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 hover:border-blue-500/60 transition-all font-semibold"
+              >
+                <Radar className="w-5 h-5" />
+                {t("Go to Scanner Engine", "Scanner Engine руу очих")}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8 items-center">
