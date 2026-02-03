@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useLanguage } from "@/contexts/language-context"
 
 // Admin email address for full Live Ops access
 const ADMIN_EMAIL = "kamnasjey@gmail.com"
@@ -117,8 +118,9 @@ const isMarketClosed = (symbol: string, serverTime: string | null): boolean => {
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { toast } = useToast()
+  const { t } = useLanguage()
   const uid = (session as any)?.user?.id || ""
-  
+
   // Check if current user is admin
   const isAdmin = useMemo(() => {
     const email = session?.user?.email?.toLowerCase()
@@ -669,29 +671,29 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard <span className="text-base font-normal text-muted-foreground">/ Хянах самбар</span></h1>
+            <h1 className="text-2xl font-bold">{t("Dashboard", "Хянах самбар")}</h1>
             <p className="text-sm text-muted-foreground">
-              Welcome{session?.user?.email ? `, ${session.user.email}` : ""} / Сайн байна уу
+              {t("Welcome", "Сайн байна уу")}{session?.user?.email ? `, ${session.user.email}` : ""}
             </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleManualScan} disabled={loading}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Scan Now
+              {t("Scan Now", "Скан хийх")}
             </Button>
             <Button variant="outline" onClick={refreshDashboard} disabled={loading}>
-              Refresh / Шинэчлэх
+              {t("Refresh", "Шинэчлэх")}
             </Button>
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <MetricCard title="Total Setups / Нийт setup" value={totalSignalsText} subtitle="Recent stats / Сүүлийн статистик" icon={BarChart3} />
-          <MetricCard title="Win Rate / Ялалтын хувь" value={winRateText} subtitle="Success rate" icon={Activity} />
+          <MetricCard title={t("Total Setups", "Нийт setup")} value={totalSignalsText} subtitle={t("Recent stats", "Сүүлийн статистик")} icon={BarChart3} />
+          <MetricCard title={t("Win Rate", "Ялалтын хувь")} value={winRateText} subtitle={t("Success rate", "Амжилтын хувь")} icon={Activity} />
           <MetricCard
-            title="Active Strategies / Идэвхтэй"
+            title={t("Active Strategies", "Идэвхтэй")}
             value={activeSymbolCount || "—"}
-            subtitle="Symbol-strategy pairs"
+            subtitle={t("Symbol-strategy pairs", "Symbol-стратеги хос")}
             icon={Layers3}
           />
         </div>
