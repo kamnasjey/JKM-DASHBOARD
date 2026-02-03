@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/contexts/language-context"
 
 interface SidebarProps {
   isAdmin?: boolean
@@ -59,12 +60,15 @@ const navItems = [
 
 export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps) {
   const pathname = usePathname()
+  const { lang } = useLanguage()
 
   const handleClick = () => {
     if (isMobile && onNavigate) {
       onNavigate()
     }
   }
+
+  const getLabel = (en: string, mn: string) => lang === "mn" ? mn : en
 
   return (
     <aside
@@ -109,10 +113,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                <span className="flex flex-col leading-tight">
-                  <span>{item.label}</span>
-                  <span className="text-[10px] opacity-60">{item.labelMn}</span>
-                </span>
+                <span>{getLabel(item.label, item.labelMn)}</span>
               </Link>
             )
           })}
@@ -128,10 +129,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
               )}
             >
               <Wrench className="h-5 w-5 flex-shrink-0" />
-              <span className="flex flex-col leading-tight">
-                <span>Repair</span>
-                <span className="text-[10px] opacity-60">Засварын газар</span>
-              </span>
+              <span>{getLabel("Repair", "Засварын газар")}</span>
             </Link>
           )}
           {isAdmin && (
@@ -146,10 +144,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
               )}
             >
               <Settings className="h-5 w-5 flex-shrink-0" />
-              <span className="flex flex-col leading-tight">
-                <span>Admin</span>
-                <span className="text-[10px] opacity-60">Админ</span>
-              </span>
+              <span>{getLabel("Admin", "Админ")}</span>
             </Link>
           )}
         </nav>
