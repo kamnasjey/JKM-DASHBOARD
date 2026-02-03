@@ -86,9 +86,9 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400 font-mono">
-            <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("How It Works", "Яаж ажилладаг")}</a>
-            <Link className="hover:text-[#0df269] transition-colors" href="/scanner">{t("Scanner", "Сканнер")}</Link>
-            <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("Simulator", "Симулятор")}</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#features">{t("How It Works", "Яаж ажилладаг")}</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("Scanner", "Сканнер")}</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#simulator">{t("Simulator", "Симулятор")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#faq">FAQ</a>
           </div>
 
