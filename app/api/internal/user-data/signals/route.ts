@@ -111,7 +111,20 @@ export async function POST(request: NextRequest) {
     payload.generated_at = String((signal as any).generated_at)
   }
   if ((signal as any).status) {
-    payload.status = String((signal as any).status)
+    const status = String((signal as any).status)
+    payload.status = status
+
+    // Map status to outcome for History page compatibility
+    // VPS sends status (hit_tp/hit_sl/expired), History reads outcome (win/loss/pending)
+    if (!payload.outcome) {
+      if (status === "hit_tp") {
+        payload.outcome = "win"
+      } else if (status === "hit_sl") {
+        payload.outcome = "loss"
+      } else if (status === "expired") {
+        payload.outcome = "expired"
+      }
+    }
   }
   if ((signal as any).outcome) {
     payload.outcome = String((signal as any).outcome)

@@ -131,7 +131,16 @@ export async function listUserSignals(
       createdAt: data.createdAt ? String(data.createdAt) : undefined,
       // Entry tracking fields
       entry_taken: data.entry_taken === true ? true : data.entry_taken === false ? false : null,
-      outcome: data.outcome ? String(data.outcome) as StoredSignal["outcome"] : null,
+      // Map outcome from either outcome field or status field (for backwards compatibility)
+      outcome: data.outcome
+        ? String(data.outcome) as StoredSignal["outcome"]
+        : data.status === "hit_tp"
+          ? "win"
+          : data.status === "hit_sl"
+            ? "loss"
+            : data.status === "expired"
+              ? "expired"
+              : null,
     } as StoredSignal & { ts?: string })
   }
 
