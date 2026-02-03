@@ -40,13 +40,27 @@ export function SignalsDrawer({ signal, onClose }: SignalsDrawerProps) {
             </div>
           </div>
 
-          {/* Evidence */}
+          {/* Evidence Summary */}
           {signal.evidence && (
             <div className="space-y-2">
-              <div className="text-sm font-medium">Evidence (AI тайлбар)</div>
-              <div className="rounded-md border bg-muted/30 p-3">
-                <pre className="whitespace-pre-wrap font-mono text-xs">{JSON.stringify(signal.evidence, null, 2)}</pre>
-              </div>
+              <div className="text-sm font-medium">Тайлбар</div>
+              {/* Human-readable summary */}
+              {(signal.evidence.summary || signal.evidence.reason) && (
+                <div className="rounded-md border bg-primary/5 border-primary/20 p-3">
+                  <p className="text-sm leading-relaxed">
+                    {signal.evidence.summary || signal.evidence.reason}
+                  </p>
+                </div>
+              )}
+              {/* Detailed breakdown (collapsible) */}
+              <details className="group">
+                <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                  Дэлгэрэнгүй харах...
+                </summary>
+                <div className="mt-2 rounded-md border bg-muted/30 p-3">
+                  <pre className="whitespace-pre-wrap font-mono text-xs">{JSON.stringify(signal.evidence, null, 2)}</pre>
+                </div>
+              </details>
             </div>
           )}
 
