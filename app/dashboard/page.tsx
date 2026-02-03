@@ -246,11 +246,20 @@ export default function DashboardPage() {
   const handleEntryToggle = useCallback(async (signalKey: string, taken: boolean) => {
     try {
       await api.updateSignalEntry(signalKey, taken)
+      // Update local state immediately for instant UI feedback
+      setFirestoreSignals(prev => prev.map(s => {
+        const sKey = s.id.startsWith("signals:") ? s.id.slice(8) : s.id
+        if (sKey === signalKey) {
+          return { ...s, entry_taken: taken }
+        }
+        return s
+      }))
       toast({
         title: taken ? "✓ Entry жагсаалтад орлоо" : "✗ Entry жагсаалтаас хасагдлаа",
         description: `Signal ${signalKey.slice(0, 8)}... амжилттай хадгалагдлаа`,
       })
     } catch (err: any) {
+      console.error("[handleEntryToggle] Error:", err)
       toast({
         title: "Алдаа",
         description: err.message || "Entry tracking хадгалж чадсангүй",
@@ -263,11 +272,20 @@ export default function DashboardPage() {
   const handleOutcomeSet = useCallback(async (signalKey: string, outcome: "win" | "loss" | null) => {
     try {
       await api.updateSignalEntry(signalKey, null, outcome)
+      // Update local state immediately for instant UI feedback
+      setFirestoreSignals(prev => prev.map(s => {
+        const sKey = s.id.startsWith("signals:") ? s.id.slice(8) : s.id
+        if (sKey === signalKey) {
+          return { ...s, outcome: outcome }
+        }
+        return s
+      }))
       toast({
         title: outcome === "win" ? "✓ TP цохисон" : outcome === "loss" ? "✗ SL цохисон" : "↺ Үр дүн арилгав",
         description: `Signal ${signalKey.slice(0, 8)}...`,
       })
     } catch (err: any) {
+      console.error("[handleOutcomeSet] Error:", err)
       toast({
         title: "Алдаа",
         description: err.message || "Үр дүн хадгалж чадсангүй",
