@@ -32,7 +32,7 @@ export function HeroSection() {
         </h1>
 
         <p className="mb-6 text-pretty text-lg text-muted-foreground md:text-xl">
-          Polygon.io-оос 5 минут тутам шинэчлэгдэх жинхэнэ зах зээлийн дата дээр
+          Гуравдагч эх сурвалжаас-оос 5 минут тутам шинэчлэгдэх жинхэнэ зах зээлийн дата дээр
           <span className="text-primary font-medium"> таны өөрийн стратегиар </span>
           24/7 автоматаар scan хийж, оновчтой setup-уудыг илрүүлнэ.
         </p>

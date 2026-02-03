@@ -1,6 +1,9 @@
-import Link from "next/link"
+"use client"
 
-// Live Feed Data - Polygon.io Forex data
+import Link from "next/link"
+import { useState } from "react"
+
+// Live Feed Data - Forex market data
 const liveFeedData = [
   { symbol: "XAUUSD", tf: "M5", regime: "TREND UP", regimeColor: "green", confidence: "87%", trend: "up" },
   { symbol: "EURUSD", tf: "M5", regime: "RANGE", regimeColor: "yellow", confidence: "72%", trend: "neutral" },
@@ -37,6 +40,9 @@ function RegimeBadge({ regime, color }: { regime: string; color: string }) {
 }
 
 export default function LandingPage() {
+  const [lang, setLang] = useState<"en" | "mn">("en")
+  const t = (en: string, mn: string) => lang === "en" ? en : mn
+
   return (
     <div className="landing-page bg-[#0a0a0a] text-white font-sans antialiased selection:bg-[#0df269]/30 selection:text-white min-h-screen">
       {/* Grid Background */}
@@ -58,14 +64,23 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400 font-mono">
-            <a className="hover:text-[#0df269] transition-colors" href="#features">How It Works</a>
-            <a className="hover:text-[#0df269] transition-colors" href="#simulator">Simulator</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#features">{t("How It Works", "Яаж ажилладаг")}</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#simulator">{t("Simulator", "Симулятор")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#faq">FAQ</a>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            {/* Language Toggle */}
+            <button
+              onClick={() => setLang(lang === "en" ? "mn" : "en")}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-white/10 bg-white/5 hover:bg-white/10 transition-colors text-xs font-mono"
+            >
+              <span className={lang === "en" ? "text-[#0df269]" : "text-gray-500"}>EN</span>
+              <span className="text-gray-600">/</span>
+              <span className={lang === "mn" ? "text-[#0df269]" : "text-gray-500"}>MN</span>
+            </button>
             <Link href="/login" className="hidden sm:block text-sm font-medium text-gray-400 hover:text-white transition-colors">
-              Login
+              {t("Login", "Нэвтрэх")}
             </Link>
             <Link
               href="/simulator"
@@ -74,7 +89,7 @@ export default function LandingPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              <span>TRY SIMULATOR</span>
+              <span>{t("TRY SIMULATOR", "СИМУЛЯТОР")}</span>
             </Link>
           </div>
         </div>
@@ -98,49 +113,42 @@ export default function LandingPage() {
               </div>
 
               <h1 className="text-4xl md:text-6xl font-black leading-[1.1] tracking-tight">
-                Your Personal Trading Copilot
-                <span className="block text-lg md:text-2xl mt-2 text-gray-500 font-medium">
-                  Таны хувийн Trading Copilot
-                </span>
+                {t("Your Personal Trading Copilot", "Таны хувийн Trading Copilot")}
                 <span className="block text-base md:text-xl mt-4 text-[#0df269] font-medium font-mono leading-tight">
-                  24/7 Auto Scanner + Strategy Simulator
+                  {t("24/7 Auto Scanner + Strategy Simulator", "24/7 Автомат Скан + Стратеги Симулятор")}
                 </span>
               </h1>
 
               <p className="text-[#9cbaa8] text-base md:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed border-l-2 border-[#0df269]/30 pl-4">
-                Real market data from Polygon.io every 5 minutes. Scans 24/7 using <span className="text-[#0df269]">your own strategy</span>.
-                <span className="block mt-2 text-sm text-gray-500">
-                  Polygon.io-оос 5 минут тутам бодит дата татаж, таны өөрийн стратегиар 24/7 scan хийнэ.
-                </span>
+                {t(
+                  "Real market data every 5 minutes. Scans 24/7 using",
+                  "5 минут тутам бодит дата татаж,"
+                )} <span className="text-[#0df269]">{t("your own strategy", "таны өөрийн стратегиар")}</span> {t(".", "24/7 scan хийнэ.")}
                 <span className="block mt-2 text-xs text-gray-600 font-mono">
-                  Doesn&apos;t replace a trader — helps you trade with more discipline.
+                  {t("Doesn't replace a trader — helps you trade with more discipline.", "Trader орлохгүй — сахилга баттай арилжаа хийхэд туслана.")}
                 </span>
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
                   href="/simulator"
-                  className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex flex-col items-center justify-center transition-all shadow-neon hover:scale-[1.02]"
+                  className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex items-center justify-center gap-2 transition-all shadow-neon hover:scale-[1.02]"
                 >
-                  <span className="flex items-center gap-2">
-                    Try Simulator
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </span>
-                  <span className="text-[10px] font-medium opacity-80 mt-0.5">Симулятор турших</span>
+                  {t("Try Simulator", "Симулятор турших")}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </Link>
                 <Link
                   href="/dashboard"
-                  className="h-14 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex flex-col items-center justify-center transition-colors group"
+                  className="h-14 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex items-center justify-center gap-2 transition-colors group"
                 >
-                  <span className="flex items-center gap-2 group-hover:text-[#0df269] transition-colors">
-                    View Dashboard
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
+                  <span className="group-hover:text-[#0df269] transition-colors">
+                    {t("View Dashboard", "Dashboard харах")}
                   </span>
-                  <span className="text-[10px] text-gray-500 mt-0.5 group-hover:text-[#0df269]/70">Хянах самбар</span>
+                  <svg className="w-4 h-4 group-hover:text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
                 </Link>
               </div>
 
@@ -150,17 +158,17 @@ export default function LandingPage() {
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    Your Strategy, Your Rules
+                    {t("Your Strategy, Your Rules", "Таны стратеги, таны дүрэм")}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
-                    Explained Setup Detection
+                    {t("Explained Setup Detection", "Тайлбартай setup илрүүлэлт")}
                   </span>
                 </div>
                 <p className="mt-3 text-[10px] text-gray-600 font-mono">
-                  ⚠️ Not financial advice. You make all final decisions.
+                  ⚠️ {t("Not financial advice. You make all final decisions.", "Санхүүгийн зөвлөгөө биш. Эцсийн шийдвэрийг та гаргана.")}
                 </p>
               </div>
             </div>
@@ -231,7 +239,7 @@ export default function LandingPage() {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Polygon.io дата (5 минут тутам)
+                    Бодит дата (5 минут тутам)
                   </span>
                   <span className="text-[9px] font-mono text-[#0df269] animate-pulse">● 24/7 Scan</span>
                 </div>
@@ -245,10 +253,10 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 py-6">
             <div className="flex flex-wrap justify-center gap-4 md:gap-8">
               {[
-                { value: "15+", label: "Forex Pairs + Gold, BTC" },
-                { value: "5min", label: "Real Polygon.io Data" },
-                { icon: "brain", label: "Explained Setups" },
-                { icon: "server", label: "24/7 Auto Scan" },
+                { value: "15+", label: t("Forex Pairs + Gold, BTC", "Forex хос + Алт, BTC") },
+                { value: "5min", label: t("Real Market Data", "Бодит зах зээлийн дата") },
+                { icon: "brain", label: t("Explained Setups", "Тайлбартай setup") },
+                { icon: "server", label: t("24/7 Auto Scan", "24/7 автомат скан") },
               ].map((stat, idx) => (
                 <div
                   key={idx}
@@ -276,10 +284,9 @@ export default function LandingPage() {
         <section className="py-20 md:py-24 px-6" id="features">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-2">How It Works</h2>
-              <p className="text-lg text-gray-500 mb-1">Яаж ажилладаг вэ?</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">{t("How It Works", "Яаж ажилладаг вэ?")}</h2>
               <p className="text-[#9cbaa8] text-sm md:text-base">
-                Your Strategy + Real Data + 24/7 Scan = Optimal Setups
+                {t("Your Strategy + Real Data + 24/7 Scan = Optimal Setups", "Таны стратеги + Бодит дата + 24/7 скан = Оновчтой setup")}
               </p>
             </div>
 
@@ -287,24 +294,18 @@ export default function LandingPage() {
               {[
                 {
                   icon: "radar",
-                  title: "1. Build Your Strategy",
-                  titleMn: "Стратегиа бүтээ",
-                  desc: "Choose from 30+ detectors to build your approach: Gate, Trigger, Confluence.",
-                  descMn: "30+ detector-оос сонгож өөрийн арга барилыг тохируулна.",
+                  title: t("1. Build Your Strategy", "1. Стратегиа бүтээ"),
+                  desc: t("Choose from 30+ detectors to build your approach: Gate, Trigger, Confluence.", "30+ detector-оос сонгож өөрийн арга барилыг тохируулна: Gate, Trigger, Confluence."),
                 },
                 {
                   icon: "ai",
-                  title: "2. Bot Scans 24/7",
-                  titleMn: "Bot 24/7 скан хийнэ",
-                  desc: "Pulls real data from Polygon.io every 5 min, scans 15+ pairs using your strategy.",
-                  descMn: "Та унтаж байхад ч bot ажиллана.",
+                  title: t("2. Bot Scans 24/7", "2. Bot 24/7 скан хийнэ"),
+                  desc: t("Pulls real market data every 5 min, scans 15+ pairs using your strategy.", "5 минут тутам бодит дата татаж, 15+ хосыг таны стратегиар скан хийнэ."),
                 },
                 {
                   icon: "chart",
-                  title: "3. Explained Alerts",
-                  titleMn: "Тайлбартай мэдэгдэл",
-                  desc: "Get Telegram + Web alerts when setups are found. Explains why it triggered — you decide.",
-                  descMn: "Зүгээр л BUY/SELL биш — яагаад гэдгийг мэднэ.",
+                  title: t("3. Explained Alerts", "3. Тайлбартай мэдэгдэл"),
+                  desc: t("Get Telegram + Web alerts when setups found. Explains why it triggered — you decide.", "Setup олдоход Telegram + Web мэдэгдэл. Яагаад trigger болсныг тайлбарлана."),
                 },
               ].map((feature, idx) => (
                 <div key={idx} className="group p-8 rounded-xl bg-[#111111] border border-white/5 hover:border-[#0df269]/50 transition-colors">
@@ -321,10 +322,8 @@ export default function LandingPage() {
                       )}
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold mb-1 text-white group-hover:text-[#0df269] transition-colors">{feature.title}</h3>
-                  <p className="text-sm text-gray-500 mb-3">{feature.titleMn}</p>
-                  <p className="text-gray-400 text-sm leading-relaxed mb-2">{feature.desc}</p>
-                  <p className="text-xs text-gray-600">{feature.descMn}</p>
+                  <h3 className="text-xl font-bold mb-3 text-white group-hover:text-[#0df269] transition-colors">{feature.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
                 </div>
               ))}
             </div>
@@ -337,12 +336,11 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="flex justify-between items-end mb-12">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold">30+ Detectors</h2>
-                <p className="text-gray-500 text-sm">30+ Detector-ууд</p>
-                <p className="text-[#9cbaa8] mt-2 text-sm">Gate, Trigger, Confluence — build your own strategy.</p>
+                <h2 className="text-2xl md:text-3xl font-bold">{t("30+ Detectors", "30+ Детектор")}</h2>
+                <p className="text-[#9cbaa8] mt-2 text-sm">{t("Gate, Trigger, Confluence — build your own strategy.", "Gate, Trigger, Confluence — өөрийн стратегиа бүтээ.")}</p>
               </div>
               <Link href="/strategies" className="hidden md:flex items-center text-[#0df269] hover:text-[#0be360] font-mono text-xs gap-1 border-b border-[#0df269]/50 pb-0.5">
-                VIEW ALL
+                {t("VIEW ALL", "БҮГДИЙГ ХАРАХ")}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
@@ -351,10 +349,10 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { name: "Trend Continuation", type: "TRIGGER", desc: "Catch trend continuations using BOS + FVG.", descMn: "BOS + FVG ашиглан тренд үргэлжлэлийг барина.", tags: ["BOS", "FVG", "OB"], isNew: false },
-                { name: "Reversal Hunter", type: "TRIGGER", desc: "Detect reversals using Sweep, CHoCH, SFP.", descMn: "Sweep, CHoCH, SFP ашиглан эргэлтийг илрүүлнэ.", tags: ["SWEEP", "CHOCH", "SFP"], isNew: false },
-                { name: "Smart Money", type: "CONFLUENCE", desc: "Find entries at Order Block + Imbalance zones.", descMn: "Order Block + Imbalance дээр оролт хайна.", tags: ["OB", "FVG", "EQ_BREAK"], isNew: false },
-                { name: "Regime Gate", type: "GATE", desc: "Only trade in the right market conditions.", descMn: "Зөв зах зээлийн нөхцөлд л trade нээнэ.", tags: ["GATE_REGIME", "GATE_VOLATILITY"], isNew: true },
+                { name: "Trend Continuation", type: "TRIGGER", desc: t("Catch trend continuations using BOS + FVG.", "BOS + FVG ашиглан тренд үргэлжлэлийг барина."), tags: ["BOS", "FVG", "OB"], isNew: false },
+                { name: "Reversal Hunter", type: "TRIGGER", desc: t("Detect reversals using Sweep, CHoCH, SFP.", "Sweep, CHoCH, SFP ашиглан эргэлтийг илрүүлнэ."), tags: ["SWEEP", "CHOCH", "SFP"], isNew: false },
+                { name: "Smart Money", type: "CONFLUENCE", desc: t("Find entries at Order Block + Imbalance zones.", "Order Block + Imbalance дээр оролт хайна."), tags: ["OB", "FVG", "EQ_BREAK"], isNew: false },
+                { name: "Regime Gate", type: "GATE", desc: t("Only trade in the right market conditions.", "Зөв зах зээлийн нөхцөлд л trade нээнэ."), tags: ["GATE_REGIME", "GATE_VOLATILITY"], isNew: true },
               ].map((detector, idx) => (
                 <div
                   key={idx}
@@ -362,7 +360,7 @@ export default function LandingPage() {
                 >
                   {detector.isNew && (
                     <div className="absolute top-0 right-0 p-2">
-                      <span className="bg-[#0df269] text-[#0a0a0a] text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">NEW</span>
+                      <span className="bg-[#0df269] text-[#0a0a0a] text-[10px] font-bold px-2 py-0.5 rounded shadow-neon">{t("NEW", "ШИНЭ")}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-start mb-4">
@@ -372,8 +370,7 @@ export default function LandingPage() {
                     <span className="text-[10px] font-mono bg-white/10 px-2 py-1 rounded text-white border border-white/10">{detector.type}</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2 group-hover:text-[#0df269] transition-colors">{detector.name}</h3>
-                  <p className="text-xs text-[#9cbaa8] mb-1">{detector.desc}</p>
-                  <p className="text-xs text-gray-600 mb-4">{detector.descMn}</p>
+                  <p className="text-xs text-[#9cbaa8] mb-4">{detector.desc}</p>
                   <div className="flex flex-wrap gap-2 text-[10px] font-mono text-gray-400">
                     {detector.tags.map((tag, i) => (
                       <span key={i} className="bg-black/60 px-2 py-1 rounded border border-white/5">{tag}</span>
@@ -391,12 +388,12 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto">
             <div className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
               <div>
-                <h2 className="text-3xl font-bold mb-1">Strategy Simulator</h2>
-                <p className="text-gray-500 text-sm mb-2">Стратеги Симулятор</p>
+                <h2 className="text-3xl font-bold mb-2">Strategy Simulator</h2>
                 <p className="text-[#9cbaa8] text-sm max-w-2xl">
-                  Test your strategy on historical data. See win rate and results before going live.
-                  <br />
-                  <span className="text-xs text-gray-500">Стратегиа өнгөрсөн дата дээр туршиж, үр дүнг урьдчилан харна.</span>
+                  {t(
+                    "Test your strategy on historical data. See win rate and results before going live.",
+                    "Стратегиа өнгөрсөн дата дээр туршиж, win rate болон үр дүнг урьдчилан харна."
+                  )}
                 </p>
               </div>
             </div>
@@ -405,7 +402,7 @@ export default function LandingPage() {
               {/* Settings Panel */}
               <div className="w-full lg:w-80 bg-[#111111]/95 p-6 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col gap-6">
                 <div>
-                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">SYMBOL</label>
+                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">{t("SYMBOL", "СИМБОЛ")}</label>
                   <div className="relative">
                     <select className="w-full bg-[#0a0a0a] border border-white/10 rounded px-3 py-2.5 text-xs text-white focus:border-[#0df269] focus:ring-1 focus:ring-[#0df269] outline-none appearance-none font-mono">
                       <option>XAUUSD</option>
@@ -417,7 +414,7 @@ export default function LandingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">СТРАТЕГИ</label>
+                  <label className="block text-[10px] font-mono text-[#0df269] font-bold mb-2 tracking-wider">{t("STRATEGY", "СТРАТЕГИ")}</label>
                   <div className="relative">
                     <select className="w-full bg-[#0a0a0a] border border-white/10 rounded px-3 py-2.5 text-xs text-white focus:border-[#0df269] focus:ring-1 focus:ring-[#0df269] outline-none appearance-none font-mono">
                       <option>Trend Continuation (BOS + FVG)</option>
@@ -455,7 +452,7 @@ export default function LandingPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    RUN SIMULATION
+                    {t("RUN SIMULATION", "СИМУЛЯЦ АЖИЛЛУУЛАХ")}
                   </Link>
                 </div>
               </div>
@@ -464,7 +461,7 @@ export default function LandingPage() {
               <div className="flex-1 p-8 relative flex flex-col bg-gradient-to-b from-[#0c0c0c] to-[#050505]">
                 <div className="flex flex-wrap justify-between items-start mb-8 gap-4">
                   <div>
-                    <div className="text-xs text-gray-500 font-mono mb-1 tracking-wider">PROJECTED ROI (30D)</div>
+                    <div className="text-xs text-gray-500 font-mono mb-1 tracking-wider">{t("PROJECTED ROI (30D)", "ТӨСӨӨЛСӨН ROI (30 хоног)")}</div>
                     <div className="text-4xl font-black text-white flex items-baseline gap-3 tracking-tight">
                       +24.8%
                       <span className="text-base font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 font-mono">+$12,400</span>
@@ -473,8 +470,8 @@ export default function LandingPage() {
                   <div className="flex gap-3">
                     {[
                       { label: "SHARPE RATIO", value: "1.82", color: "text-gray-300" },
-                      { label: "WIN RATE", value: "64%", color: "text-[#0df269]" },
-                      { label: "MAX DD", value: "-4.2%", color: "text-red-400" },
+                      { label: t("WIN RATE", "WIN RATE"), value: "64%", color: "text-[#0df269]" },
+                      { label: t("MAX DD", "MAX DD"), value: "-4.2%", color: "text-red-400" },
                     ].map((stat, idx) => (
                       <div key={idx} className="flex flex-col items-end">
                         <span className="text-[10px] text-gray-600 font-mono">{stat.label}</span>
@@ -509,11 +506,11 @@ export default function LandingPage() {
                     <circle cx="90" cy="8" r="1.5" fill="#0a0a0a" stroke="#0df269" strokeWidth="0.5" />
                   </svg>
                   <div className="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] text-gray-600 font-mono">
-                    <span>Day 1</span>
-                    <span>Day 7</span>
-                    <span>Day 14</span>
-                    <span>Day 21</span>
-                    <span>Day 30</span>
+                    <span>{t("Day 1", "Өдөр 1")}</span>
+                    <span>{t("Day 7", "Өдөр 7")}</span>
+                    <span>{t("Day 14", "Өдөр 14")}</span>
+                    <span>{t("Day 21", "Өдөр 21")}</span>
+                    <span>{t("Day 30", "Өдөр 30")}</span>
                   </div>
                 </div>
               </div>
@@ -526,49 +523,49 @@ export default function LandingPage() {
           <div className="max-w-3xl mx-auto px-6">
             <div className="text-center mb-12">
               <h2 className="text-2xl font-bold mb-2">FAQ</h2>
-              <p className="text-sm text-gray-500">Frequently Asked Questions / Түгээмэл асуултууд</p>
+              <p className="text-sm text-gray-500">{t("Frequently Asked Questions", "Түгээмэл асуултууд")}</p>
             </div>
             <div className="space-y-4">
               {[
                 {
-                  q: "Where does the market data come from?",
-                  qMn: "Зах зээлийн дата хаанаас авдаг вэ?",
-                  a: "We pull real-time data from Polygon.io every 5 minutes and store it on our own servers. Supports 15+ Forex pairs + XAUUSD, BTCUSD.",
-                  aMn: "Polygon.io-оос 5 минут тутам тасралтгүй татаж, өөрсдийн серверт хадгалдаг.",
+                  q: t("Where does the market data come from?", "Зах зээлийн дата хаанаас авдаг вэ?"),
+                  a: t(
+                    "We pull real-time data from third-party sources every 5 minutes and store it on our own servers. Supports 15+ Forex pairs + XAUUSD, BTCUSD.",
+                    "Гуравдагч эх сурвалжаас 5 минут тутам тасралтгүй татаж, өөрсдийн серверт хадгалдаг. 15+ Forex хос + XAUUSD, BTCUSD дэмждэг."
+                  ),
                 },
                 {
-                  q: "Does this replace a trader 100%?",
-                  qMn: "Энэ 100% trader-ийг орлох уу?",
-                  a: "No. JKM Copilot helps you find optimal setups using your strategy. You analyze and make the final decision.",
-                  aMn: "Үгүй. Setup олдохоор та харж, өөрөө дүн шинжилгээ хийж, шийдвэрээ гаргана.",
+                  q: t("Does this replace a trader 100%?", "Энэ 100% trader-ийг орлох уу?"),
+                  a: t(
+                    "No. JKM Copilot helps you find optimal setups using your strategy. You analyze and make the final decision.",
+                    "Үгүй. Setup олдохоор та харж, өөрөө дүн шинжилгээ хийж, шийдвэрээ гаргана."
+                  ),
                 },
                 {
-                  q: "Does each setup come with an explanation?",
-                  qMn: "Setup бүр дээр тайлбар байдаг уу?",
-                  a: "Yes. We explain why it triggered, which detectors fired, and what conditions matched.",
-                  aMn: "Тийм. Яагаад trigger болсон, ямар detector-ууд давсан, ямар нөхцөл таарсныг тайлбарлана.",
+                  q: t("Does each setup come with an explanation?", "Setup бүр дээр тайлбар байдаг уу?"),
+                  a: t(
+                    "Yes. We explain why it triggered, which detectors fired, and what conditions matched.",
+                    "Тийм. Яагаад trigger болсон, ямар detector-ууд давсан, ямар нөхцөл таарсныг тайлбарлана."
+                  ),
                 },
                 {
-                  q: "Is this financial advice?",
-                  qMn: "Энэ санхүүгийн зөвлөгөө юу?",
-                  a: "No. This is a technical tool, not financial advice. You make all final decisions yourself.",
-                  aMn: "Үгүй. Энэ нь санхүүгийн зөвлөгөө биш, зөвхөн техникийн хэрэгсэл юм.",
+                  q: t("Is this financial advice?", "Энэ санхүүгийн зөвлөгөө юу?"),
+                  a: t(
+                    "No. This is a technical tool, not financial advice. You make all final decisions yourself.",
+                    "Үгүй. Энэ нь санхүүгийн зөвлөгөө биш, зөвхөн техникийн хэрэгсэл юм."
+                  ),
                 },
               ].map((faq, idx) => (
                 <div key={idx} className="border border-white/10 rounded-lg bg-[#111111] overflow-hidden">
                   <details className="group">
                     <summary className="flex justify-between items-center p-5 cursor-pointer list-none hover:bg-white/5 transition-colors">
-                      <div className="flex-1">
-                        <span className="font-medium text-gray-200 text-sm block">{faq.q}</span>
-                        <span className="text-xs text-gray-500">{faq.qMn}</span>
-                      </div>
+                      <span className="font-medium text-gray-200 text-sm">{faq.q}</span>
                       <svg className="w-5 h-5 text-gray-400 transition-transform group-open:rotate-180 ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </summary>
-                    <div className="px-5 pb-5 text-sm leading-relaxed border-t border-white/5 pt-4 space-y-2">
+                    <div className="px-5 pb-5 text-sm leading-relaxed border-t border-white/5 pt-4">
                       <p className="text-gray-300">{faq.a}</p>
-                      <p className="text-gray-500 text-xs">{faq.aMn}</p>
                     </div>
                   </details>
                 </div>
@@ -581,24 +578,25 @@ export default function LandingPage() {
         <section className="py-24 px-6 relative">
           <div className="absolute inset-0 bg-gradient-to-t from-[#0df269]/10 to-transparent pointer-events-none" />
           <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h2 className="text-3xl md:text-5xl font-black mb-2 tracking-tight">Ready to Trade with More Discipline?</h2>
-            <p className="text-lg text-gray-500 mb-6">Илүү сахилга баттай арилжаа хийхэд бэлэн үү?</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-2 tracking-tight">
+              {t("Ready to Trade with More Discipline?", "Илүү сахилга баттай арилжаа хийхэд бэлэн үү?")}
+            </h2>
             <p className="text-base text-[#9cbaa8] mb-10 max-w-xl mx-auto">
-              JKM Copilot doesn&apos;t trade for you — it helps you become a better trader.
-              <br />
-              <span className="text-sm text-gray-500">Таны ажлыг хөнгөвчилж, илүү сайн trader болоход туслах хэрэгсэл юм.</span>
+              {t(
+                "JKM Copilot doesn't trade for you — it helps you become a better trader.",
+                "Таны ажлыг хөнгөвчилж, илүү сайн trader болоход туслах хэрэгсэл юм."
+              )}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 href="/simulator"
-                className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex flex-col justify-center items-center"
+                className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex items-center justify-center"
               >
-                <span>Try Simulator</span>
-                <span className="text-[10px] font-normal opacity-80">Симулятор туршиx</span>
+                <span>{t("Try Simulator", "Симулятор туршиx")}</span>
               </Link>
             </div>
             <p className="mt-6 text-xs text-gray-600 font-mono">
-              ⚠️ Not financial advice. You make all final decisions. / Санхүүгийн зөвлөгөө биш.
+              ⚠️ {t("Not financial advice. You make all final decisions.", "Санхүүгийн зөвлөгөө биш. Бүх шийдвэрийг та өөрөө гаргана.")}
             </p>
           </div>
         </section>
@@ -618,13 +616,13 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex gap-8 text-xs text-gray-500 font-mono">
-              <a className="hover:text-[#0df269] transition-colors" href="#">Documentation</a>
+              <a className="hover:text-[#0df269] transition-colors" href="#">{t("Documentation", "Гарын авлага")}</a>
               <a className="hover:text-[#0df269] transition-colors" href="#">API Status</a>
-              <a className="hover:text-[#0df269] transition-colors" href="#">Terms</a>
-              <a className="hover:text-[#0df269] transition-colors" href="#">Privacy</a>
+              <a className="hover:text-[#0df269] transition-colors" href="#">{t("Terms", "Нөхцөл")}</a>
+              <a className="hover:text-[#0df269] transition-colors" href="#">{t("Privacy", "Нууцлал")}</a>
             </div>
             <div className="text-[10px] text-gray-600 font-mono">
-              © 2024 JKM Copilot Inc. All rights reserved.
+              © 2024 JKM Copilot Inc. {t("All rights reserved.", "Бүх эрх хуулиар хамгаалагдсан.")}
             </div>
           </div>
         </footer>

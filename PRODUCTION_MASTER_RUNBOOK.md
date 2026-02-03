@@ -84,9 +84,8 @@ Create `/opt/JKM-AI-BOT/.env`:
 # Internal API (must match dashboard)
 INTERNAL_API_KEY=<shared-secret-key>
 
-# Market Data Provider (at least one)
-MASSIVE_API_KEY=<massive-api-key>
-# POLYGON_API_KEY=<polygon-api-key>  # Alternative
+# Market Data Provider
+MARKET_DATA_API_KEY=<your-api-key>
 
 # Dashboard Gateway
 DASHBOARD_BASE_URL=https://jkmcopilot.com
@@ -413,7 +412,7 @@ ssh root@159.65.11.255 'source /opt/JKM-AI-BOT/.env && \
 | **CORS blocked** | Origin not allowed | Backend allows: jkmcopilot.com, www.jkmcopilot.com, *.vercel.app |
 | **502 Bad Gateway** | Backend not running | `docker compose ps` → restart if down |
 | **502 from nginx** | Port binding issue | Check `docker-compose.yml` has `127.0.0.1:8000:8000` |
-| **health ok=false, provider** | Massive key missing | Add `MASSIVE_API_KEY` to `/opt/JKM-AI-BOT/.env` |
+| **health ok=false, provider** | Market data key missing | Add `MARKET_DATA_API_KEY` to `/opt/JKM-AI-BOT/.env` |
 | **health ok=false, dashboard** | Gateway unreachable | Check `DASHBOARD_BASE_URL` and key match |
 | **Google OAuth error** | Callback URL mismatch | GCP Console → Authorized redirect URIs must include `https://jkmcopilot.com/api/auth/callback/google` |
 | **Email/Phone disabled** | No DATABASE_URL | Expected in Path-2 mode. Add Postgres to enable. |
@@ -727,7 +726,7 @@ For manual redeploy:
 │                          │                                   │
 │                          ▼                                   │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │         Market Data (Massive/Polygon)                 │   │
+│  │         Market Data (Third-party Source)              │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```

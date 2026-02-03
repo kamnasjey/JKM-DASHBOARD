@@ -20,7 +20,7 @@ export function InfoBoard() {
             </div>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Polygon.io-оос 5 минут тутам тасралтгүй татаж, өөрийн market data сантай. 15+ валютын хос + Crypto.
+            Гуравдагч эх сурвалжаас-оос 5 минут тутам тасралтгүй татаж, өөрийн market data сантай. 15+ валютын хос + Crypto.
           </CardContent>
         </Card>
 

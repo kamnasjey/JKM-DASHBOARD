@@ -11,7 +11,7 @@
 
 | Асуудал | Шийдэл | Статус |
 |---------|--------|--------|
-| MASSIVE API Path буруу (`/v1/candles`) | `.env`-д `MASSIVE_CANDLES_PATH=/v2/aggs/ticker` нэмсэн | ✅ Fixed |
+| MARKET_DATA API Path буруу (`/v1/candles`) | `.env`-д `MARKET_DATA_CANDLES_PATH=/v2/aggs/ticker` нэмсэн | ✅ Fixed |
 | Strategy Source Dashboard-only | Local preset fallback нэмсэн (`strategy_source.py`) | ✅ Fixed |
 | Data 3 өдрийн хуучин | Auto-backfill ажиллаж байна | ✅ Syncing |
 | Scanner strategy олдохгүй | Local preset уншиж байна | ✅ Fixed |
@@ -36,7 +36,7 @@ Strategies:  ✅ 4 preset strategies loaded
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
 │  ┌──────────────────────┐    ┌──────────────────────────────────┐   │
-│  │    MASSIVE API       │───▶│     MassiveDataProvider          │   │
+│  │    MARKET_DATA API       │───▶│     MarketDataDataProvider          │   │
 │  │ /v2/aggs/ticker/...  │    │  - Rate limiting                 │   │
 │  └──────────────────────┘    │  - Retry with backoff            │   │
 │                              │  - Symbol normalization           │   │
@@ -163,7 +163,7 @@ scanner_service.start()
 ## ✅ CHECKLIST: Production-Ready
 
 ### Data Layer
-- [ ] MASSIVE_CANDLES_PATH=/v2/aggs/ticker тохируулсан
+- [ ] MARKET_DATA_CANDLES_PATH=/v2/aggs/ticker тохируулсан
 - [ ] Data ingestor ажиллаж байна
 - [ ] Cache дотор fresh data байна (< 10 min old)
 - [ ] Auto-backfill gap-уудыг дүүргэж байна
@@ -195,8 +195,8 @@ ssh root@159.65.11.255
 # 2. .env засах
 cd /root/JKM-AI-BOT
 cat >> .env << 'EOF'
-MASSIVE_CANDLES_PATH=/v2/aggs/ticker
-MASSIVE_BASE_URL=https://api.massive.com
+MARKET_DATA_CANDLES_PATH=/v2/aggs/ticker
+MARKET_DATA_BASE_URL=https://api.example.com
 EOF
 
 # 3. Container restart
@@ -219,7 +219,7 @@ curl -s http://127.0.0.1:8000/scan/status | python3 -m json.tool
 
 1. **Image vs Environment:** Docker image дотор буруу env var build болсон байна. `docker-compose.yml` environment section нь `env_file` дараа уншигддаг тул override хийх ёстой.
 
-2. **v1/candles vs v2/aggs:** Massive API нь `/v1/candles` endpoint-ийг deprecated болгосон. Бүх дуудлага `/v2/aggs/ticker/{ticker}/range/...` руу хийгдэх ёстой.
+2. **v1/candles vs v2/aggs:** MarketData API нь `/v1/candles` endpoint-ийг deprecated болгосон. Бүх дуудлага `/v2/aggs/ticker/{ticker}/range/...` руу хийгдэх ёстой.
 
 3. **SLA Target:** 15 symbols × 5m candles × 120 секундын дотор refresh - одоо биелэхгүй байна.
 
