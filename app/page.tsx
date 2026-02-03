@@ -483,12 +483,12 @@ export default function LandingPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg md:text-xl font-bold text-white mb-3">
-                    {t("One Strategy = One Scanner", "Нэг стратеги = Нэг Scanner")}
+                    {t("1 Combination = 1 Strategy", "1 хослол = 1 стратеги")}
                   </h3>
                   <p className="text-gray-400 text-sm leading-relaxed mb-4">
                     {t(
-                      "Each detector combination you create becomes its own independent strategy. The scanner runs each strategy SEPARATELY — tailored to that specific market condition. Create a Trend strategy with BOS + FVG, a Reversal strategy with SWEEP + CHoCH — each runs on its own, scanning the market with YOUR unique logic.",
-                      "Таны үүсгэсэн detector хослол бүр бие даасан стратеги болно. Scanner стратеги бүрийг ТУС ТУСАД НЬ ажиллуулдаг — тухайн зах зээлийн нөхцөлд тохируулсан. Trend стратеги BOS + FVG-тэй, Reversal стратеги SWEEP + CHoCH-тэй үүсгэ — тус бүр нь өөрийн гэсэн scanner болж, ТАНЫ логикоор зах зээлийг скан хийнэ."
+                      "1 detector combination = 1 strategy. 15 combinations = 15 separate strategies running in the scanner. Why? Because each combination is designed for its own market behavior — some markets trend smoothly, others are choppy and volatile. A Trend strategy (BOS + FVG) catches clean moves, while a Reversal strategy (SWEEP + CHoCH) thrives in ranging conditions. Build strategies that match different market movements — the scanner runs each one independently.",
+                      "1 detector хослол = 1 стратеги. 15 хослол = 15 тусдаа стратеги scanner-т ажиллана. Яагаад гэвэл хослол бүр өөрийн зах зээлийн хөдөлгөөнд зориулагдсан — зарим зах зээл тайван trend хийдэг, зарим нь савлагаатай, хэлбэлзэлтэй байдаг. Trend стратеги (BOS + FVG) цэвэрхэн хөдөлгөөнийг барьдаг бол Reversal стратеги (SWEEP + CHoCH) range нөхцөлд илүү сайн ажилладаг. Өөр өөр зах зээлийн хөдөлгөөнд тохирсон стратегиуд бүтээ — scanner тус бүрийг бие даан ажиллуулна."
                     )}
                   </p>
                   <div className="flex flex-wrap gap-2">
