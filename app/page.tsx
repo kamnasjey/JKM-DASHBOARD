@@ -11,6 +11,19 @@ const liveFeedData = [
   { symbol: "USDJPY", tf: "M5", regime: "PULLBACK", regimeColor: "red", confidence: "68%", trend: "down" },
 ]
 
+// Detector Glossary - Tooltips for trading jargon
+const detectorGlossary: Record<string, { en: string; mn: string }> = {
+  "BOS": { en: "Break of Structure — price breaks a previous swing high/low, confirming trend continuation", mn: "Бүтцийн эвдрэл — үнэ өмнөх swing high/low-г эвдэж, тренд үргэлжлэлийг баталгаажуулна" },
+  "FVG": { en: "Fair Value Gap — imbalance zone where price moved too fast, often revisited", mn: "Fair Value Gap — үнэ хэт хурдан хөдөлсөн тэнцвэргүй бүс, ихэвчлэн дахин очдог" },
+  "OB": { en: "Order Block — zone where institutions placed large orders, acts as support/resistance", mn: "Order Block — том байгууллагууд захиалга байршуулсан бүс, support/resistance үүрэгтэй" },
+  "CHOCH": { en: "Change of Character — first sign of trend reversal, structure breaks opposite direction", mn: "Character өөрчлөлт — тренд эргэлтийн эхний шинж, бүтэц эсрэг чиглэлд эвдэрнэ" },
+  "SWEEP": { en: "Liquidity Sweep — price hunts stop losses before reversing", mn: "Liquidity Sweep — үнэ stop loss-уудыг авсны дараа эргэнэ" },
+  "SFP": { en: "Swing Failure Pattern — false breakout that traps traders", mn: "Swing Failure Pattern — trader-уудыг хуурдаг хуурамч breakout" },
+  "EQ_BREAK": { en: "Equal High/Low Break — breaks of equal levels where liquidity sits", mn: "Тэнцүү түвшний эвдрэл — liquidity байрлах тэнцүү түвшнүүдийн эвдрэл" },
+  "GATE_REGIME": { en: "Market Regime Gate — filters trades based on trend/range conditions", mn: "Market Regime Gate — trend/range нөхцөлөөр trade шүүдэг" },
+  "GATE_VOLATILITY": { en: "Volatility Gate — filters based on market volatility levels", mn: "Volatility Gate — volatility түвшингээр шүүдэг" },
+}
+
 // Sparkline component
 function Sparkline({ trend, color }: { trend: string; color: string }) {
   const paths = {
@@ -73,9 +86,9 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400 font-mono">
-            <a className="hover:text-[#0df269] transition-colors" href="#features">{t("How It Works", "Яаж ажилладаг")}</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("How It Works", "Яаж ажилладаг")}</a>
             <Link className="hover:text-[#0df269] transition-colors" href="/scanner">{t("Scanner", "Сканнер")}</Link>
-            <a className="hover:text-[#0df269] transition-colors" href="#simulator">{t("Simulator", "Симулятор")}</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("Simulator", "Симулятор")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#faq">FAQ</a>
           </div>
 
@@ -173,11 +186,24 @@ export default function LandingPage() {
                     </svg>
                     {t("Your Strategy, Your Rules", "Таны стратеги, таны дүрэм")}
                   </span>
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 group relative">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                     {t("Explained Setup Detection", "Тайлбартай setup илрүүлэлт")}
+                    <svg className="w-3.5 h-3.5 text-gray-500 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {/* Setup Definition Tooltip */}
+                    <div className="absolute bottom-full left-0 mb-2 w-72 p-3 rounded-lg bg-[#1a1a1a] border border-[#0df269]/30 text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 shadow-xl">
+                      <p className="text-white font-semibold mb-1">{t("What is a Setup?", "Setup гэж юу вэ?")}</p>
+                      <p className="text-gray-400 leading-relaxed">
+                        {t(
+                          "A setup is when your strategy rules are met — entry conditions align (trend, trigger, confluence). It's a potential trade opportunity, not a signal to blindly follow.",
+                          "Setup гэдэг нь таны стратегийн дүрмүүд биелсэн үе — entry нөхцөлүүд (trend, trigger, confluence) таарсан. Энэ нь боломжит арилжааны сонголт, сохроор дагах signal биш."
+                        )}
+                      </p>
+                    </div>
                   </span>
                 </div>
                 <p className="mt-3 text-[10px] text-gray-600 font-mono">
@@ -261,6 +287,67 @@ export default function LandingPage() {
                     <span className="size-2 rounded-full bg-[#0df269] animate-ping" />
                     24/7 Scan
                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3-Step Onboarding Strip */}
+        <section className="py-8 px-6 bg-gradient-to-r from-[#0a0a0a] via-[#111111] to-[#0a0a0a] border-y border-[#0df269]/10">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-center text-xs text-gray-500 font-mono mb-4 uppercase tracking-wider">
+              {t("Get Started in 3 Steps", "3 алхамаар эхлэх")}
+            </p>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0">
+              {/* Step 1 */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#0df269]/5 border border-[#0df269]/20">
+                <div className="w-8 h-8 rounded-full bg-[#0df269]/20 border border-[#0df269]/40 flex items-center justify-center text-[#0df269] font-bold text-sm">1</div>
+                <div>
+                  <p className="text-white text-sm font-medium">{t("Create Strategy", "Стратеги үүсгэ")}</p>
+                  <p className="text-gray-500 text-[10px]">{t("Pick your detectors", "Detector-оо сонго")}</p>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div className="hidden md:flex items-center px-3">
+                <svg className="w-6 h-6 text-[#0df269]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+              <div className="md:hidden">
+                <svg className="w-5 h-5 text-[#0df269]/40 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold text-sm">2</div>
+                <div>
+                  <p className="text-white text-sm font-medium">{t("Connect Telegram", "Telegram холбо")}</p>
+                  <p className="text-gray-500 text-[10px]">{t("Get instant alerts", "Шууд мэдэгдэл авах")}</p>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div className="hidden md:flex items-center px-3">
+                <svg className="w-6 h-6 text-[#0df269]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+              <div className="md:hidden">
+                <svg className="w-5 h-5 text-[#0df269]/40 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 font-bold text-sm">3</div>
+                <div>
+                  <p className="text-white text-sm font-medium">{t("Enable Scanner", "Scanner асаа")}</p>
+                  <p className="text-gray-500 text-[10px]">{t("24/7 auto monitoring", "24/7 автомат хяналт")}</p>
                 </div>
               </div>
             </div>
@@ -697,7 +784,7 @@ export default function LandingPage() {
         </section>
 
         {/* Scanner Engine Section */}
-        <section className="py-20 bg-[#0a0a0a] relative overflow-hidden">
+        <section id="scanner-engine" className="py-20 bg-[#0a0a0a] relative overflow-hidden">
           {/* Background Effects */}
           <div className="absolute inset-0 opacity-30">
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#0df269]/10 rounded-full blur-3xl" />
@@ -896,6 +983,83 @@ export default function LandingPage() {
                   {t("START YOUR SCANNER", "СКАННЕР ЭХЛҮҮЛЭХ")}
                 </Link>
               </div>
+            </div>
+
+            {/* Telegram Alert Sample */}
+            <div className="mt-16 max-w-2xl mx-auto">
+              <div className="text-center mb-6">
+                <p className="text-xs text-gray-500 font-mono uppercase tracking-wider mb-2">
+                  {t("What you'll receive", "Танд ирэх мэдэгдэл")}
+                </p>
+                <h3 className="text-xl font-bold text-white">{t("Telegram Alert Example", "Telegram мэдэгдлийн жишээ")}</h3>
+              </div>
+
+              {/* Telegram Message Mock */}
+              <div className="bg-[#1c2836] rounded-2xl border border-[#3d5a80]/30 overflow-hidden shadow-2xl">
+                {/* Telegram Header */}
+                <div className="flex items-center gap-3 p-3 bg-[#17212b] border-b border-[#3d5a80]/20">
+                  <div className="w-10 h-10 rounded-full bg-[#0df269]/20 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[#0df269]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-white font-medium text-sm">JKM Copilot Bot</div>
+                    <div className="text-[10px] text-gray-400">bot</div>
+                  </div>
+                </div>
+
+                {/* Message Content */}
+                <div className="p-4 space-y-3">
+                  <div className="bg-[#182533] rounded-lg p-4 max-w-[85%]">
+                    <div className="text-[#0df269] font-bold text-sm mb-2">🎯 NEW SETUP FOUND</div>
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Symbol:</span>
+                        <span className="text-white font-bold">XAUUSD</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Direction:</span>
+                        <span className="text-[#0df269] font-bold">🟢 BUY</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Timeframe:</span>
+                        <span className="text-white">M15</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">R:R Ratio:</span>
+                        <span className="text-yellow-400 font-bold">1:2.8</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{t("Why triggered", "Яагаад trigger болсон")}</div>
+                      <div className="text-xs text-gray-300 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#0df269]"></span>
+                          <span>Gate: <span className="text-white">TREND UP</span> {t("confirmed", "баталгаажсан")}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          <span>Trigger: <span className="text-white">BOS</span> {t("at key level", "чухал түвшинд")}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                          <span>Confluence: <span className="text-white">FVG + Fibo 61.8%</span></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[10px] text-gray-500">
+                      {t("Strategy:", "Стратеги:")} My Trend Strategy • 14:32 UTC
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-center text-xs text-gray-500 mt-4">
+                {t("Each setup includes full explanation — no blind signals", "Setup бүр бүрэн тайлбартай — сохор signal биш")}
+              </p>
             </div>
           </div>
         </section>
