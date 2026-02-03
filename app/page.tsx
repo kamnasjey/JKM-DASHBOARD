@@ -68,7 +68,7 @@ export default function LandingPage() {
             </div>
             <div>
               <h1 className="text-base font-bold tracking-tight leading-none">JKM Copilot</h1>
-              <span className="text-[10px] text-gray-500 font-mono tracking-wider">just keep moving AI trading system</span>
+              <span className="text-[10px] text-gray-500 font-mono tracking-wider">just keep moving AI trading copilot</span>
             </div>
           </div>
 
