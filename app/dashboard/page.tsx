@@ -332,9 +332,19 @@ export default function DashboardPage() {
 
   // Count active symbols (symbols with strategy mapping)
   const activeSymbolCount = useMemo(() => {
-    return Object.entries(activeStrategyMap).filter(([sym, stratId]) => 
+    return Object.entries(activeStrategyMap).filter(([sym, stratId]) =>
       stratId && (symbolEnabled[sym] !== false)
     ).length
+  }, [activeStrategyMap, symbolEnabled])
+
+  // Count unique active strategies
+  const uniqueActiveStrategies = useMemo(() => {
+    const strategyIds = new Set(
+      Object.entries(activeStrategyMap)
+        .filter(([sym, stratId]) => stratId && symbolEnabled[sym] !== false)
+        .map(([, stratId]) => stratId)
+    )
+    return strategyIds.size
   }, [activeStrategyMap, symbolEnabled])
 
   const refreshDashboard = async () => {
@@ -693,9 +703,9 @@ export default function DashboardPage() {
           <MetricCard title={t("Total Setups", "Нийт setup")} value={totalSignalsText} subtitle={t("Recent stats", "Сүүлийн статистик")} icon={BarChart3} />
           <MetricCard title={t("Win Rate", "Ялалтын хувь")} value={winRateText} subtitle={t("Success rate", "Амжилтын хувь")} icon={Activity} />
           <MetricCard
-            title={t("Active Strategies", "Идэвхтэй")}
-            value={activeSymbolCount || "—"}
-            subtitle={t("Symbol-strategy pairs", "Symbol-стратеги хос")}
+            title={t("Active Strategies", "Идэвхтэй стратеги")}
+            value={uniqueActiveStrategies || "—"}
+            subtitle={`${activeSymbolCount} symbol-стратеги хос`}
             icon={Layers3}
           />
         </div>
