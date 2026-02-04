@@ -89,7 +89,7 @@ export default function LandingPage() {
             <a className="hover:text-[#0df269] transition-colors" href="#features">{t("How It Works", "Яаж ажилладаг")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#scanner-engine">{t("Scanner", "Сканнер")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#simulator">{t("Simulator", "Симулятор")}</a>
-            <a className="hover:text-[#0df269] transition-colors" href="#faq">FAQ</a>
+            <a className="hover:text-[#0df269] transition-colors" href="#about">{t("About", "Тухай")}</a>
             <a className="hover:text-[#0df269] transition-colors" href="#pricing">{t("Pricing", "Үнэ")}</a>
           </div>
 
@@ -437,6 +437,51 @@ export default function LandingPage() {
                 <div>
                   <p className="text-white text-sm font-medium">{t("Enable Scanner", "Scanner асаа")}</p>
                   <p className="text-gray-500 text-[10px]">{t("24/7 auto monitoring", "24/7 автомат хяналт")}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Live System Status */}
+        <section className="py-8 px-6 bg-[#0a0a0a]">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-[#111111] rounded-xl border border-white/10 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-[#0c0c0c]">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0df269] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0df269]" />
+                    </span>
+                    <span className="text-xs font-mono text-[#0df269] font-bold">{t("SYSTEM STATUS", "СИСТЕМИЙН ТӨЛӨВ")}</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-gray-500">LIVE</span>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-y md:divide-y-0 divide-white/5">
+                <div className="p-4 text-center">
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{t("Last Scan", "Сүүлийн скан")}</div>
+                  <div className="text-lg font-bold text-white font-mono">~5 min</div>
+                </div>
+                <div className="p-4 text-center">
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{t("Symbols", "Хос")}</div>
+                  <div className="text-lg font-bold text-[#0df269] font-mono">17</div>
+                </div>
+                <div className="p-4 text-center">
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{t("Detectors", "Детектор")}</div>
+                  <div className="text-lg font-bold text-white font-mono">31</div>
+                </div>
+                <div className="p-4 text-center">
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{t("Timeframes", "Timeframe")}</div>
+                  <div className="text-lg font-bold text-white font-mono">5</div>
+                </div>
+                <div className="p-4 text-center col-span-2 md:col-span-1">
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{t("Uptime", "Uptime")}</div>
+                  <div className="text-lg font-bold text-[#0df269] font-mono">99.8%</div>
                 </div>
               </div>
             </div>
@@ -1194,6 +1239,256 @@ export default function LandingPage() {
                 {t("Each setup includes full explanation with evidence", "Setup бүр бүрэн тайлбар, нотолгоотой")}
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Developer's Story Section */}
+        <section className="py-20 px-6 bg-gradient-to-b from-[#0a0a0a] to-[#111111]" id="about">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0df269]/10 border border-[#0df269]/30 rounded-full text-xs text-[#0df269] font-medium mb-4">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {t("DEVELOPER'S STORY", "ХӨГЖҮҮЛЭГЧИЙН ТҮҮХ")}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black mb-3">{t("Why I Built This", "Яагаад энэ системийг бүтээсэн бэ?")}</h2>
+            </div>
+
+            <div className="bg-[#111111] rounded-2xl border border-white/10 p-8 md:p-10 relative overflow-hidden">
+              {/* Glow effect */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#0df269]/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="relative z-10">
+                {/* Developer Info */}
+                <div className="flex items-center gap-4 mb-8 pb-8 border-b border-white/10">
+                  <div className="w-16 h-16 rounded-full bg-[#0df269]/20 border-2 border-[#0df269]/40 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-[#0df269]">JK</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">JKM_KAME_TRADER</h3>
+                    <p className="text-gray-400 text-sm">Developer • 7 {t("years in Forex", "жилийн Forex туршлага")}</p>
+                  </div>
+                </div>
+
+                {/* Story Content */}
+                <div className="space-y-6 text-gray-300 leading-relaxed">
+                  <p>
+                    {t(
+                      "I started trading Forex in 2019. To be honest, I only became a consistently profitable trader in the last year.",
+                      "Би 2019 оноос Forex зах зээл дээр арилжаа хийж эхэлсэн. Үнэнийг хэлэхэд, сүүлийн 1 жил л тогтвортой ашигтай арилжаачин болсон."
+                    )}
+                  </p>
+
+                  <p className="text-white font-medium border-l-2 border-[#0df269] pl-4">
+                    {t(
+                      "During this time, I clearly understood one thing: Forex is not an easy money game where you just take a course and succeed.",
+                      "Энэ хугацаанд нэг зүйлийг маш тод ойлгосон: Forex бол зүгээр нэг сургалт аваад чадчихдаг, амархан мөнгөний тоглоом огт биш."
+                    )}
+                  </p>
+
+                  <p>
+                    {t(
+                      "No matter how much training you take and how good your theoretical knowledge becomes, humans are inherently greedy, impatient, and emotional. I personally believe that many people only start becoming real traders after going through financial pressure, losses, and 'losing everything' moments.",
+                      "Хичнээн сургалт аваад онолын мэдлэг сайн болоод ч хүн гэдэг угаасаа шуналтай, тэвчээргүй, эмоциональ байдаг. Олон хүн санхүүгийн дарамт, уналт, 'бүх зүйл 0 болсон үе'-ийг туулж байж жинхэнэ trader болж эхэлдэг гэж би хувьдаа боддог."
+                    )}
+                  </p>
+
+                  <p className="text-[#0df269] font-medium text-lg">
+                    {t(
+                      "But I believe newcomers don't have to go through that suffering.",
+                      "Харин би шинээр орж ирж буй хүмүүс заавал тэр зовлонгоор дамжих ёсгүй гэж үзсэн."
+                    )}
+                  </p>
+
+                  <p>
+                    {t(
+                      "That's why I built this system.",
+                      "Тийм учраас би энэ системийг бүтээсэн."
+                    )}
+                  </p>
+                </div>
+
+                {/* Mission Box */}
+                <div className="mt-8 p-6 bg-[#0df269]/5 border border-[#0df269]/20 rounded-xl">
+                  <h4 className="text-[#0df269] font-bold mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {t("JKM COPILOT's Mission", "JKM COPILOT-ийн зорилго")}
+                  </h4>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#0df269] mt-1">✓</span>
+                      <span>{t("Based on YOUR strategy, YOUR rules", "Таны стратеги, дүрэм дээр үндэслэн")}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#0df269] mt-1">✓</span>
+                      <span>{t("Monitor the market 24/7 on your behalf", "Зах зээлийг 24/7 таны өмнөөс хянаж")}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#0df269] mt-1">✓</span>
+                      <span>{t("Alert you when setups are found", "Setup илэрсэн үед мэдэгдэл өгч")}</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#0df269] mt-1">✓</span>
+                      <span>{t("Help you become a rule-based, disciplined trader", "Rule-based, сахилга баттай trader болоход туслах")}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Quote */}
+                <div className="mt-8 text-center">
+                  <p className="text-gray-400 italic text-sm">
+                    "{t(
+                      "My wish is simple: May JKM COPILOT be your most trusted assistant, helping you become a disciplined, hardworking, and realistic trader.",
+                      "Миний хүсэл бол нэг л зүйл: JKM COPILOT таны хамгийн итгэлт туслах байж, таныг дүрэмтэй, хатуужилтай, бодитой trader болоход туслаасай."
+                    )}" 🤝📈
+                  </p>
+                  <p className="text-[#0df269] font-medium mt-2">— JKM_KAME_TRADER</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Transparency Section */}
+        <section className="py-20 px-6 bg-[#111111]" id="transparency">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">{t("Honest Disclaimer", "Үнэн зүйлс")}</h2>
+              <p className="text-gray-500 text-sm">{t("We believe in transparency", "Бид шударга байдлыг эрхэмлэдэг")}</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* What it's NOT */}
+              <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-6">
+                <h3 className="text-red-400 font-bold mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  {t("What JKM COPILOT is NOT", "JKM COPILOT юу БИШ вэ")}
+                </h3>
+                <ul className="space-y-3 text-sm text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">✗</span>
+                    <span>{t("Not a \"success button\"", "\"Амжилтын товч\" биш")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">✗</span>
+                    <span>{t("Won't make you instantly profitable", "Таныг шууд ашигтай болгохгүй")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">✗</span>
+                    <span>{t("Won't solve financial problems overnight", "Санхүүгийн асуудлыг нэг өдрөөр шийдэхгүй")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">✗</span>
+                    <span>{t("Not every setup will be successful", "Илэрсэн setup бүр амжилттай байхгүй")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-400">✗</span>
+                    <span>{t("Does NOT replace a trader", "Trader-ийг орлохгүй")}</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* What it IS */}
+              <div className="bg-[#0df269]/5 border border-[#0df269]/20 rounded-xl p-6">
+                <h3 className="text-[#0df269] font-bold mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {t("What JKM COPILOT IS", "JKM COPILOT юу вэ")}
+                </h3>
+                <ul className="space-y-3 text-sm text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#0df269]">✓</span>
+                    <span>{t("A tool to run your strategy 24/7", "Таны стратегийг 24/7 ажиллуулах хэрэгсэл")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#0df269]">✓</span>
+                    <span>{t("An assistant that alerts when setups appear", "Setup илэрсэн үед мэдэгдэл өгөх туслах")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#0df269]">✓</span>
+                    <span>{t("Helps you become disciplined", "Дүрэмтэй, сахилга баттай болоход туслах")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#0df269]">✓</span>
+                    <span>{t("Reduces emotional decisions", "Эмоциональ шийдвэрийг багасгах")}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#0df269]">✓</span>
+                    <span>{t("Explains WHY each setup triggered", "Setup яагаад илэрснийг тайлбарлах")}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom Note */}
+            <div className="mt-8 p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+              <p className="text-sm text-gray-400">
+                📌 "{t(
+                  "For every opportunity found, you must re-analyze, do your own due diligence, and enter with confidence in your own approach.",
+                  "Илэрсэн боломж бүр дээр та дахин нягталж, дүн шинжилгээ хийж, өөрийн арга барилдаа итгэлтэй оролт хийх ёстой."
+                )}"
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Early Adopters Section */}
+        <section className="py-16 px-6 bg-gradient-to-b from-[#111111] to-[#0a0a0a]">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-sm text-purple-400 font-medium mb-6">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400" />
+              </span>
+              {t("EARLY ACCESS", "ЭРЛИЙН ХАНДАЛТ")}
+            </div>
+
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              {t("Join the Early Adopters", "Early Adopters-т нэгдэх")}
+            </h2>
+            <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+              {t(
+                "Be among the first traders to use AI-powered setup detection. Shape the product with your feedback.",
+                "AI-д суурилсан setup илрүүлэлтийг анхнаас нь ашиглах. Таны санал хүсэлтээр бүтээгдэхүүнийг хамтдаа хөгжүүлье."
+              )}
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10">
+                <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span className="text-sm text-gray-300">{t("Direct feedback to developer", "Хөгжүүлэгчтэй шууд холбоо")}</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10">
+                <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span className="text-sm text-gray-300">{t("Shape the product roadmap", "Бүтээгдэхүүний чиглэлд нөлөөлөх")}</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10">
+                <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm text-gray-300">{t("Early adopter benefits", "Эхний хэрэглэгчийн давуу тал")}</span>
+              </div>
+            </div>
+
+            <Link
+              href="/auth/register"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-lg transition-all hover:scale-105"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {t("JOIN EARLY ACCESS", "EARLY ACCESS АВАХ")}
+            </Link>
           </div>
         </section>
 
