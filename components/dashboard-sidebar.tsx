@@ -57,9 +57,9 @@ const navItems = [
     icon: User,
   },
   {
-    label: "Plan Upgrade",
+    label: "Plan",
     labelMn: "Төлөвлөгөө",
-    href: "/pricing",
+    href: "/dashboard/plan",
     icon: Crown,
     highlight: true,
   },
