@@ -29,7 +29,6 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
   // Form state
   const [formData, setFormData] = useState({
     payerEmail: "",
-    txnRef: "",
     note: "",
   })
 
@@ -78,7 +77,6 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
         body: JSON.stringify({
           payerEmail: formData.payerEmail,
           plan: selectedPlan,
-          txnRef: formData.txnRef,
           note: formData.note,
         }),
       })
@@ -96,7 +94,7 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
 
       onOpenChange(false)
       setSelectedPlan(null)
-      setFormData({ payerEmail: userEmail, txnRef: "", note: "" })
+      setFormData({ payerEmail: userEmail, note: "" })
     } catch (err: any) {
       toast({ title: "Алдаа", description: err.message, variant: "destructive" })
     } finally {
@@ -276,17 +274,6 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
                     required
                     value={formData.payerEmail}
                     onChange={(e) => setFormData({ ...formData, payerEmail: e.target.value })}
-                    className="h-9"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="txnRef" className="text-xs">Гүйлгээний дугаар</Label>
-                  <Input
-                    id="txnRef"
-                    value={formData.txnRef}
-                    onChange={(e) => setFormData({ ...formData, txnRef: e.target.value })}
-                    placeholder="TXN123..."
                     className="h-9"
                   />
                 </div>
