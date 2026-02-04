@@ -158,18 +158,6 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
-                  href="/pricing"
-                  className="h-14 px-8 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded flex flex-col items-center justify-center gap-0 transition-all shadow-neon hover:scale-[1.02]"
-                >
-                  <span className="flex items-center gap-2">
-                    {t("Get Started", "Эхлэх")}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </span>
-                  <span className="text-[10px] font-normal opacity-70">{t("View pricing plans", "Үнийн төлөвлөгөө харах")}</span>
-                </Link>
-                <Link
                   href="/auth/login?callbackUrl=/dashboard"
                   className="relative h-auto py-3 px-8 bg-[#1c1c1c] hover:bg-[#252525] border border-white/10 text-white font-medium rounded flex flex-col items-center justify-center gap-1 transition-colors group"
                 >
