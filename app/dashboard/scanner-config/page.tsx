@@ -9,10 +9,8 @@ import {
   Check,
   RefreshCw,
   Radio,
-  Zap,
   Clock,
   Settings2,
-  ChevronDown,
   X,
   Activity,
   AlertTriangle,
@@ -192,7 +190,6 @@ export default function ScannerConfigPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [strategies, setStrategies] = useState<Strategy[]>([])
-  const [activeStrategyId, setActiveStrategyId] = useState<string>("")
   const [activeStrategyMap, setActiveStrategyMap] = useState<Record<string, string>>({})
   const [pendingMap, setPendingMap] = useState<Record<string, string | null>>({})
   const [engineStatus, setEngineStatus] = useState<EngineStatus | null>(null)
@@ -232,12 +229,6 @@ export default function ScannerConfigPage() {
       if (backendData.ok) {
         const nextStrategies = v2Strategies.length > 0 ? v2Strategies : (backendData.strategies || [])
         setStrategies(nextStrategies)
-        const backendActiveId = backendData.activeStrategyId || ""
-        const fallbackActiveId = nextStrategies[0]?.id || ""
-        const resolvedActiveId = nextStrategies.some(s => s.id === backendActiveId)
-          ? backendActiveId
-          : fallbackActiveId
-        setActiveStrategyId(resolvedActiveId)
         setActiveStrategyMap(backendData.activeStrategyMap || {})
         setSymbolEnabled(backendData.symbolEnabled || {})
         setRequireExplicitMapping(backendData.requireExplicitMapping ?? true)
@@ -302,34 +293,6 @@ export default function ScannerConfigPage() {
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = Object.keys(pendingMap).length > 0 || Object.keys(pendingEnabled).length > 0
-
-  // Handle global active strategy change
-  const handleActiveStrategyChange = async (strategyId: string) => {
-    if (!uid || !strategyId) return
-
-    setSaving(true)
-    try {
-      const result = await api.backendStrategies.setActiveStrategy(uid, strategyId)
-      if (result.ok) {
-        setActiveStrategyId(strategyId)
-        toast({
-          title: "Амжилттай",
-          description: "Үндсэн стратеги сонгогдлоо",
-        })
-        // Refresh status to show updated effectiveStrategy
-        loadEngineStatus()
-      }
-    } catch (err: any) {
-      console.error("[scanner-config] set active error:", err)
-      toast({
-        title: "Алдаа",
-        description: err.message || "Хадгалж чадсангүй",
-        variant: "destructive",
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
 
   // Handle per-symbol strategy change (local only until save)
   const handleSymbolStrategyChange = (symbol: string, strategyId: string | null) => {
@@ -432,32 +395,30 @@ export default function ScannerConfigPage() {
     if (symbol in pendingMap) {
       const pendingId = pendingMap[symbol]
       if (pendingId === null) {
-        // Clearing override - fallback to active
-        const strat = strategies.find(s => s.id === activeStrategyId)
-        return { id: activeStrategyId, name: strat?.name || "Default", isMapped: false, isPending: true }
+        // Clearing - no strategy assigned
+        return { id: "", name: "Стратеги сонгоогүй", isMapped: false, isPending: true }
       }
       const strat = strategies.find(s => s.id === pendingId)
       return { id: pendingId, name: strat?.name || pendingId, isMapped: true, isPending: true }
     }
-    
+
     // Check current map
     const mappedId = activeStrategyMap[symbol]
     if (mappedId) {
       const strat = strategies.find(s => s.id === mappedId)
       return { id: mappedId, name: strat?.name || mappedId, isMapped: true, isPending: false }
     }
-    
-    // Fallback to active strategy
-    const strat = strategies.find(s => s.id === activeStrategyId)
-    return { id: activeStrategyId, name: strat?.name || "Default", isMapped: false, isPending: false }
+
+    // No strategy assigned
+    return { id: "", name: "Стратеги сонгоогүй", isMapped: false, isPending: false }
   }
 
   // Get current dropdown value for a symbol
   const getDropdownValue = (symbol: string): string => {
     if (symbol in pendingMap) {
-      return pendingMap[symbol] || "__default__"
+      return pendingMap[symbol] || "__none__"
     }
-    return activeStrategyMap[symbol] || "__default__"
+    return activeStrategyMap[symbol] || "__none__"
   }
 
   // Get status info for a symbol from engine status
@@ -576,49 +537,6 @@ export default function ScannerConfigPage() {
           </CardContent>
         </Card>
 
-        {/* Active Strategy Card */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Zap className="h-5 w-5" />
-              Active Strategy (Global Default)
-            </CardTitle>
-            <CardDescription>
-              Symbol-д override тохируулаагүй бол энэ стратегийг ашиглана
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Select
-                value={activeStrategyId}
-                onValueChange={handleActiveStrategyChange}
-                disabled={saving || strategies.length === 0}
-              >
-                <SelectTrigger className="w-[300px]">
-                  <SelectValue placeholder="Стратеги сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  {strategies.map((strategy) => (
-                    <SelectItem key={strategy.id} value={strategy.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{strategy.name}</span>
-                        {strategy.isStarterClone && (
-                          <Badge variant="outline" className="text-xs">Starter</Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {activeStrategyId && (
-                <Badge variant="secondary">
-                  {strategies.find(s => s.id === activeStrategyId)?.detectors?.length || 0} detectors
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Per-Symbol Strategy Mapping Card */}
         <Card>
           <CardHeader className="pb-3">
@@ -626,10 +544,10 @@ export default function ScannerConfigPage() {
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Layers className="h-5 w-5" />
-                  Per-Symbol Strategy Mapping
+                  Symbol Strategy Mapping
                 </CardTitle>
                 <CardDescription>
-                  Symbol бүрт өөр стратеги оноож болно
+                  Symbol бүрт стратеги заавал оноох шаардлагатай
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -771,20 +689,13 @@ export default function ScannerConfigPage() {
                 {strategies.map((strategy) => (
                   <div
                     key={strategy.id}
-                    className={`p-3 rounded-lg border ${
-                      strategy.id === activeStrategyId
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
-                    }`}
+                    className="p-3 rounded-lg border border-border"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{strategy.name}</span>
                         {strategy.isStarterClone && (
                           <Badge variant="outline" className="text-xs">Starter</Badge>
-                        )}
-                        {strategy.id === activeStrategyId && (
-                          <Badge className="bg-primary/20 text-primary text-xs">Active</Badge>
                         )}
                         {!strategy.enabled && (
                           <Badge variant="secondary" className="text-xs">Disabled</Badge>
