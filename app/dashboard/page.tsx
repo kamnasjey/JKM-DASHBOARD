@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
-import { Activity, BarChart3, Layers3, RefreshCw, Wifi, WifiOff, Bell, TrendingUp, TrendingDown, Minus, Check, ChevronDown, Radio, Zap, Clock } from "lucide-react"
+import { Activity, BarChart3, Layers3, Wifi, WifiOff, Bell, TrendingUp, TrendingDown, Minus, Check, ChevronDown, Radio, Zap, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AccessGateViewOnly } from "@/components/access-gate"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -541,26 +541,6 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [isAdmin])
 
-  const handleManualScan = async () => {
-    setLoading(true)
-    try {
-      const result = await api.manualScan()
-      toast({
-        title: "Амжилттай",
-        description: `Scan эхэллээ${result?.scan_id ? ` (${result.scan_id})` : ""}`,
-      })
-
-      // Refresh signals & engine status right after scan
-      const [eng, sigs] = await Promise.all([api.engineStatus(), api.signals({ limit: 10 })])
-      setEngineStatus(eng)
-      setRecentSignals(Array.isArray(sigs) ? (sigs as any) : ((sigs as any)?.signals ?? []))
-    } catch (err: any) {
-      toast({ title: "Алдаа", description: err.message, variant: "destructive" })
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Live Ops computed values
   const candleAgeSec = useMemo(() => {
     if (!lastCandleTime) return null
@@ -687,15 +667,6 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground">
               {t("Welcome", "Сайн байна уу")}{session?.user?.email ? `, ${session.user.email}` : ""}
             </p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleManualScan} disabled={loading}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              {t("Scan Now", "Скан хийх")}
-            </Button>
-            <Button variant="outline" onClick={refreshDashboard} disabled={loading}>
-              {t("Refresh", "Шинэчлэх")}
-            </Button>
           </div>
         </div>
 
