@@ -1438,60 +1438,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Early Adopters Section */}
-        <section className="py-16 px-6 bg-gradient-to-b from-[#111111] to-[#0a0a0a]">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full text-sm text-purple-400 font-medium mb-6">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-400" />
-              </span>
-              {t("EARLY ACCESS", "ЭРЛИЙН ХАНДАЛТ")}
-            </div>
-
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              {t("Join the Early Adopters", "Early Adopters-т нэгдэх")}
-            </h2>
-            <p className="text-gray-400 mb-8 max-w-xl mx-auto">
-              {t(
-                "Be among the first traders to use AI-powered setup detection. Shape the product with your feedback.",
-                "AI-д суурилсан setup илрүүлэлтийг анхнаас нь ашиглах. Таны санал хүсэлтээр бүтээгдэхүүнийг хамтдаа хөгжүүлье."
-              )}
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <span className="text-sm text-gray-300">{t("Direct feedback to developer", "Хөгжүүлэгчтэй шууд холбоо")}</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <span className="text-sm text-gray-300">{t("Shape the product roadmap", "Бүтээгдэхүүний чиглэлд нөлөөлөх")}</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-                <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-sm text-gray-300">{t("Early adopter benefits", "Эхний хэрэглэгчийн давуу тал")}</span>
-              </div>
-            </div>
-
-            <Link
-              href="/auth/register"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-lg transition-all hover:scale-105"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              {t("JOIN EARLY ACCESS", "EARLY ACCESS АВАХ")}
-            </Link>
-          </div>
-        </section>
-
         {/* FAQ Section */}
         <section className="py-20 bg-[#1c1c1c]/20" id="faq">
           <div className="max-w-3xl mx-auto px-6">
