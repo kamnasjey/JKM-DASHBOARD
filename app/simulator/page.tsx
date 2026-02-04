@@ -29,6 +29,7 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Languages,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -418,6 +419,10 @@ function TagAttributionTable({ tags }: { tags: TagInsight[] }) {
 // ============================================
 export default function SimulatorPage() {
   const { toast } = useToast()
+
+  // Language toggle
+  const [lang, setLang] = useState<"en" | "mn">("mn")
+  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
 
   // Data state
   const [symbols, setSymbols] = useState<string[]>([])
@@ -872,9 +877,9 @@ export default function SimulatorPage() {
                 <Card>
                   <CardContent className="py-10 text-center">
                     <AlertTriangle className="h-8 w-8 mx-auto text-destructive mb-4" />
-                    <p className="text-sm text-muted-foreground">Simulator хэсэг алдаа гарлаа.</p>
+                    <p className="text-sm text-muted-foreground">Simulator section error occurred.</p>
                     <Button className="mt-4" onClick={() => window.location.reload()}>
-                      Дахин ачаалах
+                      Reload
                     </Button>
                   </CardContent>
                 </Card>
@@ -903,10 +908,10 @@ export default function SimulatorPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">
-                  Strategy Simulator
+                  {t("Strategy Simulator", "Стратеги Симулятор")}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  Multi-timeframe backtesting across 5m → 4h
+                  {t("Multi-timeframe backtesting across 5m → 4h", "5m → 4h бүх timeframe дээр backtest хийх")}
                 </p>
                 {/* Version info */}
                 {(simVersion || dashboardVersion) && (
@@ -917,25 +922,36 @@ export default function SimulatorPage() {
                   </p>
                 )}
               </div>
-              <Badge variant="secondary" className="gap-1.5">
-                <Layers className="h-3.5 w-3.5" />
-                Multi-TF Auto
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLang(lang === "mn" ? "en" : "mn")}
+                  className="gap-1.5"
+                >
+                  <Languages className="h-4 w-4" />
+                  {lang === "mn" ? "EN" : "MN"}
+                </Button>
+                <Badge variant="secondary" className="gap-1.5">
+                  <Layers className="h-3.5 w-3.5" />
+                  {t("Multi-TF Auto", "Multi-TF Авто")}
+                </Badge>
+              </div>
             </div>
 
             {/* Configuration Card */}
         <Card>
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Configuration</CardTitle>
+            <CardTitle className="text-lg">{t("Configuration", "Тохиргоо")}</CardTitle>
             <CardDescription>
-              Select your symbol, strategy, and date range. All timeframes run automatically.
+              {t("Select your symbol, strategy, and date range. All timeframes run automatically.", "Symbol, стратеги, хугацааны хүрээгээ сонгоно уу. Бүх timeframe автоматаар ажиллана.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Symbol */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Symbol</label>
+                <label className="text-sm font-medium">{t("Symbol", "Символ")}</label>
                 <Select value={symbol} onValueChange={setSymbol} disabled={loading}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select symbol..." />
@@ -952,7 +968,7 @@ export default function SimulatorPage() {
 
               {/* Strategy */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Strategy</label>
+                <label className="text-sm font-medium">{t("Strategy", "Стратеги")}</label>
                 <Select
                   value={strategyId}
                   onValueChange={(value) => {
@@ -982,7 +998,7 @@ export default function SimulatorPage() {
 
               {/* Range */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date Range</label>
+                <label className="text-sm font-medium">{t("Date Range", "Хугацааны хүрээ")}</label>
                 <Select value={rangePreset} onValueChange={setRangePreset}>
                   <SelectTrigger>
                     <SelectValue />
@@ -1000,7 +1016,7 @@ export default function SimulatorPage() {
                 </p>
                 {(rangePreset === "90D" || rangePreset === "6M" || rangePreset === "1Y") && (
                   <p className="text-xs text-yellow-500 mt-1">
-                    ⚠️ Урт хугацаа = удаан scan (~1-3 мин)
+                    {t("⚠️ Long range = slower scan (~1-3 min)", "⚠️ Урт хугацаа = удаан scan (~1-3 мин)")}
                   </p>
                 )}
               </div>
@@ -1023,7 +1039,7 @@ export default function SimulatorPage() {
             {requestedDetectors.length > 0 && (
               <div className="pt-4 border-t border-border">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Active Detectors ({requestedDetectors.length})
+                  {t("Active Detectors", "Идэвхтэй Detector-ууд")} ({requestedDetectors.length})
                 </label>
                 <div className="space-y-3 mt-3">
                   {/* Group detectors by category */}
@@ -1099,7 +1115,7 @@ export default function SimulatorPage() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>
-                Running on: <strong className="text-foreground">5m, 15m, 30m, 1h, 4h</strong>
+                {t("Running on:", "Ажиллах TF:")} <strong className="text-foreground">5m, 15m, 30m, 1h, 4h</strong>
               </span>
             </div>
 
@@ -1111,7 +1127,7 @@ export default function SimulatorPage() {
                 disabled={running || !result}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Clear
+                {t("Clear", "Цэвэрлэх")}
               </Button>
               <Button
                 onClick={runSimulation}
@@ -1119,7 +1135,7 @@ export default function SimulatorPage() {
                 className="min-w-[140px]"
               >
                 <RotateCcw className={cn("h-4 w-4 mr-2", running && "animate-spin")} />
-                {running ? "Simulating..." : "Run Simulation"}
+                {running ? t("Simulating...", "Симуляци хийж байна...") : t("Run Simulation", "Симуляци эхлүүлэх")}
               </Button>
             </div>
           </CardContent>
@@ -1133,7 +1149,7 @@ export default function SimulatorPage() {
                 <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
                 <div>
                   <h4 className="text-sm font-medium text-destructive">
-                    Simulation Error
+                    {t("Simulation Error", "Симуляцийн алдаа")}
                   </h4>
                   <p className="text-sm text-muted-foreground mt-1">{error}</p>
                 </div>
@@ -1149,7 +1165,7 @@ export default function SimulatorPage() {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
               <div className="bg-card border rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
                 <h3 className="text-lg font-semibold mb-4 text-center">
-                  Симуляци ажиллаж байна
+                  {t("Simulation running", "Симуляци ажиллаж байна")}
                 </h3>
                 <SimulatorProgress isRunning={running} />
                 <p className="text-xs text-muted-foreground text-center mt-4">
@@ -1179,28 +1195,28 @@ export default function SimulatorPage() {
               return (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <MetricCard
-                    label="Total Trades"
+                    label={t("Total Trades", "Нийт Trade")}
                     value={totalTrades}
-                    subValue="across all TFs"
+                    subValue={t("across all TFs", "бүх TF дээр")}
                   />
                   <MetricCard
-                    label="Win Rate"
+                    label={t("Win Rate", "Ялалтын хувь")}
                     value={`${winRate.toFixed(1)}%`}
                     subValue={`${tpHits}W / ${slHits}L`}
                     trend={winRate >= 50 ? "up" : "down"}
                   />
                   <MetricCard
-                    label="TP Hits"
+                    label={t("TP Hits", "TP хүрсэн")}
                     value={tpHits}
                     trend="up"
                   />
                   <MetricCard
-                    label="SL Hits"
+                    label={t("SL Hits", "SL хүрсэн")}
                     value={slHits}
                     trend="down"
                   />
                   <MetricCard
-                    label="Best TF"
+                    label={t("Best TF", "Шилдэг TF")}
                     value={combinedResult.bestTf?.toUpperCase() || "—"}
                     subValue={
                       combinedResult.bestWinrate
@@ -1217,10 +1233,10 @@ export default function SimulatorPage() {
                 <CardContent className="pt-6">
                   <h4 className="text-sm font-medium flex items-center gap-2">
                     <Info className="h-4 w-4 text-muted-foreground" />
-                    No setups found
+                    {t("No setups found", "Setup олдсонгүй")}
                   </h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Энэ хугацаанд тохирох trigger илрээгүй байна. Entry/TP/SL нь 0 гэж харуулж байна.
+                    {t("No matching trigger found in this time period. Entry/TP/SL shows 0.", "Энэ хугацаанд тохирох trigger илрээгүй байна. Entry/TP/SL нь 0 гэж харуулж байна.")}
                   </p>
                 </CardContent>
               </Card>
@@ -1229,7 +1245,7 @@ export default function SimulatorPage() {
             {/* Timeframe Tabs */}
             <Card>
               <CardHeader className="pb-0">
-                <CardTitle className="text-lg">Simulation Results</CardTitle>
+                <CardTitle className="text-lg">{t("Simulation Results", "Симуляцийн үр дүн")}</CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1237,13 +1253,13 @@ export default function SimulatorPage() {
                     <TabsTrigger value="combined">
                       <div className="flex items-center gap-1.5">
                         <BarChart3 className="h-3.5 w-3.5" />
-                        <span>Overview</span>
+                        <span>{t("Overview", "Ерөнхий")}</span>
                       </div>
                     </TabsTrigger>
                     <TabsTrigger value="trades">
                       <div className="flex items-center gap-1.5">
                         <Target className="h-3.5 w-3.5" />
-                        <span>All Trades</span>
+                        <span>{t("All Trades", "Бүх Trade")}</span>
                         {result.trades && result.trades.length > 0 && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 ml-1">
                             {result.trades.length}
@@ -1262,10 +1278,10 @@ export default function SimulatorPage() {
                         <Card>
                           <CardHeader className="pb-2">
                             <CardTitle className="text-base">
-                              Timeframe тус бүрээр
+                              {t("By Timeframe", "Timeframe тус бүрээр")}
                             </CardTitle>
                             <CardDescription>
-                              Entry олдсон timeframe-ээр ангилсан
+                              {t("Entries found per timeframe", "Entry олдсон timeframe-ээр ангилсан")}
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -1287,7 +1303,7 @@ export default function SimulatorPage() {
                                   )}>
                                     <p className="text-sm font-semibold mb-1">{tf.toUpperCase()}</p>
                                     <p className="text-2xl font-bold">{tfEntries}</p>
-                                    <p className="text-xs text-muted-foreground">entries</p>
+                                    <p className="text-xs text-muted-foreground">{t("entries", "entry")}</p>
                                     {tfEntries > 0 && (
                                       <div className="mt-2 text-xs">
                                         <span className="text-green-500">{tfTP}W</span>
@@ -1313,26 +1329,26 @@ export default function SimulatorPage() {
                         <Card>
                           <CardHeader className="pb-2">
                             <CardTitle className="text-base">
-                              Гүйцэтгэлийн товч
+                              {t("Performance Summary", "Гүйцэтгэлийн товч")}
                             </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               <div className="text-center p-3 bg-muted/30 rounded-lg">
                                 <p className="text-3xl font-bold">{combinedResult.summary.entries ?? 0}</p>
-                                <p className="text-xs text-muted-foreground">Нийт Trade</p>
+                                <p className="text-xs text-muted-foreground">{t("Total Trades", "Нийт Trade")}</p>
                               </div>
                               <div className="text-center p-3 bg-green-500/10 rounded-lg">
                                 <p className="text-3xl font-bold text-green-500">
                                   {combinedResult.summary.tp ?? 0}
                                 </p>
-                                <p className="text-xs text-muted-foreground">TP Hit</p>
+                                <p className="text-xs text-muted-foreground">{t("TP Hit", "TP хүрсэн")}</p>
                               </div>
                               <div className="text-center p-3 bg-red-500/10 rounded-lg">
                                 <p className="text-3xl font-bold text-red-500">
                                   {combinedResult.summary.sl ?? 0}
                                 </p>
-                                <p className="text-xs text-muted-foreground">SL Hit</p>
+                                <p className="text-xs text-muted-foreground">{t("SL Hit", "SL хүрсэн")}</p>
                               </div>
                               <div className={cn(
                                 "text-center p-3 rounded-lg",
@@ -1354,10 +1370,10 @@ export default function SimulatorPage() {
                         <Card>
                           <CardHeader className="pb-2">
                             <CardTitle className="text-base flex items-center gap-2">
-                              📊 Гол KPI-ууд
+                              📊 {t("Key KPIs", "Гол KPI-ууд")}
                             </CardTitle>
                             <CardDescription>
-                              Strategy-ийн чанарыг хэмжих гол үзүүлэлтүүд
+                              {t("Key metrics to measure strategy quality", "Strategy-ийн чанарыг хэмжих гол үзүүлэлтүүд")}
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -1391,14 +1407,14 @@ export default function SimulatorPage() {
                                     "bg-red-500/10 border-red-500/30"
                                   )}>
                                     <p className="text-3xl font-bold">{entriesPerWeek.toFixed(1)}</p>
-                                    <p className="text-sm font-medium mt-1">Entries / Week</p>
+                                    <p className="text-sm font-medium mt-1">{t("Entries / Week", "Entry / 7 хоног")}</p>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                      {entriesPerWeek < 1 ? "⚠️ Хэт цөөн" :
+                                      {entriesPerWeek < 1 ? t("⚠️ Too few", "⚠️ Хэт цөөн") :
                                        entriesPerWeek > 10 ? "⚠️ Spam setup?" :
-                                       "✅ Хэвийн"}
+                                       t("✅ Normal", "✅ Хэвийн")}
                                     </p>
                                   </div>
-                                  
+
                                   {/* Resolution Rate */}
                                   <div className={cn(
                                     "text-center p-4 rounded-lg border",
@@ -1407,13 +1423,13 @@ export default function SimulatorPage() {
                                     "bg-red-500/10 border-red-500/30"
                                   )}>
                                     <p className="text-3xl font-bold">{resolutionRate.toFixed(0)}%</p>
-                                    <p className="text-sm font-medium mt-1">Resolution Rate</p>
+                                    <p className="text-sm font-medium mt-1">{t("Resolution Rate", "Шийдвэрлэлтийн хувь")}</p>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                      {resolutionRate < 70 ? "⚠️ Олон pending" :
-                                       "✅ Дуусдаг"}
+                                      {resolutionRate < 70 ? t("⚠️ Many pending", "⚠️ Олон pending") :
+                                       t("✅ Completes", "✅ Дуусдаг")}
                                     </p>
                                   </div>
-                                  
+
                                   {/* TimeExit Rate */}
                                   <div className={cn(
                                     "text-center p-4 rounded-lg border",
@@ -1422,10 +1438,10 @@ export default function SimulatorPage() {
                                     "bg-red-500/10 border-red-500/30"
                                   )}>
                                     <p className="text-3xl font-bold">{timeExitRate.toFixed(0)}%</p>
-                                    <p className="text-sm font-medium mt-1">Time Exit Rate</p>
+                                    <p className="text-sm font-medium mt-1">{t("Time Exit Rate", "Цаг дуусах хувь")}</p>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                      {timeExitRate > 40 ? "⚠️ Strategy тодорхойгүй" :
-                                       "✅ TP/SL-д хүрдэг"}
+                                      {timeExitRate > 40 ? t("⚠️ Unclear strategy", "⚠️ Strategy тодорхойгүй") :
+                                       t("✅ Reaches TP/SL", "✅ TP/SL-д хүрдэг")}
                                     </p>
                                   </div>
                                 </div>
@@ -1438,10 +1454,10 @@ export default function SimulatorPage() {
                         <Card>
                           <CardHeader className="pb-2">
                             <CardTitle className="text-base">
-                              Дундаж хугацаа
+                              {t("Average Duration", "Дундаж хугацаа")}
                             </CardTitle>
                             <CardDescription>
-                              Entry-ээс Exit хүртэл дундаж хугацаа
+                              {t("Average time from Entry to Exit", "Entry-ээс Exit хүртэл дундаж хугацаа")}
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -1449,7 +1465,7 @@ export default function SimulatorPage() {
                               <div className="p-3 bg-green-500/10 rounded-lg">
                                 <div className="flex items-center gap-2 mb-1">
                                   <Clock className="h-4 w-4 text-green-500" />
-                                  <span className="text-sm font-medium">TP дундаж</span>
+                                  <span className="text-sm font-medium">{t("TP average", "TP дундаж")}</span>
                                 </div>
                                 {(() => {
                                   const tpTrades = result.trades?.filter(t => t.outcome === "TP") || []
@@ -1462,7 +1478,7 @@ export default function SimulatorPage() {
                               <div className="p-3 bg-red-500/10 rounded-lg">
                                 <div className="flex items-center gap-2 mb-1">
                                   <Clock className="h-4 w-4 text-red-500" />
-                                  <span className="text-sm font-medium">SL дундаж</span>
+                                  <span className="text-sm font-medium">{t("SL average", "SL дундаж")}</span>
                                 </div>
                                 {(() => {
                                   const slTrades = result.trades?.filter(t => t.outcome === "SL") || []
@@ -1480,10 +1496,10 @@ export default function SimulatorPage() {
                         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
                           <CardHeader className="pb-2">
                             <CardTitle className="text-base flex items-center gap-2">
-                              📝 Strategy Дүгнэлт
+                              📝 {t("Strategy Conclusion", "Strategy Дүгнэлт")}
                             </CardTitle>
                             <CardDescription>
-                              Simulation үр дүнгийн товч тайлбар
+                              {t("Summary of simulation results", "Simulation үр дүнгийн товч тайлбар")}
                             </CardDescription>
                           </CardHeader>
                           <CardContent>
@@ -1635,9 +1651,9 @@ export default function SimulatorPage() {
                       <Card className="border-muted">
                         <CardContent className="py-10 text-center">
                           <Target className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-                          <h4 className="text-sm font-medium mb-1">Энэ хугацаанд trade олдсонгүй</h4>
+                          <h4 className="text-sm font-medium mb-1">{t("No trades found in this period", "Энэ хугацаанд trade олдсонгүй")}</h4>
                           <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                            Өдрийн хүрээг өргөтгөх эсвэл өөр detector ашиглаж үзнэ үү.
+                            {t("Try extending the date range or using different detectors.", "Өдрийн хүрээг өргөтгөх эсвэл өөр detector ашиглаж үзнэ үү.")}
                           </p>
                         </CardContent>
                       </Card>
@@ -1650,9 +1666,9 @@ export default function SimulatorPage() {
                       <>
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="text-base font-medium">Бүх Trade-ийн жагсаалт</h3>
+                            <h3 className="text-base font-medium">{t("All Trades List", "Бүх Trade-ийн жагсаалт")}</h3>
                             <p className="text-sm text-muted-foreground">
-                              Нийт {combinedResult.summary.entries ?? 0} trade {result.trades.length < (combinedResult.summary.entries ?? 0) && `(${result.trades.length} sample харуулж байна)`}
+                              {t("Total", "Нийт")} {combinedResult.summary.entries ?? 0} trade {result.trades.length < (combinedResult.summary.entries ?? 0) && `(${result.trades.length} ${t("sample shown", "sample харуулж байна")})`}
                             </p>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
@@ -1672,10 +1688,9 @@ export default function SimulatorPage() {
                       <Card className="border-muted">
                         <CardContent className="py-10 text-center">
                           <Target className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-                          <h4 className="text-sm font-medium mb-1">Trade дэлгэрэнгүй мэдээлэл алга</h4>
+                          <h4 className="text-sm font-medium mb-1">{t("No trade details available", "Trade дэлгэрэнгүй мэдээлэл алга")}</h4>
                           <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                            Backend-ээс per-trade мэдээлэл ирээгүй байна. Энэ функционал удахгүй нэмэгдэнэ.
-                            Одоогоор зөвхөн aggregate статистик (winrate, TP/SL тоо) харагдаж байна.
+                            {t("Per-trade info not returned from backend. Currently showing aggregate stats only.", "Backend-ээс per-trade мэдээлэл ирээгүй байна. Одоогоор зөвхөн aggregate статистик харагдаж байна.")}
                           </p>
                         </CardContent>
                       </Card>
@@ -1702,10 +1717,10 @@ export default function SimulatorPage() {
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-medium flex items-center gap-2">
                       <Info className="h-4 w-4 text-muted-foreground" />
-                      Detector шинжилгээ
+                      {t("Detector Analysis", "Detector шинжилгээ")}
                     </h4>
                     <Badge variant="secondary" className="text-xs">
-                      {result.meta.detectorsImplemented?.length || 0}/{result.meta.detectorsRequested.length} дэмжигдсэн
+                      {result.meta.detectorsImplemented?.length || 0}/{result.meta.detectorsRequested.length} {t("supported", "дэмжигдсэн")}
                     </Badge>
                   </div>
                   
@@ -1785,16 +1800,16 @@ export default function SimulatorPage() {
                   {/* Legend */}
                   <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-3 border-t">
                     <span className="flex items-center gap-1.5">
-                      <span className="text-green-500">✓</span> Дэмжигдсэн
+                      <span className="text-green-500">✓</span> {t("Supported", "Дэмжигдсэн")}
                     </span>
                     {result.meta.detectorsNotImplemented && result.meta.detectorsNotImplemented.length > 0 && (
                       <span className="flex items-center gap-1.5">
-                        <span className="text-yellow-500">⚠</span> Удахгүй ({result.meta.detectorsNotImplemented.length})
+                        <span className="text-yellow-500">⚠</span> {t("Coming soon", "Удахгүй")} ({result.meta.detectorsNotImplemented.length})
                       </span>
                     )}
                     {result.meta.detectorsUnknown && result.meta.detectorsUnknown.length > 0 && (
                       <span className="flex items-center gap-1.5">
-                        <span className="text-red-500">✗</span> Танигдаагүй ({result.meta.detectorsUnknown.length})
+                        <span className="text-red-500">✗</span> {t("Unknown", "Танигдаагүй")} ({result.meta.detectorsUnknown.length})
                       </span>
                     )}
                   </div>
@@ -1837,12 +1852,18 @@ export default function SimulatorPage() {
                   <Target className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
-                  Ready to Simulate
+                  {t("Ready to Simulate", "Симуляци хийхэд бэлэн")}
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  Configure your backtest parameters above and click{" "}
-                  <span className="text-primary font-medium">Run Simulation</span>{" "}
-                  to analyze your strategy across all timeframes.
+                  {t(
+                    "Configure your backtest parameters above and click",
+                    "Дээрх backtest тохиргоогоо хийгээд"
+                  )}{" "}
+                  <span className="text-primary font-medium">{t("Run Simulation", "Симуляци эхлүүлэх")}</span>{" "}
+                  {t(
+                    "to analyze your strategy across all timeframes.",
+                    "дарж бүх timeframe дээр стратегиа шинжилнэ үү."
+                  )}
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {TIMEFRAMES.map((tf) => (

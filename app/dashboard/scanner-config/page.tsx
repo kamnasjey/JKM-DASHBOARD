@@ -14,6 +14,7 @@ import {
   X,
   Activity,
   AlertTriangle,
+  Languages,
 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { AccessGate } from "@/components/access-gate"
@@ -185,6 +186,10 @@ export default function ScannerConfigPage() {
   const { data: session } = useSession()
   const { toast } = useToast()
   const uid = (session as any)?.user?.id || ""
+
+  // Language toggle
+  const [lang, setLang] = useState<"en" | "mn">("mn")
+  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
 
   // State
   const [loading, setLoading] = useState(true)
@@ -471,21 +476,32 @@ export default function ScannerConfigPage() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Settings2 className="h-6 w-6" />
-              Scanner Strategy Config
+              {t("Scanner Strategy Config", "Scanner Стратеги Тохиргоо")}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              24/7 Scanner-ийн strategy тохиргоо ба per-symbol mapping
+              {t("24/7 Scanner strategy configuration and per-symbol mapping", "24/7 Scanner-ийн strategy тохиргоо ба symbol бүрийн mapping")}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => { loadData(); loadEngineStatus(); }}
-            disabled={saving}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${saving ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
+              className="gap-1.5"
+            >
+              <Languages className="h-4 w-4" />
+              {lang === "mn" ? "EN" : "MN"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { loadData(); loadEngineStatus(); }}
+              disabled={saving}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${saving ? "animate-spin" : ""}`} />
+              {t("Refresh", "Шинэчлэх")}
+            </Button>
+          </div>
         </div>
 
         {/* Auth Error Banner */}
@@ -517,7 +533,7 @@ export default function ScannerConfigPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Activity className="h-5 w-5" />
-                24/7 Engine Status
+                {t("24/7 Engine Status", "24/7 Engine Төлөв")}
               </CardTitle>
               {engineStatus?.engineRunning ? (
                 <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
@@ -570,17 +586,17 @@ export default function ScannerConfigPage() {
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Layers className="h-5 w-5" />
-                  Symbol Strategy Mapping
+                  {t("Symbol Strategy Mapping", "Symbol Стратеги Mapping")}
                 </CardTitle>
                 <CardDescription>
-                  Symbol бүрт стратеги заавал оноох шаардлагатай
+                  {t("Each symbol must be assigned a strategy", "Symbol бүрт стратеги заавал оноох шаардлагатай")}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {hasUnsavedChanges && (
                   <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">
                     <AlertCircle className="h-3 w-3 mr-1" />
-                    Unsaved
+                    {t("Unsaved", "Хадгалаагүй")}
                   </Badge>
                 )}
                 <Button
@@ -589,7 +605,7 @@ export default function ScannerConfigPage() {
                   size="sm"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  Save Mapping
+                  {t("Save Mapping", "Хадгалах")}
                 </Button>
               </div>
             </div>

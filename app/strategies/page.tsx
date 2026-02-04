@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, LayoutGrid } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, LayoutGrid, Languages } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { AccessGate } from "@/components/access-gate"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
@@ -96,6 +96,11 @@ export default function StrategiesPage() {
   useAuthGuard(true)
 
   const { toast } = useToast()
+
+  // Language toggle
+  const [lang, setLang] = useState<"en" | "mn">("mn")
+  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+
   const [view, setView] = useState<"list" | "maker">("list")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -418,7 +423,7 @@ export default function StrategiesPage() {
     return (
       <DashboardLayout>
         <div className="py-12 text-center">
-          <p className="text-muted-foreground">Ачааллаж байна...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </DashboardLayout>
     )
@@ -430,18 +435,27 @@ export default function StrategiesPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Strategies</h1>
+            <h1 className="text-3xl font-bold">{t("Strategies", "Стратегиуд")}</h1>
             <p className="text-muted-foreground">
-              Таны trading стратегиуд ({strategies.length}/{MAX_STRATEGIES})
+              {t("Your trading strategies", "Таны trading стратегиуд")} ({strategies.length}/{MAX_STRATEGIES})
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
+              className="gap-1.5"
+            >
+              <Languages className="h-4 w-4" />
+              {lang === "mn" ? "EN" : "MN"}
+            </Button>
             <Button
               variant={view === "maker" ? "secondary" : "default"}
               onClick={() => setView((v) => (v === "maker" ? "list" : "maker"))}
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              {view === "maker" ? "Жагсаалт" : "AI Strategy Maker"}
+              {view === "maker" ? t("List", "Жагсаалт") : "AI Strategy Maker"}
             </Button>
             <Button
               variant="outline"
@@ -452,7 +466,7 @@ export default function StrategiesPage() {
             </Button>
             <Button onClick={openCreateDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
-              Manual
+              {t("Manual", "Гараар")}
             </Button>
             <Button onClick={() => loadData()} disabled={loading} variant="ghost" size="icon">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,13 +516,13 @@ export default function StrategiesPage() {
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Стратеги байхгүй</h3>
+                  <h3 className="text-lg font-medium mb-2">{t("No strategies", "Стратеги байхгүй")}</h3>
                   <p className="text-muted-foreground text-center mb-4">
-                    Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү
+                    {t("Combine detectors to create your own strategy", "Detector-уудыг combine хийж өөрийн strategy үүсгэнэ үү")}
                   </p>
                   <Button onClick={openCreateDialog}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Эхний Strategy үүсгэх
+                    {t("Create First Strategy", "Эхний Strategy үүсгэх")}
                   </Button>
                 </CardContent>
               </Card>
@@ -644,7 +658,7 @@ export default function StrategiesPage() {
                     onClick={() => setExpandedStrategyId(open ? null : strategyKey)}
                   >
                     <Info className="mr-1 h-3 w-3" />
-                    Дэлгэрэнгүй
+                    {t("Details", "Дэлгэрэнгүй")}
                   </Button>
                   <Button
                     variant="ghost"
@@ -653,7 +667,7 @@ export default function StrategiesPage() {
                     onClick={() => openEditDialog(idx)}
                   >
                     <Edit2 className="h-3 w-3 mr-1" />
-                    Засах
+                    {t("Edit", "Засах")}
                   </Button>
                   <Button
                     variant="ghost"
@@ -674,20 +688,20 @@ export default function StrategiesPage() {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingIndex !== null ? "Стратеги засах" : "Шинэ Strategy үүсгэх"}
+                {editingIndex !== null ? t("Edit Strategy", "Стратеги засах") : t("Create New Strategy", "Шинэ Strategy үүсгэх")}
               </DialogTitle>
               <DialogDescription>
-                Detector-уудыг сонгож combine хийнэ үү. Хамгийн багадаа 1 Gate + 1 Trigger сонгоно уу.
+                {t("Select and combine detectors. Minimum: 1 Gate + 1 Trigger.", "Detector-уудыг сонгож combine хийнэ үү. Хамгийн багадаа 1 Gate + 1 Trigger сонгоно уу.")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-6 py-4">
               {/* Name */}
               <div className="space-y-2">
-                <Label htmlFor="name">Стратегийн нэр *</Label>
+                <Label htmlFor="name">{t("Strategy Name", "Стратегийн нэр")} *</Label>
                 <Input
                   id="name"
-                  placeholder="Жишээ: My Trend Strategy"
+                  placeholder={t("Example: My Trend Strategy", "Жишээ: My Trend Strategy")}
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                 />
@@ -695,10 +709,10 @@ export default function StrategiesPage() {
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Тайлбар (optional)</Label>
+                <Label htmlFor="description">{t("Description", "Тайлбар")} ({t("optional", "заавал биш")})</Label>
                 <Input
                   id="description"
-                  placeholder="Энэ стратегийн тухай товч тайлбар"
+                  placeholder={t("Brief description of this strategy", "Энэ стратегийн тухай товч тайлбар")}
                   value={editForm.description || ""}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                 />
@@ -706,10 +720,10 @@ export default function StrategiesPage() {
 
               {/* Notes - New field for user notes */}
               <div className="space-y-2">
-                <Label htmlFor="notes">Тэмдэглэл (optional)</Label>
+                <Label htmlFor="notes">{t("Notes", "Тэмдэглэл")} ({t("optional", "заавал биш")})</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Хувийн тэмдэглэл: Энэ стратегийг хэзээ хэрэглэх, ямар зах зээлд сайн ажилладаг гэх мэт..."
+                  placeholder={t("Personal notes: When to use this strategy, which markets it works best, etc...", "Хувийн тэмдэглэл: Энэ стратегийг хэзээ хэрэглэх, ямар зах зээлд сайн ажилладаг гэх мэт...")}
                   value={editForm.notes || ""}
                   onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                   rows={2}
@@ -719,7 +733,7 @@ export default function StrategiesPage() {
 
               {/* Enabled */}
               <div className="flex items-center justify-between">
-                <Label>Идэвхтэй</Label>
+                <Label>{t("Enabled", "Идэвхтэй")}</Label>
                 <Switch
                   checked={editForm.enabled}
                   onCheckedChange={(checked) => setEditForm({ ...editForm, enabled: checked })}
@@ -776,14 +790,14 @@ export default function StrategiesPage() {
             <DialogFooter>
               <div className="flex items-center justify-between w-full">
                 <p className="text-xs text-muted-foreground">
-                  Strategies: {strategies.length}/{MAX_STRATEGIES}
+                  {t("Strategies", "Стратегиуд")}: {strategies.length}/{MAX_STRATEGIES}
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Болих
+                    {t("Cancel", "Болих")}
                   </Button>
                   <Button onClick={handleSaveStrategy} disabled={saving}>
-                    {saving ? "Хадгалж байна..." : editingIndex !== null ? "Хадгалах" : "Үүсгэх"}
+                    {saving ? t("Saving...", "Хадгалж байна...") : editingIndex !== null ? t("Save", "Хадгалах") : t("Create", "Үүсгэх")}
                   </Button>
                 </div>
               </div>
@@ -795,21 +809,21 @@ export default function StrategiesPage() {
           <Dialog open={deleteConfirmIndex !== null} onOpenChange={() => setDeleteConfirmIndex(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Стратеги устгах</DialogTitle>
+              <DialogTitle>{t("Delete Strategy", "Стратеги устгах")}</DialogTitle>
               <DialogDescription>
-                &quot;{deleteConfirmIndex !== null ? strategies[deleteConfirmIndex]?.name : ""}&quot; стратегийг устгахдаа итгэлтэй байна уу?
+                {t("Are you sure you want to delete", "Та устгахдаа итгэлтэй байна уу")} &quot;{deleteConfirmIndex !== null ? strategies[deleteConfirmIndex]?.name : ""}&quot;?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteConfirmIndex(null)}>
-                Болих
+                {t("Cancel", "Болих")}
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => deleteConfirmIndex !== null && handleDeleteStrategy(deleteConfirmIndex)}
                 disabled={saving}
               >
-                {saving ? "Устгаж байна..." : "Устгах"}
+                {saving ? t("Deleting...", "Устгаж байна...") : t("Delete", "Устгах")}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus } from "lucide-react"
+import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus, Languages } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -203,6 +203,11 @@ export default function PerformancePage() {
   useAuthGuard(true)
 
   const { toast } = useToast()
+
+  // Language toggle
+  const [lang, setLang] = useState<"en" | "mn">("mn")
+  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+
   const [loading, setLoading] = useState(true)
   const [rangeDays, setRangeDays] = useState("30")
   const [oldSignals, setOldSignals] = useState<SignalPayloadPublicV1[]>([])
@@ -366,11 +371,21 @@ export default function PerformancePage() {
       <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">History</h1>
-            <p className="text-sm text-muted-foreground">Setup бүрийн TP/SL түүх болон үр дүн</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">{t("History", "Түүх")}</h1>
+            <p className="text-sm text-muted-foreground">{t("TP/SL history and results for each setup", "Setup бүрийн TP/SL түүх болон үр дүн")}</p>
           </div>
-          <div className="w-full sm:w-56">
-            <label className="text-xs font-medium text-muted-foreground">Хугацаа</label>
+          <div className="flex items-end gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
+              className="gap-1.5"
+            >
+              <Languages className="h-4 w-4" />
+              {lang === "mn" ? "EN" : "MN"}
+            </Button>
+            <div className="w-full sm:w-56">
+              <label className="text-xs font-medium text-muted-foreground">{t("Period", "Хугацаа")}</label>
             <Select value={rangeDays} onValueChange={setRangeDays}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Хугацаа сонгох" />
@@ -383,6 +398,7 @@ export default function PerformancePage() {
                 ))}
               </SelectContent>
             </Select>
+            </div>
           </div>
         </div>
 

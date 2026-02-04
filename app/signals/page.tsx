@@ -15,7 +15,8 @@ import {
   CheckCircle,
   XCircle,
   Check,
-  X
+  X,
+  Languages,
 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -401,6 +402,10 @@ export default function SignalsPage() {
   const { toast } = useToast()
   const { symbols } = useSymbols()
 
+  // Language toggle
+  const [lang, setLang] = useState<"en" | "mn">("mn")
+  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+
   // State
   const [activeTab, setActiveTab] = useState<"all" | "scanner" | "signals">("all")
   const [scannerStatus, setScannerStatus] = useState<ScannerStatus | null>(null)
@@ -544,10 +549,19 @@ export default function SignalsPage() {
               Setups
             </h1>
             <p className="text-muted-foreground">
-              Scanner-ээс олдсон setup-үүд
+              {t("Setups found by Scanner", "Scanner-ээс олдсон setup-үүд")}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
+              className="gap-1.5"
+            >
+              <Languages className="h-4 w-4" />
+              {lang === "mn" ? "EN" : "MN"}
+            </Button>
             <Button variant="outline" asChild>
               <Link href="/scanner">
                 <Activity className="h-4 w-4 mr-2" />
@@ -569,7 +583,7 @@ export default function SignalsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <TabsList>
               <TabsTrigger value="all">
-                Бүгд ({unifiedSignals.length})
+                {t("All", "Бүгд")} ({unifiedSignals.length})
               </TabsTrigger>
               <TabsTrigger value="scanner">
                 <Zap className="h-4 w-4 mr-1" />
@@ -586,7 +600,7 @@ export default function SignalsPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                Шүүлтүүр
+                {t("Filters", "Шүүлтүүр")}
               </CardTitle>
             </CardHeader>
             <CardContent>

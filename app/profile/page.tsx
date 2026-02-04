@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User, CheckCircle, XCircle, MessageCircle, Send } from "lucide-react"
+import { User, CheckCircle, XCircle, MessageCircle, Send, Languages } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,11 @@ export default function ProfilePage() {
   const { data: session } = useSession()
 
   const { toast } = useToast()
+
+  // Language toggle
+  const [lang, setLang] = useState<"en" | "mn">("mn")
+  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -122,18 +127,29 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Profile</h1>
-          <p className="text-muted-foreground">Таны хувийн мэдээлэл болон тохиргоо</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Profile</h1>
+            <p className="text-muted-foreground">{t("Your personal information and settings", "Таны хувийн мэдээлэл болон тохиргоо")}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLang(lang === "mn" ? "en" : "mn")}
+            className="gap-1.5"
+          >
+            <Languages className="h-4 w-4" />
+            {lang === "mn" ? "EN" : "MN"}
+          </Button>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Хувийн мэдээлэл
+              {t("Personal Information", "Хувийн мэдээлэл")}
             </CardTitle>
-            <CardDescription>Таны мэдээллийг засварлах</CardDescription>
+            <CardDescription>{t("Edit your information", "Таны мэдээллийг засварлах")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
