@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle, CheckCircle, XCircle, Wifi, WifiOff, Copy, RefreshCw, Activity, AlertCircle } from "lucide-react"
+import { AlertTriangle, CheckCircle, XCircle, Wifi, WifiOff, Copy, RefreshCw, Activity, AlertCircle, Play, Square, RotateCcw, Clock, Server } from "lucide-react"
 
 type CheckResult = {
   name: string
@@ -45,6 +45,20 @@ type BackendHealth = {
   signals_count?: number
   cache_ready?: boolean
   symbols_count?: number
+  error?: string
+}
+
+type ScannerStatus = {
+  ok: boolean
+  reachable: boolean
+  running: boolean
+  lastScanTs: number
+  lastScanId: string | null
+  cadenceSec: number
+  lastError: string | null
+  secsSinceLastScan: number | null
+  health: "healthy" | "warning" | "critical" | "unknown"
+  checkedAt: number
   error?: string
 }
 
@@ -103,6 +117,8 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
   const [duplicates, setDuplicates] = useState<SignalDuplicate[]>([])
   const [backendHealth, setBackendHealth] = useState<BackendHealth | null>(null)
   const [issues, setIssues] = useState<DiagnosticIssue[]>([])
+  const [scannerStatus, setScannerStatus] = useState<ScannerStatus | null>(null)
+  const [scannerControlling, setScannerControlling] = useState(false)
 
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
@@ -207,6 +223,51 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
     }
   }, [])
 
+  // Check scanner status
+  const checkScannerStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/scanner/status", { cache: "no-store" })
+      const data = await res.json()
+      setScannerStatus(data)
+    } catch (err: any) {
+      setScannerStatus({
+        ok: false,
+        reachable: false,
+        running: false,
+        lastScanTs: 0,
+        lastScanId: null,
+        cadenceSec: 300,
+        lastError: err.message,
+        secsSinceLastScan: null,
+        health: "critical",
+        checkedAt: Math.floor(Date.now() / 1000),
+        error: err.message,
+      })
+    }
+  }, [])
+
+  // Control scanner (start/stop/restart)
+  const handleScannerControl = useCallback(async (action: "start" | "stop" | "restart") => {
+    setScannerControlling(true)
+    try {
+      const res = await fetch("/api/admin/scanner/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      })
+      const data = await res.json()
+      if (!data.ok) {
+        alert(`Амжилтгүй: ${data.error || data.message}`)
+      }
+      // Refresh status after action
+      setTimeout(checkScannerStatus, 2000)
+    } catch (err: any) {
+      alert(`Алдаа: ${err.message}`)
+    } finally {
+      setScannerControlling(false)
+    }
+  }, [checkScannerStatus])
+
   // Analyze and generate issues
   const analyzeIssues = useCallback(() => {
     const newIssues: DiagnosticIssue[] = []
@@ -307,17 +368,18 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
 
     // Run all checks in parallel
     const [checkResults] = await Promise.all([
-      Promise.all(checks.map(([name, url, required]) => 
+      Promise.all(checks.map(([name, url, required]) =>
         runCheck(name, url).then(r => ({ ...r, required }))
       )),
       testWebSocket(),
       checkDuplicates(),
       checkBackendHealth(),
+      checkScannerStatus(),
     ])
 
     setResults(checkResults)
     setRunning(false)
-  }, [testWebSocket, checkDuplicates, checkBackendHealth])
+  }, [testWebSocket, checkDuplicates, checkBackendHealth, checkScannerStatus])
 
   // Analyze issues when data changes
   useEffect(() => {
@@ -623,6 +685,143 @@ export default function RepairClient({ userEmail }: { userEmail: string }) {
         </CardHeader>
         <CardContent>
           <pre className="whitespace-pre-wrap break-words text-xs font-mono rounded-md border p-3 max-h-96 overflow-auto">{reportText}</pre>
+        </CardContent>
+      </Card>
+
+      {/* Scanner Monitor */}
+      <Card className={scannerStatus?.health === "critical" ? "border-red-500/50" : scannerStatus?.health === "warning" ? "border-yellow-500/50" : "border-emerald-500/30"}>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              <Server className="h-5 w-5" />
+              Scanner Monitor
+            </span>
+            {scannerStatus && (
+              <Badge
+                variant="outline"
+                className={
+                  scannerStatus.health === "healthy"
+                    ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    : scannerStatus.health === "warning"
+                      ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"
+                      : "bg-red-500/10 text-red-600 border-red-500/20"
+                }
+              >
+                {scannerStatus.health === "healthy" ? "Хэвийн" : scannerStatus.health === "warning" ? "Анхааруулга" : "Асуудалтай"}
+              </Badge>
+            )}
+          </CardTitle>
+          <CardDescription>Scanner real-time статус, удирдлага</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Scanner Status Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="border rounded-lg p-3">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Activity className="h-3 w-3" /> Төлөв
+              </div>
+              <div className={`text-sm font-medium mt-1 ${scannerStatus?.running ? "text-emerald-600" : "text-red-600"}`}>
+                {scannerStatus?.running ? "Ажиллаж байна" : "Зогссон"}
+              </div>
+            </div>
+            <div className="border rounded-lg p-3">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Сүүлийн scan
+              </div>
+              <div className="text-sm font-medium mt-1">
+                {scannerStatus?.secsSinceLastScan !== null && scannerStatus?.secsSinceLastScan !== undefined
+                  ? scannerStatus.secsSinceLastScan < 60
+                    ? `${scannerStatus.secsSinceLastScan}с өмнө`
+                    : `${Math.floor(scannerStatus.secsSinceLastScan / 60)}м өмнө`
+                  : "—"}
+              </div>
+            </div>
+            <div className="border rounded-lg p-3">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <RefreshCw className="h-3 w-3" /> Давтамж
+              </div>
+              <div className="text-sm font-medium mt-1">
+                {scannerStatus?.cadenceSec ? `${Math.floor(scannerStatus.cadenceSec / 60)} минут` : "—"}
+              </div>
+            </div>
+            <div className="border rounded-lg p-3">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Wifi className="h-3 w-3" /> Backend
+              </div>
+              <div className={`text-sm font-medium mt-1 ${scannerStatus?.reachable ? "text-emerald-600" : "text-red-600"}`}>
+                {scannerStatus?.reachable ? "Холбогдсон" : "Холбогдоогүй"}
+              </div>
+            </div>
+          </div>
+
+          {/* Scanner Error */}
+          {scannerStatus?.lastError && (
+            <div className="border border-red-500/30 bg-red-500/5 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-red-600">Сүүлийн алдаа</div>
+                  <div className="text-xs text-muted-foreground mt-1 font-mono">{scannerStatus.lastError}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scanner Controls */}
+          <div className="flex items-center gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={checkScannerStatus}
+              disabled={running}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${running ? "animate-spin" : ""}`} />
+              Шалгах
+            </Button>
+            {scannerStatus?.running ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleScannerControl("stop")}
+                  disabled={scannerControlling}
+                  className="text-red-600 border-red-500/30 hover:bg-red-500/10"
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  Stop
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleScannerControl("restart")}
+                  disabled={scannerControlling}
+                  className="text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/10"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Restart
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleScannerControl("start")}
+                disabled={scannerControlling}
+                className="text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Start
+              </Button>
+            )}
+          </div>
+
+          {/* Last Scan ID */}
+          {scannerStatus?.lastScanId && (
+            <div className="text-xs text-muted-foreground">
+              Scan ID: <span className="font-mono">{scannerStatus.lastScanId}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
