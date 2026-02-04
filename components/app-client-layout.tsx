@@ -6,6 +6,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppTopbar } from "@/components/app-topbar"
+import { SupportChat } from "@/components/support-chat"
 import { useSession } from "next-auth/react"
 import { SignalsProvider } from "@/context/SignalsContext"
 
@@ -29,6 +30,7 @@ export function AppClientLayout({ children }: { children: React.ReactNode }) {
           <AppTopbar />
           <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
+        <SupportChat />
       </div>
     </SignalsProvider>
   )

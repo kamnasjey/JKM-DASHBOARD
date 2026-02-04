@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Activity, Users, Check, X, Calendar, Plus, Trash2, ExternalLink, Server, RefreshCw, Wifi, WifiOff, Clock, AlertTriangle } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Activity, Users, Check, X, Calendar, Plus, Trash2, ExternalLink, Server, RefreshCw, Wifi, WifiOff, Clock, AlertTriangle, MessageCircle, Send, ChevronDown } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -69,6 +70,26 @@ type SystemStatus = {
   }
 }
 
+type SupportMessage = {
+  id: string
+  sender: "user" | "admin"
+  senderName: string
+  content: string
+  createdAt: string
+}
+
+type SupportTicket = {
+  id: string
+  userId: string
+  userEmail: string
+  userName: string
+  status: "open" | "replied" | "closed"
+  subject: string
+  messages: SupportMessage[]
+  createdAt: string
+  updatedAt: string
+}
+
 export default function AdminPage() {
   useAuthGuard(true)
 
@@ -97,6 +118,15 @@ export default function AdminPage() {
   // System Status
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [statusLoading, setStatusLoading] = useState(false)
+
+  // Support Tickets
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([])
+  const [supportLoading, setSupportLoading] = useState(false)
+  const [supportFilter, setSupportFilter] = useState<"all" | "open" | "replied" | "closed">("all")
+  const [openTicketsCount, setOpenTicketsCount] = useState(0)
+  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState("")
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let mounted = true
@@ -131,6 +161,7 @@ export default function AdminPage() {
     loadManualRequests()
     loadUsers()
     loadForexHolidays()
+    loadSupportTickets()
   }, [])
 
   // Load system status
@@ -177,6 +208,120 @@ export default function AdminPage() {
     } finally {
       setUsersLoading(false)
     }
+  }
+
+  // Support Tickets functions
+  const loadSupportTickets = useCallback(async () => {
+    setSupportLoading(true)
+    try {
+      const status = supportFilter === "all" ? "" : `?status=${supportFilter}`
+      const res = await fetch(`/api/admin/support${status}`, { cache: "no-store" })
+      const data = await res.json()
+      if (data.ok) {
+        setSupportTickets(data.tickets || [])
+        setOpenTicketsCount(data.openCount || 0)
+      }
+    } catch (err) {
+      console.error("[admin] loadSupportTickets failed:", err)
+    } finally {
+      setSupportLoading(false)
+    }
+  }, [supportFilter])
+
+  useEffect(() => {
+    if (isOwner) {
+      loadSupportTickets()
+    }
+  }, [supportFilter, isOwner, loadSupportTickets])
+
+  const handleReplyToTicket = async (ticketId: string) => {
+    if (!replyText.trim()) return
+    setLoadingAction(`reply-${ticketId}`)
+    try {
+      const res = await fetch("/api/admin/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "reply",
+          ticketId,
+          message: replyText,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setReplyText("")
+        toast({ title: "Амжилттай", description: "Хариу илгээгдлээ" })
+        await loadSupportTickets()
+      } else {
+        throw new Error(data.error || "Failed to reply")
+      }
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Хариу илгээхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
+  const updateTicketStatus = async (ticketId: string, status: "open" | "replied" | "closed") => {
+    setLoadingAction(`status-${ticketId}`)
+    try {
+      const res = await fetch("/api/admin/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateStatus",
+          ticketId,
+          status,
+        }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        toast({ title: "Амжилттай", description: "Төлөв шинэчлэгдлээ" })
+        await loadSupportTickets()
+      } else {
+        throw new Error(data.error || "Failed to update status")
+      }
+    } catch (err: any) {
+      toast({
+        title: "Алдаа",
+        description: err.message || "Төлөв шинэчлэхэд алдаа гарлаа",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
+  const getTicketStatusBadge = (status: string) => {
+    switch (status) {
+      case "open":
+        return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">Хүлээгдэж буй</Badge>
+      case "replied":
+        return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Хариу илгээсэн</Badge>
+      case "closed":
+        return <Badge className="bg-gray-500/10 text-gray-600 border-gray-500/20">Хаагдсан</Badge>
+      default:
+        return null
+    }
+  }
+
+  const formatTicketTime = (iso: string) => {
+    const date = new Date(iso)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const mins = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+
+    if (mins < 1) return "Одоо"
+    if (mins < 60) return `${mins}м өмнө`
+    if (hours < 24) return `${hours}ц өмнө`
+    if (days < 7) return `${days}өдөр өмнө`
+    return date.toLocaleDateString("mn-MN")
   }
 
   // Forex Holidays functions
@@ -809,6 +954,196 @@ export default function AdminPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Support Tickets */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Хэрэглэгчийн хүсэлтүүд
+              {openTicketsCount > 0 && (
+                <Badge className="bg-red-500 text-white ml-2">{openTicketsCount}</Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              Хэрэглэгчдийн санал, хүсэлт, асуултууд
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Filter and refresh */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Select value={supportFilter} onValueChange={(v) => setSupportFilter(v as typeof supportFilter)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Бүгд</SelectItem>
+                    <SelectItem value="open">Хүлээгдэж буй</SelectItem>
+                    <SelectItem value="replied">Хариу илгээсэн</SelectItem>
+                    <SelectItem value="closed">Хаагдсан</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="sm" onClick={loadSupportTickets} disabled={supportLoading}>
+                  <RefreshCw className={`h-4 w-4 ${supportLoading ? "animate-spin" : ""}`} />
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Нийт: {supportTickets.length} хүсэлт
+              </div>
+            </div>
+
+            {/* Tickets list */}
+            {supportLoading ? (
+              <p className="text-center text-sm text-muted-foreground py-8">Ачааллаж байна...</p>
+            ) : supportTickets.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                {supportFilter === "all" ? "Хүсэлт байхгүй" : "Энэ төлөвтэй хүсэлт байхгүй"}
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {supportTickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className={`rounded-lg border transition-all ${
+                      ticket.status === "open"
+                        ? "bg-yellow-500/5 border-yellow-500/30"
+                        : ticket.status === "replied"
+                        ? "bg-emerald-500/5 border-emerald-500/20"
+                        : "bg-muted/30"
+                    }`}
+                  >
+                    {/* Ticket header - always visible */}
+                    <button
+                      onClick={() => setExpandedTicketId(expandedTicketId === ticket.id ? null : ticket.id)}
+                      className="w-full text-left p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">{ticket.subject}</span>
+                            {getTicketStatusBadge(ticket.status)}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Avatar className="h-5 w-5">
+                              <AvatarFallback className="text-[10px]">
+                                {ticket.userName?.charAt(0) || ticket.userEmail?.charAt(0) || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{ticket.userName || ticket.userEmail}</span>
+                            <span>•</span>
+                            <span>{formatTicketTime(ticket.updatedAt)}</span>
+                            <span>•</span>
+                            <span>{ticket.messages.length} мессеж</span>
+                          </div>
+                          {/* Preview of last message */}
+                          <p className="text-sm text-muted-foreground mt-2 truncate">
+                            {ticket.messages[ticket.messages.length - 1]?.content}
+                          </p>
+                        </div>
+                        <ChevronDown
+                          className={`h-5 w-5 text-muted-foreground transition-transform ${
+                            expandedTicketId === ticket.id ? "rotate-180" : ""
+                          }`}
+                        />
+                      </div>
+                    </button>
+
+                    {/* Expanded content */}
+                    {expandedTicketId === ticket.id && (
+                      <div className="border-t px-4 pb-4">
+                        {/* Messages */}
+                        <div className="py-4 space-y-3 max-h-[400px] overflow-y-auto">
+                          {ticket.messages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`flex ${msg.sender === "admin" ? "justify-end" : "justify-start"}`}
+                            >
+                              <div
+                                className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                  msg.sender === "admin"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted"
+                                }`}
+                              >
+                                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                <p
+                                  className={`text-xs mt-1 ${
+                                    msg.sender === "admin" ? "opacity-70" : "text-muted-foreground"
+                                  }`}
+                                >
+                                  {msg.senderName} • {formatTicketTime(msg.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Reply form and actions */}
+                        {ticket.status !== "closed" && (
+                          <div className="space-y-3">
+                            <div className="flex gap-2">
+                              <Textarea
+                                placeholder="Хариу бичих..."
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                rows={2}
+                                className="flex-1"
+                              />
+                              <Button
+                                onClick={() => handleReplyToTicket(ticket.id)}
+                                disabled={loadingAction === `reply-${ticket.id}` || !replyText.trim()}
+                              >
+                                <Send className="h-4 w-4 mr-1" />
+                                {loadingAction === `reply-${ticket.id}` ? "..." : "Илгээх"}
+                              </Button>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateTicketStatus(ticket.id, "closed")}
+                                disabled={loadingAction === `status-${ticket.id}`}
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                Хаах
+                              </Button>
+                              {ticket.status === "replied" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateTicketStatus(ticket.id, "open")}
+                                  disabled={loadingAction === `status-${ticket.id}`}
+                                >
+                                  Дахин нээх
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {ticket.status === "closed" && (
+                          <div className="flex items-center justify-between pt-2">
+                            <p className="text-sm text-muted-foreground">Энэ хүсэлт хаагдсан</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateTicketStatus(ticket.id, "open")}
+                              disabled={loadingAction === `status-${ticket.id}`}
+                            >
+                              Дахин нээх
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
