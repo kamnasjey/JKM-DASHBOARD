@@ -224,7 +224,7 @@ export function AdminLiveOpsPanel({
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground mt-1">
             <span><span className="text-green-500 font-medium">LIVE</span> — Data шинэ, хэвийн ажиллаж байна</span>
             <span><span className="text-amber-500 font-medium">DELAYED</span> — Data удааширсан (5+ мин)</span>
-            <span><span className="text-blue-500 font-medium">CLOSED</span> — Зах хаалттай</span>
+            <span><span className="text-blue-500 font-medium">CLOSED</span> — Market хаалттай</span>
           </div>
         </div>
 
