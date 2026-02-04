@@ -14,7 +14,6 @@ import {
   X,
   Activity,
   AlertTriangle,
-  Languages,
 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { AccessGate } from "@/components/access-gate"
@@ -47,6 +46,7 @@ import {
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
+import { useLanguage } from "@/contexts/language-context"
 
 // Default 15 symbols (must match backend)
 const DEFAULT_15_SYMBOLS = [
@@ -185,11 +185,8 @@ export default function ScannerConfigPage() {
   useAuthGuard(true)
   const { data: session } = useSession()
   const { toast } = useToast()
+  const { t } = useLanguage()
   const uid = (session as any)?.user?.id || ""
-
-  // Language toggle
-  const [lang, setLang] = useState<"en" | "mn">("mn")
-  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
 
   // State
   const [loading, setLoading] = useState(true)
@@ -482,26 +479,15 @@ export default function ScannerConfigPage() {
               {t("24/7 Scanner strategy configuration and per-symbol mapping", "24/7 Scanner-ийн strategy тохиргоо ба symbol бүрийн mapping")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
-              className="gap-1.5"
-            >
-              <Languages className="h-4 w-4" />
-              {lang === "mn" ? "EN" : "MN"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { loadData(); loadEngineStatus(); }}
-              disabled={saving}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${saving ? "animate-spin" : ""}`} />
-              {t("Refresh", "Шинэчлэх")}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { loadData(); loadEngineStatus(); }}
+            disabled={saving}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${saving ? "animate-spin" : ""}`} />
+            {t("Refresh", "Шинэчлэх")}
+          </Button>
         </div>
 
         {/* Auth Error Banner */}

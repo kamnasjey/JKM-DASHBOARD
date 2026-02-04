@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, LayoutGrid, Languages } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, LayoutGrid } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { AccessGate } from "@/components/access-gate"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
+import { useLanguage } from "@/contexts/language-context"
 import { normalizeDetectorList } from "@/lib/detectors/normalize"
 import { DetectorSelect, validateSelection, ensureRequiredDetectors, getUnknownDetectors } from "@/components/detectors/detector-select"
 import { CATEGORY_INFO, DETECTOR_BY_ID, DETECTOR_PRESETS, type DetectorPreset } from "@/lib/detectors/catalog"
@@ -96,10 +97,7 @@ export default function StrategiesPage() {
   useAuthGuard(true)
 
   const { toast } = useToast()
-
-  // Language toggle
-  const [lang, setLang] = useState<"en" | "mn">("mn")
-  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+  const { t } = useLanguage()
 
   const [view, setView] = useState<"list" | "maker">("list")
   const [loading, setLoading] = useState(true)
@@ -441,15 +439,6 @@ export default function StrategiesPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
-              className="gap-1.5"
-            >
-              <Languages className="h-4 w-4" />
-              {lang === "mn" ? "EN" : "MN"}
-            </Button>
             <Button
               variant={view === "maker" ? "secondary" : "default"}
               onClick={() => setView((v) => (v === "maker" ? "list" : "maker"))}

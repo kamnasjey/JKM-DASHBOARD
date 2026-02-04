@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User, CheckCircle, XCircle, MessageCircle, Send, Languages } from "lucide-react"
+import { User, CheckCircle, XCircle, MessageCircle, Send } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,18 +11,15 @@ import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
+import { useLanguage } from "@/contexts/language-context"
 import { useSession } from "next-auth/react"
 
 export default function ProfilePage() {
   useAuthGuard(true)
 
   const { data: session } = useSession()
-
   const { toast } = useToast()
-
-  // Language toggle
-  const [lang, setLang] = useState<"en" | "mn">("mn")
-  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+  const { t } = useLanguage()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -127,20 +124,9 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Profile</h1>
-            <p className="text-muted-foreground">{t("Your personal information and settings", "Таны хувийн мэдээлэл болон тохиргоо")}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLang(lang === "mn" ? "en" : "mn")}
-            className="gap-1.5"
-          >
-            <Languages className="h-4 w-4" />
-            {lang === "mn" ? "EN" : "MN"}
-          </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Profile</h1>
+          <p className="text-muted-foreground">{t("Your personal information and settings", "Таны хувийн мэдээлэл болон тохиргоо")}</p>
         </div>
 
         <Card>

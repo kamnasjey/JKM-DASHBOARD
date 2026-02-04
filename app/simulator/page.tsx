@@ -29,9 +29,9 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
-  Languages,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useLanguage } from "@/contexts/language-context"
 import { cn } from "@/lib/utils"
 import { 
   DETECTOR_BY_ID, 
@@ -419,10 +419,7 @@ function TagAttributionTable({ tags }: { tags: TagInsight[] }) {
 // ============================================
 export default function SimulatorPage() {
   const { toast } = useToast()
-
-  // Language toggle
-  const [lang, setLang] = useState<"en" | "mn">("mn")
-  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+  const { t } = useLanguage()
 
   // Data state
   const [symbols, setSymbols] = useState<string[]>([])
@@ -922,21 +919,10 @@ export default function SimulatorPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLang(lang === "mn" ? "en" : "mn")}
-                  className="gap-1.5"
-                >
-                  <Languages className="h-4 w-4" />
-                  {lang === "mn" ? "EN" : "MN"}
-                </Button>
-                <Badge variant="secondary" className="gap-1.5">
-                  <Layers className="h-3.5 w-3.5" />
-                  {t("Multi-TF Auto", "Multi-TF Авто")}
-                </Badge>
-              </div>
+              <Badge variant="secondary" className="gap-1.5">
+                <Layers className="h-3.5 w-3.5" />
+                {t("Multi-TF Auto", "Multi-TF Авто")}
+              </Badge>
             </div>
 
             {/* Configuration Card */}

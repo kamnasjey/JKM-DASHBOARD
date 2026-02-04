@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus, Languages } from "lucide-react"
+import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
+import { useLanguage } from "@/contexts/language-context"
 import {
   type UnifiedSignal,
   mapOldSignalToUnified,
@@ -203,10 +204,7 @@ export default function PerformancePage() {
   useAuthGuard(true)
 
   const { toast } = useToast()
-
-  // Language toggle
-  const [lang, setLang] = useState<"en" | "mn">("mn")
-  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
+  const { t } = useLanguage()
 
   const [loading, setLoading] = useState(true)
   const [rangeDays, setRangeDays] = useState("30")
@@ -374,18 +372,8 @@ export default function PerformancePage() {
             <h1 className="text-2xl sm:text-3xl font-bold">{t("History", "Түүх")}</h1>
             <p className="text-sm text-muted-foreground">{t("TP/SL history and results for each setup", "Setup бүрийн TP/SL түүх болон үр дүн")}</p>
           </div>
-          <div className="flex items-end gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
-              className="gap-1.5"
-            >
-              <Languages className="h-4 w-4" />
-              {lang === "mn" ? "EN" : "MN"}
-            </Button>
-            <div className="w-full sm:w-56">
-              <label className="text-xs font-medium text-muted-foreground">{t("Period", "Хугацаа")}</label>
+          <div className="w-full sm:w-56">
+            <label className="text-xs font-medium text-muted-foreground">{t("Period", "Хугацаа")}</label>
             <Select value={rangeDays} onValueChange={setRangeDays}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Хугацаа сонгох" />
@@ -398,7 +386,6 @@ export default function PerformancePage() {
                 ))}
               </SelectContent>
             </Select>
-            </div>
           </div>
         </div>
 

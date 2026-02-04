@@ -16,7 +16,6 @@ import {
   XCircle,
   Check,
   X,
-  Languages,
 } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Button } from "@/components/ui/button"
@@ -29,6 +28,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useSymbols } from "@/hooks/use-symbols"
 import { useAuthGuard } from "@/lib/auth-guard"
 import { useToast } from "@/hooks/use-toast"
+import { useLanguage } from "@/contexts/language-context"
 import { api } from "@/lib/api"
 import { getDashboardVersion } from "@/lib/version"
 import { cn } from "@/lib/utils"
@@ -400,11 +400,8 @@ function UnifiedSignalsTable({
 export default function SignalsPage() {
   useAuthGuard(true)
   const { toast } = useToast()
+  const { t } = useLanguage()
   const { symbols } = useSymbols()
-
-  // Language toggle
-  const [lang, setLang] = useState<"en" | "mn">("mn")
-  const t = (en: string, mn: string) => (lang === "mn" ? mn : en)
 
   // State
   const [activeTab, setActiveTab] = useState<"all" | "scanner" | "signals">("all")
@@ -552,23 +549,12 @@ export default function SignalsPage() {
               {t("Setups found by Scanner", "Scanner-ээс олдсон setup-үүд")}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLang(lang === "mn" ? "en" : "mn")}
-              className="gap-1.5"
-            >
-              <Languages className="h-4 w-4" />
-              {lang === "mn" ? "EN" : "MN"}
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/scanner">
-                <Activity className="h-4 w-4 mr-2" />
-                Scanner
-              </Link>
-            </Button>
-          </div>
+          <Button variant="outline" asChild>
+            <Link href="/scanner">
+              <Activity className="h-4 w-4 mr-2" />
+              Scanner
+            </Link>
+          </Button>
         </div>
 
         {/* Health Strip */}
