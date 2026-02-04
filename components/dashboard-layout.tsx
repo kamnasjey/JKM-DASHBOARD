@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react"
 import { DashboardSidebar } from "./dashboard-sidebar"
 import { DashboardTopbar } from "./dashboard-topbar"
 import { AccessDeniedGuard } from "./access-denied-guard"
+import { SupportChat } from "./support-chat"
 import { useSession } from "next-auth/react"
 import { LanguageProvider } from "@/contexts/language-context"
 
@@ -17,6 +18,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session } = useSession()
   const [isOwner, setIsOwner] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isSupportOpen, setIsSupportOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -59,7 +61,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <AccessDeniedGuard>
         <div className="flex h-screen overflow-hidden bg-background dashboard-grid-bg">
           {/* Desktop Sidebar */}
-          <DashboardSidebar isAdmin={isOwner} />
+          <DashboardSidebar isAdmin={isOwner} onOpenSupport={() => setIsSupportOpen(true)} />
 
           {/* Mobile Sidebar Overlay */}
           {/* Backdrop */}
@@ -72,7 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div
             className={`fixed inset-y-0 left-0 z-50 w-64 lg:hidden transition-transform duration-300 ease-in-out ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
           >
-            <DashboardSidebar isAdmin={isOwner} isMobile onNavigate={closeMobileMenu} />
+            <DashboardSidebar isAdmin={isOwner} isMobile onNavigate={closeMobileMenu} onOpenSupport={() => setIsSupportOpen(true)} />
           </div>
 
           <div className="flex flex-1 flex-col overflow-hidden">
@@ -82,6 +84,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             />
             <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">{children}</main>
           </div>
+
+          {/* Support Chat */}
+          <SupportChat isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
         </div>
       </AccessDeniedGuard>
     </LanguageProvider>

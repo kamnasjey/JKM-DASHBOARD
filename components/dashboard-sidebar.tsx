@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio, Crown } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio, Crown, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
@@ -14,6 +14,7 @@ interface SidebarProps {
   isAdmin?: boolean
   isMobile?: boolean
   onNavigate?: () => void
+  onOpenSupport?: () => void
 }
 
 const navItems = [
@@ -55,7 +56,7 @@ const navItems = [
   },
 ]
 
-export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps) {
+export function DashboardSidebar({ isAdmin, isMobile, onNavigate, onOpenSupport }: SidebarProps) {
   const pathname = usePathname()
   const { lang } = useLanguage()
   const [planSheetOpen, setPlanSheetOpen] = useState(false)
@@ -125,6 +126,15 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
             >
               <Crown className="h-5 w-5 flex-shrink-0 text-yellow-500" />
               <span>{getLabel("Plan", "Төлөвлөгөө")}</span>
+            </button>
+
+            {/* Support Button - Green */}
+            <button
+              onClick={onOpenSupport}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 w-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/20"
+            >
+              <MessageCircle className="h-5 w-5 flex-shrink-0 text-emerald-500" />
+              <span>{getLabel("Support", "Тусламж")}</span>
             </button>
 
             {isAdmin && (
