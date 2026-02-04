@@ -172,14 +172,14 @@ export function SupportChat() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all"
+        className="fixed bottom-6 left-6 md:left-72 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all"
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 left-6 z-50 w-80 md:w-96 rounded-xl border bg-background shadow-2xl overflow-hidden">
+        <div className="fixed bottom-24 left-6 md:left-72 z-50 w-80 md:w-96 rounded-xl border bg-background shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center justify-between">
