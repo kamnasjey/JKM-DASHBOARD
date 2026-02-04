@@ -247,7 +247,25 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
           <div className="flex-1 p-6 space-y-6">
             {/* Status Cards - 4 columns on large screens */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Системийн статус</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Системийн статус</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { checkHealth(); testWebSocket() }}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                  Дахин шалгах
+                </Button>
+              </div>
+
+              {/* Status explanation */}
+              <div className="text-xs text-muted-foreground bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 mb-4">
+                <p className="font-medium text-blue-600 mb-1">💡 Статус гэж юу вэ?</p>
+                <p>Эдгээр нь системийн үндсэн хэсгүүд зөв ажиллаж байгаа эсэхийг харуулна. Бүгд <span className="text-green-600 font-medium">ногоон</span> бол систем хэвийн ажиллаж байна.</p>
+              </div>
+
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Backend Status */}
                 <Card className={health?.ok ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"}>
@@ -274,6 +292,7 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
                         Uptime: {formatUptime(health.uptime_s)}
                       </div>
                     )}
+                    <p className="text-[10px] text-muted-foreground mt-2">Үндсэн сервер</p>
                   </CardContent>
                 </Card>
 
@@ -297,6 +316,7 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
                     ) : (
                       <span className="text-sm text-muted-foreground">Шалгаж байна...</span>
                     )}
+                    <p className="text-[10px] text-muted-foreground mt-2">Live signal холболт</p>
                   </CardContent>
                 </Card>
 
@@ -315,31 +335,22 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
                         <span className="text-lg font-semibold text-yellow-600">Бэлэн биш</span>
                       </div>
                     )}
+                    <p className="text-[10px] text-muted-foreground mt-2">Үнийн мэдээлэл</p>
                   </CardContent>
                 </Card>
 
                 {/* Simulator Queue */}
-                <Card className="border-muted">
+                <Card className={(health?.sim_queue_size ?? 0) > 3 ? "border-yellow-500/30 bg-yellow-500/5" : "border-muted"}>
                   <CardContent className="p-4">
                     <div className="text-sm text-muted-foreground mb-2">Sim Queue</div>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl font-mono font-bold">{health?.sim_queue_size ?? "—"}</span>
                       <span className="text-sm text-muted-foreground">jobs</span>
                     </div>
+                    <p className="text-[10px] text-muted-foreground mt-2">Хүлээж буй simulation</p>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Refresh Button */}
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => { checkHealth(); testWebSocket() }}
-                disabled={loading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                Дахин шалгах
-              </Button>
             </div>
 
             {/* Quick Actions - Larger buttons in grid */}
@@ -349,20 +360,28 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Restart Backend - Main action */}
                 <Card className="border-red-500/30 bg-red-500/5">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold flex items-center gap-2">
-                          <RotateCcw className="h-4 w-4" />
-                          Backend Restart
-                        </h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Simulator удаан, гацсан үед ашиглана
-                        </p>
-                      </div>
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-semibold flex items-center gap-2 text-base">
+                        <RotateCcw className="h-5 w-5" />
+                        Backend Restart
+                      </h4>
                       <Badge variant="outline" className="text-[10px] bg-red-500/10 border-red-500/30">
-                        Удаан бол
+                        Хүчтэй засвар
                       </Badge>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Хэзээ хэрэглэх:</strong> Систем бүхэлдээ удааширсан, хариу өгөхгүй болсон үед
+                      </p>
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 space-y-1">
+                        <p>• Simulator 5+ минут болж байгаа бол</p>
+                        <p>• Backend статус "Алдаа" гэж харагдаж байвал</p>
+                        <p>• Юу ч ажиллахгүй байвал энийг дар</p>
+                      </div>
+                      <p className="text-xs text-yellow-600">
+                        ⚠️ Restart дарсны дараа 10-15 секунд хүлээнэ үү
+                      </p>
                     </div>
                     <Button
                       variant="destructive"
@@ -382,15 +401,20 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
 
                 {/* Scanner Controls */}
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="mb-3">
-                      <h4 className="font-semibold flex items-center gap-2">
-                        <Play className="h-4 w-4" />
-                        Scanner удирдлага
-                      </h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Signal ирэхгүй үед Scanner эхлүүлэх/зогсоох
+                  <CardContent className="p-5">
+                    <h4 className="font-semibold flex items-center gap-2 text-base mb-2">
+                      <Play className="h-5 w-5" />
+                      Scanner удирдлага
+                    </h4>
+                    <div className="space-y-2 mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Хэзээ хэрэглэх:</strong> Dashboard дээр шинэ signal ирэхгүй болсон үед
                       </p>
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 space-y-1">
+                        <p>• Dashboard-д signal шинэчлэгдэхгүй бол</p>
+                        <p>• "Engine: Stopped" гэж харагдаж байвал</p>
+                        <p>• Эхлээд Stop дараад дахин Start дарна</p>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
@@ -425,15 +449,20 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
 
                 {/* Refresh Cache */}
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="mb-3">
-                      <h4 className="font-semibold flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4" />
-                        Cache Refresh
-                      </h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Data хуучирсан үед cache шинэчлэх
+                  <CardContent className="p-5">
+                    <h4 className="font-semibold flex items-center gap-2 text-base mb-2">
+                      <RefreshCw className="h-5 w-5" />
+                      Cache Refresh
+                    </h4>
+                    <div className="space-y-2 mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Хэзээ хэрэглэх:</strong> Үнийн мэдээлэл хуучин эсвэл буруу харагдаж байвал
                       </p>
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 space-y-1">
+                        <p>• Symbol-ийн үнэ шинэчлэгдэхгүй бол</p>
+                        <p>• "Last M5: 10+ мин ago" гэж харагдаж байвал</p>
+                        <p>• Зах хаагдсаны дараа нээгдэхэд</p>
+                      </div>
                     </div>
                     <Button
                       variant="outline"
@@ -453,15 +482,20 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
 
                 {/* Clear Queue */}
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="mb-3">
-                      <h4 className="font-semibold flex items-center gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        Queue цэвэрлэх
-                      </h4>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Simulator job гацсан үед queue-г цэвэрлэх
+                  <CardContent className="p-5">
+                    <h4 className="font-semibold flex items-center gap-2 text-base mb-2">
+                      <Trash2 className="h-5 w-5" />
+                      Queue цэвэрлэх
+                    </h4>
+                    <div className="space-y-2 mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        <strong className="text-foreground">Хэзээ хэрэглэх:</strong> Simulator дараалалд олон job хуримтлагдсан үед
                       </p>
+                      <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 space-y-1">
+                        <p>• Sim Queue дээр олон job (5+) харагдаж байвал</p>
+                        <p>• Simulator эхлэхгүй, хүлээж байна гэж байвал</p>
+                        <p>• Өмнөх simulation-ууд гацсан бол</p>
+                      </div>
                     </div>
                     <Button
                       variant="outline"
