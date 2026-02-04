@@ -1562,8 +1562,8 @@ export default function LandingPage() {
                     <span className="text-gray-300">Telegram alert</span>
                   </li>
                 </ul>
-                <Link href="/pricing?plan=pro" className="w-full py-3 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded-lg text-center transition-colors shadow-neon">
-                  {t("Choose Pro", "Pro сонгох")}
+                <Link href="/auth/register" className="w-full py-3 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded-lg text-center transition-colors shadow-neon">
+                  {t("Get Started", "Бүртгүүлэх")}
                 </Link>
               </div>
 
@@ -1602,8 +1602,8 @@ export default function LandingPage() {
                     <span className="text-gray-300">Priority support</span>
                   </li>
                 </ul>
-                <Link href="/pricing?plan=pro_plus" className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-center transition-colors">
-                  {t("Choose Pro+", "Pro+ сонгох")}
+                <Link href="/auth/register" className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-center transition-colors">
+                  {t("Get Started", "Бүртгүүлэх")}
                 </Link>
               </div>
             </div>
@@ -1625,11 +1625,10 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/pricing"
-                className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex flex-col items-center justify-center"
+                href="/auth/register"
+                className="h-14 px-10 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold text-lg rounded shadow-neon transition-all hover:scale-105 flex items-center justify-center"
               >
-                <span>{t("Get Started", "Эхлэх")}</span>
-                <span className="text-[10px] font-normal opacity-70">{t("View pricing plans", "Үнийн төлөвлөгөө харах")}</span>
+                {t("Get Started", "Бүртгүүлэх")}
               </Link>
             </div>
             <p className="mt-6 text-xs text-gray-600 font-mono">
