@@ -15,7 +15,7 @@ const FEATURE_NAMES: Record<string, string> = {
   scanner: "Scanner",
   simulator: "Simulator",
   strategies: "Strategies",
-  signals: "Signals",
+  signals: "Setups",
   dashboard: "Dashboard",
 }
 

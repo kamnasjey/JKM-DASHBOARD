@@ -581,7 +581,7 @@ export default function LandingPage() {
                       <span className="text-[#0df269]">Gate</span> → {t("Market filter", "Зах зээл шүүлт")}
                     </span>
                     <span className="px-3 py-1.5 rounded-lg bg-[#111] border border-white/10 text-xs font-mono text-gray-300">
-                      <span className="text-yellow-400">Trigger</span> → {t("Entry signal", "Оролтын дохио")}
+                      <span className="text-yellow-400">Trigger</span> → {t("Entry setup", "Оролтын дохио")}
                     </span>
                     <span className="px-3 py-1.5 rounded-lg bg-[#111] border border-white/10 text-xs font-mono text-gray-300">
                       <span className="text-blue-400">Confluence</span> → {t("Confirmation", "Баталгаажуулалт")}
@@ -1503,7 +1503,7 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-8 flex-1">
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("View Signals", "Signals харах")}</span>
+                    <span className="text-gray-300">{t("View Setups", "Setup-ууд харах")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>

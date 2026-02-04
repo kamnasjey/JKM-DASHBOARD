@@ -1394,7 +1394,7 @@ export default function SimulatorPage() {
                                     <p className="text-sm font-medium mt-1">Entries / Week</p>
                                     <p className="text-xs text-muted-foreground mt-2">
                                       {entriesPerWeek < 1 ? "⚠️ Хэт цөөн" :
-                                       entriesPerWeek > 10 ? "⚠️ Spam signal?" :
+                                       entriesPerWeek > 10 ? "⚠️ Spam setup?" :
                                        "✅ Хэвийн"}
                                     </p>
                                   </div>

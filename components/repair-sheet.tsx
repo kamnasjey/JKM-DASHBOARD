@@ -316,7 +316,7 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
                     ) : (
                       <span className="text-sm text-muted-foreground">Шалгаж байна...</span>
                     )}
-                    <p className="text-[10px] text-muted-foreground mt-2">Live signal холболт</p>
+                    <p className="text-[10px] text-muted-foreground mt-2">Live setup холболт</p>
                   </CardContent>
                 </Card>
 
@@ -408,10 +408,10 @@ export function RepairSheet({ open, onOpenChange }: RepairSheetProps) {
                     </h4>
                     <div className="space-y-2 mb-4">
                       <p className="text-sm text-muted-foreground">
-                        <strong className="text-foreground">Хэзээ хэрэглэх:</strong> Dashboard дээр шинэ signal ирэхгүй болсон үед
+                        <strong className="text-foreground">Хэзээ хэрэглэх:</strong> Dashboard дээр шинэ setup ирэхгүй болсон үед
                       </p>
                       <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 space-y-1">
-                        <p>• Dashboard-д signal шинэчлэгдэхгүй бол</p>
+                        <p>• Dashboard-д setup шинэчлэгдэхгүй бол</p>
                         <p>• "Engine: Stopped" гэж харагдаж байвал</p>
                         <p>• Эхлээд Stop дараад дахин Start дарна</p>
                       </div>

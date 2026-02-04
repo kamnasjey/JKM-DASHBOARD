@@ -38,7 +38,7 @@ const buildStrategyExplanation = (detectors: string[]) => {
   const notes: string[] = []
 
   if (has("GATE_REGIME")) notes.push("Зах зээлийн нөхцөлийг шүүж, choppy үед оролтыг багасгана")
-  if (has("GATE_VOLATILITY")) notes.push("Volatility‑ийн хэт бага/өндөр үед шүүлтүүр хийж false signal‑ийг бууруулна")
+  if (has("GATE_VOLATILITY")) notes.push("Volatility‑ийн хэт бага/өндөр үед шүүлтүүр хийж false setup‑ийг бууруулна")
   if (has("GATE_DRIFT_SENTINEL")) notes.push("Хүчтэй drift үед эсрэг чиглэлийн эрсдэлийг бууруулна")
 
   if (has("BOS")) notes.push("Structure break илэрмэгц трендийн үргэлжлэлийг барина")
