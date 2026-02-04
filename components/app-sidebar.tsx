@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut, Activity } from "lucide-react"
+import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut, Activity, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -17,7 +17,11 @@ const navItems = [
   { href: "/app/settings", label: "Settings", labelMn: "Тохиргоо", icon: Settings },
 ]
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  onOpenSupport?: () => void
+}
+
+export function AppSidebar({ onOpenSupport }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -60,7 +64,20 @@ export function AppSidebar() {
           })}
         </nav>
 
-        <div className="border-t border-border p-4">
+        <div className="border-t border-border p-4 space-y-2">
+          {/* Support Button - Green */}
+          <Button
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={onOpenSupport}
+          >
+            <MessageCircle className="mr-2 h-4 w-4" />
+            <span className="flex flex-col items-start">
+              <span>Тусламж</span>
+              <span className="text-[10px] opacity-80">Санал хүсэлт</span>
+            </span>
+          </Button>
+
+          {/* Logout Button */}
           <Button variant="outline" className="w-full bg-transparent" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span className="flex flex-col items-start">

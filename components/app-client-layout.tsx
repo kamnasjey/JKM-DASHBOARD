@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppTopbar } from "@/components/app-topbar"
@@ -13,6 +13,7 @@ import { SignalsProvider } from "@/context/SignalsContext"
 export function AppClientLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { status } = useSession()
+  const [isSupportOpen, setIsSupportOpen] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -25,12 +26,12 @@ export function AppClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <SignalsProvider>
       <div className="flex h-screen">
-        <AppSidebar />
+        <AppSidebar onOpenSupport={() => setIsSupportOpen(true)} />
         <div className="flex flex-1 flex-col">
           <AppTopbar />
           <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
-        <SupportChat />
+        <SupportChat isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       </div>
     </SignalsProvider>
   )

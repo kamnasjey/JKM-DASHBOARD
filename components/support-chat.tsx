@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { MessageCircle, X, Send, ChevronLeft, Plus } from "lucide-react"
+import { useEffect, useRef, useCallback, useState } from "react"
+import { X, Send, ChevronLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,9 +27,8 @@ type SupportTicket = {
 
 type View = "list" | "chat" | "new"
 
-export function SupportChat() {
+export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { data: session, status: sessionStatus } = useSession()
-  const [isOpen, setIsOpen] = useState(false)
   const [view, setView] = useState<View>("list")
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null)
@@ -163,23 +162,14 @@ export function SupportChat() {
     }
   }
 
-  if (sessionStatus !== "authenticated") {
+  if (sessionStatus !== "authenticated" || !isOpen) {
     return null
   }
 
   return (
     <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 left-6 md:left-72 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-      </button>
-
       {/* Chat Window */}
-      {isOpen && (
-        <div className="fixed bottom-24 left-6 md:left-72 z-50 w-80 md:w-96 rounded-xl border bg-background shadow-2xl overflow-hidden">
+      <div className="fixed bottom-6 left-6 md:left-72 z-50 w-80 md:w-96 rounded-xl border bg-background shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center justify-between">
@@ -206,6 +196,9 @@ export function SupportChat() {
                   {view === "chat" && getStatusBadge(activeTicket?.status || "")}
                 </p>
               </div>
+              <button onClick={onClose} className="hover:opacity-80">
+                <X className="h-5 w-5" />
+              </button>
             </div>
           </div>
 
@@ -351,8 +344,7 @@ export function SupportChat() {
               Энэ хүсэлт хаагдсан байна
             </div>
           )}
-        </div>
-      )}
+      </div>
     </>
   )
 }
