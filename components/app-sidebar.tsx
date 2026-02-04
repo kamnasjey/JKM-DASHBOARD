@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut } from "lucide-react"
+import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/app", label: "Dashboard", labelMn: "Хянах самбар", icon: LayoutDashboard },
   { href: "/app/setups", label: "Setups", labelMn: "Setup-ууд", icon: Target },
   { href: "/app/signals", label: "Setups", labelMn: "Setup-ууд", icon: ListFilter },
+  { href: "/app/scanner-monitor", label: "Scanner", labelMn: "Сканнер", icon: Activity },
   { href: "/app/logs", label: "Logs", labelMn: "Бүртгэл", icon: FileText },
   { href: "/app/settings", label: "Settings", labelMn: "Тохиргоо", icon: Settings },
 ]
