@@ -84,13 +84,21 @@ export async function POST(request: Request) {
     const userData = userDoc.data() || {}
 
     if (decision === "approve") {
+      const finalPlan = plan ?? userData.manualPaymentPlan ?? "pro"
+
       await db.collection("users").doc(userDocId).set(
         {
+          // Access flags
           hasPaidAccess: true,
           has_paid_access: true,
           paidAt: now,
+          // Plan info (for AccessGate)
+          plan: finalPlan,
+          planStatus: "active",
+          planStartedAt: now,
+          // Manual payment tracking
           manualPaymentStatus: "approved",
-          manualPaymentPlan: plan ?? userData.manualPaymentPlan,
+          manualPaymentPlan: finalPlan,
           manualPaymentReviewedAt: now,
           manualPaymentReviewedBy: adminEmail ?? null,
           manualPaymentNote: note || userData.manualPaymentNote || null,
@@ -98,7 +106,7 @@ export async function POST(request: Request) {
         { merge: true }
       )
 
-      return NextResponse.json({ ok: true, status: "approved" })
+      return NextResponse.json({ ok: true, status: "approved", plan: finalPlan })
     }
 
     // reject

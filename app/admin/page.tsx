@@ -30,6 +30,7 @@ import { useSession } from "next-auth/react"
 type ManualPaymentRequest = {
   id: string
   email: string | null
+  name: string | null
   manualPaymentPlan: string | null
   manualPaymentPayerEmail: string | null
   manualPaymentTxnRef: string | null
@@ -677,34 +678,58 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-3">
                 {manualRequests.map((r) => (
-                  <div key={r.id} className="rounded-md border p-3">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">{r.email ?? r.id}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Plan: {r.manualPaymentPlan ?? "—"} | Payer: {r.manualPaymentPayerEmail ?? "—"}
+                  <div key={r.id} className="rounded-lg border p-4 bg-yellow-500/5 border-yellow-500/20">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{r.name || r.email || r.id}</span>
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-500/50">
+                            {r.manualPaymentPlan === "pro_plus" ? "Pro+" : "Pro"}
+                          </Badge>
                         </div>
-                        {r.manualPaymentTxnRef && (
-                          <div className="text-xs text-muted-foreground">TxnRef: {r.manualPaymentTxnRef}</div>
-                        )}
-                        {r.manualPaymentNote && (
-                          <div className="text-xs text-muted-foreground">Note: {r.manualPaymentNote}</div>
-                        )}
+                        <div className="text-sm text-muted-foreground">{r.email}</div>
+                        <div className="grid gap-1 text-xs">
+                          <div className="flex gap-2">
+                            <span className="text-muted-foreground">Төлбөр төлсөн:</span>
+                            <span>{r.manualPaymentPayerEmail || "—"}</span>
+                          </div>
+                          {r.manualPaymentTxnRef && (
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground">Гүйлгээний дугаар:</span>
+                              <span className="font-mono">{r.manualPaymentTxnRef}</span>
+                            </div>
+                          )}
+                          {r.manualPaymentNote && (
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground">Тэмдэглэл:</span>
+                              <span>{r.manualPaymentNote}</span>
+                            </div>
+                          )}
+                          {r.manualPaymentRequestedAt && (
+                            <div className="flex gap-2">
+                              <span className="text-muted-foreground">Хүсэлт илгээсэн:</span>
+                              <span>{new Date(r.manualPaymentRequestedAt).toLocaleString("mn-MN")}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex gap-2">
                         <Button
                           onClick={() => decideManual(r, "approve")}
                           disabled={loadingAction === `manual-approve-${r.id}`}
+                          className="bg-green-600 hover:bg-green-700"
                         >
-                          Approve
+                          <Check className="h-4 w-4 mr-1" />
+                          {loadingAction === `manual-approve-${r.id}` ? "..." : "Зөвшөөрөх"}
                         </Button>
                         <Button
                           variant="destructive"
                           onClick={() => decideManual(r, "reject")}
                           disabled={loadingAction === `manual-reject-${r.id}`}
                         >
-                          Reject
+                          <X className="h-4 w-4 mr-1" />
+                          {loadingAction === `manual-reject-${r.id}` ? "..." : "Татгалзах"}
                         </Button>
                       </div>
                     </div>

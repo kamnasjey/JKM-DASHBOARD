@@ -19,10 +19,10 @@ export async function GET() {
 
   try {
     const db = getFirebaseAdminDb()
+    // Query without orderBy to avoid composite index requirement
     const snapshot = await db
       .collection("users")
       .where("manualPaymentStatus", "==", "pending")
-      .orderBy("manualPaymentRequestedAt", "desc")
       .get()
 
     const requests = snapshot.docs.map((doc) => {
@@ -30,12 +30,20 @@ export async function GET() {
       return {
         id: doc.id,
         email: data.email || null,
+        name: data.name || null,
         manualPaymentPlan: data.manualPaymentPlan || null,
         manualPaymentPayerEmail: data.manualPaymentPayerEmail || null,
         manualPaymentTxnRef: data.manualPaymentTxnRef || null,
         manualPaymentNote: data.manualPaymentNote || null,
         manualPaymentRequestedAt: data.manualPaymentRequestedAt || null,
       }
+    })
+
+    // Sort by requested date (newest first) in JavaScript
+    requests.sort((a, b) => {
+      const dateA = a.manualPaymentRequestedAt ? new Date(a.manualPaymentRequestedAt).getTime() : 0
+      const dateB = b.manualPaymentRequestedAt ? new Date(b.manualPaymentRequestedAt).getTime() : 0
+      return dateB - dateA
     })
 
     return NextResponse.json({ ok: true, requests })
