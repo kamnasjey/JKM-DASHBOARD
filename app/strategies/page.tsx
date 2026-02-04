@@ -238,7 +238,7 @@ export default function StrategiesPage() {
         description: wizardResult.style ? `${wizardResult.style} style strategy` : undefined,
         config: {
           min_score: 1.0,
-          min_rr: wizardResult.minRR,
+          min_rr: 2.7,  // Fixed default
         },
       })
 
@@ -286,7 +286,7 @@ export default function StrategiesPage() {
         description: preset.descEn,
         config: {
           min_score: 1.0,
-          min_rr: preset.recommendedSettings?.minRR || 2.7,
+          min_rr: 2.7,  // Fixed default
         },
       })
 
@@ -370,15 +370,15 @@ export default function StrategiesPage() {
           detectors: normalizedDetectors, // Use normalized
           description: editForm.description,
           config: {
-            min_score: editForm.min_score,
-            min_rr: Math.max(2.7, editForm.min_rr || 2.7),
+            min_score: editForm.min_score || 1.0,
+            min_rr: 2.7,    // Fixed default - not user configurable
           },
         })
-        
+
         if (!result.ok) {
           throw new Error("Failed to update")
         }
-        
+
         toast({
           title: "Амжилттай",
           description: "Стратеги шинэчлэгдлээ",
@@ -391,8 +391,8 @@ export default function StrategiesPage() {
           detectors: normalizedDetectors, // Use normalized
           description: editForm.description,
           config: {
-            min_score: editForm.min_score,
-            min_rr: Math.max(2.7, editForm.min_rr || 2.7),
+            min_score: editForm.min_score || 1.0,
+            min_rr: 2.7,    // Fixed default - not user configurable
           },
         })
         
@@ -692,11 +692,6 @@ export default function StrategiesPage() {
                   </div>
                 )}
 
-                {/* Params */}
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                  <span>Min RR: {strategy.min_rr || 2.7}</span>
-                  <span>Min Score: {strategy.min_score || 1.0}</span>
-                </div>
 
                 {/* Notes preview */}
                 {strategy.notes && (
@@ -792,21 +787,6 @@ export default function StrategiesPage() {
                 <Switch
                   checked={editForm.enabled}
                   onCheckedChange={(checked) => setEditForm({ ...editForm, enabled: checked })}
-                />
-              </div>
-
-              {/* Min RR */}
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <Label>Minimum Risk/Reward</Label>
-                  <span className="text-sm font-medium">{editForm.min_rr?.toFixed(1)}</span>
-                </div>
-                <Slider
-                  value={[editForm.min_rr || 2.7]}
-                  onValueChange={([value]) => setEditForm({ ...editForm, min_rr: value })}
-                  min={2.7}
-                  max={5}
-                  step={0.5}
                 />
               </div>
 

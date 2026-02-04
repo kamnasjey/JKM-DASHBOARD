@@ -284,25 +284,6 @@ function SettingsStep({
         />
       </div>
 
-      {/* Min RR */}
-      <div className="space-y-3">
-        <div className="flex justify-between">
-          <Label>Minimum Risk/Reward</Label>
-          <span className="text-sm font-medium">{minRR.toFixed(1)}</span>
-        </div>
-        <Slider
-          value={[minRR]}
-          onValueChange={([value]) => onMinRRChange(value)}
-          min={2.0}
-          max={5.0}
-          step={0.1}
-        />
-        <p className="text-xs text-muted-foreground">
-          {styleData?.recommendedSettings?.minRR
-            ? `${styleData.labelEn} style-д ${styleData.recommendedSettings.minRR}+ RR санал болгоно`
-            : "Өндөр RR = бага trade, илүү сайн чанар"}
-        </p>
-      </div>
 
       {/* Summary */}
       <Card>
