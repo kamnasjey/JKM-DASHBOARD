@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, Wand2, LayoutGrid } from "lucide-react"
+import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, LayoutGrid } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { AccessGate } from "@/components/access-gate"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
@@ -21,9 +21,7 @@ import { useAuthGuard } from "@/lib/auth-guard"
 import { normalizeDetectorList } from "@/lib/detectors/normalize"
 import { DetectorSelect, validateSelection, ensureRequiredDetectors, getUnknownDetectors } from "@/components/detectors/detector-select"
 import { CATEGORY_INFO, DETECTOR_BY_ID, DETECTOR_PRESETS, type DetectorPreset } from "@/lib/detectors/catalog"
-import { StrategyWizard } from "@/components/strategy-wizard"
 import { TemplateGallery } from "@/components/strategy-templates"
-import type { TradingStyle } from "@/lib/detectors/trading-styles"
 
 const MAX_STRATEGIES = 30
 
@@ -110,7 +108,6 @@ export default function StrategiesPage() {
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editForm, setEditForm] = useState<Omit<Strategy, 'strategy_id'> & { strategy_id?: string }>(defaultStrategy)
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
-  const [showWizard, setShowWizard] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
 
   // Debug: log editForm.detectors changes
@@ -210,59 +207,6 @@ export default function StrategiesPage() {
     setEditForm({ ...defaultStrategy })
     setEditingIndex(null)
     setShowCreateDialog(true)
-  }
-
-  // Handle wizard completion
-  const handleWizardComplete = async (wizardResult: {
-    name: string
-    detectors: string[]
-    minRR: number
-    style: TradingStyle | null
-  }) => {
-    if (strategies.length >= MAX_STRATEGIES) {
-      toast({
-        title: "Хязгаарлалт",
-        description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
-        variant: "destructive",
-      })
-      return
-    }
-
-    setSaving(true)
-    try {
-      const normalizedDetectors = normalizeDetectorList(wizardResult.detectors)
-      const result = await api.strategiesV2.create({
-        name: wizardResult.name,
-        enabled: true,
-        detectors: normalizedDetectors,
-        description: wizardResult.style ? `${wizardResult.style} style strategy` : undefined,
-        config: {
-          min_score: 1.0,
-          min_rr: 2.7,  // Fixed default
-        },
-      })
-
-      if (!result.ok) {
-        throw new Error("Failed to create")
-      }
-
-      toast({
-        title: "Амжилттай",
-        description: "Wizard-ээр шинэ стратеги үүсгэлээ",
-      })
-
-      await loadData()
-      setShowWizard(false)
-    } catch (err: any) {
-      console.error("[strategies] wizard save error:", err)
-      toast({
-        title: "Алдаа",
-        description: err.message || "Стратеги үүсгэхэд алдаа гарлаа",
-        variant: "destructive",
-      })
-    } finally {
-      setSaving(false)
-    }
   }
 
   // Handle template use
@@ -493,11 +437,11 @@ export default function StrategiesPage() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button
-              variant="default"
-              onClick={() => setShowWizard(true)}
+              variant={view === "maker" ? "secondary" : "default"}
+              onClick={() => setView((v) => (v === "maker" ? "list" : "maker"))}
             >
-              <Wand2 className="mr-2 h-4 w-4" />
-              Wizard
+              <Sparkles className="mr-2 h-4 w-4" />
+              {view === "maker" ? "Жагсаалт" : "AI Strategy Maker"}
             </Button>
             <Button
               variant="outline"
@@ -505,13 +449,6 @@ export default function StrategiesPage() {
             >
               <LayoutGrid className="mr-2 h-4 w-4" />
               Templates
-            </Button>
-            <Button
-              variant={view === "maker" ? "secondary" : "outline"}
-              onClick={() => setView((v) => (v === "maker" ? "list" : "maker"))}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              {view === "maker" ? "Жагсаалт" : "AI Maker"}
             </Button>
             <Button onClick={openCreateDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
@@ -554,9 +491,8 @@ export default function StrategiesPage() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Wizard</strong> - 4 алхамаар хялбар стратеги үүсгэх |{" "}
-                <strong>Templates</strong> - Backtest-тэй бэлэн template |{" "}
-                <strong>AI Maker</strong> - AI туслах |{" "}
+                <strong>AI Strategy Maker</strong> - Арга барилаа бичээд AI-р strategy үүсгэ |{" "}
+                <strong>Templates</strong> - JKM санал болгосон бэлэн strategy |{" "}
                 <strong>Manual</strong> - Гараар үүсгэх
               </AlertDescription>
             </Alert>
@@ -881,14 +817,7 @@ export default function StrategiesPage() {
           </>
         )}
 
-        {/* Strategy Wizard Dialog */}
-        <StrategyWizard
-          open={showWizard}
-          onOpenChange={setShowWizard}
-          onComplete={handleWizardComplete}
-          disabled={saving}
-        />
-      </div>
+              </div>
     </DashboardLayout>
     </AccessGate>
   )

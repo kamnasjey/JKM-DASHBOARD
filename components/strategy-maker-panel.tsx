@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import {
-  AlertTriangle,
   Bot,
   Check,
   Save,
@@ -14,10 +13,10 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Slider } from "@/components/ui/slider"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
-
-type DetectorRole = "gate" | "trigger" | "confluence"
 
 interface Message {
   role: "user" | "assistant"
@@ -25,237 +24,74 @@ interface Message {
   detectors?: string[]
 }
 
-// NEW: 3-Layer Detector Types
-type DetectorLayer = "context" | "trigger" | "risk"
-
-interface Detector {
-  name: string
-  role: DetectorRole
-  layer: DetectorLayer  // NEW: 3-layer classification
-  description: string
-  required?: boolean
-  options?: DetectorOption[]  // NEW: Configurable options
-}
-
-interface DetectorOption {
-  key: string
-  label: string
-  type: "select" | "number"
-  values?: string[]
-  default?: string | number
-}
-
 const MAX_STRATEGIES = 30
-
-// NEW: 3-Layer Detector System (Context / Trigger / Risk)
-const ALL_DETECTORS: Detector[] = [
-  // ============================================================
-  // LAYER 1: CONTEXT (Хаана ажиллах вэ?)
-  // ============================================================
-  { 
-    name: "session_filter", 
-    role: "gate", 
-    layer: "context",
-    description: "Trading session шүүлт (London/NY/Overlap)", 
-    options: [
-      { key: "sessions", label: "Sessions", type: "select", values: ["London", "NY", "Overlap", "Asia", "ALL"], default: "ALL" }
-    ]
-  },
-  { 
-    name: "htf_bias", 
-    role: "gate", 
-    layer: "context",
-    description: "Higher Timeframe чиглэл шүүлт",
-    options: [
-      { key: "bias", label: "Bias", type: "select", values: ["BULLISH", "BEARISH", "ANY"], default: "ANY" }
-    ]
-  },
-  { 
-    name: "volatility_filter", 
-    role: "gate", 
-    layer: "context",
-    description: "Volatility төлөв шүүлт",
-    options: [
-      { key: "mode", label: "Mode", type: "select", values: ["HIGH", "NORMAL", "LOW", "ANY"], default: "ANY" }
-    ]
-  },
-  { name: "gate_regime", role: "gate", layer: "context", description: "Зах зээл Trend/Range/Chop байгааг тодорхойлно (auto)" },
-  { name: "gate_volatility", role: "gate", layer: "context", description: "Volatility өндөр/бага/хэвийн гэдгийг хэмжинэ" },
-  
-  // ============================================================
-  // LAYER 2: TRIGGER (Хаана орох вэ?)
-  // ============================================================
-  // Core ICT/SMC Triggers
-  { name: "bos", role: "trigger", layer: "trigger", description: "Break of Structure - Бүтэц эвдэх" },
-  { name: "choch", role: "trigger", layer: "trigger", description: "Change of Character - Чиглэл өөрчлөх" },
-  { name: "fvg", role: "trigger", layer: "trigger", description: "Fair Value Gap - Үнийн цоорхой" },
-  { name: "ob", role: "trigger", layer: "trigger", description: "Order Block - Захиалгын бүс" },
-  { name: "sweep", role: "trigger", layer: "trigger", description: "Liquidity Sweep - Хөрвөх чадварын цуглуулга" },
-  // Additional Triggers
-  { name: "break_retest", role: "trigger", layer: "trigger", description: "S/R эвдээд буцаад retest хийх" },
-  { name: "compression_expansion", role: "trigger", layer: "trigger", description: "Volatility шахагдаад дэлбэрэх (squeeze → expansion)" },
-  { name: "momentum_continuation", role: "trigger", layer: "trigger", description: "Impulse → pullback → continuation" },
-  { name: "mean_reversion_snapback", role: "trigger", layer: "trigger", description: "Дундаж руу буцах (snapback)" },
-  { name: "sr_bounce", role: "trigger", layer: "trigger", description: "S/R түвшингээс эргэлт" },
-  { name: "sr_break_close", role: "trigger", layer: "trigger", description: "S/R түвшин дээр clean close гарсан" },
-  
-  // ============================================================
-  // LAYER 3: CONFLUENCE / CONFIRMATION
-  // ============================================================
-  { name: "engulf_at_level", role: "confluence", layer: "trigger", description: "Чухал түвшин дээр гарсан engulfing" },
-  { name: "pinbar_at_level", role: "confluence", layer: "trigger", description: "Чухал түвшин дээр гарсан pinbar" },
-  { name: "doji", role: "confluence", layer: "trigger", description: "Шийдэмгий бус лаа (нээлт≈хаалт)" },
-  { name: "double_top_bottom", role: "confluence", layer: "trigger", description: "Double top / bottom pattern" },
-  { name: "fakeout_trap", role: "confluence", layer: "trigger", description: "Fakeout trap (wick out → close back inside)" },
-  { name: "fibo_retrace_confluence", role: "confluence", layer: "trigger", description: "Fibo retrace + S/R confluence" },
-  { name: "flag_pennant", role: "confluence", layer: "trigger", description: "Flag / pennant pattern" },
-  { name: "sr_role_reversal", role: "confluence", layer: "trigger", description: "Resistance → Support (эсвэл эсрэгээр)" },
-]
-
-// Layer labels and colors
-const LAYER_LABELS: Record<DetectorLayer, string> = {
-  context: "📍 CONTEXT (Хаана ажиллах?)",
-  trigger: "🎯 TRIGGER (Хаана орох?)",
-  risk: "🛡️ RISK (Яаж дуусгах?)",
-}
-
-const LAYER_COLORS: Record<DetectorLayer, string> = {
-  context: "bg-purple-500/15 border-purple-500/40 text-purple-200",
-  trigger: "bg-blue-500/15 border-blue-500/40 text-blue-200",
-  risk: "bg-green-500/15 border-green-500/40 text-green-200",
-}
-
-const ROLE_LABELS: Record<DetectorRole, string> = {
-  gate: "Context / Gate",
-  trigger: "Trigger (Entry)",
-  confluence: "Confluence (Баталгаа)",
-}
-
-const ROLE_COLORS: Record<DetectorRole, string> = {
-  gate: "bg-purple-500/15 border-purple-500/40 text-purple-200",
-  trigger: "bg-blue-500/15 border-blue-500/40 text-blue-200",
-  confluence: "bg-green-500/15 border-green-500/40 text-green-200",
-}
-
 const MIN_RR = 2.7
 
-// Preset Strategy Templates - Based on 7-day backtest (Jan 2026)
-// All presets: 60%+ WR, 4+ entries, RR 2.7+
-const STRATEGY_PRESETS = [
-  // =====================================================
-  // TOP PERFORMERS (70%+ WR)
-  // =====================================================
+// JKM Copilot санал болгосон strategy templates
+// Backtest-тэй, 60%+ WR
+const JKM_RECOMMENDED_TEMPLATES = [
   {
-    id: "btcusd_bos_pinbar",
-    name: "🏆 BTCUSD BOS+PINBAR (83.3% WR)",
-    description: "7 хоногийн тестэд 83.3% WR (5W/1L), 6 trades, RR 2.7+. BTCUSD 15m дээр BOS trigger + PINBAR confluence.",
-    detectors: ["bos", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+    id: "trend_breakout",
+    name: "Trend Breakout",
+    description: "Trend-ийн дагуу breakout барих. BOS + Pinbar confluence.",
+    detectors: ["gate_regime", "bos", "pinbar_at_level"],
+    winRate: "70%+",
+    style: "Trend Following",
   },
   {
-    id: "btcusd_choch_pinbar",
-    name: "💎 BTCUSD CHOCH+PINBAR (80% WR)",
-    description: "7 хоногийн тестэд 80% WR (4W/1L), 5 trades, RR 2.7+. BTCUSD 15m дээр CHOCH trigger + PINBAR confluence.",
-    detectors: ["choch", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+    id: "reversal_hunter",
+    name: "Reversal Hunter",
+    description: "Чиглэл өөрчлөлт барих. CHOCH + Engulfing confluence.",
+    detectors: ["gate_regime", "choch", "engulf_at_level"],
+    winRate: "65%+",
+    style: "Reversal",
   },
   {
-    id: "btcusd_triple_combo",
-    name: "🎯 BTCUSD BOS+CHOCH+PINBAR (77.8% WR)",
-    description: "7 хоногийн тестэд 77.8% WR (7W/2L), 9 trades, RR 2.7+. Хамгийн олон trade-тай combo.",
-    detectors: ["bos", "choch", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSD", recommended_tf: "15m" }
+    id: "sr_bounce_pro",
+    name: "S/R Bounce Pro",
+    description: "S/R түвшнээс bounce барих. Pinbar баталгаажуулалттай.",
+    detectors: ["gate_regime", "sr_bounce", "pinbar_at_level"],
+    winRate: "62%+",
+    style: "Range Trading",
   },
   {
-    id: "btcusdt_ob",
-    name: "💰 BTCUSDT OB (75% WR)",
-    description: "7 хоногийн тестэд 75% WR (3W/1L), 4 trades, RR 2.7+. BTCUSDT 15m дээр Order Block trigger.",
-    detectors: ["ob"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "BTCUSDT", recommended_tf: "15m" }
-  },
-  
-  // =====================================================
-  // SOLID PERFORMERS (60-70% WR)
-  // =====================================================
-  {
-    id: "usdchf_ob_doji",
-    name: "🔥 USDCHF OB+DOJI (66.7% WR)",
-    description: "7 хоногийн тестэд 66.7% WR (4W/2L), 6 trades, RR 2.7+. USDCHF 15m дээр OB trigger + DOJI confluence.",
-    detectors: ["ob", "doji"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "USDCHF", recommended_tf: "15m" }
+    id: "momentum_rider",
+    name: "Momentum Rider",
+    description: "Хүчтэй momentum-ийн continuation барих.",
+    detectors: ["gate_regime", "gate_volatility", "momentum_continuation", "fibo_retrace_confluence"],
+    winRate: "68%+",
+    style: "Momentum",
   },
   {
-    id: "usdchf_ob_pinbar",
-    name: "📊 USDCHF OB+PINBAR (64.3% WR)",
-    description: "7 хоногийн тестэд 64.3% WR (9W/5L), 14 trades, RR 2.7+. Хамгийн олон trade: USDCHF 15m OB+PINBAR.",
-    detectors: ["ob", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "USDCHF", recommended_tf: "15m" }
+    id: "smart_money",
+    name: "Smart Money Concepts",
+    description: "Order Block + Liquidity Sweep combo.",
+    detectors: ["gate_regime", "ob", "sweep", "fvg"],
+    winRate: "65%+",
+    style: "SMC/ICT",
   },
   {
-    id: "xauusd_sr_bounce_pinbar",
-    name: "🥇 XAUUSD SR_BOUNCE+PINBAR (62.5% WR)",
-    description: "7 хоногийн тестэд 62.5% WR (5W/3L), 8 trades, RR 2.7+. XAUUSD 15m дээр S/R bounce + PINBAR.",
-    detectors: ["sr_bounce", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "XAUUSD", recommended_tf: "15m" }
+    id: "conservative_safe",
+    name: "Conservative Safe",
+    description: "Бага эрсдэлтэй, олон баталгаажуулалттай.",
+    detectors: ["gate_regime", "gate_volatility", "break_retest", "sr_role_reversal", "pinbar_at_level"],
+    winRate: "72%+",
+    style: "Conservative",
   },
-  {
-    id: "audusd_break_retest",
-    name: "📈 AUDUSD BREAK_RETEST (61.5% WR)",
-    description: "7 хоногийн тестэд 61.5% WR (8W/5L), 13 trades, RR 2.7+. Хамгийн идэвхтэй: AUDUSD 15m Break & Retest.",
-    detectors: ["break_retest"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "AUDUSD", recommended_tf: "15m" }
-  },
-  
-  // =====================================================
-  // OTHER PAIRS (60% WR)
-  // =====================================================
-  {
-    id: "usdjpy_sweep_dbl_top",
-    name: "🌊 USDJPY SWEEP+DBL_TOP (60% WR)",
-    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.7+. USDJPY 15m дээр Liquidity Sweep + Double Top/Bottom.",
-    detectors: ["sweep", "double_top_bottom"],
-    config: { htf_bias: "ANY", session_filter: "London,NY", rr: 2.7, recommended_symbol: "USDJPY", recommended_tf: "15m" }
-  },
-  {
-    id: "nzdusd_bos_pinbar",
-    name: "🌿 NZDUSD BOS+PINBAR (60% WR)",
-    description: "7 хоногийн тестэд 60% WR (3W/2L), 5 trades, RR 2.7+. NZDUSD 15m дээр BOS trigger + PINBAR confluence.",
-    detectors: ["bos", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7, recommended_symbol: "NZDUSD", recommended_tf: "15m" }
-  },
-  
-  // =====================================================
-  // UNIVERSAL (All Pairs)
-  // =====================================================
-  {
-    id: "universal_bos_pinbar",
-    name: "🌐 Universal BOS+PINBAR",
-    description: "BOS+PINBAR combo нь олон pair дээр тогтвортой ажилладаг (BTCUSD 83%, NZDUSD 60%). Бүх pair дээр ашиглах боломжтой.",
-    detectors: ["bos", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7 }
-  },
-  {
-    id: "universal_ob_pinbar",
-    name: "🌐 Universal OB+PINBAR",
-    description: "OB+PINBAR combo (USDCHF 64.3%, BTCUSDT 75%). Order Block + Pinbar бол найдвартай combo.",
-    detectors: ["ob", "pinbar_at_level"],
-    config: { htf_bias: "ANY", session_filter: "ALL", rr: 2.7 }
-  }
 ]
 
 const INITIAL_MESSAGE: Message = {
   role: "assistant",
   content:
-    `Сайн байна уу! Би таны Strategy Maker туслах байна.\n\n` +
-    `🎯 **3-Давхар Strategy Builder**:\n` +
-    `1. 📍 **Context** - Хаана ажиллах? (Session, HTF Bias, Volatility)\n` +
-    `2. 🎯 **Trigger** - Хаана орох? (BOS, FVG, OB, CHOCH, SWEEP)\n` +
-    `3. 🛡️ **Risk** - Яаж дуусгах? (RR, Time Exit)\n\n` +
-    `💡 **Хурдан эхлэх**: Preset template сонгоод өөрчилж болно!\n\n` +
-    `Надад дараах зүйлсийг хэлээрэй:\n` +
-    `- Та ямар төрлийн trader бэ? (Trend follower, Range trader, Scalper...)\n` +
-    `- Ямар timeframe дээр trade хийдэг вэ? (5m, 15m, 1H, 4H...)\n\n` +
-    `Жишээ: "Би trend follower, 4H timeframe дээр BTC trade хийдэг"`,
+    `Сайн байна уу! 👋\n\n` +
+    `Би таны арилжааны арга барилд тохирсон **strategy бүтээж өгнө**.\n\n` +
+    `📝 **Өөрийн арга барилаа бичээрэй:**\n\n` +
+    `• Ямар төрлийн trader бэ? (trend follower, scalper, swing...)\n` +
+    `• Ямар зах зээл? (Forex, Crypto, Gold...)\n` +
+    `• Ямар timeframe? (5m, 15m, 1H, 4H...)\n` +
+    `• Ямар entry? (breakout, pullback, reversal...)\n\n` +
+    `**Жишээ:** "Би crypto дээр swing trade хийдэг, 4H timeframe, trend дагуу breakout илүүд үздэг."\n\n` +
+    `💡 Эсвэл баруун талаас JKM санал болгосон template сонгоорой!`,
 }
 
 export function StrategyMakerPanel(props: {
@@ -270,36 +106,19 @@ export function StrategyMakerPanel(props: {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedDetectors, setSelectedDetectors] = useState<string[]>([])
   const [strategyName, setStrategyName] = useState("")
+  const [minScore, setMinScore] = useState(1.0)
   const [isSaving, setIsSaving] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  
-  // NEW: Risk/Exit settings
-  const [riskSettings, setRiskSettings] = useState({
-    rr: MIN_RR,
-    timeExitBars: 12,
-    cooldownBars: 3,
-  })
-  
-  // NEW: Context filter settings  
-  const [contextSettings, setContextSettings] = useState({
-    sessionFilter: "ALL",
-    htfBias: "ANY",
-    volatilityFilter: "ANY",
-  })
 
-  // NEW: Apply preset
-  const applyPreset = (preset: typeof STRATEGY_PRESETS[0]) => {
-    setSelectedDetectors(preset.detectors)
-    setStrategyName(preset.name.replace(/[🔥💎📊]/g, "").trim())
-    if (preset.config) {
-      setRiskSettings(prev => ({ ...prev, rr: MIN_RR }))
-      setContextSettings(prev => ({
-        ...prev,
-        htfBias: preset.config.htf_bias || "ANY",
-        sessionFilter: preset.config.session_filter || "ALL",
-      }))
-    }
-    toast({ title: "Preset Applied", description: `${preset.name} template ашиглав` })
+  // Apply template
+  const applyTemplate = (template: typeof JKM_RECOMMENDED_TEMPLATES[0]) => {
+    setSelectedDetectors(template.detectors)
+    setStrategyName(template.name)
+    setMinScore(1.0)
+    toast({
+      title: "Template сонгогдлоо",
+      description: `${template.name} - ${template.style}`
+    })
   }
 
   const scrollToBottom = () => {
@@ -341,6 +160,11 @@ export function StrategyMakerPanel(props: {
       if (data.recommended_detectors?.length > 0) {
         setSelectedDetectors(data.recommended_detectors)
       }
+
+      // Update min_score if AI recommended one
+      if (data.recommended_min_score && data.recommended_min_score >= 0.5 && data.recommended_min_score <= 3.0) {
+        setMinScore(data.recommended_min_score)
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -354,63 +178,24 @@ export function StrategyMakerPanel(props: {
     }
   }
 
-  const toggleDetector = (name: string) => {
-    const detector = ALL_DETECTORS.find((d) => d.name === name)
-    if (detector?.required && selectedDetectors.includes(name)) return
-
-    if (selectedDetectors.includes(name)) {
-      setSelectedDetectors(selectedDetectors.filter((d) => d !== name))
-    } else {
-      setSelectedDetectors([...selectedDetectors, name])
-    }
-  }
-
-  // Group detectors by layer (NEW 3-layer structure)
-  const groupedByLayer = ALL_DETECTORS.reduce((acc, det) => {
-    if (!acc[det.layer]) acc[det.layer] = []
-    acc[det.layer].push(det)
-    return acc
-  }, {} as Record<DetectorLayer, Detector[]>)
-
-  const validation = {
-    context: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.layer === "context").length,
-    triggers: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.layer === "trigger" && ALL_DETECTORS.find((det) => det.name === d)?.role === "trigger").length,
-    confluences: selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.role === "confluence").length,
-  }
-
-  // Simplified validation: need at least 1 context + 1 trigger
-  const isValid = validation.context >= 1 && validation.triggers >= 1
-
-  const makeStrategyId = (name: string) =>
-    name
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "_")
-      .replace(/[^a-z0-9_]/g, "") +
-    "_" +
-    Date.now().toString(36)
+  const isValid = selectedDetectors.length >= 2
 
   const saveStrategy = async () => {
     const name = strategyName.trim()
 
     if (!name) {
-      toast({ 
-        title: "Missing Name", 
-        description: "Please enter a strategy name / Strategy нэр оруулна уу", 
-        variant: "destructive" 
+      toast({
+        title: "Нэр оруулна уу",
+        description: "Strategy нэр заавал байх ёстой",
+        variant: "destructive"
       })
       return
     }
 
     if (!isValid) {
-      // Build detailed validation message
-      const missing: string[] = []
-      if (validation.context < 1) missing.push("Context (1+)")
-      if (validation.triggers < 1) missing.push("Trigger (1+)")
-      
       toast({
-        title: "Incomplete Selection",
-        description: `Please select at least: ${missing.join(", ")}`,
+        title: "Детектор дутуу",
+        description: "AI-с strategy авах эсвэл template сонгоно уу",
         variant: "destructive",
       })
       return
@@ -418,89 +203,45 @@ export function StrategyMakerPanel(props: {
 
     setIsSaving(true)
     try {
-      // Use v2 API (Firestore-based) - single source of truth
-      // NEW: Include context and risk settings
       const result = await api.strategiesV2.create({
         name,
         enabled: true,
         detectors: selectedDetectors,
         config: {
-          min_score: 1.0,
-          min_rr: riskSettings.rr,
-          gate_regime_enabled: selectedDetectors.includes("gate_regime"),
-          // NEW: Context filter settings
-          context_filters: {
-            session_filter: contextSettings.sessionFilter,
-            htf_bias: contextSettings.htfBias,
-            volatility_filter: contextSettings.volatilityFilter,
-          },
-          // NEW: Risk/Exit settings
-          risk_settings: {
-            rr: riskSettings.rr,
-            time_exit_bars: riskSettings.timeExitBars,
-            cooldown_bars: riskSettings.cooldownBars,
-          },
+          min_score: minScore,
+          min_rr: MIN_RR,
         },
       })
 
       if (!result.ok) {
-        // Handle specific error codes with detailed messages
         const errorData = result as any
-        const errorCode = errorData.error || errorData.code || "UNKNOWN"
         const errorMessage = errorData.message || errorData.error || "Unknown error"
-        
-        if (errorCode === "LIMIT_REACHED" || errorCode === "LIMIT_EXCEEDED" || errorMessage.includes("Maximum")) {
+
+        if (errorMessage.includes("Maximum") || errorMessage.includes("LIMIT")) {
           toast({
-            title: "Strategy Limit Reached",
-            description: `Maximum ${MAX_STRATEGIES} strategies allowed. Delete an existing strategy to create a new one.`,
+            title: "Хязгаарлалт",
+            description: `Хамгийн ихдээ ${MAX_STRATEGIES} strategy.`,
             variant: "destructive",
           })
           return
         }
-        
-        // Show the actual server error message
+
         toast({
-          title: `Error: ${errorCode}`,
+          title: "Алдаа",
           description: errorMessage,
           variant: "destructive",
         })
         return
       }
 
-      toast({ title: "Success!", description: "Strategy saved successfully" })
+      toast({ title: "Амжилттай!", description: "Strategy хадгалагдлаа" })
       setStrategyName("")
+      setSelectedDetectors([])
       props.onSaved?.()
     } catch (err: any) {
-      // Try to extract detailed error from response
-      let errorMessage = "Failed to save strategy"
-      let errorCode = "SAVE_ERROR"
-      
-      if (err?.response) {
-        try {
-          const data = await err.response.json?.() || err.response
-          errorCode = data.error || data.code || errorCode
-          errorMessage = data.message || data.error || errorMessage
-        } catch {
-          errorMessage = err.message || errorMessage
-        }
-      } else {
-        errorMessage = err?.message || errorMessage
-      }
-      
-      // Check for limit error in exception message
-      if (errorMessage.includes("Maximum") || errorMessage.includes("LIMIT")) {
-        toast({
-          title: "Strategy Limit Reached",
-          description: `Maximum ${MAX_STRATEGIES} strategies allowed.`,
-          variant: "destructive",
-        })
-        return
-      }
-      
-      // Show detailed error
       toast({
-        title: `Error: ${errorCode}`,
-        description: errorMessage,
+        title: "Алдаа",
+        description: err?.message || "Хадгалах үед алдаа гарлаа",
         variant: "destructive",
       })
     } finally {
@@ -509,27 +250,30 @@ export function StrategyMakerPanel(props: {
   }
 
   return (
-    <div className={props.embedded ? "space-y-6" : "space-y-6"}>
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold">Strategy Maker</h2>
-            <p className="text-sm text-muted-foreground">AI + detector selection</p>
+            <h2 className="text-2xl font-bold">AI Strategy Maker</h2>
+            <p className="text-sm text-muted-foreground">
+              Арга барилаа бичээд AI strategy бүтээнэ
+            </p>
           </div>
         </div>
         {props.onCancel && (
           <Button variant="outline" onClick={props.onCancel}>
-            Стратегиуд руу
+            ← Жагсаалт руу
           </Button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: AI Chat */}
-        <div className="rounded-2xl border bg-card flex flex-col h-[calc(100vh-260px)] min-h-[520px]">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: AI Chat (2 columns) */}
+        <div className="lg:col-span-2 rounded-2xl border bg-card flex flex-col h-[calc(100vh-280px)] min-h-[500px]">
           <div className="p-4 border-b">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-purple-500" />
@@ -551,7 +295,7 @@ export function StrategyMakerPanel(props: {
                     <Bot className="w-4 h-4 text-white" />
                   )}
                 </div>
-                <div className={`max-w-[80%] ${msg.role === "user" ? "text-right" : ""}`}>
+                <div className={`max-w-[85%] ${msg.role === "user" ? "text-right" : ""}`}>
                   <div
                     className={`rounded-2xl px-4 py-3 ${
                       msg.role === "user" ? "bg-blue-500 text-white" : "bg-muted text-foreground"
@@ -563,7 +307,7 @@ export function StrategyMakerPanel(props: {
                     <div className="mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded-xl">
                       <div className="text-xs text-green-500 mb-2 flex items-center gap-1">
                         <Zap className="w-3 h-3" />
-                        Санал болгож буй детекторууд:
+                        AI үүсгэсэн детекторууд:
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {msg.detectors.map((d) => (
@@ -601,150 +345,123 @@ export function StrategyMakerPanel(props: {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
                 placeholder="Өөрийн trading арга барилаа бичээрэй..."
+                className="flex-1"
               />
-              <Button onClick={sendMessage} disabled={isLoading || !input.trim()} className="shrink-0">
+              <Button onClick={sendMessage} disabled={isLoading || !input.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Right: 3-Layer Strategy Builder */}
+        {/* Right: Templates + Save (1 column) */}
         <div className="space-y-4">
-          {/* Preset Templates (NEW!) */}
+          {/* JKM Recommended Templates */}
           <div className="rounded-xl border bg-card p-4">
             <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-              💡 Preset Templates (Хурдан эхлэх)
+              ⭐ JKM санал болгосон
             </h3>
-            <div className="grid grid-cols-1 gap-2">
-              {STRATEGY_PRESETS.map((preset) => (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {JKM_RECOMMENDED_TEMPLATES.map((template) => (
                 <button
-                  key={preset.id}
-                  onClick={() => applyPreset(preset)}
-                  className="p-3 rounded-lg border border-border bg-background hover:border-purple-500/50 hover:bg-purple-500/5 text-left transition-all"
+                  key={template.id}
+                  onClick={() => applyTemplate(template)}
+                  className={`w-full p-3 rounded-lg border text-left transition-all ${
+                    strategyName === template.name
+                      ? "border-purple-500 bg-purple-500/10"
+                      : "border-border bg-background hover:border-purple-500/50 hover:bg-purple-500/5"
+                  }`}
                 >
-                  <div className="font-medium text-sm">{preset.name}</div>
-                  <div className="text-xs text-muted-foreground">{preset.description}</div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm">{template.name}</span>
+                    <span className="text-xs text-green-500">{template.winRate}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{template.description}</p>
+                  <div className="mt-2 flex gap-1 flex-wrap">
+                    {template.detectors.slice(0, 3).map((d) => (
+                      <span key={d} className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">
+                        {d}
+                      </span>
+                    ))}
+                    {template.detectors.length > 3 && (
+                      <span className="px-1.5 py-0.5 bg-muted rounded text-[10px]">
+                        +{template.detectors.length - 3}
+                      </span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Validation Status */}
-          <div
-            className={`p-4 rounded-xl border ${
-              isValid ? "bg-green-500/10 border-green-500/30" : "bg-yellow-500/10 border-yellow-500/30"
-            }`}
-          >
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2">
-                {isValid ? (
-                  <Check className="h-5 w-5 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                )}
-                <span className={isValid ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
-                  {isValid ? "Strategy бэлэн!" : "Дутуу детектор байна"}
-                </span>
-              </div>
-              <div className="flex gap-4 text-sm">
-                <span className={validation.context >= 1 ? "text-green-500" : "text-red-500"}>Context: {validation.context}/1+</span>
-                <span className={validation.triggers >= 1 ? "text-green-500" : "text-red-500"}>Trigger: {validation.triggers}/1+</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 3-Layer Detector Selection */}
-          <div className="rounded-2xl border bg-card p-4 max-h-[calc(100vh-600px)] overflow-y-auto">
-            {(["context", "trigger"] as DetectorLayer[]).map((layer) => (
-              <div key={layer} className="mb-6 last:mb-0">
-                <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                  {LAYER_LABELS[layer]}
-                  <span className="text-muted-foreground">
-                    ({selectedDetectors.filter((d) => ALL_DETECTORS.find((det) => det.name === d)?.layer === layer).length} сонгосон)
+          {/* Selected Detectors */}
+          {selectedDetectors.length > 0 && (
+            <div className="rounded-xl border bg-card p-4">
+              <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                Сонгогдсон ({selectedDetectors.length})
+              </h3>
+              <div className="flex flex-wrap gap-1">
+                {selectedDetectors.map((d) => (
+                  <span key={d} className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs font-mono">
+                    {d}
                   </span>
-                </h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {groupedByLayer[layer]?.map((det) => {
-                    const isSelected = selectedDetectors.includes(det.name)
-                    return (
-                      <button
-                        key={det.name}
-                        onClick={() => toggleDetector(det.name)}
-                        disabled={det.required && isSelected}
-                        className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between ${
-                          isSelected
-                            ? LAYER_COLORS[layer]
-                            : "border-border bg-background hover:border-foreground/30 text-foreground"
-                        } ${det.required ? "ring-1 ring-yellow-500/30" : ""}`}
-                      >
-                        <div>
-                          <div className="font-mono text-sm">{det.name}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5">{det.description}</div>
-                        </div>
-                        {isSelected && <Check className="h-4 w-4 flex-shrink-0" />}
-                      </button>
-                    )
-                  })}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Save Section */}
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="text-sm font-medium mb-4">💾 Хадгалах</h3>
+
+            <div className="space-y-4">
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="strategy-name">Strategy нэр</Label>
+                <Input
+                  id="strategy-name"
+                  value={strategyName}
+                  onChange={(e) => setStrategyName(e.target.value)}
+                  placeholder="My Strategy"
+                />
+              </div>
+
+              {/* Min Score */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Min Score</Label>
+                  <span className="text-sm font-medium">{minScore.toFixed(1)}</span>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Risk/Exit Settings (NEW!) */}
-          <div className="rounded-2xl border bg-card p-4">
-            <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-              🛡️ RISK / EXIT Settings
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Risk:Reward (Fixed)</label>
-                <div className="mt-2 text-sm font-medium text-foreground">{MIN_RR}+</div>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Time Exit (bars)</label>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  max="100"
-                  value={riskSettings.timeExitBars} 
-                  onChange={(e) => setRiskSettings(prev => ({ ...prev, timeExitBars: parseInt(e.target.value) || 12 }))}
-                  className="mt-1"
+                <Slider
+                  value={[minScore]}
+                  onValueChange={([val]) => setMinScore(val)}
+                  min={0.5}
+                  max={3.0}
+                  step={0.1}
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Өндөр = чанартай сигнал, бага давтамж
+                </p>
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Cooldown (bars)</label>
-                <Input 
-                  type="number" 
-                  min="0" 
-                  max="20"
-                  value={riskSettings.cooldownBars} 
-                  onChange={(e) => setRiskSettings(prev => ({ ...prev, cooldownBars: parseInt(e.target.value) || 3 }))}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Save Strategy */}
-          <div className="rounded-2xl border bg-card p-4">
-            <div className="flex gap-3 flex-wrap">
-              <Input value={strategyName} onChange={(e) => setStrategyName(e.target.value)} placeholder="Strategy name..." />
-              <Button onClick={saveStrategy} disabled={!isValid || !strategyName.trim() || isSaving}>
+              {/* Save Button */}
+              <Button
+                onClick={saveStrategy}
+                disabled={!isValid || !strategyName.trim() || isSaving}
+                className="w-full"
+              >
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Strategy"}
+                {isSaving ? "Хадгалж байна..." : "Strategy хадгалах"}
               </Button>
-            </div>
-            {/* Validation warning when button is disabled */}
-            {!isValid && (
-              <div className="mt-3 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-600 dark:text-yellow-400">
-                ⚠️ Select at least 1 Context filter and 1 Trigger to save.
-              </div>
-            )}
-            <div className="mt-3 text-xs text-muted-foreground">
-              Selected: {selectedDetectors.length} detectors • RR: {riskSettings.rr} • TimeExit: {riskSettings.timeExitBars} bars
+
+              {!isValid && (
+                <p className="text-xs text-yellow-500 text-center">
+                  ⚠️ AI-с strategy авах эсвэл template сонгоно уу
+                </p>
+              )}
             </div>
           </div>
         </div>
