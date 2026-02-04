@@ -137,7 +137,7 @@ export default function PricingPage() {
                 size="lg"
                 onClick={() => handleSelectPlan(plan.id)}
               >
-                {plan.id === "free" ? "Үнэгүй эхлэх" : `${plan.nameMn} сонгох`}
+                {plan.id === "free" ? "Эхлэх" : "Сонгох"}
               </Button>
             </div>
           ))}
