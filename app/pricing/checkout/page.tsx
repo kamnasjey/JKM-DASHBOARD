@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { Zap, Copy, Check, ArrowLeft, Building2, CreditCard, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const { data: session, status: sessionStatus } = useSession()
 
   const planId = searchParams.get("plan") as PlanType
   const plan = getPlanById(planId)
@@ -34,11 +36,23 @@ function CheckoutContent() {
     note: "",
   })
 
+  // Check if user is already logged in
+  const isLoggedIn = sessionStatus === "authenticated" && session?.user?.email
+
   useEffect(() => {
     if (!plan || plan.id === "free") {
       router.push("/pricing")
     }
   }, [plan, router])
+
+  // If user is already logged in, skip registration and set their email
+  useEffect(() => {
+    if (isLoggedIn && session?.user?.email) {
+      setIsRegistered(true)
+      setUserEmail(session.user.email)
+      setFormData(prev => ({ ...prev, payerEmail: session.user?.email || "" }))
+    }
+  }, [isLoggedIn, session])
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text)
@@ -96,16 +110,18 @@ function CheckoutContent() {
     setIsSubmitting(true)
 
     try {
-      // First login to get session
-      const { signIn } = await import("next-auth/react")
-      const loginRes = await signIn("email-password", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      })
+      // If user is not already logged in, we need to sign them in first
+      if (!isLoggedIn) {
+        const { signIn } = await import("next-auth/react")
+        const loginRes = await signIn("email-password", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        })
 
-      if (loginRes?.error) {
-        throw new Error("Нэвтрэх алдаа: " + loginRes.error)
+        if (loginRes?.error) {
+          throw new Error("Нэвтрэх алдаа: " + loginRes.error)
+        }
       }
 
       // Submit payment request
@@ -174,8 +190,13 @@ function CheckoutContent() {
           </div>
         </div>
 
-        {!isRegistered ? (
-          /* Step 1: Registration */
+        {sessionStatus === "loading" ? (
+          /* Loading session */
+          <div className="bg-card border rounded-xl p-6 mb-8 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : !isRegistered ? (
+          /* Step 1: Registration (only for new users) */
           <div className="bg-card border rounded-xl p-6 mb-8">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm flex items-center justify-center">1</span>
@@ -238,6 +259,23 @@ function CheckoutContent() {
             </div>
           </div>
         ) : (
+          /* Logged in user info */
+          isLoggedIn && (
+            <div className="bg-card border rounded-xl p-6 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Нэвтэрсэн</p>
+                  <p className="text-sm text-muted-foreground">{userEmail}</p>
+                </div>
+              </div>
+            </div>
+          )
+        )}
+
+        {isRegistered && (
           <>
             {/* Step 2: Bank Info */}
             <div className="bg-card border rounded-xl p-6 mb-8">
