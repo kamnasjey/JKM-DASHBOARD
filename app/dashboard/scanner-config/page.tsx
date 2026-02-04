@@ -229,7 +229,33 @@ export default function ScannerConfigPage() {
       if (backendData.ok) {
         const nextStrategies = v2Strategies.length > 0 ? v2Strategies : (backendData.strategies || [])
         setStrategies(nextStrategies)
-        setActiveStrategyMap(backendData.activeStrategyMap || {})
+
+        // Clean up deleted strategies from activeStrategyMap
+        const rawMap = backendData.activeStrategyMap || {}
+        const strategyIds = new Set(nextStrategies.map((s: Strategy) => s.id))
+        const cleanedMap: Record<string, string> = {}
+        const orphanedSymbols: string[] = []
+
+        for (const [symbol, strategyId] of Object.entries(rawMap)) {
+          if (strategyId && strategyIds.has(strategyId)) {
+            cleanedMap[symbol] = strategyId
+          } else if (strategyId) {
+            // Strategy was deleted - mark as orphaned
+            orphanedSymbols.push(symbol)
+          }
+        }
+
+        // If there are orphaned mappings, show warning
+        if (orphanedSymbols.length > 0) {
+          console.warn("[scanner-config] Orphaned strategy mappings found:", orphanedSymbols)
+          toast({
+            title: "⚠️ Устгасан стратеги илэрлээ",
+            description: `${orphanedSymbols.join(", ")} дээр устгасан стратеги тохируулсан байна. Шинэ стратеги сонгоно уу.`,
+            variant: "destructive",
+          })
+        }
+
+        setActiveStrategyMap(cleanedMap)
         setSymbolEnabled(backendData.symbolEnabled || {})
         setRequireExplicitMapping(backendData.requireExplicitMapping ?? true)
         setPendingMap({})
