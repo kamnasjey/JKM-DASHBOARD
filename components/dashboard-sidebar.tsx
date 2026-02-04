@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
 import { PlanSheet } from "@/components/plan-sheet"
+import { RepairSheet } from "@/components/repair-sheet"
 
 interface SidebarProps {
   isAdmin?: boolean
@@ -58,6 +59,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
   const pathname = usePathname()
   const { lang } = useLanguage()
   const [planSheetOpen, setPlanSheetOpen] = useState(false)
+  const [repairSheetOpen, setRepairSheetOpen] = useState(false)
 
   const handleClick = () => {
     if (isMobile && onNavigate) {
@@ -126,19 +128,13 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
             </button>
 
             {isAdmin && (
-              <Link
-                href="/repair"
-                onClick={handleClick}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                  pathname === "/repair"
-                    ? "bg-primary/15 text-primary border border-primary/30 neon-glow"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-primary/80",
-                )}
+              <button
+                onClick={() => setRepairSheetOpen(true)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 w-full text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-primary/80"
               >
                 <Wrench className="h-5 w-5 flex-shrink-0" />
                 <span>{getLabel("Repair", "Засварын газар")}</span>
-              </Link>
+              </button>
             )}
             {isAdmin && (
               <Link
@@ -161,6 +157,9 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate }: SidebarProps
 
       {/* Plan Sheet */}
       <PlanSheet open={planSheetOpen} onOpenChange={setPlanSheetOpen} />
+
+      {/* Repair Sheet */}
+      <RepairSheet open={repairSheetOpen} onOpenChange={setRepairSheetOpen} />
     </>
   )
 }
