@@ -714,7 +714,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
-              Active Pairs / Идэвхтэй хослолууд ({activeSymbolCount})
+              Идэвхтэй хослолууд ({activeSymbolCount})
               {wsConnected && (
                 <Badge className="ml-auto bg-green-600 text-xs flex items-center gap-1">
                   <Wifi className="h-3 w-3" />
@@ -722,9 +722,21 @@ export default function DashboardPage() {
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Symbol-strategy mapping from Scanner Config / Скан тохиргооноос</CardDescription>
+            <CardDescription>Скан тохиргооноос идэвхжүүлсэн symbol-стратеги хослолууд</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Explanation */}
+            <div className="text-xs bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 mb-4 space-y-1.5">
+              <p className="font-medium text-blue-600">💡 Энэ юу харуулдаг вэ?</p>
+              <p className="text-muted-foreground">
+                <span className="text-foreground font-medium">Скан тохиргоо</span> хуудсанд идэвхжүүлсэн symbol болон стратегийн хослолууд энд харагдана.
+                Scanner эдгээр хослолуудыг 5 минут тутамд шалгаж, setup олдвол signal илгээнэ.
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground mt-1">
+                <span>• <span className="text-green-500">Ногоон</span> = Сүүлийн signal</span>
+                <span>• Symbol дарж дэлгэрэнгүй харах</span>
+              </div>
+            </div>
             <ActiveStrategiesPanel
               activeStrategyMap={activeStrategyMap}
               symbolEnabled={symbolEnabled}
