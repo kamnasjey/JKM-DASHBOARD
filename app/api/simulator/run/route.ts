@@ -205,7 +205,9 @@ export async function POST(request: NextRequest) {
     symbols: effectiveSymbols,
     from: effectiveFrom,
     to: effectiveTo,
-    timeframe: timeframe || "auto",
+    // "auto" should map to "multi" for multi-TF mode with full trades
+    // Backend only returns full trades array when timeframe="multi"
+    timeframe: (timeframe === "auto" || !timeframe) ? "multi" : timeframe,
     mode: mode || "winrate",
     strategy: {
       id: strategy.id,

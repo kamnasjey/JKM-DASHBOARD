@@ -678,7 +678,7 @@ export default function SimulatorPage() {
         const patched = addDemoWarning(demoRes, warning)
 
         // Extract trades from multiple possible locations (single-TF vs multi-TF response)
-        const patchedTrades = patched.trades || patched.combined?.tradesSample || []
+        const patchedTrades = patched.trades || patched.combined?.tradesSample || (patched as any).debug?.tradesSample || []
         const normalizedPatched = { ...patched, trades: patchedTrades } as MultiTFResult
 
         setResult(normalizedPatched)
@@ -692,14 +692,17 @@ export default function SimulatorPage() {
         return
       }
 
-      // Extract trades from multiple possible locations (single-TF vs multi-TF response)
-      const trades = res.trades || res.combined?.tradesSample || (res as any).tradesSample || []
+      // Extract trades from multiple possible locations (multi-TF vs single-TF response)
+      // Priority: trades (multi-TF detailed) > combined.tradesSample > debug.tradesSample (single-TF)
+      const trades = res.trades || res.combined?.tradesSample || (res as any).tradesSample || (res as any).debug?.tradesSample || []
       console.log("[simulator] Extracted trades:", {
         fromTrades: res.trades?.length ?? 0,
         fromCombinedSample: res.combined?.tradesSample?.length ?? 0,
         fromTradesSample: (res as any).tradesSample?.length ?? 0,
+        fromDebugSample: (res as any).debug?.tradesSample?.length ?? 0,
         finalCount: trades.length,
         firstTrade: trades[0] || null,
+        timeframe: res.meta?.timeframesRan?.join(", ") ?? "unknown",
       })
       const normalizedRes = { ...res, trades } as MultiTFResult
 
@@ -798,7 +801,7 @@ export default function SimulatorPage() {
         const patched = addDemoWarning(demoRes, warning)
 
         // Extract trades from multiple possible locations (single-TF vs multi-TF response)
-        const patchedTrades = patched.trades || patched.combined?.tradesSample || []
+        const patchedTrades = patched.trades || patched.combined?.tradesSample || (patched as any).debug?.tradesSample || []
         const normalizedPatched = { ...patched, trades: patchedTrades } as MultiTFResult
 
         setResult(normalizedPatched)
@@ -808,8 +811,8 @@ export default function SimulatorPage() {
         return
       }
 
-      // Extract trades from multiple possible locations (single-TF vs multi-TF response)
-      const trades = res.trades || res.combined?.tradesSample || []
+      // Extract trades from multiple possible locations (multi-TF vs single-TF response)
+      const trades = res.trades || res.combined?.tradesSample || (res as any).tradesSample || (res as any).debug?.tradesSample || []
       const normalizedRes = { ...res, trades } as MultiTFResult
 
       setResult(normalizedRes)
