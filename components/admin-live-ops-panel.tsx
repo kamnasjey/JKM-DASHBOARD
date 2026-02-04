@@ -207,14 +207,27 @@ export function AdminLiveOpsPanel({
     <Card className="border-primary/30 bg-primary/5">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Admin Live Ops — 15 Symbols</CardTitle>
+          <Radio className="h-5 w-5 text-primary" />
+          <CardTitle className="text-lg">Market Status — 15 Symbols</CardTitle>
         </div>
         <CardDescription>
-          Бүх символийн market data болон scanner төлөв (зөвхөн админ харна)
+          Бүх символийн market data болон scanner төлөв
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Explanation for users */}
+        <div className="text-xs bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 mb-4 space-y-1.5">
+          <p className="font-medium text-blue-600">💡 Энэ юу харуулдаг вэ?</p>
+          <p className="text-muted-foreground">
+            Энд бидний дэмждэг 15 символийн <span className="text-foreground font-medium">шууд мэдээлэл</span>-ийн төлөв харагдана.
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground mt-1">
+            <span><span className="text-green-500 font-medium">LIVE</span> — Data шинэ, хэвийн ажиллаж байна</span>
+            <span><span className="text-amber-500 font-medium">DELAYED</span> — Data удааширсан (5+ мин)</span>
+            <span><span className="text-blue-500 font-medium">CLOSED</span> — Зах хаалттай</span>
+          </div>
+        </div>
+
         {/* Stats Summary - Only LIVE, DELAYED, CLOSED */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="text-center p-2 rounded-md bg-green-500/10 border border-green-500/30">

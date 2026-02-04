@@ -700,15 +700,13 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Admin Live Ops Panel - All 15 Symbols (Admin Only) */}
-        {isAdmin && (
-          <AdminLiveOpsPanel
-            feedStatus={feedStatus}
-            engineStatus247={engineStatus247}
-            allSymbolsCandles={allSymbolsCandles}
-            nowTs={nowTs}
-          />
-        )}
+        {/* Market Status Panel - All 15 Symbols (All Users) */}
+        <AdminLiveOpsPanel
+          feedStatus={feedStatus}
+          engineStatus247={engineStatus247}
+          allSymbolsCandles={allSymbolsCandles}
+          nowTs={nowTs}
+        />
 
         {/* Live Ops Status Card */}
         <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
