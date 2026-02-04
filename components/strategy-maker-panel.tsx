@@ -28,14 +28,12 @@ const MAX_STRATEGIES = 30
 const MIN_RR = 2.7
 
 // JKM Copilot санал болгосон strategy templates
-// Backtest-тэй, 60%+ WR
 const JKM_RECOMMENDED_TEMPLATES = [
   {
     id: "trend_breakout",
     name: "Trend Breakout",
     description: "Trend-ийн дагуу breakout барих. BOS + Pinbar confluence.",
     detectors: ["gate_regime", "bos", "pinbar_at_level"],
-    winRate: "70%+",
     style: "Trend Following",
   },
   {
@@ -43,7 +41,6 @@ const JKM_RECOMMENDED_TEMPLATES = [
     name: "Reversal Hunter",
     description: "Чиглэл өөрчлөлт барих. CHOCH + Engulfing confluence.",
     detectors: ["gate_regime", "choch", "engulf_at_level"],
-    winRate: "65%+",
     style: "Reversal",
   },
   {
@@ -51,7 +48,6 @@ const JKM_RECOMMENDED_TEMPLATES = [
     name: "S/R Bounce Pro",
     description: "S/R түвшнээс bounce барих. Pinbar баталгаажуулалттай.",
     detectors: ["gate_regime", "sr_bounce", "pinbar_at_level"],
-    winRate: "62%+",
     style: "Range Trading",
   },
   {
@@ -59,7 +55,6 @@ const JKM_RECOMMENDED_TEMPLATES = [
     name: "Momentum Rider",
     description: "Хүчтэй momentum-ийн continuation барих.",
     detectors: ["gate_regime", "gate_volatility", "momentum_continuation", "fibo_retrace_confluence"],
-    winRate: "68%+",
     style: "Momentum",
   },
   {
@@ -67,7 +62,6 @@ const JKM_RECOMMENDED_TEMPLATES = [
     name: "Smart Money Concepts",
     description: "Order Block + Liquidity Sweep combo.",
     detectors: ["gate_regime", "ob", "sweep", "fvg"],
-    winRate: "65%+",
     style: "SMC/ICT",
   },
   {
@@ -75,7 +69,6 @@ const JKM_RECOMMENDED_TEMPLATES = [
     name: "Conservative Safe",
     description: "Бага эрсдэлтэй, олон баталгаажуулалттай.",
     detectors: ["gate_regime", "gate_volatility", "break_retest", "sr_role_reversal", "pinbar_at_level"],
-    winRate: "72%+",
     style: "Conservative",
   },
 ]
@@ -376,7 +369,7 @@ export function StrategyMakerPanel(props: {
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{template.name}</span>
-                    <span className="text-xs text-green-500">{template.winRate}</span>
+                    <span className="text-xs text-muted-foreground">{template.style}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">{template.description}</p>
                   <div className="mt-2 flex gap-1 flex-wrap">
