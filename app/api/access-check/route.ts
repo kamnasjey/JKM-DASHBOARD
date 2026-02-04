@@ -40,29 +40,13 @@ export async function GET() {
     })
   }
 
-  try {
-    const db = getFirebaseAdminDb()
-    const userDoc = await db.collection("users").doc(userId).get()
-    
-    // Check hasPaidAccess or has_paid_access field
-    const data = userDoc.data()
-    const hasAccess = data?.hasPaidAccess === true || data?.has_paid_access === true
-
-    return NextResponse.json({
-      ok: true,
-      hasAccess,
-      email,
-      reason: hasAccess ? "approved" : "pending_approval",
-      source: "firestore"
-    })
-  } catch (err) {
-    console.error("[access-check] Firestore error:", err)
-    return NextResponse.json({
-      ok: true,
-      hasAccess: false,
-      email,
-      reason: "firestore_error",
-      error: err instanceof Error ? err.message : String(err)
-    })
-  }
+  // All authenticated users can access dashboard (free plan)
+  // Plan-based restrictions are handled by AccessGate component per feature
+  return NextResponse.json({
+    ok: true,
+    hasAccess: true,
+    email,
+    reason: "authenticated",
+    source: "open_access"
+  })
 }
