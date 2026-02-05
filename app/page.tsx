@@ -1592,15 +1592,11 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("All symbols", "Бүх symbol scan")}</span>
+                    <span className="text-gray-300">{t("15 symbols", "15 symbol scan")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                     <span className="text-gray-300">{t("Early access to new features", "Шинэ feature түрүүлж авах")}</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">Priority support</span>
                   </li>
                 </ul>
                 <Link href="/auth/register" className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-lg text-center transition-colors">

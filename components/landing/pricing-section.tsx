@@ -179,8 +179,7 @@ export function PricingSection() {
               {[
                 "15 strategy хослол",
                 "Simulator хязгааргүй",
-                "Бүх symbol scan",
-                "Priority support",
+                "15 symbol scan",
                 "Шинэ feature түрүүлж",
               ].map((feature, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">

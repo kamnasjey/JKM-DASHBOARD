@@ -38,8 +38,6 @@ export const PLANS: Plan[] = [
       { text: "Simulator 7 удаа/өдөр", included: true },
       { text: "3 symbol scan", included: true },
       { text: "Telegram alert", included: true },
-      { text: "Бүх symbol", included: false },
-      { text: "Priority support", included: false },
     ],
     limits: {
       maxStrategyCombinations: 3,
@@ -63,8 +61,6 @@ export const PLANS: Plan[] = [
       { text: "Simulator 18 удаа/өдөр", included: true },
       { text: "6 symbol scan", included: true },
       { text: "Telegram alert", included: true },
-      { text: "Шинэ feature түрүүлж", included: false },
-      { text: "Priority support", included: false },
     ],
     limits: {
       maxStrategyCombinations: 6,
@@ -85,14 +81,14 @@ export const PLANS: Plan[] = [
       { text: "Dashboard бүрэн эрх", included: true },
       { text: "15 strategy хослол", included: true },
       { text: "Simulator хязгааргүй", included: true },
-      { text: "Бүх symbol scan", included: true },
+      { text: "15 symbol scan", included: true },
       { text: "Telegram alert", included: true },
       { text: "Шинэ feature түрүүлж авах", included: true },
-      { text: "Priority support", included: true },
     ],
     limits: {
       maxStrategyCombinations: 15,
       simulatorPerDay: -1, // -1 = unlimited
+      maxSymbols: 15,
     },
   },
 ]
