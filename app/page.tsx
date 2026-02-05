@@ -1491,35 +1491,36 @@ export default function LandingPage() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {/* Free Plan */}
+              {/* Starter Plan */}
               <div className="bg-[#111111] border border-white/10 rounded-xl p-6 flex flex-col">
                 <div className="mb-6">
-                  <h3 className="text-xl font-bold mb-1">{t("Free", "Үнэгүй")}</h3>
-                  <p className="text-gray-500 text-sm">{t("Explore & learn", "Судлах, туршилт")}</p>
+                  <h3 className="text-xl font-bold mb-1">Starter</h3>
+                  <p className="text-gray-500 text-sm">{t("For beginners", "Эхлэгч трейдерүүдэд")}</p>
                 </div>
                 <div className="mb-6">
-                  <span className="text-3xl font-black">{t("Free", "Үнэгүй")}</span>
+                  <span className="text-3xl font-black">₮49,000</span>
+                  <span className="text-gray-500 text-sm">/сар</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("View Setups", "Setup-ууд харах")}</span>
+                    <span className="text-gray-300">{t("3 strategy combinations", "3 strategy хослол")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">Documentation</span>
+                    <span className="text-gray-300">{t("Simulator 7x/day", "Simulator 7 удаа/өдөр")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">{t("3 symbol scan", "3 symbol scan")}</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-gray-300">Telegram alert</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    <span className="text-gray-600">{t("Scanner", "Сканнер")}</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    <span className="text-gray-600">{t("Simulator", "Симулятор")}</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    <span className="text-gray-600">{t("Strategy creation", "Стратеги үүсгэх")}</span>
+                    <span className="text-gray-600">{t("All symbols", "Бүх symbol")}</span>
                   </li>
                 </ul>
                 <Link href="/auth/register" className="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg text-center transition-colors">
@@ -1537,29 +1538,29 @@ export default function LandingPage() {
                   <p className="text-gray-500 text-sm">{t("For active traders", "Идэвхтэй трейдерүүдэд")}</p>
                 </div>
                 <div className="mb-6">
-                  <span className="text-3xl font-black">₮120,000</span>
+                  <span className="text-3xl font-black">₮99,000</span>
                   <span className="text-gray-500 text-sm">/сар</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("5 strategy combinations", "5 strategy хослол")}</span>
+                    <span className="text-gray-300">{t("6 strategy combinations", "6 strategy хослол")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("Simulator 5x/day", "Simulator 5 удаа/өдөр")}</span>
+                    <span className="text-gray-300">{t("Simulator 18x/day", "Simulator 18 удаа/өдөр")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("Scanner access", "Scanner ажиллуулах")}</span>
-                  </li>
-                  <li className="flex items-center gap-2 text-sm">
-                    <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("Symbol selection", "Symbol сонголт")}</span>
+                    <span className="text-gray-300">{t("6 symbol scan", "6 symbol scan")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                     <span className="text-gray-300">Telegram alert</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <span className="text-gray-600">Priority support</span>
                   </li>
                 </ul>
                 <Link href="/auth/register" className="w-full py-3 bg-[#0df269] hover:bg-[#0be360] text-[#0a0a0a] font-bold rounded-lg text-center transition-colors shadow-neon">
@@ -1577,21 +1578,21 @@ export default function LandingPage() {
                   <p className="text-gray-500 text-sm">{t("Full access everything", "Бүрэн эрхтэй хандалт")}</p>
                 </div>
                 <div className="mb-6">
-                  <span className="text-3xl font-black">₮200,000</span>
+                  <span className="text-3xl font-black">₮149,000</span>
                   <span className="text-gray-500 text-sm">/сар</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("15 strategy combinations", "15 strategy хослол (бүгд)")}</span>
+                    <span className="text-gray-300">{t("15 strategy combinations", "15 strategy хослол")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("Simulator 15x/day", "Simulator 15 удаа/өдөр")}</span>
+                    <span className="text-gray-300">{t("Unlimited simulator", "Simulator хязгааргүй")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-gray-300">{t("All Pro features", "Pro-ийн бүх feature")}</span>
+                    <span className="text-gray-300">{t("All symbols", "Бүх symbol scan")}</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <svg className="w-4 h-4 text-[#0df269]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
