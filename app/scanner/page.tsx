@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
+import { useUserPlan } from "@/hooks/use-user-plan"
+import { getPlanLimits } from "@/lib/constants/pricing"
 import { api } from "@/lib/api"
 import { getDashboardVersion } from "@/lib/version"
 import { getStrategyDetectors, getDetectorCountLabel } from "@/lib/strategies/get-strategy-detectors"
@@ -101,12 +103,15 @@ interface SetupResult {
 export default function ScannerPage() {
   useAuthGuard(true)
   const { toast } = useToast()
+  const { plan } = useUserPlan()
+  const planLimits = getPlanLimits(plan)
+  const maxSymbols = planLimits.maxSymbols || 3
 
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [loadingStrategies, setLoadingStrategies] = useState(true)
   
   const [selectedStrategyId, setSelectedStrategyId] = useState<string>("")
-  const [selectedSymbols, setSelectedSymbols] = useState<string[]>(DEFAULT_SYMBOLS.slice(0, 10))
+  const [selectedSymbols, setSelectedSymbols] = useState<string[]>([])
   const [selectedTimeframes, setSelectedTimeframes] = useState<string[]>(["15m", "1h", "4h"])
   const [lookbackDays, setLookbackDays] = useState(30)
   const [intervalSec, setIntervalSec] = useState(120)
@@ -119,6 +124,16 @@ export default function ScannerPage() {
   
   const [showErrors, setShowErrors] = useState(false)
   const [showConfig, setShowConfig] = useState(true)
+
+  // Set initial symbols based on plan limit
+  useEffect(() => {
+    if (maxSymbols > 0 && selectedSymbols.length === 0) {
+      setSelectedSymbols(DEFAULT_SYMBOLS.slice(0, maxSymbols))
+    } else if (selectedSymbols.length > maxSymbols) {
+      // Trim to plan limit if user's plan changed
+      setSelectedSymbols(prev => prev.slice(0, maxSymbols))
+    }
+  }, [maxSymbols])
 
   useEffect(() => {
     loadStrategies()
@@ -230,7 +245,21 @@ export default function ScannerPage() {
   }
 
   const toggleSymbol = (symbol: string) => {
-    setSelectedSymbols(prev => prev.includes(symbol) ? prev.filter(s => s !== symbol) : [...prev, symbol])
+    setSelectedSymbols(prev => {
+      if (prev.includes(symbol)) {
+        return prev.filter(s => s !== symbol)
+      }
+      // Check plan limit
+      if (prev.length >= maxSymbols) {
+        toast({
+          title: "Лимит хүрсэн",
+          description: `${plan.toUpperCase()} план ${maxSymbols} symbol-тай. Upgrade хийгээрэй.`,
+          variant: "destructive"
+        })
+        return prev
+      }
+      return [...prev, symbol]
+    })
   }
 
   const toggleTimeframe = (tf: string) => {
@@ -387,13 +416,18 @@ export default function ScannerPage() {
               {/* Symbols */}
               <div className="space-y-2 border-t pt-4">
                 <div className="flex items-center justify-between">
-                  <Label>Symbols ({selectedSymbols.length} selected)</Label>
+                  <Label>
+                    Symbols ({selectedSymbols.length}/{maxSymbols})
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({plan.toUpperCase()} план)
+                    </span>
+                  </Label>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" onClick={() => refreshRegimes()} disabled={loadingRegimes}>
                       <RefreshCw className={cn("h-3 w-3 mr-1", loadingRegimes && "animate-spin")} />
                       Regime
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedSymbols(DEFAULT_SYMBOLS)} disabled={status?.running}>All</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedSymbols(DEFAULT_SYMBOLS.slice(0, maxSymbols))} disabled={status?.running}>Max</Button>
                     <Button variant="ghost" size="sm" onClick={() => setSelectedSymbols([])} disabled={status?.running}>None</Button>
                   </div>
                 </div>
