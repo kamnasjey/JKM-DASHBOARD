@@ -30,6 +30,7 @@ export async function GET() {
         name: data.name,
         image: data.image,
         provider: data.provider,
+        plan: data.plan || "free",
         hasPaidAccess: data.hasPaidAccess || data.has_paid_access || false,
         createdAt: data.createdAt || null,
       }
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const { userId, hasAccess } = body
+  const { userId, hasAccess, plan } = body
 
   if (!userId) {
     return NextResponse.json({ ok: false, message: "userId required" }, { status: 400 })
@@ -62,14 +63,28 @@ export async function POST(request: Request) {
 
   try {
     const db = getFirebaseAdminDb()
-    await db.collection("users").doc(userId).set(
-      {
-        hasPaidAccess: Boolean(hasAccess),
-        has_paid_access: Boolean(hasAccess),
-        updatedAt: new Date().toISOString()
-      },
-      { merge: true }
-    )
+    const now = new Date().toISOString()
+
+    // When granting access, also set plan (default to "starter" if not specified)
+    const updateData: Record<string, any> = {
+      hasPaidAccess: Boolean(hasAccess),
+      has_paid_access: Boolean(hasAccess),
+      updatedAt: now,
+    }
+
+    if (hasAccess) {
+      // Granting access - set plan to starter if currently free, or use specified plan
+      const userDoc = await db.collection("users").doc(userId).get()
+      const currentPlan = userDoc.data()?.plan || "free"
+
+      if (currentPlan === "free" || plan) {
+        updateData.plan = plan || "starter"
+        updateData.planStatus = "active"
+        updateData.paidAt = now
+      }
+    }
+
+    await db.collection("users").doc(userId).set(updateData, { merge: true })
     return NextResponse.json({ ok: true, message: hasAccess ? "Access granted" : "Access revoked" })
   } catch (err) {
     console.error("[admin/users] Firestore update error:", err)

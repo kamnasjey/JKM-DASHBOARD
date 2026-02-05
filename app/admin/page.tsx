@@ -45,6 +45,7 @@ type UserInfo = {
   name: string | null
   image: string | null
   provider: string
+  plan: string
   hasPaidAccess: boolean
   createdAt: string
 }
@@ -693,6 +694,14 @@ export default function AdminPage() {
                           <span className="font-medium text-sm">{user.name || "—"}</span>
                           <Badge variant="outline" className="text-xs">
                             {user.provider}
+                          </Badge>
+                          <Badge variant="outline" className={`text-xs ${
+                            user.plan === "pro_plus" ? "border-amber-500 text-amber-500" :
+                            user.plan === "pro" ? "border-primary text-primary" :
+                            user.plan === "starter" ? "border-emerald-500 text-emerald-500" :
+                            "border-muted-foreground text-muted-foreground"
+                          }`}>
+                            {user.plan?.toUpperCase() || "FREE"}
                           </Badge>
                           {user.hasPaidAccess && (
                             <Badge className="bg-green-500 text-xs">Access</Badge>
