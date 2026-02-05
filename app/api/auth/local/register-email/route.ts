@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const userId = randomUUID()
 
     // Determine plan and access
-    const userPlan = plan || "free"
+    const userPlan = plan || "starter"
     const hasPaidAccess = false // Always false until admin approves
 
     // Create user in Firestore
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       passwordHash,
       provider: "email",
       plan: userPlan,
-      planStatus: userPlan === "free" ? "active" : "pending",
+      planStatus: userPlan === "starter" ? "active" : "pending",
       hasPaidAccess,
       has_paid_access: hasPaidAccess,
       createdAt: new Date().toISOString(),

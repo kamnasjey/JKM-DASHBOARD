@@ -32,7 +32,7 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
     note: "",
   })
 
-  const currentPlan = (session?.user as any)?.plan || "free"
+  const currentPlan = (session?.user as any)?.plan || "starter"
   const userEmail = session?.user?.email || ""
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
   }
 
   const handleSelectPlan = (planId: PlanType) => {
-    if (planId === "free" || planId === currentPlan) return
+    if (planId === "starter" || planId === currentPlan) return
     setSelectedPlan(planId)
   }
 
@@ -104,7 +104,7 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
 
   const getPlanIcon = (planId: PlanType) => {
     switch (planId) {
-      case "free": return <Zap className="w-4 h-4" />
+      case "starter": return <Zap className="w-4 h-4" />
       case "pro": return <Crown className="w-4 h-4" />
       case "pro_plus": return <Sparkles className="w-4 h-4" />
     }
@@ -144,7 +144,7 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
               {/* Plan Cards */}
               {PLANS.map((plan) => {
                 const isCurrentPlan = plan.id === currentPlan
-                const isDisabled = plan.id === "free" || isCurrentPlan
+                const isDisabled = plan.id === "starter" || isCurrentPlan
 
                 return (
                   <div
@@ -176,7 +176,7 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
                     <div className="flex items-start gap-3">
                       <div className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                        plan.id === "free" && "bg-muted text-muted-foreground",
+                        plan.id === "starter" && "bg-muted text-muted-foreground",
                         plan.id === "pro" && "bg-primary/10 text-primary",
                         plan.id === "pro_plus" && "bg-amber-500/10 text-amber-500"
                       )}>

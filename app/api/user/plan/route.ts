@@ -41,9 +41,9 @@ export async function GET() {
     const userDoc = await db.collection("users").doc(userId).get()
 
     if (!userDoc.exists) {
-      // User not found in Firestore, default to free plan
+      // User not found in Firestore, default to starter plan
       return NextResponse.json({
-        plan: "free",
+        plan: "starter",
         planStatus: "active",
         hasPaidAccess: false,
       })
@@ -52,7 +52,7 @@ export async function GET() {
     const userData = userDoc.data()
 
     return NextResponse.json({
-      plan: userData?.plan || "free",
+      plan: userData?.plan || "starter",
       planStatus: userData?.planStatus || "active",
       hasPaidAccess: userData?.hasPaidAccess || userData?.has_paid_access || false,
     })

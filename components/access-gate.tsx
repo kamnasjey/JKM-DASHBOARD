@@ -32,7 +32,7 @@ export function AccessGate({ children, feature }: AccessGateProps) {
   }
 
   // Free plan - show locked overlay
-  if (plan === "free") {
+  if (plan === "starter") {
     return (
       <div className="relative">
         <div className="pointer-events-none select-none blur-sm opacity-40">
@@ -101,7 +101,7 @@ export function AccessGate({ children, feature }: AccessGateProps) {
   return <>{children}</>
 }
 
-// For pages that free users CAN view but can't use features
+// For pages that starter users CAN view but can't use features
 export function AccessGateViewOnly({ children, feature }: AccessGateProps) {
   const { plan, hasPaidAccess, loading } = useUserPlan()
 
@@ -115,7 +115,7 @@ export function AccessGateViewOnly({ children, feature }: AccessGateProps) {
   }
 
   // Free plan - show content with banner
-  if (plan === "free") {
+  if (plan === "starter") {
     return (
       <div>
         <div className="bg-muted/50 border-b px-4 py-3">

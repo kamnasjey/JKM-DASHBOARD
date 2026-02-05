@@ -97,18 +97,25 @@ export function PricingSection() {
         <p className="text-muted-foreground">Өөрт тохирохыг сонгоорой</p>
       </div>
 
-      <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
+      <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+        {/* Starter */}
         <Card className="relative rounded-2xl border-border/50 bg-card/50 backdrop-blur">
           <CardHeader>
-            <CardTitle className="text-2xl">Free</CardTitle>
-            <CardDescription>Анхлан суралцагчдад</CardDescription>
+            <CardTitle className="text-2xl">Starter</CardTitle>
+            <CardDescription>Эхлэгч трейдерүүдэд</CardDescription>
             <div className="mt-4">
-              <span className="text-4xl font-bold">₮0</span>
+              <span className="text-4xl font-bold">₮49,000</span>
+              <span className="text-muted-foreground">/сар</span>
             </div>
           </CardHeader>
           <CardContent>
             <ul className="mb-6 space-y-3">
-              {["Өдөрт 5 setup", "Үндсэн тайлбар", "Эрсдэлийн зөвлөмж", "Community дэмжлэг"].map((feature, i) => (
+              {[
+                "3 strategy хослол",
+                "Simulator 7 удаа/өдөр",
+                "3 symbol scan",
+                "Telegram alert",
+              ].map((feature, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <Check className="mt-0.5 h-4 w-4 text-primary" />
                   <span>{feature}</span>
@@ -121,27 +128,26 @@ export function PricingSection() {
           </CardContent>
         </Card>
 
+        {/* Pro */}
         <Card className="relative rounded-2xl border-primary/50 bg-card/50 shadow-lg shadow-primary/10 backdrop-blur">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-medium">
-            Popular
+            Түгээмэл
           </div>
           <CardHeader>
             <CardTitle className="text-2xl">Pro</CardTitle>
-            <CardDescription>Идэвхтэй трэйдэрүүдэд</CardDescription>
+            <CardDescription>Идэвхтэй трейдерүүдэд</CardDescription>
             <div className="mt-4">
-              <span className="text-4xl font-bold">₮50,000</span>
+              <span className="text-4xl font-bold">₮99,000</span>
               <span className="text-muted-foreground">/сар</span>
             </div>
           </CardHeader>
           <CardContent>
             <ul className="mb-6 space-y-3">
               {[
-                "Хязгааргүй setup",
-                "Дэлгэрэнгүй AI тайлбар",
-                "Advanced эрсдэл менежмент",
-                "Chart тэмдэглэл + Replay",
-                "Журнал + Статистик",
-                "Priority дэмжлэг",
+                "6 strategy хослол",
+                "Simulator 18 удаа/өдөр",
+                "6 symbol scan",
+                "Telegram alert",
               ].map((feature, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <Check className="mt-0.5 h-4 w-4 text-primary" />
@@ -150,7 +156,41 @@ export function PricingSection() {
               ))}
             </ul>
             <Button className="w-full" asChild>
-              <Link href="/auth/register">Upgrade (Удахгүй)</Link>
+              <Link href="/pricing">Авах</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Pro+ */}
+        <Card className="relative rounded-2xl border-border/50 bg-card/50 backdrop-blur">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-muted px-3 py-1 text-xs font-medium">
+            Бүрэн
+          </div>
+          <CardHeader>
+            <CardTitle className="text-2xl">Pro+</CardTitle>
+            <CardDescription>Professional трейдерүүдэд</CardDescription>
+            <div className="mt-4">
+              <span className="text-4xl font-bold">₮149,000</span>
+              <span className="text-muted-foreground">/сар</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ul className="mb-6 space-y-3">
+              {[
+                "15 strategy хослол",
+                "Simulator хязгааргүй",
+                "Бүх symbol scan",
+                "Priority support",
+                "Шинэ feature түрүүлж",
+              ].map((feature, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <Check className="mt-0.5 h-4 w-4 text-primary" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Button className="w-full" variant="outline" asChild>
+              <Link href="/pricing">Авах</Link>
             </Button>
           </CardContent>
         </Card>

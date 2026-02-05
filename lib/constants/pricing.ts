@@ -1,4 +1,4 @@
-export type PlanType = "free" | "pro" | "pro_plus"
+export type PlanType = "starter" | "pro" | "pro_plus"
 
 export interface PlanFeature {
   text: string
@@ -18,79 +18,81 @@ export interface Plan {
   limits: {
     maxStrategyCombinations: number
     simulatorPerDay: number
+    maxSymbols?: number
   }
   popular?: boolean
 }
 
 export const PLANS: Plan[] = [
   {
-    id: "free",
-    name: "Free",
-    nameMn: "Үнэгүй",
-    price: 0,
-    priceDisplay: "Үнэгүй",
-    period: "",
-    description: "Судлах, туршилт",
+    id: "starter",
+    name: "Starter",
+    nameMn: "Стартер",
+    price: 49000,
+    priceDisplay: "₮49,000",
+    period: "/сар",
+    description: "Эхлэгч трейдерүүдэд",
     features: [
-      { text: "Signals харах", included: true },
-      { text: "Documentation", included: true },
-      { text: "Scanner ажиллуулах", included: false },
-      { text: "Simulator ажиллуулах", included: false },
-      { text: "Strategy үүсгэх", included: false },
-      { text: "Telegram alert", included: false },
+      { text: "Dashboard хандалт", included: true },
+      { text: "3 strategy хослол", included: true },
+      { text: "Simulator 7 удаа/өдөр", included: true },
+      { text: "3 symbol scan", included: true },
+      { text: "Telegram alert", included: true },
+      { text: "Бүх symbol", included: false },
+      { text: "Priority support", included: false },
     ],
     limits: {
-      maxStrategyCombinations: 0,
-      simulatorPerDay: 0,
+      maxStrategyCombinations: 3,
+      simulatorPerDay: 7,
+      maxSymbols: 3,
     },
   },
   {
     id: "pro",
     name: "Pro",
     nameMn: "Про",
-    price: 120000,
-    priceDisplay: "₮120,000",
+    price: 99000,
+    priceDisplay: "₮99,000",
     period: "/сар",
     description: "Идэвхтэй трейдерүүдэд",
     badge: "Түгээмэл",
     popular: true,
     features: [
       { text: "Dashboard бүрэн эрх", included: true },
-      { text: "5 strategy хослол", included: true },
-      { text: "Simulator 5 удаа/өдөр", included: true },
-      { text: "Scanner ажиллуулах", included: true },
-      { text: "Symbol сонголт", included: true },
+      { text: "6 strategy хослол", included: true },
+      { text: "Simulator 18 удаа/өдөр", included: true },
+      { text: "6 symbol scan", included: true },
       { text: "Telegram alert", included: true },
       { text: "Шинэ feature түрүүлж", included: false },
       { text: "Priority support", included: false },
     ],
     limits: {
-      maxStrategyCombinations: 5,
-      simulatorPerDay: 5,
+      maxStrategyCombinations: 6,
+      simulatorPerDay: 18,
+      maxSymbols: 6,
     },
   },
   {
     id: "pro_plus",
     name: "Pro+",
     nameMn: "Про+",
-    price: 200000,
-    priceDisplay: "₮200,000",
+    price: 149000,
+    priceDisplay: "₮149,000",
     period: "/сар",
     description: "Бүрэн эрхтэй хандалт",
     badge: "Бүрэн",
     features: [
       { text: "Dashboard бүрэн эрх", included: true },
-      { text: "15 strategy хослол (бүгд)", included: true },
-      { text: "Simulator 15 удаа/өдөр", included: true },
-      { text: "Scanner ажиллуулах", included: true },
-      { text: "Symbol сонголт", included: true },
+      { text: "15 strategy хослол", included: true },
+      { text: "Simulator хязгааргүй", included: true },
+      { text: "Бүх symbol scan", included: true },
       { text: "Telegram alert", included: true },
       { text: "Шинэ feature түрүүлж авах", included: true },
       { text: "Priority support", included: true },
     ],
     limits: {
       maxStrategyCombinations: 15,
-      simulatorPerDay: 15,
+      simulatorPerDay: -1, // -1 = unlimited
     },
   },
 ]

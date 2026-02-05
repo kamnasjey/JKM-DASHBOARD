@@ -40,7 +40,7 @@ function CheckoutContent() {
   const isLoggedIn = sessionStatus === "authenticated" && session?.user?.email
 
   useEffect(() => {
-    if (!plan || plan.id === "free") {
+    if (!plan || plan.id === "starter") {
       router.push("/pricing")
     }
   }, [plan, router])

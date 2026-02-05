@@ -13,8 +13,8 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null)
 
   const handleSelectPlan = (planId: PlanType) => {
-    if (planId === "free") {
-      router.push("/auth/register?plan=free")
+    if (planId === "starter") {
+      router.push("/auth/register?plan=starter")
     } else {
       router.push(`/pricing/checkout?plan=${planId}`)
     }
@@ -22,7 +22,7 @@ export default function PricingPage() {
 
   const getPlanIcon = (planId: PlanType) => {
     switch (planId) {
-      case "free":
+      case "starter":
         return <Zap className="w-6 h-6" />
       case "pro":
         return <Crown className="w-6 h-6" />
@@ -89,7 +89,7 @@ export default function PricingPage() {
               <div className="text-center mb-6">
                 <div className={cn(
                   "w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center",
-                  plan.id === "free" && "bg-muted text-muted-foreground",
+                  plan.id === "starter" && "bg-muted text-muted-foreground",
                   plan.id === "pro" && "bg-primary/10 text-primary",
                   plan.id === "pro_plus" && "bg-amber-500/10 text-amber-500"
                 )}>
@@ -133,11 +133,11 @@ export default function PricingPage() {
                   plan.popular && "bg-primary hover:bg-primary/90",
                   plan.id === "pro_plus" && "bg-amber-500 hover:bg-amber-600 text-white"
                 )}
-                variant={plan.id === "free" ? "outline" : "default"}
+                variant={plan.id === "starter" ? "outline" : "default"}
                 size="lg"
                 onClick={() => handleSelectPlan(plan.id)}
               >
-                {plan.id === "free" ? "Эхлэх" : "Сонгох"}
+                {plan.id === "starter" ? "Эхлэх" : "Сонгох"}
               </Button>
             </div>
           ))}
@@ -159,24 +159,24 @@ export default function PricingPage() {
             <div className="bg-card rounded-lg p-6 border">
               <h3 className="font-semibold mb-2">Strategy хослол гэж юу вэ?</h3>
               <p className="text-muted-foreground text-sm">
-                Манай систем 31 detector-тэй. Эдгээрийг хослуулан strategy үүсгэнэ.
-                Pro нь 5 хослол, Pro+ нь 15 хослол (бүгд) дээр ажиллана.
+                Манай систем 22 detector-тэй. Эдгээрийг хослуулан strategy үүсгэнэ.
+                Starter 3, Pro 6, Pro+ 15 хослол дээр ажиллана.
               </p>
             </div>
 
             <div className="bg-card rounded-lg p-6 border">
               <h3 className="font-semibold mb-2">Simulator хэдэн удаа ажиллуулах вэ?</h3>
               <p className="text-muted-foreground text-sm">
-                Pro хэрэглэгч өдөрт 5 удаа, Pro+ хэрэглэгч өдөрт 15 удаа simulator
+                Starter 7 удаа, Pro 18 удаа, Pro+ хязгааргүй simulator
                 ажиллуулж болно. Шөнө 00:00-д тоолуур reset хийгдэнэ.
               </p>
             </div>
 
             <div className="bg-card rounded-lg p-6 border">
-              <h3 className="font-semibold mb-2">Free хэрэглэгч юу хийж болох вэ?</h3>
+              <h3 className="font-semibold mb-2">Starter хэрэглэгч юу хийж болох вэ?</h3>
               <p className="text-muted-foreground text-sm">
-                Dashboard, Signals харах боломжтой. Гэхдээ Scanner, Simulator,
-                Strategy үүсгэх зэрэг идэвхтэй үйлдлүүд хийх боломжгүй.
+                Dashboard бүрэн хандалт, 3 strategy, 7 simulator/өдөр,
+                3 symbol scan, Telegram alert бүгд багтсан.
               </p>
             </div>
           </div>
