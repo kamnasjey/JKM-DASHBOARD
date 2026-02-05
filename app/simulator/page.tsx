@@ -1803,12 +1803,20 @@ export default function SimulatorPage() {
               </Card>
             )}
 
-            {/* Version Info */}
-            {result.meta?.simVersion && (
-              <div className="flex items-center justify-center text-xs text-muted-foreground">
-                <span className="text-green-600">v{result.meta.simVersion}</span>
-              </div>
-            )}
+            {/* Data Source Info */}
+            <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
+              <span>Data: {typeof result.meta?.dataSource === "string"
+                ? result.meta.dataSource
+                : result.meta?.dataSource?.source || "unknown"}</span>
+              <span>•</span>
+              <span>
+                Range: {result.meta?.range?.from} → {result.meta?.range?.to}
+              </span>
+              <span>•</span>
+              <span>
+                Timeframes: {result.meta?.timeframesRan?.join(", ") || "—"}
+              </span>
+            </div>
 
             {/* Diagnostics Panel - Replaces DevTools */}
             <DiagnosticsPanel />
