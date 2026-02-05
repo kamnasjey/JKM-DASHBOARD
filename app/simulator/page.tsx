@@ -29,6 +29,8 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  History,
+  Loader2,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
@@ -227,6 +229,25 @@ interface Strategy {
   symbols?: string[]
   timeframe?: string
   config?: Record<string, any>
+}
+
+// Simulation history record type (matches API)
+interface SimulationRecord {
+  id?: string
+  strategyId: string
+  strategyName: string
+  symbol: string
+  dateRange: { from: string; to: string }
+  timeframes: string[]
+  totalTrades: number
+  tpCount: number
+  slCount: number
+  winRate: number
+  bestTf?: string
+  bestWinRate?: number
+  detectors: string[]
+  createdAt: string
+  tradesSample?: any[]
 }
 
 // ============================================
@@ -472,6 +493,11 @@ export default function SimulatorPage() {
   const [result, setResult] = useState<MultiTFResult | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
 
+  // Simulation history state
+  const [simulationHistory, setSimulationHistory] = useState<SimulationRecord[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [showHistory, setShowHistory] = useState(true)
+
   // Form state
   const [symbol, setSymbol] = useState("")
   const [strategyId, setStrategyId] = useState("")
@@ -504,7 +530,90 @@ export default function SimulatorPage() {
   // Load data on mount
   useEffect(() => {
     loadData()
+    loadHistory()
   }, [])
+
+  // Load simulation history from Firestore
+  async function loadHistory() {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch("/api/simulator/history")
+      const data = await res.json()
+      if (data.ok && data.history) {
+        setSimulationHistory(data.history)
+      }
+    } catch (err) {
+      console.error("[simulator] Failed to load history:", err)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  // Save simulation result to Firestore
+  async function saveSimulation(simResult: MultiTFResult, strategyInfo: Strategy | undefined) {
+    if (!simResult.ok || !simResult.combined) return
+
+    const summary = simResult.combined.summary
+    const totalTrades = summary?.entries ?? 0
+
+    // Don't save if no trades
+    if (totalTrades === 0) return
+
+    try {
+      const record = {
+        strategyId: strategyInfo?.id || strategyId,
+        strategyName: strategyInfo?.name || strategyInfo?.id || strategyId,
+        symbol,
+        dateRange: rangeDates,
+        timeframes: simResult.meta?.timeframesRan || TIMEFRAMES,
+        totalTrades,
+        tpCount: summary?.tp ?? 0,
+        slCount: summary?.sl ?? 0,
+        winRate: summary?.winrate ?? 0,
+        bestTf: simResult.combined.bestTf,
+        bestWinRate: simResult.combined.bestWinrate,
+        detectors: strategyInfo?.detectors || [],
+        tradesSample: (simResult.trades || []).slice(0, 10),
+      }
+
+      const res = await fetch("/api/simulator/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      })
+
+      const data = await res.json()
+      if (data.ok) {
+        // Reload history to show new entry
+        loadHistory()
+        toast({
+          title: "Хадгалагдлаа",
+          description: "Simulation үр дүн хадгалагдлаа",
+        })
+      }
+    } catch (err) {
+      console.error("[simulator] Failed to save simulation:", err)
+    }
+  }
+
+  // Delete simulation from history
+  async function deleteSimulation(simId: string) {
+    try {
+      const res = await fetch(`/api/simulator/history?id=${simId}`, {
+        method: "DELETE",
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setSimulationHistory(prev => prev.filter(s => s.id !== simId))
+        toast({
+          title: "Устгагдлаа",
+          description: "Simulation устгагдлаа",
+        })
+      }
+    } catch (err) {
+      console.error("[simulator] Failed to delete simulation:", err)
+    }
+  }
 
   async function loadData() {
     setLoading(true)
@@ -806,6 +915,11 @@ export default function SimulatorPage() {
       // Increment daily usage counter on successful simulation
       const newUsage = incrementSimulatorUsage()
       setUsedToday(newUsage)
+
+      // Save simulation result to history
+      if (normalizedRes.ok) {
+        saveSimulation(normalizedRes, strategy)
+      }
 
       // Animate trades if available
       if (trades.length > 0) {
@@ -1945,6 +2059,138 @@ export default function SimulatorPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Simulation History Section */}
+        <Card className="mt-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <History className="h-5 w-5" />
+                {t("Simulation History", "Simulation түүх")}
+                {simulationHistory.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {simulationHistory.length}
+                  </Badge>
+                )}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHistory(!showHistory)}
+              >
+                {showHistory ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+            <CardDescription>
+              {t("Your recent simulation results saved to your account", "Таны бүртгэлд хадгалагдсан simulation үр дүнгүүд")}
+            </CardDescription>
+          </CardHeader>
+
+          {showHistory && (
+            <CardContent>
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : simulationHistory.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">{t("No simulation history yet", "Simulation түүх байхгүй байна")}</p>
+                  <p className="text-xs mt-1">{t("Run a simulation to see results here", "Simulation ажиллуулахад энд харагдана")}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground border-b border-border">
+                        <th className="text-left py-2 px-2 font-medium">{t("Date", "Огноо")}</th>
+                        <th className="text-left py-2 px-2 font-medium">{t("Strategy", "Стратеги")}</th>
+                        <th className="text-left py-2 px-2 font-medium">{t("Symbol", "Символ")}</th>
+                        <th className="text-center py-2 px-2 font-medium">{t("Trades", "Trade")}</th>
+                        <th className="text-center py-2 px-2 font-medium">{t("TP", "TP")}</th>
+                        <th className="text-center py-2 px-2 font-medium">{t("SL", "SL")}</th>
+                        <th className="text-center py-2 px-2 font-medium">{t("Win Rate", "Win Rate")}</th>
+                        <th className="text-center py-2 px-2 font-medium">{t("Best TF", "Шилдэг TF")}</th>
+                        <th className="text-center py-2 px-2 font-medium">{t("Range", "Хүрээ")}</th>
+                        <th className="text-right py-2 px-2 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {simulationHistory.map((sim) => (
+                        <tr key={sim.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <td className="py-2 px-2 text-muted-foreground">
+                            {new Date(sim.createdAt).toLocaleDateString("mn-MN", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </td>
+                          <td className="py-2 px-2">
+                            <span className="font-medium">{sim.strategyName}</span>
+                          </td>
+                          <td className="py-2 px-2">
+                            <Badge variant="outline" className="text-xs">
+                              {sim.symbol}
+                            </Badge>
+                          </td>
+                          <td className="py-2 px-2 text-center font-medium">
+                            {sim.totalTrades}
+                          </td>
+                          <td className="py-2 px-2 text-center text-green-500">
+                            {sim.tpCount}
+                          </td>
+                          <td className="py-2 px-2 text-center text-red-500">
+                            {sim.slCount}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <span className={cn(
+                              "font-medium",
+                              sim.winRate >= 50 ? "text-green-500" : "text-red-500"
+                            )}>
+                              {sim.winRate.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {sim.bestTf ? (
+                              <Badge variant="secondary" className="text-xs">
+                                {sim.bestTf.toUpperCase()}
+                                {sim.bestWinRate && (
+                                  <span className="ml-1 text-green-500">
+                                    {sim.bestWinRate.toFixed(0)}%
+                                  </span>
+                                )}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2 text-center text-xs text-muted-foreground">
+                            {sim.dateRange.from && sim.dateRange.to ? (
+                              <>
+                                {formatDateShort(sim.dateRange.from)} - {formatDateShort(sim.dateRange.to)}
+                              </>
+                            ) : "—"}
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={() => sim.id && deleteSimulation(sim.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          )}
+        </Card>
         </div>
       </div>
     </ErrorBoundary>
