@@ -28,7 +28,10 @@ export async function POST() {
   }
 
   try {
-    // Call VPS endpoint to send test message
+    // Call VPS endpoint to send test message with 15s timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+
     const response = await fetch(`${VPS_BASE_URL}/telegram/test`, {
       method: "POST",
       headers: {
@@ -39,8 +42,10 @@ export async function POST() {
         chat_id: chatId,
         user_id: userId,
       }),
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
     const data = await response.json()
 
     if (!response.ok) {
@@ -51,8 +56,17 @@ export async function POST() {
     }
 
     return NextResponse.json({ ok: true, message: "Тест мессеж илгээгдлээ!" })
-  } catch (err) {
+  } catch (err: any) {
     console.error("[telegram/test] Error:", err)
+
+    // Check if it's a timeout/abort error
+    if (err?.name === "AbortError") {
+      return NextResponse.json(
+        { ok: true, message: "Мессеж илгээгдсэн байх магадлалтай (timeout)" },
+        { status: 200 }
+      )
+    }
+
     return NextResponse.json(
       { ok: false, message: "VPS сервертэй холбогдож чадсангүй" },
       { status: 500 }
