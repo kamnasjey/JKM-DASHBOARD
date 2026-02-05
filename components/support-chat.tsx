@@ -59,8 +59,16 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     if (sessionStatus !== "authenticated") return
     setLoading(true)
     try {
-      const res = await fetch("/api/support", { cache: "no-store" })
+      // Add timestamp to bust cache
+      const res = await fetch(`/api/support?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+        },
+      })
       const data = await res.json()
+      console.log("[support] Loaded tickets:", data)
       if (data.ok) {
         const newTickets = data.tickets || []
         setTickets(newTickets)
@@ -84,6 +92,11 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   useEffect(() => {
     if (isOpen && sessionStatus === "authenticated") {
       loadTickets()
+    } else if (!isOpen) {
+      // Reset state when closed
+      setView("list")
+      setActiveTicket(null)
+      activeTicketIdRef.current = null
     }
   }, [isOpen, sessionStatus, loadTickets])
 
@@ -158,8 +171,26 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     }
   }
 
-  const openTicket = (ticket: SupportTicket) => {
-    setActiveTicket(ticket)
+  const openTicket = async (ticket: SupportTicket) => {
+    // Fetch fresh ticket data
+    try {
+      const res = await fetch(`/api/support?ticketId=${ticket.id}&_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+        },
+      })
+      const data = await res.json()
+      if (data.ok && data.ticket) {
+        setActiveTicket(data.ticket)
+      } else {
+        setActiveTicket(ticket)
+      }
+    } catch (err) {
+      console.error("[support] Failed to fetch ticket:", err)
+      setActiveTicket(ticket)
+    }
     setView("chat")
   }
 
