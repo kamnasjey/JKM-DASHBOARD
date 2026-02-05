@@ -14,7 +14,7 @@ const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || process.env.BACKEND_INT
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   // Authentication
   const session = await getServerSession(authOptions)
@@ -22,7 +22,7 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
 
-  const { jobId } = params
+  const { jobId } = await params
 
   if (!jobId) {
     return NextResponse.json({ ok: false, error: "Job ID required" }, { status: 400 })
