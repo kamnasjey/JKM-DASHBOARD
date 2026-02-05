@@ -44,6 +44,33 @@ import { ErrorBoundary } from "@/components/error-boundary"
 import { TradesTable } from "@/components/simulator/trades-table"
 import { LiveTradesStream } from "@/components/simulator/live-trades-stream"
 import { SimulatorProgress } from "@/components/simulator/simulator-progress"
+import { useUserPlan } from "@/hooks/use-user-plan"
+import { getPlanLimits } from "@/lib/constants/pricing"
+
+// Helper to track daily simulation usage in localStorage
+function getSimulatorUsageToday(): number {
+  const key = "jkm_simulator_usage"
+  const today = new Date().toISOString().split("T")[0]
+  try {
+    const data = JSON.parse(localStorage.getItem(key) || "{}")
+    if (data.date === today) {
+      return data.count || 0
+    }
+    // New day - reset counter
+    return 0
+  } catch {
+    return 0
+  }
+}
+
+function incrementSimulatorUsage(): number {
+  const key = "jkm_simulator_usage"
+  const today = new Date().toISOString().split("T")[0]
+  const currentCount = getSimulatorUsageToday()
+  const newCount = currentCount + 1
+  localStorage.setItem(key, JSON.stringify({ date: today, count: newCount }))
+  return newCount
+}
 
 // ============================================
 // Types
@@ -421,6 +448,21 @@ export default function SimulatorPage() {
   const { toast } = useToast()
   const { t } = useLanguage()
 
+  // Plan-based limits
+  const { plan } = useUserPlan()
+  const planLimits = getPlanLimits(plan)
+  const maxSimulationsPerDay = planLimits.simulatorPerDay // -1 = unlimited
+  const [usedToday, setUsedToday] = useState(0)
+
+  // Load usage count on mount
+  useEffect(() => {
+    setUsedToday(getSimulatorUsageToday())
+  }, [])
+
+  // Check if user can run simulation
+  const canRunSimulation = maxSimulationsPerDay === -1 || usedToday < maxSimulationsPerDay
+  const remainingSimulations = maxSimulationsPerDay === -1 ? "∞" : Math.max(0, maxSimulationsPerDay - usedToday)
+
   // Data state
   const [symbols, setSymbols] = useState<string[]>([])
   const [strategies, setStrategies] = useState<Strategy[]>([])
@@ -625,6 +667,16 @@ export default function SimulatorPage() {
   }
 
   async function runSimulation() {
+    // Check plan-based daily limit
+    if (!canRunSimulation) {
+      toast({
+        title: "Өдрийн лимит хүрсэн",
+        description: `${plan.toUpperCase()} план дээр өдөрт ${maxSimulationsPerDay} удаа simulator ажиллуулах боломжтой. Маргааш дахин оролдоно уу эсвэл план шинэчлээрэй.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     // Debug logging
     console.log("[simulator] runSimulation called with:", { symbol, strategyId, strategiesCount: strategies.length })
     console.log("[simulator] Current strategies in state:", strategies.map(s => ({ id: s.id, name: s.name })))
@@ -751,6 +803,10 @@ export default function SimulatorPage() {
 
       setResult(normalizedRes)
 
+      // Increment daily usage counter on successful simulation
+      const newUsage = incrementSimulatorUsage()
+      setUsedToday(newUsage)
+
       // Animate trades if available
       if (trades.length > 0) {
         animateTradesStream(trades)
@@ -775,6 +831,16 @@ export default function SimulatorPage() {
   // Quick fix handlers for 0 trades debugging
   async function handleQuickFix(action: "normalize" | "extend_range" | "change_tf" | "disable_gates") {
     if (!symbol || !strategyId) return
+
+    // Check plan-based daily limit
+    if (!canRunSimulation) {
+      toast({
+        title: "Өдрийн лимит хүрсэн",
+        description: `${plan.toUpperCase()} план дээр өдөрт ${maxSimulationsPerDay} удаа simulator ажиллуулах боломжтой.`,
+        variant: "destructive",
+      })
+      return
+    }
 
     setRunning(true)
     setError(null)
@@ -848,6 +914,9 @@ export default function SimulatorPage() {
         const normalizedPatched = { ...patched, trades: patchedTrades } as MultiTFResult
 
         setResult(normalizedPatched)
+        // Increment usage counter
+        const newUsage1 = incrementSimulatorUsage()
+        setUsedToday(newUsage1)
         if (!normalizedPatched.ok && normalizedPatched.error) {
           setError(normalizeMessage(normalizedPatched.error))
         }
@@ -859,6 +928,9 @@ export default function SimulatorPage() {
       const normalizedRes = { ...res, trades } as MultiTFResult
 
       setResult(normalizedRes)
+      // Increment usage counter
+      const newUsage2 = incrementSimulatorUsage()
+      setUsedToday(newUsage2)
 
       if (!normalizedRes.ok && normalizedRes.error) {
         setError(normalizeMessage(normalizedRes.error))
@@ -1147,23 +1219,38 @@ export default function SimulatorPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-              <Button
-                variant="outline"
-                onClick={clearResults}
-                disabled={running || !result}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                {t("Clear", "Цэвэрлэх")}
-              </Button>
-              <Button
-                onClick={runSimulation}
-                disabled={running || !symbol || !strategyId}
-                className="min-w-[140px]"
-              >
-                <RotateCcw className={cn("h-4 w-4 mr-2", running && "animate-spin")} />
-                {running ? t("Simulating...", "Симуляци хийж байна...") : t("Run Simulation", "Симуляци эхлүүлэх")}
-              </Button>
+            <div className="flex items-center justify-between pt-4 border-t border-border">
+              {/* Daily usage info */}
+              <div className="text-sm text-muted-foreground">
+                {t("Today's usage:", "Өнөөдрийн хэрэглээ:")}{" "}
+                <span className={cn(
+                  "font-medium",
+                  !canRunSimulation && "text-destructive"
+                )}>
+                  {usedToday}/{maxSimulationsPerDay === -1 ? "∞" : maxSimulationsPerDay}
+                </span>
+                <span className="text-xs ml-2">
+                  ({plan.toUpperCase()} {t("plan", "план")})
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={clearResults}
+                  disabled={running || !result}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("Clear", "Цэвэрлэх")}
+                </Button>
+                <Button
+                  onClick={runSimulation}
+                  disabled={running || !symbol || !strategyId || !canRunSimulation}
+                  className="min-w-[140px]"
+                >
+                  <RotateCcw className={cn("h-4 w-4 mr-2", running && "animate-spin")} />
+                  {running ? t("Simulating...", "Симуляци хийж байна...") : !canRunSimulation ? t("Limit reached", "Лимит хүрсэн") : t("Run Simulation", "Симуляци эхлүүлэх")}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
