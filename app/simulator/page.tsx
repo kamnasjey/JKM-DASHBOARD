@@ -428,6 +428,7 @@ export default function SimulatorPage() {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<MultiTFResult | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
 
   // Form state
   const [symbol, setSymbol] = useState("")
@@ -593,6 +594,36 @@ export default function SimulatorPage() {
     }
   }
 
+  // Poll for job completion
+  async function pollJobUntilComplete(jid: string): Promise<any> {
+    const maxAttempts = 300 // 5 minutes max
+    let attempts = 0
+
+    while (attempts < maxAttempts) {
+      try {
+        const jobRes = await api.simulatorV2.jobStatus(jid)
+        console.log("[simulator] Poll job status:", { jid, status: jobRes.job?.status, progress: jobRes.job?.progress })
+
+        if (jobRes.job?.status === "completed" && jobRes.job?.result) {
+          return jobRes.job.result
+        }
+
+        if (jobRes.job?.status === "failed") {
+          throw new Error(jobRes.job?.error || "Job failed")
+        }
+
+        // Wait 1 second before next poll
+        await new Promise(r => setTimeout(r, 1000))
+        attempts++
+      } catch (err) {
+        console.error("[simulator] Poll error:", err)
+        throw err
+      }
+    }
+
+    throw new Error("Job timed out")
+  }
+
   async function runSimulation() {
     // Debug logging
     console.log("[simulator] runSimulation called with:", { symbol, strategyId, strategiesCount: strategies.length })
@@ -630,6 +661,7 @@ export default function SimulatorPage() {
     setRunning(true)
     setError(null)
     setResult(null)
+    setJobId(null)
     setStreamingTrades([])
     setActiveTab("combined")
 
@@ -647,7 +679,16 @@ export default function SimulatorPage() {
       console.log("[simulator] API request payload:", JSON.stringify(requestPayload, null, 2))
       console.log("[simulator] strategyId value:", strategyId, "type:", typeof strategyId, "length:", strategyId?.length)
 
-      const res = await api.simulatorV2.run(requestPayload)
+      let res = await api.simulatorV2.run(requestPayload)
+
+      // Handle async job response - poll until complete
+      if (res.ok && res.jobId && res.status === "queued") {
+        console.log("[simulator] Async job started:", res.jobId)
+        setJobId(res.jobId)
+
+        // Poll for completion
+        res = await pollJobUntilComplete(res.jobId)
+      }
 
       // Debug: Log full response with trades info
       console.log("[simulator] API response:", JSON.stringify({
@@ -1153,7 +1194,7 @@ export default function SimulatorPage() {
                 <h3 className="text-lg font-semibold mb-4 text-center">
                   {t("Simulation running", "Симуляци ажиллаж байна")}
                 </h3>
-                <SimulatorProgress isRunning={running} />
+                <SimulatorProgress isRunning={running} jobId={jobId} />
                 <p className="text-xs text-muted-foreground text-center mt-4">
                   {symbol} • 5 timeframe
                 </p>

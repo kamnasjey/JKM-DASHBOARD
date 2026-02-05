@@ -221,6 +221,7 @@ export async function POST(request: NextRequest) {
       config: strategy.config || {},
     },
     demoMode,
+    async: true, // Enable async mode for real progress tracking
   }
   
   // Log detector count for debugging
@@ -263,6 +264,24 @@ export async function POST(request: NextRequest) {
         { ok: false, error: "BACKEND_ERROR", message: "Backend returned invalid response" },
         { status: 502 }
       )
+    }
+
+    // Handle async job response - return jobId immediately for progress polling
+    if (backendJson?.ok && backendJson?.jobId && backendJson?.status === "queued") {
+      console.log(`[${requestId}] Async job queued: ${backendJson.jobId}`)
+      return NextResponse.json({
+        ok: true,
+        jobId: backendJson.jobId,
+        status: "queued",
+        meta: {
+          requestId,
+          dashboardVersion,
+          detectorsRequested,
+          detectorsNormalized,
+          detectorsUnknown,
+          demoMode,
+        }
+      })
     }
 
     // Log backend errors for troubleshooting

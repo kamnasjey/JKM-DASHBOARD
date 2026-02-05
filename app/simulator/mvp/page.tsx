@@ -332,7 +332,7 @@ export default function SimulatorMVPPage() {
     setResult(null)
 
     try {
-      const res = await api.simulatorV2.run({
+      let res = await api.simulatorV2.run({
         strategyId,
         symbols,
         from: dateRange.from,
@@ -341,6 +341,35 @@ export default function SimulatorMVPPage() {
         mode: "winrate",
         demoMode,
       })
+
+      // Handle async job response - poll until complete
+      if (res.ok && res.jobId && res.status === "queued") {
+        console.log("[simulator-mvp] Async job started:", res.jobId)
+
+        // Poll for completion
+        const maxAttempts = 300 // 5 minutes max
+        let attempts = 0
+        while (attempts < maxAttempts) {
+          const jobRes = await api.simulatorV2.jobStatus(res.jobId)
+          console.log("[simulator-mvp] Poll job status:", { jobId: res.jobId, status: jobRes.job?.status })
+
+          if (jobRes.job?.status === "completed" && jobRes.job?.result) {
+            res = jobRes.job.result
+            break
+          }
+
+          if (jobRes.job?.status === "failed") {
+            throw new Error(jobRes.job?.error || "Job failed")
+          }
+
+          await new Promise(r => setTimeout(r, 1000))
+          attempts++
+        }
+
+        if (attempts >= maxAttempts) {
+          throw new Error("Job timed out")
+        }
+      }
 
       setResult(res)
 

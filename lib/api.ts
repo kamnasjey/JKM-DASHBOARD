@@ -536,6 +536,9 @@ export const api = {
     }) =>
       apiFetch<{
         ok: boolean
+        // Async job response (when async=true)
+        jobId?: string
+        status?: "queued" | "running" | "completed" | "failed"
         summary?: {
           entries: number
           tp: number
@@ -709,6 +712,26 @@ export const api = {
         method: "POST",
         body: JSON.stringify(params),
       }).then(sanitizeSimulatorV2Response),
+
+    // Poll job status for async simulation
+    jobStatus: (jobId: string) =>
+      apiFetch<{
+        ok: boolean
+        job?: {
+          id: string
+          status: "queued" | "running" | "completed" | "failed"
+          progress?: {
+            stage: string
+            percent: number
+            message: string
+          }
+          result?: any
+          error?: string
+          createdAt: string
+          updatedAt: string
+        }
+        error?: string
+      }>(`/api/simulator/job/${jobId}`),
   },
 
   // Scanner API (continuous setup finder)
