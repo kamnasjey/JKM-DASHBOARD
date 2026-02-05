@@ -352,8 +352,8 @@ export default function ScannerConfigPage() {
     for (const symbol of DEFAULT_15_SYMBOLS) {
       if (symbol in pendingEnabled) {
         if (pendingEnabled[symbol]) count++
-      } else if (symbolEnabled[symbol] !== false) {
-        // Default is enabled (true) if not explicitly disabled
+      } else if (symbolEnabled[symbol] === true) {
+        // Default is disabled (false) - only count explicitly enabled
         count++
       }
     }
@@ -368,7 +368,7 @@ export default function ScannerConfigPage() {
       // Check if this symbol is already counted
       const isCurrentlyEnabled = symbol in pendingEnabled
         ? pendingEnabled[symbol]
-        : (symbolEnabled[symbol] !== false)
+        : (symbolEnabled[symbol] === true)
 
       // If enabling a currently disabled symbol, check limit
       if (!isCurrentlyEnabled && currentCount >= maxSymbols) {
@@ -383,8 +383,8 @@ export default function ScannerConfigPage() {
 
     setPendingEnabled(prev => {
       const newEnabled = { ...prev }
-      if (enabled === (symbolEnabled[symbol] ?? true)) {
-        // Same as current - remove from pending
+      if (enabled === (symbolEnabled[symbol] ?? false)) {
+        // Same as current - remove from pending (default is now false/disabled)
         delete newEnabled[symbol]
       } else {
         newEnabled[symbol] = enabled
@@ -394,11 +394,12 @@ export default function ScannerConfigPage() {
   }
 
   // Check if symbol is enabled (considering pending changes)
+  // Default is FALSE (disabled) - users must explicitly enable symbols
   const isSymbolEnabled = (symbol: string): boolean => {
     if (symbol in pendingEnabled) {
       return pendingEnabled[symbol]
     }
-    return symbolEnabled[symbol] ?? true
+    return symbolEnabled[symbol] ?? false
   }
 
   // Check if symbol has required strategy (when requireExplicitMapping is true)
