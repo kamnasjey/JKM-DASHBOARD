@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     if (userSnapshot.empty) {
       // Create new user with phone
       userId = randomUUID()
-      const userPlan = plan || "starter"
+      const userPlan = plan || "free"
       const hasPaidAccess = false // Always false until admin approves
       await db.collection("users").doc(userId).set({
         user_id: userId,
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         name: name?.trim() || null,
         provider: "phone",
         plan: userPlan,
-        planStatus: userPlan === "starter" ? "active" : "pending",
+        planStatus: userPlan === "free" ? "active" : "pending",
         hasPaidAccess,
         has_paid_access: hasPaidAccess,
         createdAt: new Date().toISOString(),

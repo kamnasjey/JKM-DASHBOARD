@@ -102,7 +102,7 @@ export default function AdminPage() {
 
   const [manualRequests, setManualRequests] = useState<ManualPaymentRequest[]>([])
   const [manualGrantEmail, setManualGrantEmail] = useState("")
-  const [manualGrantPlan, setManualGrantPlan] = useState<string>("pro")
+  const [manualGrantPlan, setManualGrantPlan] = useState<string>("starter")
   const [manualGrantNote, setManualGrantNote] = useState("")
 
   // Users list
@@ -860,6 +860,7 @@ export default function AdminPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="starter">Starter</SelectItem>
                       <SelectItem value="pro">Pro</SelectItem>
                       <SelectItem value="pro_plus">Pro+</SelectItem>
                     </SelectContent>

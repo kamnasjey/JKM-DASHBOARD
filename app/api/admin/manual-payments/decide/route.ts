@@ -18,9 +18,10 @@ function normalizeEmail(value: unknown): string {
   return String(value ?? "").toLowerCase().trim()
 }
 
-function normalizePlan(value: unknown): "pro" | "pro_plus" | null {
+function normalizePlan(value: unknown): "starter" | "pro" | "pro_plus" | null {
   const raw = String(value ?? "").toLowerCase().trim()
   if (!raw) return null
+  if (raw === "starter") return "starter"
   if (raw === "pro") return "pro"
   if (raw === "pro+" || raw === "pro_plus" || raw === "pro plus" || raw === "plus") return "pro_plus"
   return null
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
     const userData = userDoc.data() || {}
 
     if (decision === "approve") {
-      const finalPlan = plan ?? userData.manualPaymentPlan ?? "pro"
+      const finalPlan = plan ?? userData.manualPaymentPlan ?? "starter"
 
       await db.collection("users").doc(userDocId).set(
         {

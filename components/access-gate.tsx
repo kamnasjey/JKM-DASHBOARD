@@ -32,7 +32,7 @@ export function AccessGate({ children, feature }: AccessGateProps) {
   }
 
   // Free plan - show locked overlay
-  if (plan === "starter") {
+  if (plan === "free") {
     return (
       <div className="relative">
         <div className="pointer-events-none select-none blur-sm opacity-40">
@@ -48,7 +48,7 @@ export function AccessGate({ children, feature }: AccessGateProps) {
                 {FEATURE_NAMES[feature]} түгжээтэй байна
               </h2>
               <p className="text-sm text-muted-foreground">
-                Энэ функц нь Pro болон Pro+ хэрэглэгчдэд нээлттэй.
+                Энэ функц нь төлбөртэй хэрэглэгчдэд нээлттэй.
                 <br />
                 Төлбөрийн төлөвлөгөө сонгоод бүрэн эрх авна уу.
               </p>
@@ -65,7 +65,7 @@ export function AccessGate({ children, feature }: AccessGateProps) {
   }
 
   // Paid plan but pending approval - show waiting state
-  if ((plan === "pro" || plan === "pro_plus") && !hasPaidAccess) {
+  if (!hasPaidAccess) {
     return (
       <div className="relative">
         <div className="pointer-events-none select-none blur-sm opacity-40">
@@ -115,7 +115,7 @@ export function AccessGateViewOnly({ children, feature }: AccessGateProps) {
   }
 
   // Free plan - show content with banner
-  if (plan === "starter") {
+  if (plan === "free") {
     return (
       <div>
         <div className="bg-muted/50 border-b px-4 py-3">
@@ -137,7 +137,7 @@ export function AccessGateViewOnly({ children, feature }: AccessGateProps) {
   }
 
   // Paid but pending
-  if ((plan === "pro" || plan === "pro_plus") && !hasPaidAccess) {
+  if (!hasPaidAccess) {
     return (
       <div>
         <div className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-3">

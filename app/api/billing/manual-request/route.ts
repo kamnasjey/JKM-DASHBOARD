@@ -16,9 +16,10 @@ function normalizeEmail(value: unknown): string {
   return String(value ?? "").toLowerCase().trim()
 }
 
-function normalizePlan(value: unknown): "pro" | "pro_plus" | null {
+function normalizePlan(value: unknown): "starter" | "pro" | "pro_plus" | null {
   const raw = String(value ?? "").toLowerCase().trim()
   if (!raw) return null
+  if (raw === "starter") return "starter"
   if (raw === "pro") return "pro"
   if (raw === "pro+" || raw === "pro_plus" || raw === "pro plus" || raw === "plus") return "pro_plus"
   return null

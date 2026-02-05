@@ -43,7 +43,7 @@ export async function GET() {
     if (!userDoc.exists) {
       // User not found in Firestore, default to starter plan
       return NextResponse.json({
-        plan: "starter",
+        plan: "free",
         planStatus: "active",
         hasPaidAccess: false,
       })

@@ -15,7 +15,7 @@ interface UserPlanData {
 export function useUserPlan(): UserPlanData {
   const { data: session, status } = useSession()
   const [planData, setPlanData] = useState<UserPlanData>({
-    plan: "starter",
+    plan: "free",
     planStatus: "active",
     hasPaidAccess: false,
     loading: true,
@@ -26,7 +26,7 @@ export function useUserPlan(): UserPlanData {
     if (status === "loading") return
     if (!session?.user) {
       setPlanData({
-        plan: "starter",
+        plan: "free",
         planStatus: "active",
         hasPaidAccess: false,
         loading: false,
@@ -60,7 +60,7 @@ export function useUserPlan(): UserPlanData {
         console.error("[useUserPlan] Error fetching plan:", err)
         // Default to starter plan on error
         setPlanData({
-          plan: "starter",
+          plan: "free",
           planStatus: "active",
           hasPaidAccess: false,
           loading: false,

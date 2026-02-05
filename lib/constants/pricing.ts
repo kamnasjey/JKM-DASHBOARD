@@ -1,4 +1,4 @@
-export type PlanType = "starter" | "pro" | "pro_plus"
+export type PlanType = "free" | "starter" | "pro" | "pro_plus"
 
 export interface PlanFeature {
   text: string
@@ -25,6 +25,27 @@ export interface Plan {
 
 export const PLANS: Plan[] = [
   {
+    id: "free",
+    name: "Free",
+    nameMn: "Үнэгүй",
+    price: 0,
+    priceDisplay: "₮0",
+    period: "",
+    description: "Бүртгүүлээд үзэх",
+    features: [
+      { text: "Dashboard харах", included: true },
+      { text: "Strategy хослол", included: false },
+      { text: "Simulator", included: false },
+      { text: "Symbol scan", included: false },
+      { text: "Telegram alert", included: false },
+    ],
+    limits: {
+      maxStrategyCombinations: 0,
+      simulatorPerDay: 0,
+      maxSymbols: 0,
+    },
+  },
+  {
     id: "starter",
     name: "Starter",
     nameMn: "Стартер",
@@ -33,7 +54,7 @@ export const PLANS: Plan[] = [
     period: "/сар",
     description: "Эхлэгч трейдерүүдэд",
     features: [
-      { text: "Dashboard хандалт", included: true },
+      { text: "Dashboard бүрэн хандалт", included: true },
       { text: "3 strategy хослол", included: true },
       { text: "Simulator 7 удаа/өдөр", included: true },
       { text: "3 symbol scan", included: true },
