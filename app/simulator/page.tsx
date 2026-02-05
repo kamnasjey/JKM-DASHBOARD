@@ -41,7 +41,6 @@ import {
   type DetectorCategory 
 } from "@/lib/detectors/catalog"
 import { ZeroTradesDebugPanel } from "@/components/simulator/zero-trades-debug-panel"
-import { DiagnosticsPanel } from "@/components/simulator/diagnostics-panel"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { TradesTable } from "@/components/simulator/trades-table"
 import { LiveTradesStream } from "@/components/simulator/live-trades-stream"
@@ -2020,9 +2019,6 @@ export default function SimulatorPage() {
                 Timeframes: {result.meta?.timeframesRan?.join(", ") || "—"}
               </span>
             </div>
-
-            {/* Diagnostics Panel - Replaces DevTools */}
-            <DiagnosticsPanel />
           </div>
         )}
 
