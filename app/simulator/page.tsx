@@ -1592,45 +1592,6 @@ export default function SimulatorPage() {
                       </>
                     )}
 
-                    {/* Tag Attribution Tables - only if tags exist */}
-                    {((combinedResult.tagsAny && combinedResult.tagsAny.length > 0) || 
-                      (combinedResult.tagsPrimary && combinedResult.tagsPrimary.length > 0)) && (
-                      <div className="grid md:grid-cols-2 gap-6">
-                        {/* Tag Attribution - Any Mode */}
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-base">
-                              Tag Attribution (Any)
-                            </CardTitle>
-                            <CardDescription>
-                              Winrate when tag appears in signal
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <TagAttributionTable
-                              tags={combinedResult.tagsAny || []}
-                            />
-                          </CardContent>
-                        </Card>
-
-                        {/* Tag Attribution - Primary Mode */}
-                        <Card>
-                          <CardHeader className="pb-2">
-                            <CardTitle className="text-base">
-                              Tag Attribution (Primary)
-                            </CardTitle>
-                            <CardDescription>
-                              Winrate when tag is primary reason
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <TagAttributionTable
-                              tags={combinedResult.tagsPrimary || []}
-                            />
-                          </CardContent>
-                        </Card>
-                      </div>
-                    )}
                     
                     {/* Empty state when no trades */}
                     {(!result.trades || result.trades.length === 0) && (
@@ -1807,7 +1768,7 @@ export default function SimulatorPage() {
             <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
               <span>Data: {typeof result.meta?.dataSource === "string"
                 ? result.meta.dataSource
-                : result.meta?.dataSource?.source || "unknown"}</span>
+                : result.meta?.dataSource?.source || "local_store"}</span>
               <span>•</span>
               <span>
                 Range: {result.meta?.range?.from} → {result.meta?.range?.to}
