@@ -304,6 +304,13 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
                   24 цагийн дотор таны эрх нээгдэнэ
                 </p>
               </form>
+
+              {/* QPay Coming Soon */}
+              <div className="bg-muted/30 border border-dashed rounded-lg p-4 text-center">
+                <CreditCard className="w-6 h-6 mx-auto mb-1 text-muted-foreground/50" />
+                <p className="text-sm font-medium text-muted-foreground">QPay</p>
+                <p className="text-xs text-muted-foreground">Удахгүй нэмэгдэнэ...</p>
+              </div>
             </>
           )}
         </div>
