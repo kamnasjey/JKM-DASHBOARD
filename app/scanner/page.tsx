@@ -28,6 +28,12 @@ import { api } from "@/lib/api"
 import { getDashboardVersion } from "@/lib/version"
 import { getStrategyDetectors, getDetectorCountLabel } from "@/lib/strategies/get-strategy-detectors"
 import { cn } from "@/lib/utils"
+import {
+  useSymbolRegimes,
+  getSymbolDetectorWarnings,
+  formatRegimeText,
+  formatWarningText,
+} from "@/hooks/use-symbol-regimes"
 
 const DEFAULT_SYMBOLS = [
   "BTCUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT",
@@ -235,6 +241,18 @@ export default function ScannerPage() {
   const detectorInfo = selectedStrategy ? getStrategyDetectors(selectedStrategy) : null
   const dashboardVersion = getDashboardVersion()
 
+  // Fetch regime data for selected symbols
+  const { regimes: symbolRegimes, loading: loadingRegimes, refresh: refreshRegimes } = useSymbolRegimes(selectedSymbols)
+
+  // Get selected strategy's detectors for warning calculation
+  const strategyDetectors = selectedStrategy?.detectors || []
+
+  // Calculate warnings for each selected symbol
+  const symbolWarnings = selectedSymbols.reduce((acc, symbol) => {
+    acc[symbol] = getSymbolDetectorWarnings(symbolRegimes[symbol], strategyDetectors)
+    return acc
+  }, {} as Record<string, ReturnType<typeof getSymbolDetectorWarnings>>)
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -371,6 +389,10 @@ export default function ScannerPage() {
                 <div className="flex items-center justify-between">
                   <Label>Symbols ({selectedSymbols.length} selected)</Label>
                   <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => refreshRegimes()} disabled={loadingRegimes}>
+                      <RefreshCw className={cn("h-3 w-3 mr-1", loadingRegimes && "animate-spin")} />
+                      Regime
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => setSelectedSymbols(DEFAULT_SYMBOLS)} disabled={status?.running}>All</Button>
                     <Button variant="ghost" size="sm" onClick={() => setSelectedSymbols([])} disabled={status?.running}>None</Button>
                   </div>
@@ -389,6 +411,47 @@ export default function ScannerPage() {
                     </Button>
                   ))}
                 </div>
+
+                {/* Regime Display for Selected Symbols */}
+                {selectedSymbols.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <Label className="text-xs text-muted-foreground">Market Regime (1H | 4H | 1D)</Label>
+                    <div className="space-y-1 text-xs">
+                      {selectedSymbols.map(symbol => {
+                        const regimeData = symbolRegimes[symbol]
+                        const warnings = symbolWarnings[symbol] || []
+                        const hasWarnings = warnings.length > 0
+
+                        return (
+                          <div
+                            key={symbol}
+                            className={cn(
+                              "flex flex-col p-2 rounded border",
+                              hasWarnings ? "border-yellow-500/30 bg-yellow-500/5" : "border-border/50"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono font-semibold">{symbol.replace("USDT", "")}</span>
+                              <span className="text-muted-foreground">
+                                {regimeData?.loading ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  formatRegimeText(regimeData)
+                                )}
+                              </span>
+                            </div>
+                            {hasWarnings && (
+                              <div className="mt-1 text-yellow-500 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">{formatWarningText(warnings)}</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Timeframes */}
