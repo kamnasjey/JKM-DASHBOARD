@@ -48,6 +48,13 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  const activeTicketIdRef = useRef<string | null>(null)
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeTicketIdRef.current = activeTicket?.id || null
+  }, [activeTicket])
+
   const loadTickets = useCallback(async () => {
     if (sessionStatus !== "authenticated") return
     setLoading(true)
@@ -55,7 +62,17 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       const res = await fetch("/api/support", { cache: "no-store" })
       const data = await res.json()
       if (data.ok) {
-        setTickets(data.tickets || [])
+        const newTickets = data.tickets || []
+        setTickets(newTickets)
+
+        // Update activeTicket with fresh data if it exists
+        const currentActiveId = activeTicketIdRef.current
+        if (currentActiveId) {
+          const updated = newTickets.find((t: SupportTicket) => t.id === currentActiveId)
+          if (updated) {
+            setActiveTicket(updated)
+          }
+        }
       }
     } catch (err) {
       console.error("[support] Failed to load tickets:", err)
@@ -69,6 +86,17 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
       loadTickets()
     }
   }, [isOpen, sessionStatus, loadTickets])
+
+  // Auto-refresh when in chat view to get admin replies
+  useEffect(() => {
+    if (!isOpen || view !== "chat" || !activeTicket) return
+
+    const interval = setInterval(() => {
+      loadTickets()
+    }, 5000) // Refresh every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [isOpen, view, activeTicket, loadTickets])
 
   useEffect(() => {
     if (view === "chat" && activeTicket) {
