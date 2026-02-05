@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useToast } from "@/hooks/use-toast"
+import { useUserPlan } from "@/hooks/use-user-plan"
 import { cn } from "@/lib/utils"
 import { PLANS, BANK_INFO, getPlanById, type PlanType } from "@/lib/constants/pricing"
 
@@ -21,6 +22,7 @@ interface PlanSheetProps {
 export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
   const { data: session } = useSession()
   const { toast } = useToast()
+  const { plan: currentPlan, loading: planLoading } = useUserPlan()
 
   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -32,7 +34,6 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
     note: "",
   })
 
-  const currentPlan = (session?.user as any)?.plan || "free"
   const userEmail = session?.user?.email || ""
 
   useEffect(() => {
@@ -140,7 +141,15 @@ export function PlanSheet({ open, onOpenChange }: PlanSheetProps) {
             <>
               {/* Current Plan */}
               <div className="text-sm text-muted-foreground">
-                Одоогийн: <Badge variant="outline">{currentPlan.toUpperCase()}</Badge>
+                Одоогийн:{" "}
+                {planLoading ? (
+                  <Badge variant="outline">
+                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                    ...
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">{currentPlan.toUpperCase()}</Badge>
+                )}
               </div>
 
               {/* Plan Cards - skip free plan in list */}

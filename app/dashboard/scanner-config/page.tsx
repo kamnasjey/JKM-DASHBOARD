@@ -47,6 +47,8 @@ import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import { useLanguage } from "@/contexts/language-context"
+import { useUserPlan } from "@/hooks/use-user-plan"
+import { getPlanLimits } from "@/lib/constants/pricing"
 
 // Default 15 symbols (must match backend)
 const DEFAULT_15_SYMBOLS = [
@@ -187,6 +189,11 @@ export default function ScannerConfigPage() {
   const { toast } = useToast()
   const { t } = useLanguage()
   const uid = (session as any)?.user?.id || ""
+
+  // Get user plan for symbol limits
+  const { plan } = useUserPlan()
+  const planLimits = getPlanLimits(plan)
+  const maxSymbols = planLimits.maxSymbols || 3
 
   // State
   const [loading, setLoading] = useState(true)
@@ -339,8 +346,41 @@ export default function ScannerConfigPage() {
     })
   }
 
+  // Count currently enabled symbols (considering pending changes)
+  const countEnabledSymbols = (): number => {
+    let count = 0
+    for (const symbol of DEFAULT_15_SYMBOLS) {
+      if (symbol in pendingEnabled) {
+        if (pendingEnabled[symbol]) count++
+      } else if (symbolEnabled[symbol] !== false) {
+        // Default is enabled (true) if not explicitly disabled
+        count++
+      }
+    }
+    return count
+  }
+
   // Handle symbol enable/disable toggle
   const handleSymbolToggle = (symbol: string, enabled: boolean) => {
+    // Check plan limit when enabling a symbol
+    if (enabled) {
+      const currentCount = countEnabledSymbols()
+      // Check if this symbol is already counted
+      const isCurrentlyEnabled = symbol in pendingEnabled
+        ? pendingEnabled[symbol]
+        : (symbolEnabled[symbol] !== false)
+
+      // If enabling a currently disabled symbol, check limit
+      if (!isCurrentlyEnabled && currentCount >= maxSymbols) {
+        toast({
+          title: "Symbol лимит хүрсэн",
+          description: `${plan.toUpperCase()} план дээр ${maxSymbols} symbol-аас илүүгүй идэвхжүүлэх боломжтой.`,
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
     setPendingEnabled(prev => {
       const newEnabled = { ...prev }
       if (enabled === (symbolEnabled[symbol] ?? true)) {
@@ -552,7 +592,7 @@ export default function ScannerConfigPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Symbols:</span>
-                  <span className="ml-2 font-medium">{engineStatus.lastOutcome?.symbolsScanned || 15}</span>
+                  <span className="ml-2 font-medium">{countEnabledSymbols()} / {maxSymbols} ({plan.toUpperCase()})</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Setups Found:</span>
@@ -575,7 +615,10 @@ export default function ScannerConfigPage() {
                   {t("Symbol Strategy Mapping", "Symbol Стратеги Mapping")}
                 </CardTitle>
                 <CardDescription>
-                  {t("Each symbol must be assigned a strategy", "Symbol бүрт стратеги заавал оноох шаардлагатай")}
+                  {t("Each symbol must be assigned a strategy", "Symbol бүрт стратеги заавал оноох шаардлагатай")} •
+                  <span className="text-primary ml-1">
+                    {plan.toUpperCase()}: {maxSymbols} symbol
+                  </span>
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
