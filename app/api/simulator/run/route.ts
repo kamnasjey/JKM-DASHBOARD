@@ -144,13 +144,16 @@ export async function POST(request: NextRequest) {
   }
   
   // --- 4. Load strategy from Firestore ---
+  console.log(`[${requestId}] Loading strategy: userId=${userId}, strategyId=${strategyId}`)
   const strategy = await getStrategy(userId, strategyId)
+  console.log(`[${requestId}] Strategy result: ${strategy ? `found (name=${strategy.name})` : 'NOT FOUND'}`)
 
   if (!strategy) {
+    console.error(`[${requestId}] STRATEGY_NOT_FOUND: userId=${userId}, strategyId=${strategyId}`)
     return NextResponse.json(
       {
         ok: false,
-        error: "STRATEGY_NOT_FOUND",
+        error: { code: "STRATEGY_NOT_FOUND", message: `Strategy '${strategyId}' not found`, details: { userId: userId.substring(0, 8) + '...' } },
         message: `Strategy '${strategyId}' not found`,
       },
       { status: 404 }
