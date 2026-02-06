@@ -49,7 +49,39 @@ import { useAuthGuard } from "@/lib/auth-guard"
 import { useLanguage } from "@/contexts/language-context"
 import { useUserPlan } from "@/hooks/use-user-plan"
 import { getPlanLimits } from "@/lib/constants/pricing"
-import { RegimeStatusGrid } from "@/components/regime-status-grid"
+import { cn } from "@/lib/utils"
+
+// API URL for regime status
+const API_URL = process.env.NEXT_PUBLIC_JKM_BOT_API || "http://159.65.11.255:8000"
+
+// Regime types
+interface RegimeCell {
+  regime: string
+  emoji: string
+  label: string
+  strength?: number
+}
+
+interface RegimeStatusData {
+  ok: boolean
+  timestamp: number
+  symbols: string[]
+  timeframes: string[]
+  regimes: Record<string, Record<string, RegimeCell>>
+}
+
+// Regime color mapping
+const REGIME_COLORS: Record<string, string> = {
+  trend_up: "bg-green-500/20 text-green-400 border-green-500/30",
+  trend_down: "bg-red-500/20 text-red-400 border-red-500/30",
+  range: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+  consolidation: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  breakout: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  pullback: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  reversal: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  unknown: "bg-gray-700/20 text-gray-500 border-gray-700/30",
+  error: "bg-red-700/20 text-red-500 border-red-700/30",
+}
 
 // Default 15 symbols (must match backend)
 const DEFAULT_15_SYMBOLS = [
@@ -211,8 +243,12 @@ export default function ScannerConfigPage() {
   const [pendingEnabled, setPendingEnabled] = useState<Record<string, boolean>>({})
   const [requireExplicitMapping, setRequireExplicitMapping] = useState(true) // Default: no default strategy
 
+  // Regime status state
+  const [regimeData, setRegimeData] = useState<RegimeStatusData | null>(null)
+
   // Polling ref
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const regimePollRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load initial data
   const loadData = useCallback(async () => {
@@ -292,7 +328,7 @@ export default function ScannerConfigPage() {
   // Load engine status
   const loadEngineStatus = useCallback(async () => {
     if (!uid) return
-    
+
     try {
       const data = await api.engineStatus247(uid)
       setEngineStatus(data)
@@ -304,13 +340,29 @@ export default function ScannerConfigPage() {
     }
   }, [uid])
 
+  // Load regime status
+  const loadRegimeStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/regime-status`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const result = await response.json()
+      if (result.ok) {
+        setRegimeData(result)
+      }
+    } catch (err: any) {
+      console.error("[scanner-config] regime fetch error:", err)
+    }
+  }, [])
+
   // Initial load
   useEffect(() => {
     if (uid) {
       loadData()
       loadEngineStatus()
     }
-  }, [uid, loadData, loadEngineStatus])
+    // Load regime status regardless of uid
+    loadRegimeStatus()
+  }, [uid, loadData, loadEngineStatus, loadRegimeStatus])
 
   // Status polling (every 10 seconds)
   useEffect(() => {
@@ -326,6 +378,19 @@ export default function ScannerConfigPage() {
       }
     }
   }, [uid, loadEngineStatus])
+
+  // Regime status polling (every 30 seconds)
+  useEffect(() => {
+    regimePollRef.current = setInterval(() => {
+      loadRegimeStatus()
+    }, 30000)
+
+    return () => {
+      if (regimePollRef.current) {
+        clearInterval(regimePollRef.current)
+      }
+    }
+  }, [loadRegimeStatus])
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = Object.keys(pendingMap).length > 0 || Object.keys(pendingEnabled).length > 0
@@ -607,9 +672,6 @@ export default function ScannerConfigPage() {
           </CardContent>
         </Card>
 
-        {/* Real-time Market Regime Status */}
-        <RegimeStatusGrid refreshInterval={30000} />
-
         {/* Per-Symbol Strategy Mapping Card */}
         <Card>
           <CardHeader className="pb-3">
@@ -667,77 +729,115 @@ export default function ScannerConfigPage() {
                     const enabled = isSymbolEnabled(symbol)
                     const hasStrategy = hasRequiredStrategy(symbol)
                     const needsStrategy = requireExplicitMapping && !hasStrategy
+                    const symbolRegimes = regimeData?.regimes?.[symbol] || {}
+                    const timeframes = ["M5", "M15", "M30", "H1", "H4"]
 
                     return (
-                      <TableRow 
-                        key={symbol} 
-                        className={`${hasPendingChange ? "bg-yellow-500/5" : ""} ${!enabled ? "opacity-50" : ""}`}
-                      >
-                        {/* Enable/Disable Toggle */}
-                        <TableCell>
-                          <Switch
-                            checked={enabled}
-                            onCheckedChange={(checked) => handleSymbolToggle(symbol, checked)}
-                            disabled={saving}
-                          />
-                        </TableCell>
-                        
-                        {/* Symbol */}
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {symbol}
-                            {needsStrategy && enabled && (
-                              <Badge variant="destructive" className="text-xs">
-                                !
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        
-                        {/* Strategy Selection */}
-                        <TableCell>
-                          <Select
-                            value={dropdownValue}
-                            onValueChange={(val) => handleSymbolStrategyChange(symbol, val === "__none__" ? null : val)}
-                            disabled={saving || !enabled}
-                          >
-                            <SelectTrigger className={`h-8 text-xs ${needsStrategy && enabled ? "border-red-500" : ""}`}>
-                              <SelectValue placeholder="Select strategy" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">
-                                <span className="text-muted-foreground">-- No Strategy --</span>
-                              </SelectItem>
-                              {strategies.map((strategy) => (
-                                <SelectItem key={strategy.id} value={strategy.id}>
-                                  {strategy.name}
+                      <>
+                        <TableRow
+                          key={symbol}
+                          className={`${hasPendingChange ? "bg-yellow-500/5" : ""} ${!enabled ? "opacity-50" : ""} border-b-0`}
+                        >
+                          {/* Enable/Disable Toggle */}
+                          <TableCell className="pb-1">
+                            <Switch
+                              checked={enabled}
+                              onCheckedChange={(checked) => handleSymbolToggle(symbol, checked)}
+                              disabled={saving}
+                            />
+                          </TableCell>
+
+                          {/* Symbol */}
+                          <TableCell className="font-medium pb-1">
+                            <div className="flex items-center gap-2">
+                              {symbol}
+                              {needsStrategy && enabled && (
+                                <Badge variant="destructive" className="text-xs">
+                                  !
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Strategy Selection */}
+                          <TableCell className="pb-1">
+                            <Select
+                              value={dropdownValue}
+                              onValueChange={(val) => handleSymbolStrategyChange(symbol, val === "__none__" ? null : val)}
+                              disabled={saving || !enabled}
+                            >
+                              <SelectTrigger className={`h-8 text-xs ${needsStrategy && enabled ? "border-red-500" : ""}`}>
+                                <SelectValue placeholder="Select strategy" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">
+                                  <span className="text-muted-foreground">-- No Strategy --</span>
                                 </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        
-                        {/* Status */}
-                        <TableCell>
-                          <StatusPill
-                            status={symbolStatus?.delayReason || "OK"}
-                            reason={symbolStatus?.delayReason}
-                          />
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {symbolStatus?.lagSec != null && symbolStatus.lagSec >= 0 ? `${symbolStatus.lagSec}s` : "-"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {formatRelativeTime(symbolStatus?.lastScanTs)}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {symbolStatus?.setupsFound24h != null ? (
-                            <span className={symbolStatus.setupsFound24h > 0 ? "text-green-400 font-medium" : "text-muted-foreground"}>
-                              {symbolStatus.setupsFound24h}
-                            </span>
-                          ) : "-"}
-                        </TableCell>
-                      </TableRow>
+                                {strategies.map((strategy) => (
+                                  <SelectItem key={strategy.id} value={strategy.id}>
+                                    {strategy.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+
+                          {/* Status */}
+                          <TableCell className="pb-1">
+                            <StatusPill
+                              status={symbolStatus?.delayReason || "OK"}
+                              reason={symbolStatus?.delayReason}
+                            />
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground pb-1">
+                            {symbolStatus?.lagSec != null && symbolStatus.lagSec >= 0 ? `${symbolStatus.lagSec}s` : "-"}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground pb-1">
+                            {formatRelativeTime(symbolStatus?.lastScanTs)}
+                          </TableCell>
+                          <TableCell className="text-xs pb-1">
+                            {symbolStatus?.setupsFound24h != null ? (
+                              <span className={symbolStatus.setupsFound24h > 0 ? "text-green-400 font-medium" : "text-muted-foreground"}>
+                                {symbolStatus.setupsFound24h}
+                              </span>
+                            ) : "-"}
+                          </TableCell>
+                        </TableRow>
+                        {/* Regime Status Row */}
+                        <TableRow key={`${symbol}-regime`} className={`${!enabled ? "opacity-50" : ""}`}>
+                          <TableCell colSpan={7} className="pt-0 pb-3">
+                            <div className="flex items-center gap-1 ml-1">
+                              <span className="text-[10px] text-muted-foreground mr-1">Regime:</span>
+                              {timeframes.map((tf) => {
+                                const regime = symbolRegimes[tf] || { regime: "unknown", emoji: "❓", label: "?" }
+                                const colorClass = REGIME_COLORS[regime.regime] || REGIME_COLORS.unknown
+                                return (
+                                  <TooltipProvider key={tf}>
+                                    <Tooltip delayDuration={200}>
+                                      <TooltipTrigger asChild>
+                                        <div
+                                          className={cn(
+                                            "px-1.5 py-0.5 rounded text-[10px] font-medium border cursor-default",
+                                            colorClass
+                                          )}
+                                        >
+                                          <span className="opacity-70 mr-0.5">{tf}:</span>
+                                          {regime.emoji}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="bottom">
+                                        <div className="text-xs">
+                                          <span className="font-medium">{tf}:</span> {regime.emoji} {regime.label}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )
+                              })}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </>
                     )
                   })}
                 </TableBody>
