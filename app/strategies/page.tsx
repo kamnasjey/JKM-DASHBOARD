@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
@@ -25,6 +26,16 @@ import { CATEGORY_INFO, DETECTOR_BY_ID, DETECTOR_PRESETS, type DetectorPreset } 
 import { TemplateGallery } from "@/components/strategy-templates"
 
 const MAX_STRATEGIES = 30
+
+// Timeframe options for entry and trend
+const TIMEFRAME_OPTIONS = [
+  { value: "M5", label: "5 min" },
+  { value: "M15", label: "15 min" },
+  { value: "M30", label: "30 min" },
+  { value: "H1", label: "1 hour" },
+  { value: "H4", label: "4 hour" },
+  { value: "D1", label: "Daily" },
+]
 
 const STRATEGY_NAME_PREFIX = /^EDGE Starter #\d+\s+—\s+/i
 
@@ -79,6 +90,8 @@ interface Strategy {
   min_rr?: number
   description?: string
   notes?: string // User notes for strategy
+  entry_tf?: string // Entry timeframe (M5, M15, M30, H1, H4, D1)
+  trend_tf?: string // Trend timeframe (H1, H4, D1)
   config?: Record<string, any>
   createdAt?: string
   updatedAt?: string
@@ -91,6 +104,8 @@ const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
   min_score: 1.0,
   min_rr: 2.7,
   notes: "",
+  entry_tf: "M15",
+  trend_tf: "H1",
 }
 
 export default function StrategiesPage() {
@@ -145,6 +160,8 @@ export default function StrategiesPage() {
         strategy_id: s.id, // Backward compat
         min_score: s.config?.min_score ?? 1.0,
         min_rr: s.config?.min_rr ?? 2.0,
+        entry_tf: s.config?.entry_tf ?? "M15",
+        trend_tf: s.config?.trend_tf ?? "H1",
       }))
       
       setStrategies(mappedStrategies)
@@ -271,6 +288,8 @@ export default function StrategiesPage() {
       min_rr: Math.max(2.7, (strategy.min_rr || strategy.config?.min_rr || 2.7)),
       description: strategy.description,
       notes: strategy.notes || "",
+      entry_tf: strategy.entry_tf || strategy.config?.entry_tf || "M15",
+      trend_tf: strategy.trend_tf || strategy.config?.trend_tf || "H1",
     })
     setEditingIndex(index)
     setShowCreateDialog(true)
@@ -319,6 +338,8 @@ export default function StrategiesPage() {
           config: {
             min_score: editForm.min_score || 1.0,
             min_rr: 2.7,    // Fixed default - not user configurable
+            entry_tf: editForm.entry_tf || "M15",
+            trend_tf: editForm.trend_tf || "H1",
           },
         })
 
@@ -340,6 +361,8 @@ export default function StrategiesPage() {
           config: {
             min_score: editForm.min_score || 1.0,
             min_rr: 2.7,    // Fixed default - not user configurable
+            entry_tf: editForm.entry_tf || "M15",
+            trend_tf: editForm.trend_tf || "H1",
           },
         })
         
@@ -742,6 +765,52 @@ export default function StrategiesPage() {
                   max={3}
                   step={0.1}
                 />
+              </div>
+
+              {/* Timeframe Selection */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t("Entry Timeframe", "Entry TF")}</Label>
+                  <Select
+                    value={editForm.entry_tf || "M15"}
+                    onValueChange={(value) => setEditForm({ ...editForm, entry_tf: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select entry TF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEFRAME_OPTIONS.map((tf) => (
+                        <SelectItem key={tf.value} value={tf.value}>
+                          {tf.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {t("Timeframe for entry signals", "Сигнал хайх timeframe")}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t("Trend Timeframe", "Trend TF")}</Label>
+                  <Select
+                    value={editForm.trend_tf || "H1"}
+                    onValueChange={(value) => setEditForm({ ...editForm, trend_tf: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select trend TF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMEFRAME_OPTIONS.filter(tf => ["H1", "H4", "D1"].includes(tf.value)).map((tf) => (
+                        <SelectItem key={tf.value} value={tf.value}>
+                          {tf.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {t("Timeframe for trend direction", "Тренд шалгах timeframe")}
+                  </p>
+                </div>
               </div>
 
               {/* Pro Detector Select Component */}

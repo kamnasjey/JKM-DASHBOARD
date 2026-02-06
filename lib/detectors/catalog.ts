@@ -44,12 +44,12 @@ export interface DetectorMeta {
 }
 
 // ============================================================
-// Detector Catalog (31 total)
+// Detector Catalog (29 total)
 // ============================================================
 
 export const DETECTOR_CATALOG: DetectorMeta[] = [
   // ============================================================
-  // 🚦 GATE DETECTORS (3) - Market condition filters
+  // 🚦 GATE DETECTORS (1) - Market condition filters
   // "If gate fails → block trades"
   // ============================================================
   {
@@ -65,30 +65,8 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     required: true,
     tags: ["trend", "filter", "regime"],
   },
-  {
-    id: "GATE_VOLATILITY",
-    labelEn: "Volatility Filter",
-    labelMn: "Volatility шүүлтүүр",
-    labelShort: "Volatility",
-    descEn: "Measures volatility via ATR. Blocks trades during extremely low or high volatility.",
-    descriptionMn: "ATR-ээр volatility хэмжиж, хэт бага/өндөр volatility үед trade блоклоно.",
-    category: "gate",
-    impact: "medium",
-    cost: "light",
-    tags: ["volatility", "atr", "filter"],
-  },
-  {
-    id: "GATE_DRIFT_SENTINEL",
-    labelEn: "Drift Sentinel",
-    labelMn: "Drift Sentinel",
-    labelShort: "Drift",
-    descEn: "Prevents counter-trend trades during strong momentum drift.",
-    descriptionMn: "Хүчтэй momentum drift үед counter-trend trade хийхээс сэргийлнэ.",
-    category: "gate",
-    impact: "medium",
-    cost: "light",
-    tags: ["momentum", "drift", "filter"],
-  },
+  // NOTE: GATE_VOLATILITY and GATE_DRIFT_SENTINEL removed - deprecated
+  // GATE_REGIME now handles all regime/volatility filtering
 
   // ============================================================
   // 🎯 TRIGGER DETECTORS (15) - Entry signal generators
