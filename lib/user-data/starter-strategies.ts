@@ -22,7 +22,7 @@ const USERS_COLLECTION = "users"
 const STRATEGIES_SUBCOLLECTION = "strategies"
 
 /** Current starter seed version - increment to reseed all users */
-export const STARTER_SEED_VERSION = "v3"
+export const STARTER_SEED_VERSION = "v4"
 
 const DISABLE_STARTER_STRATEGIES = ["1", "true", "yes"].includes(
   String(process.env.DISABLE_STARTER_STRATEGIES || "").trim().toLowerCase(),
@@ -122,6 +122,73 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 2,
     },
     cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
+  },
+  // ============================================================
+  // TESTED STRATEGIES (90-day backtest verified, 50%+ WR, positive R)
+  // ============================================================
+  {
+    id: "starter_TESTED_1",
+    name: "TESTED #1 - EURGBP Mean Reversion",
+    description: "15m Mean Reversion on EURGBP. 69.4% WR, +14.9R (90-day backtest).",
+    detectors: ["GATE_REGIME", "MEAN_REVERSION_SNAPBACK", "PINBAR_AT_LEVEL"],
+    gates: ["GATE_REGIME"],
+    triggers: ["MEAN_REVERSION_SNAPBACK"],
+    confluence: ["PINBAR_AT_LEVEL"],
+    starterKey: "tested_eurgbp_meanrev_v1",
+    risk: {
+      minRR: 2.5,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 1,
+    },
+    cooldownMinutes: 30,
+  },
+  {
+    id: "starter_TESTED_2",
+    name: "TESTED #2 - EURJPY Mean Reversion",
+    description: "15m Mean Reversion on EURJPY. 56.9% WR, +21.6R (90-day backtest).",
+    detectors: ["GATE_REGIME", "MEAN_REVERSION_SNAPBACK", "PINBAR_AT_LEVEL"],
+    gates: ["GATE_REGIME"],
+    triggers: ["MEAN_REVERSION_SNAPBACK"],
+    confluence: ["PINBAR_AT_LEVEL"],
+    starterKey: "tested_eurjpy_meanrev_v1",
+    risk: {
+      minRR: 2.5,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 1,
+    },
+    cooldownMinutes: 30,
+  },
+  {
+    id: "starter_TESTED_3",
+    name: "TESTED #3 - BTCUSD Mean Reversion",
+    description: "1h Mean Reversion on BTCUSD. 55.6% WR, +11.7R (90-day backtest).",
+    detectors: ["GATE_REGIME", "MEAN_REVERSION_SNAPBACK", "PINBAR_AT_LEVEL"],
+    gates: ["GATE_REGIME"],
+    triggers: ["MEAN_REVERSION_SNAPBACK"],
+    confluence: ["PINBAR_AT_LEVEL"],
+    starterKey: "tested_btcusd_meanrev_v1",
+    risk: {
+      minRR: 2.5,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 1,
+    },
+    cooldownMinutes: 120,
+  },
+  {
+    id: "starter_TESTED_4",
+    name: "TESTED #4 - NZDUSD EQ Break",
+    description: "1h EQ Break on NZDUSD. 58.8% WR, +11.5R (90-day backtest).",
+    detectors: ["GATE_REGIME", "EQ_BREAK", "BOS"],
+    gates: ["GATE_REGIME"],
+    triggers: ["EQ_BREAK"],
+    confluence: ["BOS"],
+    starterKey: "tested_nzdusd_eqbreak_v1",
+    risk: {
+      minRR: 2.5,
+      maxRiskPercent: 1.0,
+      minConfirmHits: 1,
+    },
+    cooldownMinutes: 120,
   },
 ]
 
