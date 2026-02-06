@@ -51,9 +51,6 @@ import { useUserPlan } from "@/hooks/use-user-plan"
 import { getPlanLimits } from "@/lib/constants/pricing"
 import { cn } from "@/lib/utils"
 
-// API URL for regime status
-const API_URL = process.env.NEXT_PUBLIC_JKM_BOT_API || "http://159.65.11.255:8000"
-
 // Regime types
 interface RegimeCell {
   regime: string
@@ -340,10 +337,10 @@ export default function ScannerConfigPage() {
     }
   }, [uid])
 
-  // Load regime status
+  // Load regime status (via proxy to avoid mixed content)
   const loadRegimeStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/regime-status`)
+      const response = await fetch("/api/proxy/regime-status")
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const result = await response.json()
       if (result.ok) {
