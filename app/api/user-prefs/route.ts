@@ -28,6 +28,10 @@ export async function PUT(request: NextRequest) {
   if ("telegram_chat_id" in body) prefs.telegram_chat_id = body.telegram_chat_id
   if ("telegram_enabled" in body) prefs.telegram_enabled = body.telegram_enabled
 
+  // Trading settings (min_rr, min_score)
+  if ("min_rr" in body) prefs.min_rr = Number(body.min_rr) || 2.5
+  if ("min_score" in body) prefs.min_score = Number(body.min_score) || 0
+
   // Identity (display_name)
   if ("display_name" in body) identity.display_name = body.display_name
 

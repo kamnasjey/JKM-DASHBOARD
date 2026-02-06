@@ -32,6 +32,9 @@ export async function GET() {
       plan: userDoc?.plan || null,
       plan_status: userDoc?.plan_status || null,
       scan_enabled: userDoc?.scan_enabled || false,
+      // Trading settings
+      min_rr: userDoc?.min_rr ?? 2.5,
+      min_score: userDoc?.min_score ?? 0,
     })
   } catch (err) {
     console.error("[api/profile] Error fetching user:", err)

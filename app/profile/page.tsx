@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User, CheckCircle, XCircle, MessageCircle, Send } from "lucide-react"
+import { User, CheckCircle, XCircle, MessageCircle, Send, TrendingUp } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -42,6 +42,8 @@ export default function ProfilePage() {
         display_name: "",
         telegram_chat_id: "",
         telegram_enabled: false,
+        min_rr: 2.5,
+        min_score: 0,
       })
       toast({
         title: "Алдаа",
@@ -64,6 +66,8 @@ export default function ProfilePage() {
         telegram_chat_id: rawChatId || null,
         telegram_enabled: Boolean(rawChatId),
         display_name: displayName || null,
+        min_rr: profile?.min_rr ?? 2.5,
+        min_score: profile?.min_score ?? 0,
       })
 
       // Update local state to reflect saved status
@@ -166,6 +170,75 @@ export default function ProfilePage() {
               <Label htmlFor="email">Имэйл</Label>
               <Input id="email" value={profile?.email || session?.user?.email || ""} disabled />
               <p className="text-xs text-muted-foreground">Имэйл солих боломжгүй</p>
+            </div>
+
+            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+              {saving ? "Хадгалж байна..." : "Хадгалах"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Trading Settings Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Trading тохиргоо
+            </CardTitle>
+            <CardDescription>Scanner болон Simulator-т ашиглагдах тохиргоо</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="min_rr">Minimum Risk/Reward (RR)</Label>
+                <Input
+                  id="min_rr"
+                  type="number"
+                  step="0.1"
+                  min="1.0"
+                  max="10.0"
+                  value={profile?.min_rr ?? 2.5}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...(prev ?? {}),
+                      min_rr: parseFloat(e.target.value) || 2.5,
+                    }))
+                  }
+                  placeholder="2.5"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Хамгийн бага RR (1:X). Жишээ: 2.5 = 1:2.5
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="min_score">Minimum Score</Label>
+                <Input
+                  id="min_score"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5.0"
+                  value={profile?.min_score ?? 0}
+                  onChange={(e) =>
+                    setProfile((prev: any) => ({
+                      ...(prev ?? {}),
+                      min_score: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Signal-ийн доод оноо (0 = шүүлтгүй)
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-4">
+              <p className="text-sm text-blue-600 dark:text-blue-400">
+                Эдгээр утгыг Scanner болон Simulator хоёулаа ашиглана.
+                RR {profile?.min_rr ?? 2.5}-ээс бага trade-ийг алгасна.
+              </p>
             </div>
 
             <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
