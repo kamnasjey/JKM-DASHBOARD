@@ -856,41 +856,50 @@ export default function ScannerConfigPage() {
                                         <div className="text-xs space-y-2">
                                           <div className="font-semibold">{tf}: {regime.emoji} {regime.label}</div>
                                           <div className="text-muted-foreground">{mnLabel}</div>
-                                          {regime.strength != null && (
-                                            <div className="space-y-1.5 pt-1 border-t border-border">
-                                              <div className="flex items-center justify-between">
-                                                <span className="text-muted-foreground">Хүч:</span>
-                                                <span className={cn(
-                                                  "font-semibold",
-                                                  regime.strength < 0.2 ? "text-red-400" :
-                                                  regime.strength < 0.5 ? "text-yellow-400" : "text-green-400"
-                                                )}>
-                                                  {(regime.strength * 100).toFixed(0)}%
-                                                </span>
-                                              </div>
-                                              {/* Progress bar */}
-                                              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                                                <div
-                                                  className={cn(
-                                                    "h-full rounded-full transition-all",
-                                                    regime.strength < 0.2 ? "bg-red-400" :
-                                                    regime.strength < 0.5 ? "bg-yellow-400" : "bg-green-400"
+                                          {regime.strength != null && (() => {
+                                            // Strength = price change %. Forex: 0.05-0.5%, Crypto: 1-20%
+                                            // Normalize to 0-100 scale for progress bar (multiply by 20, cap at 100)
+                                            const normalizedStrength = Math.min(regime.strength * 20, 100)
+                                            const isWeak = regime.strength < 0.5
+                                            const isMedium = regime.strength >= 0.5 && regime.strength < 2
+                                            const isStrong = regime.strength >= 2
+
+                                            return (
+                                              <div className="space-y-1.5 pt-1 border-t border-border">
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-muted-foreground">Хүч:</span>
+                                                  <span className={cn(
+                                                    "font-semibold",
+                                                    isWeak ? "text-red-400" :
+                                                    isMedium ? "text-yellow-400" : "text-green-400"
+                                                  )}>
+                                                    {regime.strength.toFixed(2)}%
+                                                  </span>
+                                                </div>
+                                                {/* Progress bar */}
+                                                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                                  <div
+                                                    className={cn(
+                                                      "h-full rounded-full transition-all",
+                                                      isWeak ? "bg-red-400" :
+                                                      isMedium ? "bg-yellow-400" : "bg-green-400"
+                                                    )}
+                                                    style={{ width: `${normalizedStrength}%` }}
+                                                  />
+                                                </div>
+                                                {/* Beginner explanation */}
+                                                <div className="text-[10px] text-muted-foreground pt-1">
+                                                  {isWeak ? (
+                                                    <span className="text-red-400">⚠️ Сул - Зах удаан хөдөлж байна, хүлээх нь дээр</span>
+                                                  ) : isMedium ? (
+                                                    <span className="text-yellow-400">⏳ Дундаж - Хөдөлгөөн эхэлж байна, анхааралтай</span>
+                                                  ) : (
+                                                    <span className="text-green-400">✅ Хүчтэй - Идэвхтэй хөдөлгөөн, trade хийж болно</span>
                                                   )}
-                                                  style={{ width: `${Math.min(regime.strength * 100, 100)}%` }}
-                                                />
+                                                </div>
                                               </div>
-                                              {/* Beginner explanation */}
-                                              <div className="text-[10px] text-muted-foreground pt-1">
-                                                {regime.strength < 0.2 ? (
-                                                  <span className="text-red-400">⚠️ Сул дохио - Энэ чиг хандлага тодорхойгүй, хүлээх нь дээр</span>
-                                                ) : regime.strength < 0.5 ? (
-                                                  <span className="text-yellow-400">⏳ Дундаж - Бусад timeframe-тай харьцуулж үзээрэй</span>
-                                                ) : (
-                                                  <span className="text-green-400">✅ Хүчтэй - Энэ чиг хандлага итгэлтэй, trade хийж болно</span>
-                                                )}
-                                              </div>
-                                            </div>
-                                          )}
+                                            )
+                                          })()}
                                         </div>
                                       </TooltipContent>
                                     </Tooltip>
