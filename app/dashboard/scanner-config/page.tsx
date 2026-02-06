@@ -824,12 +824,12 @@ export default function ScannerConfigPage() {
                         <TableRow key={`${symbol}-regime`} className={`${!enabled ? "opacity-50" : ""}`}>
                           <TableCell colSpan={7} className="pt-0 pb-4">
                             <div className="flex items-center gap-2 ml-1 flex-wrap">
-                              {/* Real-time price display via SSE (1 second updates) */}
+                              {/* Real-time price display: SYMBOL = PRICE $ */}
                               {(prices[symbol]?.close || symbolRegimes["M5"]?.close) && (
-                                <div className="text-sm font-mono font-semibold text-primary mr-3 min-w-[80px]">
-                                  {Number(prices[symbol]?.close || symbolRegimes["M5"]?.close).toFixed(
+                                <div className="text-sm font-mono font-semibold text-primary mr-3 min-w-[140px] bg-primary/10 px-2 py-0.5 rounded">
+                                  {symbol} = {Number(prices[symbol]?.close || symbolRegimes["M5"]?.close).toFixed(
                                     symbol.includes("JPY") ? 3 : symbol === "XAUUSD" ? 2 : symbol === "BTCUSD" ? 1 : 5
-                                  )}
+                                  )} $
                                 </div>
                               )}
                               {/* Regime badges */}
