@@ -256,9 +256,13 @@ export default function ScannerConfigPage() {
   // Regime status state
   const [regimeData, setRegimeData] = useState<RegimeStatusData | null>(null)
 
+  // Real-time prices state
+  const [prices, setPrices] = useState<Record<string, { close: number; high: number; low: number }>>({})
+
   // Polling ref
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const regimePollRef = useRef<NodeJS.Timeout | null>(null)
+  const pricePollRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load initial data
   const loadData = useCallback(async () => {
@@ -364,15 +368,30 @@ export default function ScannerConfigPage() {
     }
   }, [])
 
+  // Load real-time prices (via proxy)
+  const loadPrices = useCallback(async () => {
+    try {
+      const response = await fetch("/api/proxy/prices")
+      if (!response.ok) return
+      const result = await response.json()
+      if (result.ok && result.prices) {
+        setPrices(result.prices)
+      }
+    } catch (err: any) {
+      // Silently fail - prices are optional
+    }
+  }, [])
+
   // Initial load
   useEffect(() => {
     if (uid) {
       loadData()
       loadEngineStatus()
     }
-    // Load regime status regardless of uid
+    // Load regime status and prices regardless of uid
     loadRegimeStatus()
-  }, [uid, loadData, loadEngineStatus, loadRegimeStatus])
+    loadPrices()
+  }, [uid, loadData, loadEngineStatus, loadRegimeStatus, loadPrices])
 
   // Status polling (every 10 seconds)
   useEffect(() => {
@@ -401,6 +420,19 @@ export default function ScannerConfigPage() {
       }
     }
   }, [loadRegimeStatus])
+
+  // Real-time price polling (every 2 seconds)
+  useEffect(() => {
+    pricePollRef.current = setInterval(() => {
+      loadPrices()
+    }, 2000)
+
+    return () => {
+      if (pricePollRef.current) {
+        clearInterval(pricePollRef.current)
+      }
+    }
+  }, [loadPrices])
 
   // Check if there are unsaved changes
   const hasUnsavedChanges = Object.keys(pendingMap).length > 0 || Object.keys(pendingEnabled).length > 0
@@ -817,10 +849,10 @@ export default function ScannerConfigPage() {
                         <TableRow key={`${symbol}-regime`} className={`${!enabled ? "opacity-50" : ""}`}>
                           <TableCell colSpan={7} className="pt-0 pb-4">
                             <div className="flex items-center gap-2 ml-1 flex-wrap">
-                              {/* Price display */}
-                              {symbolRegimes["M5"]?.close && (
-                                <div className="text-sm font-mono font-medium text-foreground mr-2">
-                                  {Number(symbolRegimes["M5"].close).toFixed(
+                              {/* Real-time price display (updates every 2s) */}
+                              {(prices[symbol]?.close || symbolRegimes["M5"]?.close) && (
+                                <div className="text-sm font-mono font-semibold text-primary mr-3 min-w-[80px]">
+                                  {Number(prices[symbol]?.close || symbolRegimes["M5"]?.close).toFixed(
                                     symbol.includes("JPY") ? 3 : symbol === "XAUUSD" ? 2 : symbol === "BTCUSD" ? 1 : 5
                                   )}
                                 </div>
