@@ -153,8 +153,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: { code: "STRATEGY_NOT_FOUND", message: `Strategy '${strategyId}' not found`, details: { userId: userId.substring(0, 8) + '...' } },
-        message: `Strategy '${strategyId}' not found`,
+        error: "STRATEGY_NOT_FOUND",
+        message: `Strategy '${strategyId}' not found (user: ${userId.substring(0, 8)}...)`,
       },
       { status: 404 }
     )
