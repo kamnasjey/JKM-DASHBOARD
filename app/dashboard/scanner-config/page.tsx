@@ -854,29 +854,20 @@ export default function ScannerConfigPage() {
                                       </TooltipTrigger>
                                       <TooltipContent side="bottom" className="max-w-[280px]">
                                         <div className="text-xs space-y-2">
-                                          <div className="font-semibold">{tf}: {regime.emoji} {regime.label}</div>
-                                          <div className="text-muted-foreground">{mnLabel}</div>
+                                          <div className="font-bold">{tf}: {regime.emoji} {regime.label}</div>
+                                          <div className="opacity-70">{mnLabel}</div>
                                           {regime.strength != null && (() => {
-                                            // Strength = price change %. Forex: 0.05-0.5%, Crypto: 1-20%
-                                            // Normalize to 0-100 scale for progress bar (multiply by 20, cap at 100)
                                             const normalizedStrength = Math.min(regime.strength * 20, 100)
                                             const isWeak = regime.strength < 0.5
                                             const isMedium = regime.strength >= 0.5 && regime.strength < 2
-                                            const isStrong = regime.strength >= 2
 
                                             return (
                                               <div className="space-y-1.5 pt-1 border-t border-border">
                                                 <div className="flex items-center justify-between">
-                                                  <span className="text-muted-foreground">Хүч:</span>
-                                                  <span className={cn(
-                                                    "font-semibold",
-                                                    isWeak ? "text-red-400" :
-                                                    isMedium ? "text-yellow-400" : "text-green-400"
-                                                  )}>
-                                                    {regime.strength.toFixed(2)}%
-                                                  </span>
+                                                  <span className="opacity-70">Хүч:</span>
+                                                  <span className="font-bold">{regime.strength.toFixed(2)}%</span>
                                                 </div>
-                                                {/* Progress bar */}
+                                                {/* Progress bar - keep colors */}
                                                 <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                                                   <div
                                                     className={cn(
@@ -887,14 +878,14 @@ export default function ScannerConfigPage() {
                                                     style={{ width: `${normalizedStrength}%` }}
                                                   />
                                                 </div>
-                                                {/* Beginner explanation */}
-                                                <div className="text-[10px] text-muted-foreground pt-1">
+                                                {/* Beginner explanation - plain text */}
+                                                <div className="text-[10px] pt-1 font-medium">
                                                   {isWeak ? (
-                                                    <span className="text-red-400">⚠️ Сул - Зах удаан хөдөлж байна, хүлээх нь дээр</span>
+                                                    "⚠️ Сул - Зах удаан хөдөлж байна, хүлээх нь дээр"
                                                   ) : isMedium ? (
-                                                    <span className="text-yellow-400">⏳ Дундаж - Хөдөлгөөн эхэлж байна, анхааралтай</span>
+                                                    "⏳ Дундаж - Хөдөлгөөн эхэлж байна, анхааралтай"
                                                   ) : (
-                                                    <span className="text-green-400">✅ Хүчтэй - Идэвхтэй хөдөлгөөн, trade хийж болно</span>
+                                                    "✅ Хүчтэй - Идэвхтэй хөдөлгөөн, trade хийж болно"
                                                   )}
                                                 </div>
                                               </div>
