@@ -80,6 +80,19 @@ const REGIME_COLORS: Record<string, string> = {
   error: "bg-red-700/20 text-red-500 border-red-700/30",
 }
 
+// Mongolian regime labels
+const REGIME_LABELS_MN: Record<string, string> = {
+  trend_up: "Өсөлтийн чиг хандлага",
+  trend_down: "Уналтын чиг хандлага",
+  range: "Хажуугийн хөдөлгөөн",
+  consolidation: "Шахалт/Хүлээлт",
+  breakout: "Түвшин эвдэлт",
+  pullback: "Буцалт",
+  reversal: "Чиг хандлага өөрчлөлт",
+  unknown: "Тодорхойгүй",
+  error: "Алдаа",
+}
+
 // Default 15 symbols (must match backend)
 const DEFAULT_15_SYMBOLS = [
   "EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCAD",
@@ -802,29 +815,43 @@ export default function ScannerConfigPage() {
                         </TableRow>
                         {/* Regime Status Row */}
                         <TableRow key={`${symbol}-regime`} className={`${!enabled ? "opacity-50" : ""}`}>
-                          <TableCell colSpan={7} className="pt-0 pb-3">
-                            <div className="flex items-center gap-1 ml-1">
-                              <span className="text-[10px] text-muted-foreground mr-1">Regime:</span>
+                          <TableCell colSpan={7} className="pt-0 pb-4">
+                            <div className="flex items-center gap-2 ml-1 flex-wrap">
+                              {/* Price display */}
+                              {symbolRegimes["M5"]?.close && (
+                                <div className="text-sm font-mono font-medium text-foreground mr-2">
+                                  {Number(symbolRegimes["M5"].close).toFixed(
+                                    symbol.includes("JPY") ? 3 : symbol === "XAUUSD" ? 2 : symbol === "BTCUSD" ? 1 : 5
+                                  )}
+                                </div>
+                              )}
+                              {/* Regime badges */}
                               {timeframes.map((tf) => {
                                 const regime = symbolRegimes[tf] || { regime: "unknown", emoji: "❓", label: "?" }
                                 const colorClass = REGIME_COLORS[regime.regime] || REGIME_COLORS.unknown
+                                const mnLabel = REGIME_LABELS_MN[regime.regime] || "Тодорхойгүй"
                                 return (
                                   <TooltipProvider key={tf}>
                                     <Tooltip delayDuration={200}>
                                       <TooltipTrigger asChild>
                                         <div
                                           className={cn(
-                                            "px-1.5 py-0.5 rounded text-[10px] font-medium border cursor-default",
+                                            "px-2 py-1 rounded text-xs font-medium border cursor-default flex items-center gap-1",
                                             colorClass
                                           )}
                                         >
-                                          <span className="opacity-70 mr-0.5">{tf}:</span>
-                                          {regime.emoji}
+                                          <span className="opacity-60 text-[10px]">{tf}</span>
+                                          <span>{regime.emoji}</span>
+                                          <span className="hidden sm:inline">{regime.label}</span>
                                         </div>
                                       </TooltipTrigger>
-                                      <TooltipContent side="bottom">
-                                        <div className="text-xs">
-                                          <span className="font-medium">{tf}:</span> {regime.emoji} {regime.label}
+                                      <TooltipContent side="bottom" className="max-w-[200px]">
+                                        <div className="text-xs space-y-1">
+                                          <div className="font-semibold">{tf}: {regime.emoji} {regime.label}</div>
+                                          <div className="text-muted-foreground">{mnLabel}</div>
+                                          {regime.strength != null && (
+                                            <div className="text-muted-foreground">Хүч: {regime.strength.toFixed(1)}%</div>
+                                          )}
                                         </div>
                                       </TooltipContent>
                                     </Tooltip>
