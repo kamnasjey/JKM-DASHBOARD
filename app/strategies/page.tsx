@@ -91,7 +91,7 @@ interface Strategy {
   description?: string
   notes?: string // User notes for strategy
   entry_tf?: string // Entry timeframe (M5, M15, M30, H1, H4, D1)
-  trend_tf?: string // Trend timeframe (H1, H4, D1)
+  trend_tf?: string[] // Trend timeframes - can select 1-2 (H1, H4, D1)
   config?: Record<string, any>
   createdAt?: string
   updatedAt?: string
@@ -105,7 +105,7 @@ const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
   min_rr: 2.7,
   notes: "",
   entry_tf: "M15",
-  trend_tf: "H1",
+  trend_tf: ["H1"],  // Array - can select 1-2 timeframes
 }
 
 export default function StrategiesPage() {
@@ -161,7 +161,8 @@ export default function StrategiesPage() {
         min_score: s.config?.min_score ?? 1.0,
         min_rr: s.config?.min_rr ?? 2.0,
         entry_tf: s.config?.entry_tf ?? "M15",
-        trend_tf: s.config?.trend_tf ?? "H1",
+        // trend_tf is array (can select 1-2 timeframes)
+        trend_tf: Array.isArray(s.config?.trend_tf) ? s.config.trend_tf : [s.config?.trend_tf ?? "H1"],
       }))
       
       setStrategies(mappedStrategies)
@@ -289,7 +290,10 @@ export default function StrategiesPage() {
       description: strategy.description,
       notes: strategy.notes || "",
       entry_tf: strategy.entry_tf || strategy.config?.entry_tf || "M15",
-      trend_tf: strategy.trend_tf || strategy.config?.trend_tf || "H1",
+      // Handle trend_tf as array for multi-select
+      trend_tf: Array.isArray(strategy.trend_tf) ? strategy.trend_tf :
+                Array.isArray(strategy.config?.trend_tf) ? strategy.config.trend_tf :
+                [strategy.trend_tf || strategy.config?.trend_tf || "H1"],
     })
     setEditingIndex(index)
     setShowCreateDialog(true)
@@ -339,7 +343,7 @@ export default function StrategiesPage() {
             min_score: editForm.min_score || 1.0,
             min_rr: 2.7,    // Fixed default - not user configurable
             entry_tf: editForm.entry_tf || "M15",
-            trend_tf: editForm.trend_tf || "H1",
+            trend_tf: editForm.trend_tf || ["H1"],  // Array of 1-2 timeframes
           },
         })
 
@@ -362,10 +366,10 @@ export default function StrategiesPage() {
             min_score: editForm.min_score || 1.0,
             min_rr: 2.7,    // Fixed default - not user configurable
             entry_tf: editForm.entry_tf || "M15",
-            trend_tf: editForm.trend_tf || "H1",
+            trend_tf: editForm.trend_tf || ["H1"],  // Array of 1-2 timeframes
           },
         })
-        
+
         if (!result.ok) {
           throw new Error("Failed to create")
         }
@@ -791,24 +795,41 @@ export default function StrategiesPage() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("Trend Timeframe", "Trend TF")}</Label>
-                  <Select
-                    value={editForm.trend_tf || "H1"}
-                    onValueChange={(value) => setEditForm({ ...editForm, trend_tf: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select trend TF" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIMEFRAME_OPTIONS.filter(tf => ["H1", "H4", "D1"].includes(tf.value)).map((tf) => (
-                        <SelectItem key={tf.value} value={tf.value}>
+                  <Label>{t("Trend Timeframe", "Trend TF")} (1-2 сонгоно)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {TIMEFRAME_OPTIONS.filter(tf => ["M15", "M30", "H1", "H4", "D1"].includes(tf.value)).map((tf) => {
+                      const isSelected = (editForm.trend_tf || []).includes(tf.value)
+                      return (
+                        <button
+                          key={tf.value}
+                          type="button"
+                          onClick={() => {
+                            const current = editForm.trend_tf || []
+                            if (isSelected) {
+                              // Remove - but keep at least 1
+                              if (current.length > 1) {
+                                setEditForm({ ...editForm, trend_tf: current.filter(t => t !== tf.value) })
+                              }
+                            } else {
+                              // Add - max 2
+                              if (current.length < 2) {
+                                setEditForm({ ...editForm, trend_tf: [...current, tf.value] })
+                              }
+                            }
+                          }}
+                          className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background border-border hover:border-primary/50"
+                          }`}
+                        >
                           {tf.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </button>
+                      )
+                    })}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {t("Timeframe for trend direction", "Тренд шалгах timeframe")}
+                    {t("Timeframe for trend direction (select 1-2)", "Тренд шалгах timeframe (1-2 сонгох)")}
                   </p>
                 </div>
               </div>
