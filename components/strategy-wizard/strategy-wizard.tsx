@@ -19,6 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 import { StyleSelector } from "./style-selector"
 import {
@@ -56,7 +63,19 @@ interface WizardState {
   selectedDetectors: string[]
   name: string
   minRR: number
+  entry_tf: string
+  trend_tf: string[]
 }
+
+// Valid timeframes
+const TIMEFRAME_OPTIONS = [
+  { value: "M5", label: "5 min" },
+  { value: "M15", label: "15 min" },
+  { value: "M30", label: "30 min" },
+  { value: "H1", label: "1 hour" },
+  { value: "H4", label: "4 hour" },
+  { value: "D1", label: "Daily" },
+]
 
 interface StrategyWizardProps {
   /** Whether the wizard dialog is open */
@@ -69,6 +88,8 @@ interface StrategyWizardProps {
     detectors: string[]
     minRR: number
     style: TradingStyle | null
+    entry_tf: string
+    trend_tf: string[]
   }) => void
   /** Disabled state */
   disabled?: boolean
@@ -252,6 +273,10 @@ function SettingsStep({
   onMinRRChange,
   selectedDetectors,
   style,
+  entry_tf,
+  onEntryTfChange,
+  trend_tf,
+  onTrendTfToggle,
 }: {
   name: string
   onNameChange: (name: string) => void
@@ -259,10 +284,18 @@ function SettingsStep({
   onMinRRChange: (rr: number) => void
   selectedDetectors: string[]
   style: TradingStyle | null
+  entry_tf: string
+  onEntryTfChange: (tf: string) => void
+  trend_tf: string[]
+  onTrendTfToggle: (tf: string) => void
 }) {
   const validation = validateSelection(selectedDetectors)
   const conflicts = checkConflicts(selectedDetectors)
   const styleData = style ? getTradingStyleById(style) : null
+
+  // Get entry TF index for filtering trend TFs (trend must be higher)
+  const entryTfIndex = TIMEFRAME_OPTIONS.findIndex(t => t.value === entry_tf)
+  const availableTrendTfs = TIMEFRAME_OPTIONS.filter((_, i) => i > entryTfIndex)
 
   return (
     <div className="space-y-6">
@@ -284,6 +317,59 @@ function SettingsStep({
         />
       </div>
 
+      {/* Timeframe Configuration */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Entry Timeframe */}
+        <div className="space-y-2">
+          <Label>Entry Timeframe</Label>
+          <Select value={entry_tf} onValueChange={onEntryTfChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select entry TF" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEFRAME_OPTIONS.slice(0, -1).map(tf => (
+                <SelectItem key={tf.value} value={tf.value}>
+                  {tf.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground">
+            Entry signal илрэх timeframe
+          </p>
+        </div>
+
+        {/* Trend Timeframes */}
+        <div className="space-y-2">
+          <Label>Trend Timeframes (1-2 сонгоно уу)</Label>
+          <div className="flex flex-wrap gap-2">
+            {availableTrendTfs.map(tf => {
+              const isSelected = trend_tf.includes(tf.value)
+              const isDisabled = !isSelected && trend_tf.length >= 2
+              return (
+                <button
+                  key={tf.value}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => onTrendTfToggle(tf.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                    isSelected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80",
+                    isDisabled && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {tf.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Trend шалгах өндөр timeframe-үүд
+          </p>
+        </div>
+      </div>
 
       {/* Summary */}
       <Card>
@@ -301,6 +387,16 @@ function SettingsStep({
                 </Badge>
               )
             })}
+          </div>
+
+          {/* TF Summary */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Entry:</span>
+            <Badge variant="outline">{entry_tf}</Badge>
+            <span className="text-muted-foreground ml-2">Trend:</span>
+            {trend_tf.map(tf => (
+              <Badge key={tf} variant="outline">{tf}</Badge>
+            ))}
           </div>
 
           {/* Validation */}
@@ -366,6 +462,8 @@ export function StrategyWizard({
     selectedDetectors: ensureRequiredDetectors([]),
     name: "",
     minRR: 2.7,
+    entry_tf: "M15",
+    trend_tf: ["H1", "H4"],
   })
 
   // Auto-select recommended detectors when style changes
@@ -420,12 +518,50 @@ export function StrategyWizard({
     }
   }, [state.step])
 
+  const handleEntryTfChange = useCallback((tf: string) => {
+    setState(prev => {
+      // Reset trend_tf if any are now invalid (lower than entry)
+      const entryIdx = TIMEFRAME_OPTIONS.findIndex(t => t.value === tf)
+      const validTrendTfs = prev.trend_tf.filter(ttf => {
+        const trendIdx = TIMEFRAME_OPTIONS.findIndex(t => t.value === ttf)
+        return trendIdx > entryIdx
+      })
+      // If no valid trend TFs, set defaults based on new entry TF
+      const newTrendTfs = validTrendTfs.length > 0 ? validTrendTfs :
+        TIMEFRAME_OPTIONS.slice(entryIdx + 1, entryIdx + 3).map(t => t.value)
+      return { ...prev, entry_tf: tf, trend_tf: newTrendTfs }
+    })
+  }, [])
+
+  const handleTrendTfToggle = useCallback((tf: string) => {
+    setState(prev => {
+      if (prev.trend_tf.includes(tf)) {
+        // Remove (but keep at least 1)
+        if (prev.trend_tf.length > 1) {
+          return { ...prev, trend_tf: prev.trend_tf.filter(t => t !== tf) }
+        }
+        return prev
+      } else {
+        // Add (max 2)
+        if (prev.trend_tf.length < 2) {
+          return { ...prev, trend_tf: [...prev.trend_tf, tf].sort((a, b) => {
+            return TIMEFRAME_OPTIONS.findIndex(t => t.value === a) -
+                   TIMEFRAME_OPTIONS.findIndex(t => t.value === b)
+          })}
+        }
+        return prev
+      }
+    })
+  }, [])
+
   const handleComplete = useCallback(() => {
     onComplete({
       name: state.name,
       detectors: state.selectedDetectors,
       minRR: state.minRR,
       style: state.style,
+      entry_tf: state.entry_tf,
+      trend_tf: state.trend_tf,
     })
     // Reset state
     setState({
@@ -434,6 +570,8 @@ export function StrategyWizard({
       selectedDetectors: ensureRequiredDetectors([]),
       name: "",
       minRR: 2.7,
+      entry_tf: "M15",
+      trend_tf: ["H1", "H4"],
     })
     onOpenChange(false)
   }, [state, onComplete, onOpenChange])
@@ -516,6 +654,10 @@ export function StrategyWizard({
               onMinRRChange={(minRR) => setState(prev => ({ ...prev, minRR }))}
               selectedDetectors={state.selectedDetectors}
               style={state.style}
+              entry_tf={state.entry_tf}
+              onEntryTfChange={handleEntryTfChange}
+              trend_tf={state.trend_tf}
+              onTrendTfToggle={handleTrendTfToggle}
             />
           )}
         </div>

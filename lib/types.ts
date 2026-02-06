@@ -215,6 +215,9 @@ export interface StrategySpec {
   allowed_regimes?: string[]
   parameters?: Record<string, any>
   notes?: string
+  // Multi-timeframe configuration
+  entry_tf?: string // Single TF for entry signals (e.g., "M15")
+  trend_tf?: string[] // Array of TFs for trend confirmation (e.g., ["H1", "H4"])
 }
 
 // Alias for backward compatibility

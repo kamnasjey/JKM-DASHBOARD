@@ -22,7 +22,7 @@ const USERS_COLLECTION = "users"
 const STRATEGIES_SUBCOLLECTION = "strategies"
 
 /** Current starter seed version - increment to reseed all users */
-export const STARTER_SEED_VERSION = "v4"
+export const STARTER_SEED_VERSION = "v5"
 
 const DISABLE_STARTER_STRATEGIES = ["1", "true", "yes"].includes(
   String(process.env.DISABLE_STARTER_STRATEGIES || "").trim().toLowerCase(),
@@ -72,6 +72,10 @@ export interface StarterStrategyTemplate {
   }
   /** Cooldown in minutes between same signals */
   cooldownMinutes: number
+  /** Entry timeframe - where entry signals are detected */
+  entry_tf: string
+  /** Trend timeframes - array of TFs for trend confirmation (max 2) */
+  trend_tf: string[]
 }
 
 export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
@@ -90,6 +94,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 2,
     },
     cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
+    entry_tf: "M15",
+    trend_tf: ["H1", "H4"],
   },
   {
     id: "starter_EDGE_2",
@@ -106,6 +112,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 2,
     },
     cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
+    entry_tf: "M15",
+    trend_tf: ["H1", "H4"],
   },
   {
     id: "starter_EDGE_3",
@@ -122,6 +130,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 2,
     },
     cooldownMinutes: 60, // 1 hour cooldown to prevent duplicate signals
+    entry_tf: "M15",
+    trend_tf: ["H1", "H4"],
   },
   // ============================================================
   // TESTED STRATEGIES (90-day backtest verified, 50%+ WR, positive R)
@@ -141,6 +151,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 1,
     },
     cooldownMinutes: 30,
+    entry_tf: "M15",
+    trend_tf: ["H1", "H4"],
   },
   {
     id: "starter_TESTED_2",
@@ -157,6 +169,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 1,
     },
     cooldownMinutes: 30,
+    entry_tf: "M15",
+    trend_tf: ["H1", "H4"],
   },
   {
     id: "starter_TESTED_3",
@@ -173,6 +187,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 1,
     },
     cooldownMinutes: 120,
+    entry_tf: "H1",
+    trend_tf: ["H4", "D1"],
   },
   {
     id: "starter_TESTED_4",
@@ -189,6 +205,8 @@ export const STARTER_STRATEGIES_V1: StarterStrategyTemplate[] = [
       minConfirmHits: 1,
     },
     cooldownMinutes: 120,
+    entry_tf: "H1",
+    trend_tf: ["H4", "D1"],
   },
 ]
 
@@ -296,6 +314,10 @@ export async function seedStarterStrategiesForUser(
 
           // Cooldown to prevent duplicate signals (snake_case for backend compatibility)
           cooldown_minutes: template.cooldownMinutes || 60,
+
+          // Multi-timeframe configuration
+          entry_tf: template.entry_tf,
+          trend_tf: template.trend_tf,
 
           // Metadata
           enabled: true,

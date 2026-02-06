@@ -49,6 +49,7 @@ import { useAuthGuard } from "@/lib/auth-guard"
 import { useLanguage } from "@/contexts/language-context"
 import { useUserPlan } from "@/hooks/use-user-plan"
 import { getPlanLimits } from "@/lib/constants/pricing"
+import { RegimeStatusGrid } from "@/components/regime-status-grid"
 
 // Default 15 symbols (must match backend)
 const DEFAULT_15_SYMBOLS = [
@@ -605,6 +606,9 @@ export default function ScannerConfigPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Real-time Market Regime Status */}
+        <RegimeStatusGrid refreshInterval={30000} />
 
         {/* Per-Symbol Strategy Mapping Card */}
         <Card>
