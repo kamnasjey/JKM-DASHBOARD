@@ -44,6 +44,9 @@ export type UserPrefs = {
   scan_enabled?: boolean | null
   plan?: string | null
   plan_status?: string | null
+  // Trading settings
+  min_rr?: number | null
+  min_score?: number | null
 }
 
 export type UserDoc = UserIdentity & UserPrefs & {
@@ -78,6 +81,9 @@ export async function getUserDoc(userId: string): Promise<UserDoc | null> {
     telegram_enabled: data.telegram_enabled !== undefined ? Boolean(data.telegram_enabled) : null,
     telegram_connected_ts: data.telegram_connected_ts !== undefined ? Number(data.telegram_connected_ts) : null,
     scan_enabled: data.scan_enabled !== undefined ? Boolean(data.scan_enabled) : null,
+    // Trading settings
+    min_rr: data.min_rr !== undefined ? Number(data.min_rr) : null,
+    min_score: data.min_score !== undefined ? Number(data.min_score) : null,
     strategies: Array.isArray(data.strategies) ? data.strategies : undefined,
     updatedAt: data.updatedAt !== undefined ? String(data.updatedAt) : undefined,
     createdAt: data.createdAt !== undefined ? String(data.createdAt) : undefined,
@@ -126,6 +132,9 @@ export async function updateUserPrefs(userId: string, prefs: Partial<UserPrefs>)
   if (prefs.scan_enabled !== undefined) update.scan_enabled = prefs.scan_enabled
   if (prefs.plan !== undefined) update.plan = prefs.plan
   if (prefs.plan_status !== undefined) update.plan_status = prefs.plan_status
+  // Trading settings
+  if (prefs.min_rr !== undefined) update.min_rr = prefs.min_rr
+  if (prefs.min_score !== undefined) update.min_score = prefs.min_score
 
   // Handle strategies field deletion (strategies should be in subcollection, not here)
   const { FieldValue } = await import("firebase-admin/firestore")
@@ -188,6 +197,8 @@ export async function listUsersFromFirestore(options?: {
       telegram_enabled: data.telegram_enabled !== undefined ? Boolean(data.telegram_enabled) : null,
       telegram_connected_ts: data.telegram_connected_ts !== undefined ? Number(data.telegram_connected_ts) : null,
       scan_enabled: data.scan_enabled !== undefined ? Boolean(data.scan_enabled) : null,
+      min_rr: data.min_rr !== undefined ? Number(data.min_rr) : null,
+      min_score: data.min_score !== undefined ? Number(data.min_score) : null,
       updatedAt: data.updatedAt !== undefined ? String(data.updatedAt) : undefined,
     })
   }
