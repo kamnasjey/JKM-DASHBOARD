@@ -222,9 +222,9 @@ export async function POST(request: NextRequest) {
     symbols: effectiveSymbols,
     from: effectiveFrom,
     to: effectiveTo,
-    // Pass timeframe as-is to backend. "auto" = single-TF (fast, ~2-3s).
-    // "multi" = multi-TF (5 TFs parallel, ~20s+). Let user explicitly choose.
-    timeframe: timeframe || "auto",
+    // "auto" maps to "multi" for 5-TF results (M5, M15, M30, H1, H4).
+    // Fallback retries removed to prevent 504 timeout.
+    timeframe: (timeframe === "auto" || !timeframe) ? "multi" : timeframe,
     mode: mode || "winrate",
     strategy: {
       id: strategy.id,
