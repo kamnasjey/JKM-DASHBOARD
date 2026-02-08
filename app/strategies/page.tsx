@@ -245,13 +245,13 @@ export default function StrategiesPage() {
     try {
       const normalizedDetectors = normalizeDetectorList(preset.detectors)
       const result = await api.strategiesV2.create({
-        name: `${preset.nameEn} - Copy`,
+        name: preset.nameEn,
         enabled: true,
         detectors: normalizedDetectors,
         description: preset.descEn,
         config: {
           min_score: 1.0,
-          min_rr: 2.7,  // Fixed default
+          min_rr: preset.recommendedSettings?.minRR ?? 2.5,
         },
       })
 
