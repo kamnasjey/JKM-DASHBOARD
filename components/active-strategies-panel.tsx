@@ -5,6 +5,14 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Zap, TrendingUp, TrendingDown, Clock, Radio, Check, AlertTriangle, X } from "lucide-react"
 
+// Client-side market closed detection (weekend check)
+const isMarketClosedNow = (symbol: string): boolean => {
+  const s = symbol.toUpperCase()
+  if (s.startsWith("BTC") || s.startsWith("ETH") || s.startsWith("SOL")) return false
+  const day = new Date().getUTCDay()
+  return day === 0 || day === 6
+}
+
 interface Strategy {
   id?: string
   strategy_id?: string
@@ -102,6 +110,9 @@ export function ActiveStrategiesPanel({
         return { status: "closed", lagSec: effSym.lagSec, lastScan: effSym.lastScanTs }
       }
       if (effSym.lagSec && effSym.lagSec > 300) {
+        if (isMarketClosedNow(symbol)) {
+          return { status: "closed", lagSec: effSym.lagSec, lastScan: effSym.lastScanTs }
+        }
         return { status: "delayed", lagSec: effSym.lagSec, lastScan: effSym.lastScanTs }
       }
       return { status: "live", lagSec: effSym.lagSec, lastScan: effSym.lastScanTs }
@@ -116,11 +127,19 @@ export function ActiveStrategiesPanel({
         return { status: "closed", lagSec: item.lagSec, lastScan: null }
       }
       if (item.lagSec && item.lagSec > 300) {
+        // Client-side fallback: check if weekend before marking delayed
+        if (isMarketClosedNow(symbol)) {
+          return { status: "closed", lagSec: item.lagSec, lastScan: null }
+        }
         return { status: "delayed", lagSec: item.lagSec, lastScan: null }
       }
       return { status: "live", lagSec: item.lagSec, lastScan: null }
     }
 
+    // No data at all - check if market closed
+    if (isMarketClosedNow(symbol)) {
+      return { status: "closed", lagSec: null, lastScan: null }
+    }
     return { status: "unknown", lagSec: null, lastScan: null }
   }
 

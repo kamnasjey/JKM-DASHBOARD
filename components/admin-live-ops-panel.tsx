@@ -15,6 +15,20 @@ export const ALL_SYMBOLS = [
   "XAUUSD", "BTCUSD"
 ]
 
+// Client-side market closed detection (weekend check)
+const isCryptoSymbol = (symbol: string): boolean => {
+  const s = symbol.toUpperCase()
+  return s.startsWith("BTC") || s.startsWith("ETH") || s.startsWith("SOL") ||
+         s.includes("USDT") || s.includes("USDC")
+}
+
+const isMarketClosedNow = (symbol: string, nowTs: number): boolean => {
+  if (isCryptoSymbol(symbol)) return false // Crypto trades 24/7
+  const dt = new Date(nowTs * 1000)
+  const day = dt.getUTCDay() // 0=Sun, 6=Sat
+  return day === 0 || day === 6
+}
+
 interface FeedItem {
   symbol: string
   lastCandleTs?: string
@@ -114,8 +128,11 @@ export function AdminLiveOpsPanel({
       
       // Determine status
       let status: "live" | "delayed" | "closed" = "delayed"
-      
+
       if (rootCause === "MARKET_CLOSED") {
+        status = "closed"
+      } else if (isMarketClosedNow(symbol, nowTs)) {
+        // Client-side fallback: weekend detection when backend doesn't send rootCause
         status = "closed"
       } else if (lagSec !== null) {
         // Live = candle arrived within 5min + 60sec grace (360 sec)
