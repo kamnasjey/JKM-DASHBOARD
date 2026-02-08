@@ -102,7 +102,7 @@ const defaultStrategy: Omit<Strategy, 'strategy_id'> = {
   enabled: true,
   detectors: [],
   min_score: 1.0,
-  min_rr: 2.7,
+  min_rr: 2.5, // Will be overridden by user profile min_rr
   notes: "",
   entry_tf: "M15",
   trend_tf: ["H1"],  // Array - can select 1-2 timeframes
@@ -127,6 +127,14 @@ export default function StrategiesPage() {
   const [editForm, setEditForm] = useState<Omit<Strategy, 'strategy_id'> & { strategy_id?: string }>(defaultStrategy)
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
   const [showTemplates, setShowTemplates] = useState(false)
+  const [userMinRR, setUserMinRR] = useState<number>(2.5)
+
+  // Load user profile min_rr
+  useEffect(() => {
+    api.profile().then((p: any) => {
+      if (p?.min_rr) setUserMinRR(Number(p.min_rr))
+    }).catch(() => {})
+  }, [])
 
   // Debug: log editForm.detectors changes
   useEffect(() => {
@@ -225,7 +233,7 @@ export default function StrategiesPage() {
       })
       return
     }
-    setEditForm({ ...defaultStrategy })
+    setEditForm({ ...defaultStrategy, min_rr: userMinRR })
     setEditingIndex(null)
     setShowCreateDialog(true)
   }
@@ -251,7 +259,7 @@ export default function StrategiesPage() {
         description: preset.descEn,
         config: {
           min_score: 1.0,
-          min_rr: preset.recommendedSettings?.minRR ?? 2.5,
+          min_rr: userMinRR,
         },
       })
 
@@ -286,7 +294,7 @@ export default function StrategiesPage() {
       enabled: strategy.enabled,
       detectors: ensureRequiredDetectors([...strategy.detectors]),
       min_score: strategy.min_score || strategy.config?.min_score || 1.0,
-      min_rr: Math.max(2.7, (strategy.min_rr || strategy.config?.min_rr || 2.7)),
+      min_rr: strategy.min_rr || strategy.config?.min_rr || userMinRR,
       description: strategy.description,
       notes: strategy.notes || "",
       entry_tf: strategy.entry_tf || strategy.config?.entry_tf || "M15",
@@ -341,7 +349,7 @@ export default function StrategiesPage() {
           description: editForm.description,
           config: {
             min_score: editForm.min_score || 1.0,
-            min_rr: 2.7,    // Fixed default - not user configurable
+            min_rr: editForm.min_rr || userMinRR,
             entry_tf: editForm.entry_tf || "M15",
             trend_tf: editForm.trend_tf || ["H1"],  // Array of 1-2 timeframes
           },
@@ -364,7 +372,7 @@ export default function StrategiesPage() {
           description: editForm.description,
           config: {
             min_score: editForm.min_score || 1.0,
-            min_rr: 2.7,    // Fixed default - not user configurable
+            min_rr: editForm.min_rr || userMinRR,
             entry_tf: editForm.entry_tf || "M15",
             trend_tf: editForm.trend_tf || ["H1"],  // Array of 1-2 timeframes
           },

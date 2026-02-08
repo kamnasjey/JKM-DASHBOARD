@@ -84,9 +84,16 @@ export default function StrategyTesterPage() {
   const [initialCapital, setInitialCapital] = useState(10000)
   const [riskPerTrade, setRiskPerTrade] = useState(1.0)
   const [intrabarPolicy, setIntrabarPolicy] = useState("sl_first")
-  const [minRr, setMinRr] = useState(2.7)
+  const [minRr, setMinRr] = useState(2.5)
   const [maxTradesPerDay, setMaxTradesPerDay] = useState(10)
-  
+
+  // Load user profile min_rr
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then((p: any) => {
+      if (p?.min_rr) setMinRr(Number(p.min_rr))
+    }).catch(() => {})
+  }, [])
+
   useEffect(() => {
     loadData()
   }, [])

@@ -16,7 +16,7 @@ export type ValidTimeframe = typeof VALID_TIMEFRAMES[number]
 // Strategy config object (flexible structure)
 export const StrategyConfigSchema = z.object({
   min_score: z.number().min(0).max(100).optional().default(1.0),
-  min_rr: z.number().min(2.7).max(50).optional().default(2.7),
+  min_rr: z.number().min(1.0).max(50).optional().default(2.5),
   allowed_regimes: z.array(z.string()).optional(),
   detector_weights: z.record(z.string(), z.number()).optional(),
   family_weights: z.record(z.string(), z.number()).optional(),

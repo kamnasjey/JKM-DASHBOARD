@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Check, Sparkles, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -456,15 +456,29 @@ export function StrategyWizard({
   onComplete,
   disabled = false,
 }: StrategyWizardProps) {
+  const [userMinRR, setUserMinRR] = useState<number>(2.5)
+
+  // Load user profile min_rr
+  useEffect(() => {
+    fetch("/api/profile").then(r => r.json()).then((p: any) => {
+      if (p?.min_rr) setUserMinRR(Number(p.min_rr))
+    }).catch(() => {})
+  }, [])
+
   const [state, setState] = useState<WizardState>({
     step: "style",
     style: null,
     selectedDetectors: ensureRequiredDetectors([]),
     name: "",
-    minRR: 2.7,
+    minRR: userMinRR,
     entry_tf: "M15",
     trend_tf: ["H1", "H4"],
   })
+
+  // Update minRR when profile loads
+  useEffect(() => {
+    setState(prev => ({ ...prev, minRR: userMinRR }))
+  }, [userMinRR])
 
   // Auto-select recommended detectors when style changes
   const handleStyleSelect = useCallback((style: TradingStyle) => {
@@ -483,7 +497,7 @@ export function StrategyWizard({
       ...prev,
       style,
       selectedDetectors: autoDetectors,
-      minRR: styleData.recommendedSettings?.minRR || 2.7,
+      minRR: userMinRR,
     }))
   }, [])
 
@@ -569,7 +583,7 @@ export function StrategyWizard({
       style: null,
       selectedDetectors: ensureRequiredDetectors([]),
       name: "",
-      minRR: 2.7,
+      minRR: userMinRR,
       entry_tf: "M15",
       trend_tf: ["H1", "H4"],
     })
