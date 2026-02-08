@@ -19,7 +19,7 @@ export const ALL_SYMBOLS = [
 const isCryptoSymbol = (symbol: string): boolean => {
   const s = symbol.toUpperCase()
   return s.startsWith("BTC") || s.startsWith("ETH") || s.startsWith("SOL") ||
-         s.includes("USDT") || s.includes("USDC")
+         s.endsWith("USDT") || s === "USDC"
 }
 
 const isMarketClosedNow = (symbol: string, nowTs: number): boolean => {
