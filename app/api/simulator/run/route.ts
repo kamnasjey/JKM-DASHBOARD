@@ -111,9 +111,23 @@ export async function POST(request: NextRequest) {
 
   const { strategyId, symbols, from, to, timeframe, mode, demoMode: clientDemoMode } = validation.data
 
-  // --- 3. Check access (owner bypass) ---
+  // --- 3. Check access + load trading settings ---
   const isOwner = isOwnerEmail(userEmail)
   const hasPaidAccess = isOwner ? true : await checkUserAccess(userId)
+
+  // Load user trading settings (min_rr, min_score) from Firestore
+  let userMinRr = 2.5  // default
+  let userMinScore = 0  // default
+  try {
+    const db = getFirebaseAdminDb()
+    const userDoc = await db.collection("users").doc(userId).get()
+    const userData = userDoc.data()
+    if (userData?.min_rr !== undefined) userMinRr = Number(userData.min_rr) || 2.5
+    if (userData?.min_score !== undefined) userMinScore = Number(userData.min_score) || 0
+  } catch (err) {
+    console.warn(`[${requestId}] Failed to load user trading settings:`, err)
+  }
+
   // Allow gaps when demoMode is requested or when no paid access.
   const allowGaps = clientDemoMode || !hasPaidAccess
   // Only apply demo limits when access is not paid.
@@ -224,6 +238,8 @@ export async function POST(request: NextRequest) {
       config: strategy.config || {},
     },
     demoMode,
+    min_rr: userMinRr,
+    min_score: userMinScore,
     async: true, // Enable async mode for real progress tracking
   }
   
