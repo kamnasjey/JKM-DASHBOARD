@@ -222,9 +222,9 @@ export async function POST(request: NextRequest) {
     symbols: effectiveSymbols,
     from: effectiveFrom,
     to: effectiveTo,
-    // "auto" should map to "multi" for multi-TF mode with full trades
-    // Backend only returns full trades array when timeframe="multi"
-    timeframe: (timeframe === "auto" || !timeframe) ? "multi" : timeframe,
+    // Pass timeframe as-is to backend. "auto" = single-TF (fast, ~2-3s).
+    // "multi" = multi-TF (5 TFs parallel, ~20s+). Let user explicitly choose.
+    timeframe: timeframe || "auto",
     mode: mode || "winrate",
     strategy: {
       id: strategy.id,
@@ -472,53 +472,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (isNoTriggerHits) {
-      const range90 = extendRange(90)
-      const gateTriggerDetectors = buildFilteredDetectors("gate_trigger")
-      const fallbackPayloadA = {
-        ...backendPayload,
-        from: range90.from,
-        to: range90.to,
-        timeframe: "1h,4h",
-        strategy: {
-          ...backendPayload.strategy,
-          detectors: gateTriggerDetectors,
-        },
-      }
-
-      const fallbackA = await runFallback(fallbackPayloadA)
-      if (fallbackA.ok) {
-        backendJson = fallbackA.json
-        backendJson.meta = backendJson.meta || {}
-        backendJson.meta.warnings = [
-          ...(backendJson.meta.warnings || []),
-          "No trigger hits. Retried with 1H/4H and fewer confluence detectors.",
-        ]
-      } else {
-        const range120 = extendRange(120)
-        const triggerOnlyDetectors = buildFilteredDetectors("trigger_only")
-        const fallbackPayloadB = {
-          ...backendPayload,
-          from: range120.from,
-          to: range120.to,
-          timeframe: "1h,4h",
-          strategy: {
-            ...backendPayload.strategy,
-            detectors: triggerOnlyDetectors,
-          },
-        }
-
-        const fallbackB = await runFallback(fallbackPayloadB)
-        if (fallbackB.ok) {
-          backendJson = fallbackB.json
-          backendJson.meta = backendJson.meta || {}
-          backendJson.meta.warnings = [
-            ...(backendJson.meta.warnings || []),
-            "No trigger hits. Retried with triggers only on 1H/4H.",
-          ]
-        }
-      }
-    }
+    // NOTE: Fallback retries disabled for performance. Each retry adds 20-60s
+    // which causes 504 Gateway Timeout. The explainability block already shows
+    // suggestions to the user (extend range, change TF, etc.).
 
     const formatNotice = (input: any) => {
       if (typeof input === "string") return input
