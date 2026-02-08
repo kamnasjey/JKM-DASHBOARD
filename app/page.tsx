@@ -239,8 +239,8 @@ export default function LandingPage() {
                       <p className="text-white font-semibold mb-1">{t("What is a Setup?", "Setup гэж юу вэ?")}</p>
                       <p className="text-gray-400 leading-relaxed">
                         {t(
-                          "A setup is when your strategy rules are met — entry conditions align (trend, trigger, confluence). It's a potential trade opportunity, not a signal to blindly follow.",
-                          "Setup гэдэг нь таны стратегийн дүрмүүд биелсэн үе — entry нөхцөлүүд (trend, trigger, confluence) таарсан. Энэ нь боломжит арилжааны сонголт, сохроор дагах signal биш."
+                          "A setup is when your strategy rules are met — entry conditions align (trend, trigger, confluence). It's a potential trade opportunity.",
+                          "Setup гэдэг нь таны стратегийн дүрмүүд биелсэн үе — entry нөхцөлүүд (trend, trigger, confluence) таарсан. Энэ нь боломжит арилжааны сонголт."
                         )}
                       </p>
                     </div>
