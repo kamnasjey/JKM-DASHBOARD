@@ -229,7 +229,7 @@ export default function ProfilePage() {
                   placeholder="0"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Signal-ийн доод оноо (0 = шүүлтгүй)
+                  Setup-ийн доод оноо (0 = шүүлтгүй)
                 </p>
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function ProfilePage() {
               )}
             </div>
             <CardDescription>
-              Signal илэрсэн үед Telegram-аар мэдэгдэл авах
+              Setup илэрсэн үед Telegram-аар мэдэгдэл авах
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -296,7 +296,7 @@ export default function ProfilePage() {
             {telegramEnabled && (
               <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  Telegram мэдэгдэл идэвхтэй байна. Signal илэрсэн үед танд Telegram-аар мэдэгдэл очно.
+                  Telegram мэдэгдэл идэвхтэй байна. Setup илэрсэн үед танд Telegram-аар мэдэгдэл очно.
                 </p>
               </div>
             )}
