@@ -1136,14 +1136,7 @@ export default function SimulatorPage() {
                 <p className="text-muted-foreground mt-1">
                   {t("Multi-timeframe backtesting across 5m → 4h", "5m → 4h бүх timeframe дээр backtest хийх")}
                 </p>
-                {/* Version info */}
-                {(simVersion || dashboardVersion) && (
-                  <p className="text-xs text-muted-foreground/60 mt-1 font-mono">
-                    {dashboardVersion && `dash:${dashboardVersion}`}
-                    {dashboardVersion && simVersion && " • "}
-                    {simVersion && `sim:${simVersion}`}
-                  </p>
-                )}
+                {/* Version info - hidden from users, kept in DOM for debugging */}
               </div>
               <Badge variant="secondary" className="gap-1.5">
                 <Layers className="h-3.5 w-3.5" />
