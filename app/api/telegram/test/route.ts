@@ -32,7 +32,7 @@ export async function POST() {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 15000)
 
-    const response = await fetch(`${VPS_BASE_URL}/telegram/test`, {
+    const response = await fetch(`${VPS_BASE_URL}/api/telegram/test`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
