@@ -1138,16 +1138,7 @@ export default function LandingPage() {
                   ))}
                 </div>
 
-                {/* CTA */}
-                <Link
-                  href="/pricing"
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg text-sm transition-all flex justify-center items-center gap-2 group"
-                >
-                  <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {t("GET STARTED", "ЭХЛЭХ")}
-                </Link>
+                {/* CTA - removed */}
               </div>
             </div>
 
