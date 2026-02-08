@@ -711,10 +711,10 @@ export default function DashboardPage() {
               <p className="font-medium text-blue-600">💡 Энэ юу харуулдаг вэ?</p>
               <p className="text-muted-foreground">
                 <span className="text-foreground font-medium">Скан тохиргоо</span> хуудсанд идэвхжүүлсэн symbol болон стратегийн хослолууд энд харагдана.
-                Scanner эдгээр хослолуудыг 5 минут тутамд шалгаж, setup олдвол signal илгээнэ.
+                Scanner эдгээр хослолуудыг 5 минут тутамд шалгаж, setup олдвол мэдэгдэл илгээнэ.
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground mt-1">
-                <span>• <span className="text-green-500">Ногоон</span> = Сүүлийн signal</span>
+                <span>• <span className="text-green-500">Ногоон</span> = Сүүлийн setup</span>
                 <span>• Symbol дарж дэлгэрэнгүй харах</span>
               </div>
             </div>
