@@ -34,7 +34,7 @@ export const CreateStrategySchema = z.object({
   name: z.string().min(1, "Strategy name is required").max(100, "Name too long"),
   description: z.string().max(500).optional(),
   enabled: z.boolean().optional().default(true),
-  detectors: z.array(DetectorSchema).min(1, "At least 1 detector required").max(15, "Max 15 detectors"),
+  detectors: z.array(DetectorSchema).min(1, "At least 1 detector required").max(30, "Max 30 detectors"),
   symbols: z.array(z.string()).optional(),
   timeframe: z.string().optional(),
   // Multi-timeframe configuration
@@ -48,7 +48,7 @@ export const UpdateStrategySchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional().nullable(),
   enabled: z.boolean().optional(),
-  detectors: z.array(DetectorSchema).min(1).max(15).optional(),
+  detectors: z.array(DetectorSchema).min(1).max(30).optional(),
   symbols: z.array(z.string()).optional().nullable(),
   timeframe: z.string().optional().nullable(),
   // Multi-timeframe configuration
