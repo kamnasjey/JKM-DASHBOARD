@@ -500,9 +500,14 @@ export async function POST(request: NextRequest) {
       backendJson.meta.warnings = backendJson.meta.warnings.map(formatNotice)
     }
     
+    // For multi-TF responses, hoist combined.summary to top level for frontend compatibility
+    if (!backendJson.summary && backendJson.combined?.summary) {
+      backendJson.summary = backendJson.combined.summary
+    }
+
     // Ensure stats block always exists
     if (!backendJson.stats) {
-      const summary = backendJson.summary || {}
+      const summary = backendJson.summary || backendJson.combined?.summary || {}
       backendJson.stats = {
         trades: summary.entries || 0,
         winrate: summary.winrate || 0,
@@ -603,6 +608,12 @@ export async function POST(request: NextRequest) {
       console.error(`[${requestId}] Failed to store diagnostics:`, diagErr)
     }
     
+    // Ensure trades are accessible at top level for frontend compatibility.
+    // Multi-TF backend puts them in combined.tradesSample; frontend expects res.trades.
+    if (!backendJson.trades && backendJson.combined?.tradesSample?.length > 0) {
+      backendJson.trades = backendJson.combined.tradesSample
+    }
+
     return NextResponse.json(backendJson)
     
   } catch (err: any) {
