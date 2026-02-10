@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut, Activity, MessageCircle } from "lucide-react"
+import { LayoutDashboard, Target, ListFilter, FileText, Settings, LogOut, Activity, MessageCircle, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -15,6 +15,7 @@ const navItems = [
   { href: "/app/scanner-monitor", label: "Scanner", labelMn: "Сканнер", icon: Activity },
   { href: "/app/logs", label: "Logs", labelMn: "Бүртгэл", icon: FileText },
   { href: "/app/settings", label: "Settings", labelMn: "Тохиргоо", icon: Settings },
+  { href: "/app/guide", label: "Guide", labelMn: "Заавар", icon: BookOpen },
 ]
 
 type AppSidebarProps = {
