@@ -57,7 +57,7 @@ const navItems = [
   {
     label: "Guide",
     labelMn: "Заавар",
-    href: "/app/guide",
+    href: "/guide",
     icon: BookOpen,
   },
 ]
@@ -112,7 +112,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate, onOpenSupport 
                   key={item.href}
                   href={item.href}
                   onClick={handleClick}
-                  data-tour={item.href === "/app/guide" ? "guide-link" : undefined}
+                  data-tour={item.href === "/guide" ? "guide-link" : undefined}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
                     isActive
