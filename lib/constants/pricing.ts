@@ -129,3 +129,10 @@ export function getPlanLimits(plan: PlanType) {
   const p = getPlanById(plan)
   return p?.limits || { maxStrategyCombinations: 0, simulatorPerDay: 0 }
 }
+
+// Free trial config
+export const TRIAL_CONFIG = {
+  days: 5,
+  plan: "starter" as PlanType,
+  maxUsers: 100,
+}

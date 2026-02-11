@@ -10,6 +10,11 @@ interface UserPlanData {
   hasPaidAccess: boolean
   loading: boolean
   error: string | null
+  // Trial fields
+  is_trial?: boolean
+  trial_expired?: boolean
+  trial_days_remaining?: number
+  trial_end?: string
 }
 
 export function useUserPlan(): UserPlanData {
@@ -55,6 +60,10 @@ export function useUserPlan(): UserPlanData {
           hasPaidAccess: data.hasPaidAccess || false,
           loading: false,
           error: null,
+          is_trial: data.is_trial || false,
+          trial_expired: data.trial_expired || false,
+          trial_days_remaining: data.trial_days_remaining,
+          trial_end: data.trial_end,
         })
       } catch (err) {
         console.error("[useUserPlan] Error fetching plan:", err)

@@ -18,6 +18,7 @@ import { ActiveStrategiesPanel } from "@/components/active-strategies-panel"
 import { SignalsHistoryPanel } from "@/components/signals-history-panel"
 import { AdminLiveOpsPanel, ALL_SYMBOLS } from "@/components/admin-live-ops-panel"
 import { mapOldSignalToUnified, type UnifiedSignal } from "@/lib/signals/unified"
+import { useUserPlan } from "@/hooks/use-user-plan"
 import {
   Select,
   SelectContent,
@@ -122,6 +123,7 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const { t } = useLanguage()
   const uid = (session as any)?.user?.id || ""
+  const { is_trial, trial_days_remaining, trial_expired } = useUserPlan()
 
   // Check if current user is admin
   const isAdmin = useMemo(() => {
@@ -670,6 +672,44 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Trial Banner */}
+        {is_trial && !trial_expired && trial_days_remaining !== undefined && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-amber-500" />
+              <div>
+                <p className="text-sm font-medium text-amber-500">
+                  {t("Free Trial", "Үнэгүй туршилт")} — {trial_days_remaining} {t("days remaining", "хоног үлдсэн")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("Upgrade to keep access after trial ends", "Туршилт дуусахаас өмнө план сонгоно уу")}
+                </p>
+              </div>
+            </div>
+            <a href="/pricing" className="text-xs font-medium bg-amber-500 text-black px-3 py-1.5 rounded-md hover:bg-amber-400 transition-colors">
+              {t("Upgrade", "Сунгах")}
+            </a>
+          </div>
+        )}
+        {is_trial && trial_expired && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-red-500" />
+              <div>
+                <p className="text-sm font-medium text-red-500">
+                  {t("Trial Expired", "Туршилт дууссан")}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("Select a plan to continue using all features", "Бүх боломжийг ашиглахын тулд план сонгоно уу")}
+                </p>
+              </div>
+            </div>
+            <a href="/pricing" className="text-xs font-medium bg-red-500 text-white px-3 py-1.5 rounded-md hover:bg-red-400 transition-colors">
+              {t("Choose Plan", "План сонгох")}
+            </a>
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-3" data-tour="status-cards">
           <MetricCard title={<span className="flex items-center gap-1">{t("Total Setups", "Нийт setup")} <InfoTooltip textMn="Сүүлийн хугацаанд олдсон нийт setup-ийн тоо" textEn="Total number of setups found recently" /></span>} value={totalSignalsText} subtitle={t("Recent stats", "Сүүлийн статистик")} icon={BarChart3} />

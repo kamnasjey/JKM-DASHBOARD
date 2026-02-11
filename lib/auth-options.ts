@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { seedStarterStrategiesForUser } from "@/lib/user-data/starter-strategies"
+import { isTrialAvailable, getTrialFields } from "@/lib/trial"
 
 // Mask email for logs: a***@domain.com
 function maskEmail(email: string): string {
@@ -123,12 +124,15 @@ export const authOptions: NextAuthOptions = {
           // Create new user with phone
           const { randomUUID } = await import("crypto")
           const userId = randomUUID()
+          const trialAvailable = await isTrialAvailable()
+          const trialFields = trialAvailable ? getTrialFields() : {}
 
           await db.collection("users").doc(userId).set({
             user_id: userId,
             phone,
             provider: "phone",
             createdAt: new Date().toISOString(),
+            ...trialFields,
           })
 
           console.log(`[Auth] Phone user created: ${maskPhone(phone)}`)
@@ -193,6 +197,8 @@ export const authOptions: NextAuthOptions = {
           } else {
             // Create new user with Google providerAccountId as stable ID
             const userId = `google_${account.providerAccountId}`
+            const trialAvailable = await isTrialAvailable()
+            const trialFields = trialAvailable ? getTrialFields() : {}
             await db.collection("users").doc(userId).set({
               user_id: userId,
               email,
@@ -201,6 +207,7 @@ export const authOptions: NextAuthOptions = {
               provider: "google",
               createdAt: new Date().toISOString(),
               lastLoginAt: new Date().toISOString(),
+              ...trialFields,
             })
             ;(user as any).firestoreId = userId
             console.log(`[Auth] Google user created: ${maskEmail(email)}`)

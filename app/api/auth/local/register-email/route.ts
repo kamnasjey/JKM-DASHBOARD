@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { hash } from "bcryptjs"
 import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 import { seedStarterStrategiesForUser } from "@/lib/user-data/starter-strategies"
+import { isTrialAvailable, getTrialFields } from "@/lib/trial"
 import { randomUUID } from "crypto"
 
 export const runtime = "nodejs"
@@ -41,9 +42,13 @@ export async function POST(request: Request) {
     // Generate user ID
     const userId = randomUUID()
 
+    // Check if free trial is available
+    const trialAvailable = await isTrialAvailable()
+    const trialFields = trialAvailable ? getTrialFields() : {}
+
     // Determine plan and access
-    const userPlan = plan || "free"
-    const hasPaidAccess = false // Always false until admin approves
+    const userPlan = trialAvailable ? trialFields.plan : (plan || "free")
+    const hasPaidAccess = trialAvailable ? true : false
 
     // Create user in Firestore
     await db.collection("users").doc(userId).set({
@@ -53,10 +58,11 @@ export async function POST(request: Request) {
       passwordHash,
       provider: "email",
       plan: userPlan,
-      planStatus: userPlan === "free" ? "active" : "pending",
+      planStatus: "active",
       hasPaidAccess,
       has_paid_access: hasPaidAccess,
       createdAt: new Date().toISOString(),
+      ...trialFields,
     })
 
     // Mask email in response
