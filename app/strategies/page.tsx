@@ -768,7 +768,7 @@ export default function StrategiesPage() {
               {/* Min Score */}
               <div className="space-y-3" data-tour="strategy-config">
                 <div className="flex justify-between">
-                  <Label className="flex items-center gap-1">Minimum Score <InfoTooltip textMn="Дохионы итгэлийн доод хязгаар. Өндөр бол цөөн гэхдээ найдвартай дохио" textEn="Minimum confidence threshold. Higher = fewer but more reliable signals" /></Label>
+                  <Label className="flex items-center gap-1">Minimum Score <InfoTooltip textMn="Дохионы итгэлийн доод хязгаар. Өндөр бол цөөн гэхдээ найдвартай дохио" textEn="Minimum confidence threshold. Higher = fewer but more reliable setups" /></Label>
                   <span className="text-sm font-medium">{editForm.min_score?.toFixed(1)}</span>
                 </div>
                 <Slider
@@ -783,7 +783,7 @@ export default function StrategiesPage() {
               {/* Timeframe Selection */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-1">{t("Entry Timeframe", "Entry TF")} <InfoTooltip textMn="Entry дохио хайх timeframe. M15 = 15 минутын зураг дээр" textEn="Timeframe for entry signals. M15 = 15-minute chart" /></Label>
+                  <Label className="flex items-center gap-1">{t("Entry Timeframe", "Entry TF")} <InfoTooltip textMn="Entry дохио хайх timeframe. M15 = 15 минутын зураг дээр" textEn="Timeframe for entry setups. M15 = 15-minute chart" /></Label>
                   <Select
                     value={editForm.entry_tf || "M15"}
                     onValueChange={(value) => setEditForm({ ...editForm, entry_tf: value })}
@@ -845,7 +845,7 @@ export default function StrategiesPage() {
 
               {/* Pro Detector Select Component */}
               <div className="space-y-2" data-tour="detector-select">
-                <Label className="flex items-center gap-1">Detectors * <InfoTooltip textMn="Gate=шүүлтүүр, Trigger=entry дохио, Confluence=баталгаажуулалт. 2+ гэр бүлээс тохирвол score нэмэгддэг" textEn="Gate=filter, Trigger=entry signal, Confluence=confirmation. Score increases with 2+ family match" /></Label>
+                <Label className="flex items-center gap-1">Detectors * <InfoTooltip textMn="Gate=шүүлтүүр, Trigger=entry дохио, Confluence=баталгаажуулалт. 2+ гэр бүлээс тохирвол score нэмэгддэг" textEn="Gate=filter, Trigger=entry setup, Confluence=confirmation. Score increases with 2+ family match" /></Label>
                 <DetectorSelect
                   selected={editForm.detectors}
                   onChange={handleDetectorSelectionChange}

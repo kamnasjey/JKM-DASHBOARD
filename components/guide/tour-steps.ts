@@ -36,7 +36,7 @@ const dashboardSteps: BilingualStep[] = [
     titleMn: "Сканнерийн статус",
     titleEn: "Scanner Status",
     descMn: "Сканнер хэзээ ажилласан, хэдэн стратеги идэвхтэй, хэдэн дохио олдсоныг харуулна.",
-    descEn: "Shows when scanner last ran, active strategies count, and signals found.",
+    descEn: "Shows when scanner last ran, active strategies count, and setups found.",
   },
   {
     element: "[data-tour='strategies-panel']",
@@ -48,9 +48,9 @@ const dashboardSteps: BilingualStep[] = [
   {
     element: "[data-tour='signals-panel']",
     titleMn: "Дохионы түүх",
-    titleEn: "Signal History",
+    titleEn: "Setup History",
     descMn: "Сканнер олсон бүх дохионууд энд гарна. Symbol, чиглэл, score, RR харагдана.",
-    descEn: "All signals found by the scanner appear here with symbol, direction, score, and RR.",
+    descEn: "All setups found by the scanner appear here with symbol, direction, score, and RR.",
   },
   {
     element: "[data-tour='guide-link']",
@@ -82,14 +82,14 @@ const strategiesSteps: BilingualStep[] = [
     titleMn: "Detector-ууд",
     titleEn: "Detectors",
     descMn: "Gate = шүүлтүүр, Trigger = гол дохио, Confluence = баталгаажуулалт. 2+ гэр бүлээс тохирвол score нэмэгддэг.",
-    descEn: "Gate = filter, Trigger = main signal, Confluence = confirmation. Score increases with 2+ family match.",
+    descEn: "Gate = filter, Trigger = main setup, Confluence = confirmation. Score increases with 2+ family match.",
   },
   {
     element: "[data-tour='strategy-config']",
     titleMn: "Тохиргоо",
     titleEn: "Configuration",
     descMn: "Entry TF = entry хайх timeframe. Trend TF = чиглэл тогтоох timeframe (1-2 сонгоно).",
-    descEn: "Entry TF = timeframe for entry signals. Trend TF = timeframes for direction (select 1-2).",
+    descEn: "Entry TF = timeframe for entry setups. Trend TF = timeframes for direction (select 1-2).",
   },
 ]
 
@@ -99,7 +99,7 @@ const profileSteps: BilingualStep[] = [
     titleMn: "Эрсдэлийн тохиргоо",
     titleEn: "Risk Settings",
     descMn: "min_rr = TP-ийн доод R:R. min_score = дохионы итгэлийн доод хязгаар. Хэт өндөр болговол дохио цөөрнө.",
-    descEn: "min_rr = minimum TP ratio. min_score = minimum confidence threshold. Too high = fewer signals.",
+    descEn: "min_rr = minimum TP ratio. min_score = minimum confidence threshold. Too high = fewer setups.",
   },
   {
     element: "[data-tour='telegram-section']",
@@ -113,7 +113,7 @@ const profileSteps: BilingualStep[] = [
     titleMn: "Скан идэвхжүүлэх",
     titleEn: "Enable Scanning",
     descMn: "Идэвхжүүлснээр 5 минут тутам 15 валют хосыг скан хийж, Telegram-аар дохио илгээнэ.",
-    descEn: "When enabled, scans 15 currency pairs every 5 minutes and sends signals via Telegram.",
+    descEn: "When enabled, scans 15 currency pairs every 5 minutes and sends setups via Telegram.",
   },
 ]
 

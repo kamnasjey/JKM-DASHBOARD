@@ -44,7 +44,7 @@ export function SignalsProvider({
             setLastUpdated(new Date());
         } catch (e: any) {
             console.error('Failed to fetch signals:', e);
-            setError(e.message || 'Failed to fetch signals');
+            setError(e.message || 'Failed to fetch setups');
         } finally {
             setLoading(false);
         }

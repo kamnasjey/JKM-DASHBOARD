@@ -316,7 +316,7 @@ export function SupportChat({ isOpen, onClose }: { isOpen: boolean; onClose: () 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Гарчиг</label>
                   <Input
-                    placeholder="Жишээ: Signal ирэхгүй байна"
+                    placeholder="Жишээ: Setup ирэхгүй байна"
                     value={newSubject}
                     onChange={(e) => setNewSubject(e.target.value)}
                   />

@@ -440,7 +440,7 @@ export default function GuidePage() {
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <div className="rounded bg-muted/50 p-2 text-center">
                       <div className="font-bold text-foreground">0.3</div>
-                      <div>Олон дохио, false signal их</div>
+                      <div>Олон дохио, хуурамч их</div>
                     </div>
                     <div className="rounded bg-primary/10 border border-primary/30 p-2 text-center">
                       <div className="font-bold text-primary">0.5-0.6</div>

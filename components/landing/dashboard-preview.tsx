@@ -58,7 +58,7 @@ export function DashboardPreview() {
               </div>
               <div className="space-y-3 text-sm">
                 <div>
-                  <div className="mb-1 text-xs text-muted-foreground">Signal</div>
+                  <div className="mb-1 text-xs text-muted-foreground">Setup</div>
                   <div className="font-medium text-green-400">BUY EURUSD</div>
                 </div>
                 <div>

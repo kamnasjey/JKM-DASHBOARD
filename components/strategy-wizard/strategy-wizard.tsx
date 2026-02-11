@@ -335,7 +335,7 @@ function SettingsStep({
             </SelectContent>
           </Select>
           <p className="text-[10px] text-muted-foreground">
-            Entry signal илрэх timeframe
+            Entry setup илрэх timeframe
           </p>
         </div>
 
