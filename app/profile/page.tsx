@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import { useLanguage } from "@/contexts/language-context"
 import { useSession } from "next-auth/react"
+import { InfoTooltip } from "@/components/guide/info-tooltip"
 
 export default function ProfilePage() {
   useAuthGuard(true)
@@ -155,7 +156,7 @@ export default function ProfilePage() {
             setConnecting(false)
             toast({
               title: t("Connected!", "Холбогдлоо!"),
-              description: t("Telegram connected successfully! You will now receive signal notifications.", "Telegram амжилттай холбогдлоо! Та одоо signal мэдэгдэл хүлээн авна."),
+              description: t("Telegram connected successfully! You will now receive setup notifications.", "Telegram амжилттай холбогдлоо! Та одоо setup мэдэгдэл хүлээн авна."),
             })
           }
         } catch {
@@ -276,7 +277,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Trading Settings Card */}
-        <Card>
+        <Card data-tour="risk-settings">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
@@ -287,7 +288,7 @@ export default function ProfilePage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="min_rr">Minimum Risk/Reward (RR)</Label>
+                <Label htmlFor="min_rr" className="flex items-center gap-1">Minimum Risk/Reward (RR) <InfoTooltip textMn="TP-ийн доод хязгаар. 2.5 = SL-ээс 2.5 дахин хол TP байрлана" textEn="Minimum TP distance. 2.5 = TP is 2.5x farther than SL" /></Label>
                 <Input
                   id="min_rr"
                   type="number"
@@ -309,7 +310,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="min_score">Minimum Score</Label>
+                <Label htmlFor="min_score" className="flex items-center gap-1">Minimum Score <InfoTooltip textMn="Дохионы итгэлийн доод хязгаар. 0 = шүүлтгүй, 0.5-0.6 зөвлөмж" textEn="Minimum confidence score. 0 = no filter, 0.5-0.6 recommended" /></Label>
                 <Input
                   id="min_score"
                   type="number"
@@ -345,7 +346,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Telegram Settings Card */}
-        <Card>
+        <Card data-tour="telegram-section">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">

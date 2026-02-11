@@ -20,6 +20,7 @@ import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useAuthGuard } from "@/lib/auth-guard"
 import { useLanguage } from "@/contexts/language-context"
+import { InfoTooltip } from "@/components/guide/info-tooltip"
 import { normalizeDetectorList } from "@/lib/detectors/normalize"
 import { DetectorSelect, validateSelection, ensureRequiredDetectors, getUnknownDetectors } from "@/components/detectors/detector-select"
 import { CATEGORY_INFO, DETECTOR_BY_ID, DETECTOR_PRESETS, type DetectorPreset } from "@/lib/detectors/catalog"
@@ -488,7 +489,7 @@ export default function StrategiesPage() {
               <LayoutGrid className="mr-2 h-4 w-4" />
               Templates
             </Button>
-            <Button onClick={openCreateDialog} variant="outline">
+            <Button onClick={openCreateDialog} variant="outline" data-tour="new-strategy">
               <Plus className="mr-2 h-4 w-4" />
               {t("Manual", "Гараар")}
             </Button>
@@ -553,7 +554,7 @@ export default function StrategiesPage() {
             )}
 
             {/* Strategy Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-tour="strategy-list">
               {strategies.map((strategy, idx) => {
                 const strategyKey = String(strategy.id || strategy.strategy_id || idx)
                 const displayName = formatStrategyName(strategy.name, strategy.strategy_id || strategy.id)
@@ -765,9 +766,9 @@ export default function StrategiesPage() {
               </div>
 
               {/* Min Score */}
-              <div className="space-y-3">
+              <div className="space-y-3" data-tour="strategy-config">
                 <div className="flex justify-between">
-                  <Label>Minimum Score</Label>
+                  <Label className="flex items-center gap-1">Minimum Score <InfoTooltip textMn="Дохионы итгэлийн доод хязгаар. Өндөр бол цөөн гэхдээ найдвартай дохио" textEn="Minimum confidence threshold. Higher = fewer but more reliable signals" /></Label>
                   <span className="text-sm font-medium">{editForm.min_score?.toFixed(1)}</span>
                 </div>
                 <Slider
@@ -782,7 +783,7 @@ export default function StrategiesPage() {
               {/* Timeframe Selection */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t("Entry Timeframe", "Entry TF")}</Label>
+                  <Label className="flex items-center gap-1">{t("Entry Timeframe", "Entry TF")} <InfoTooltip textMn="Entry дохио хайх timeframe. M15 = 15 минутын зураг дээр" textEn="Timeframe for entry signals. M15 = 15-minute chart" /></Label>
                   <Select
                     value={editForm.entry_tf || "M15"}
                     onValueChange={(value) => setEditForm({ ...editForm, entry_tf: value })}
@@ -799,11 +800,11 @@ export default function StrategiesPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    {t("Timeframe for entry signals", "Сигнал хайх timeframe")}
+                    {t("Timeframe for entry setups", "Setup хайх timeframe")}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("Trend Timeframe", "Trend TF")} (1-2 сонгоно)</Label>
+                  <Label className="flex items-center gap-1">{t("Trend Timeframe", "Trend TF")} (1-2 сонгоно) <InfoTooltip textMn="Зах зээлийн чиглэл тодорхойлох timeframe. H1+H4 сонговол 2 TF дээр zone үүсгэнэ" textEn="Timeframes for trend direction. Selecting H1+H4 creates zones on both" /></Label>
                   <div className="flex flex-wrap gap-2">
                     {TIMEFRAME_OPTIONS.filter(tf => ["M15", "M30", "H1", "H4", "D1"].includes(tf.value)).map((tf) => {
                       const isSelected = (editForm.trend_tf || []).includes(tf.value)
@@ -843,8 +844,8 @@ export default function StrategiesPage() {
               </div>
 
               {/* Pro Detector Select Component */}
-              <div className="space-y-2">
-                <Label>Detectors *</Label>
+              <div className="space-y-2" data-tour="detector-select">
+                <Label className="flex items-center gap-1">Detectors * <InfoTooltip textMn="Gate=шүүлтүүр, Trigger=entry дохио, Confluence=баталгаажуулалт. 2+ гэр бүлээс тохирвол score нэмэгддэг" textEn="Gate=filter, Trigger=entry signal, Confluence=confirmation. Score increases with 2+ family match" /></Label>
                 <DetectorSelect
                   selected={editForm.detectors}
                   onChange={handleDetectorSelectionChange}
