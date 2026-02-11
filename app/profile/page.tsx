@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { User, CheckCircle, XCircle, MessageCircle, Send, TrendingUp } from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { User, CheckCircle, XCircle, MessageCircle, Send, TrendingUp, LinkIcon, RefreshCw, Unlink, Loader2, ExternalLink } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,8 +26,17 @@ export default function ProfilePage() {
   const [testing, setTesting] = useState(false)
   const [profile, setProfile] = useState<any | null>(null)
 
+  // Telegram connect state
+  const [connecting, setConnecting] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollCountRef = useRef(0)
+
   useEffect(() => {
     loadProfile()
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+    }
   }, [])
 
   const loadProfile = async () => {
@@ -46,8 +55,8 @@ export default function ProfilePage() {
         min_score: 0,
       })
       toast({
-        title: "Алдаа",
-        description: "Profile ачаалж чадсангүй",
+        title: t("Error", "Алдаа"),
+        description: t("Failed to load profile", "Profile ачаалж чадсангүй"),
         variant: "destructive",
       })
     } finally {
@@ -59,33 +68,22 @@ export default function ProfilePage() {
     if (!profile) return
     setSaving(true)
     try {
-      const rawChatId = typeof profile?.telegram_chat_id === "string" ? profile.telegram_chat_id.trim() : ""
       const displayName = typeof profile?.display_name === "string" ? profile.display_name.trim() : ""
 
       await api.updateUserPrefs({
-        telegram_chat_id: rawChatId || null,
-        telegram_enabled: Boolean(rawChatId),
         display_name: displayName || null,
         min_rr: profile?.min_rr ?? 2.5,
         min_score: profile?.min_score ?? 0,
       })
 
-      // Update local state to reflect saved status
-      setProfile((prev: any) => ({
-        ...prev,
-        telegram_enabled: Boolean(rawChatId),
-      }))
-
       toast({
-        title: "Амжилттай",
-        description: rawChatId
-          ? "Profile хадгалагдлаа. Telegram мэдэгдэл идэвхжлээ!"
-          : "Profile хадгалагдлаа",
+        title: t("Saved", "Амжилттай"),
+        description: t("Profile saved", "Profile хадгалагдлаа"),
       })
     } catch (err: any) {
       toast({
-        title: "Алдаа",
-        description: err.message || "Хадгалах үед алдаа гарлаа",
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to save", "Хадгалах үед алдаа гарлаа"),
         variant: "destructive",
       })
     } finally {
@@ -98,13 +96,13 @@ export default function ProfilePage() {
     try {
       const result = await api.telegramTest()
       toast({
-        title: "Амжилттай",
-        description: result.message || "Тест мессеж илгээгдлээ! Telegram-аа шалгана уу.",
+        title: t("Sent", "Амжилттай"),
+        description: result.message || t("Test message sent! Check your Telegram.", "Тест мессеж илгээгдлээ! Telegram-аа шалгана уу."),
       })
     } catch (err: any) {
       toast({
-        title: "Алдаа",
-        description: err.message || "Telegram тест илгээхэд алдаа гарлаа",
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to send test", "Telegram тест илгээхэд алдаа гарлаа"),
         variant: "destructive",
       })
     } finally {
@@ -112,14 +110,113 @@ export default function ProfilePage() {
     }
   }
 
+  // --- One-click Telegram connect ---
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+    pollCountRef.current = 0
+  }, [])
+
+  const handleConnectTelegram = async () => {
+    setConnecting(true)
+    try {
+      const result = await api.telegramConnect()
+      if (!result.ok || !result.url) {
+        throw new Error("Холболтын линк авч чадсангүй")
+      }
+
+      // Open Telegram deep link
+      window.open(result.url, "_blank")
+
+      // Start polling for connection
+      pollCountRef.current = 0
+      pollRef.current = setInterval(async () => {
+        pollCountRef.current += 1
+
+        // Timeout after 30 polls (90 seconds)
+        if (pollCountRef.current > 30) {
+          stopPolling()
+          setConnecting(false)
+          toast({
+            title: t("Timeout", "Хугацаа дууслаа"),
+            description: t("Connection timed out. Please try again.", "Холболт хугацаа хэтэрлээ. Дахин оролдоно уу."),
+            variant: "destructive",
+          })
+          return
+        }
+
+        try {
+          const freshProfile = await api.profile()
+          if (freshProfile?.telegram_chat_id) {
+            stopPolling()
+            setProfile(freshProfile)
+            setConnecting(false)
+            toast({
+              title: t("Connected!", "Холбогдлоо!"),
+              description: t("Telegram connected successfully! You will now receive signal notifications.", "Telegram амжилттай холбогдлоо! Та одоо signal мэдэгдэл хүлээн авна."),
+            })
+          }
+        } catch {
+          // Ignore poll errors
+        }
+      }, 3000)
+    } catch (err: any) {
+      setConnecting(false)
+      toast({
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to connect", "Холбоход алдаа гарлаа"),
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleCancelConnect = () => {
+    stopPolling()
+    setConnecting(false)
+  }
+
+  const handleDisconnectTelegram = async () => {
+    setDisconnecting(true)
+    try {
+      await api.updateUserPrefs({
+        telegram_chat_id: null,
+        telegram_enabled: false,
+      })
+      setProfile((prev: any) => ({
+        ...prev,
+        telegram_chat_id: null,
+        telegram_enabled: false,
+      }))
+      toast({
+        title: t("Disconnected", "Салгагдлаа"),
+        description: t("Telegram disconnected", "Telegram холболт салгагдлаа"),
+      })
+    } catch (err: any) {
+      toast({
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to disconnect", "Салгахад алдаа гарлаа"),
+        variant: "destructive",
+      })
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
   const hasTelegramId = Boolean(profile?.telegram_chat_id?.trim())
   const telegramEnabled = hasTelegramId && profile?.telegram_enabled
+
+  // Mask chat ID for display
+  const maskedChatId = profile?.telegram_chat_id
+    ? "***" + String(profile.telegram_chat_id).slice(-4)
+    : ""
 
   if (loading) {
     return (
       <DashboardLayout>
         <div className="py-12 text-center">
-          <p className="text-muted-foreground">Ачааллаж байна...</p>
+          <p className="text-muted-foreground">{t("Loading...", "Ачааллаж байна...")}</p>
         </div>
       </DashboardLayout>
     )
@@ -255,68 +352,132 @@ export default function ProfilePage() {
                 <MessageCircle className="h-5 w-5" />
                 Telegram мэдэгдэл
               </CardTitle>
-              {telegramEnabled ? (
+              {connecting ? (
+                <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  {t("Connecting...", "Холбож байна...")}
+                </Badge>
+              ) : telegramEnabled ? (
                 <Badge variant="default" className="bg-green-600">
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Идэвхтэй
+                  {t("Active", "Идэвхтэй")}
                 </Badge>
               ) : (
                 <Badge variant="secondary">
                   <XCircle className="h-3 w-3 mr-1" />
-                  Идэвхгүй
+                  {t("Inactive", "Идэвхгүй")}
                 </Badge>
               )}
             </div>
             <CardDescription>
-              Setup илэрсэн үед Telegram-аар мэдэгдэл авах
+              {t("Receive Telegram notifications when setups are found", "Setup илэрсэн үед Telegram-аар мэдэгдэл авах")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="telegram_chat_id">Telegram Chat ID</Label>
-              <Input
-                id="telegram_chat_id"
-                value={profile?.telegram_chat_id || ""}
-                onChange={(e) => setProfile({ ...profile!, telegram_chat_id: e.target.value })}
-                placeholder="123456789"
-              />
-            </div>
-
-            {/* Instructions */}
-            <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-              <p className="text-sm font-medium">Telegram ID хэрхэн авах вэ?</p>
-              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                <li>Telegram дээр <code className="bg-muted px-1 rounded">@RawDataBot</code> хайж олоод нээ</li>
-                <li><code className="bg-muted px-1 rounded">/start</code> команд ажиллуул</li>
-                <li>Bot таны <strong>Chat ID</strong>-г харуулна (жишээ: 123456789)</li>
-                <li>Тэр ID-г хуулж аваад энд оруул</li>
-              </ol>
-            </div>
-
-            {telegramEnabled && (
-              <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  Telegram мэдэгдэл идэвхтэй байна. Setup илэрсэн үед танд Telegram-аар мэдэгдэл очно.
-                </p>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button onClick={handleSaveProfile} disabled={saving} className="flex-1">
-                {saving ? "Хадгалж байна..." : "Хадгалах"}
-              </Button>
-              {telegramEnabled && (
+            {/* State: Connecting (waiting for user to press Start in Telegram) */}
+            {connecting && (
+              <>
+                <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-yellow-600" />
+                    <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                      {t("Waiting for Telegram connection...", "Telegram холболт хүлээж байна...")}
+                    </p>
+                  </div>
+                  <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                    <li>{t("Telegram app should have opened", "Telegram апп нээгдсэн байх ёстой")}</li>
+                    <li>{t("Press the \"Start\" button in the bot", "Bot дээр \"Start\" товч дарна уу")}</li>
+                    <li>{t("This page will update automatically", "Энэ хуудас автоматаар шинэчлэгдэнэ")}</li>
+                  </ol>
+                </div>
                 <Button
                   variant="outline"
-                  onClick={handleTestTelegram}
-                  disabled={testing}
-                  className="flex items-center gap-2"
+                  onClick={handleCancelConnect}
+                  className="w-full"
                 >
-                  <Send className="h-4 w-4" />
-                  {testing ? "Илгээж байна..." : "Тест"}
+                  {t("Cancel", "Цуцлах")}
                 </Button>
-              )}
-            </div>
+              </>
+            )}
+
+            {/* State: Connected */}
+            {!connecting && telegramEnabled && (
+              <>
+                <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      {t("Telegram connected", "Telegram холбогдсон")}
+                      {maskedChatId && <span className="ml-2 font-mono text-xs opacity-70">ID: {maskedChatId}</span>}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("You will receive notifications when trading setups are found.", "Setup илэрсэн үед танд мэдэгдэл очно.")}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleTestTelegram}
+                    disabled={testing}
+                    className="flex-1 flex items-center justify-center gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    {testing ? t("Sending...", "Илгээж байна...") : t("Send Test", "Тест илгээх")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleConnectTelegram}
+                    disabled={connecting}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {t("Reconnect", "Дахин холбох")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleDisconnectTelegram}
+                    disabled={disconnecting}
+                    className="flex items-center gap-2 text-destructive hover:text-destructive"
+                  >
+                    <Unlink className="h-4 w-4" />
+                    {disconnecting ? "..." : t("Disconnect", "Салгах")}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* State: Not connected */}
+            {!connecting && !telegramEnabled && (
+              <>
+                <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "Connect your Telegram to receive instant notifications when trading setups are detected.",
+                      "Telegram-аа холбож, арилжааны setup илэрсэн үед шууд мэдэгдэл авна уу."
+                    )}
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleConnectTelegram}
+                  disabled={connecting}
+                  className="w-full flex items-center justify-center gap-2"
+                  size="lg"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {t("Connect Telegram", "Telegram холбох")}
+                </Button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  {t(
+                    "Pressing the button will open Telegram. Just press \"Start\" and you're connected!",
+                    "Товч дарахад Telegram нээгдэнэ. \"Start\" дарахад л болно!"
+                  )}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

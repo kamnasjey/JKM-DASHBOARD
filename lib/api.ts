@@ -284,6 +284,12 @@ export const api = {
       method: "POST",
     }),
 
+  // Telegram one-click connect (generates deep link)
+  telegramConnect: () =>
+    apiFetch<{ ok: boolean; url: string; expires_in_s: number }>("/api/telegram/connect", {
+      method: "POST",
+    }),
+
   // Engine controls
   engineStatus: () => apiFetch<any>("/api/proxy/engine/status"),
   manualScan: () => apiFetch<any>("/api/proxy/engine/manual-scan", { method: "POST" }),
