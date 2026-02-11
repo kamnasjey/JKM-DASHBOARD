@@ -34,6 +34,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import { InfoTooltip } from "@/components/guide/info-tooltip"
 import { cn } from "@/lib/utils"
 import { 
   DETECTOR_BY_ID, 
@@ -1556,7 +1557,7 @@ export default function SimulatorPage() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                               <div className="text-center p-3 bg-muted/30 rounded-lg">
                                 <p className="text-3xl font-bold">{combinedResult.summary.entries ?? 0}</p>
-                                <p className="text-xs text-muted-foreground">{t("Total Trades", "Нийт Trade")}</p>
+                                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">{t("Total Trades", "Нийт Trade")} <InfoTooltip textMn="Нийт нээгдсэн позицийн тоо" textEn="Total positions opened" /></p>
                               </div>
                               <div className="text-center p-3 bg-green-500/10 rounded-lg">
                                 <p className="text-3xl font-bold text-green-500">
@@ -1580,7 +1581,7 @@ export default function SimulatorPage() {
                                 )}>
                                   {combinedResult.summary.winrate.toFixed(1)}%
                                 </p>
-                                <p className="text-xs text-muted-foreground">Win Rate</p>
+                                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">Win Rate <InfoTooltip textMn="TP хүрсэн trade-ийн хувь. 30-45% нь R:R 2.5+ үед сайн гүйцэтгэл" textEn="Percentage of trades hitting TP. 30-45% is good with RR 2.5+" /></p>
                               </div>
                             </div>
                           </CardContent>

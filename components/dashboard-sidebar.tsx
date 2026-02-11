@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio, Crown, MessageCircle } from "lucide-react"
+import { LayoutDashboard, TrendingUp, Settings, User, Layers, X, BarChart3, LineChart, TestTube2, Wrench, Radio, Crown, MessageCircle, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/contexts/language-context"
@@ -54,6 +54,12 @@ const navItems = [
     href: "/profile",
     icon: User,
   },
+  {
+    label: "Guide",
+    labelMn: "Заавар",
+    href: "/app/guide",
+    icon: BookOpen,
+  },
 ]
 
 export function DashboardSidebar({ isAdmin, isMobile, onNavigate, onOpenSupport }: SidebarProps) {
@@ -97,7 +103,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate, onOpenSupport 
               </Button>
             )}
           </div>
-          <nav className="flex-1 space-y-1 p-4">
+          <nav className="flex-1 space-y-1 p-4" data-tour="sidebar-nav">
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
@@ -106,6 +112,7 @@ export function DashboardSidebar({ isAdmin, isMobile, onNavigate, onOpenSupport 
                   key={item.href}
                   href={item.href}
                   onClick={handleClick}
+                  data-tour={item.href === "/app/guide" ? "guide-link" : undefined}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
                     isActive

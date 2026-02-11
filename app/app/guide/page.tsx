@@ -348,12 +348,13 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Холболт хийх</CardTitle>
+                  <CardTitle className="text-sm">Холболт хийх (Нэг товч)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
-                  <Step n={1}>Telegram дээр <strong>@JKMCopilotBot</strong> хайж олно</Step>
-                  <Step n={2}>/start команд илгээнэ → Chat ID автоматаар хадгалагдана</Step>
-                  <Step n={3}>Dashboard Тохиргоо хуудаснаас &quot;Telegram enabled&quot; идэвхжүүлнэ</Step>
+                  <Step n={1}>Dashboard-ийн <strong>Профайл</strong> хуудас руу орно</Step>
+                  <Step n={2}><strong>&quot;Telegram холбох&quot;</strong> товч дарна → Telegram автоматаар нээгдэнэ</Step>
+                  <Step n={3}>Telegram дээр <strong>Start</strong> товч дарна → автоматаар холбогдоно</Step>
+                  <Step n={4}>Dashboard руу буцвал <strong>&quot;Идэвхтэй&quot;</strong> гэж харагдана</Step>
                 </CardContent>
               </Card>
 

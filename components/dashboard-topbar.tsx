@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Bell, LogOut, Menu, Clock, Globe } from "lucide-react"
+import { TourButton } from "@/components/guide/tour-button"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -197,6 +198,7 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
           <span className={lang === "mn" ? "text-primary font-semibold" : "text-muted-foreground"}>MN</span>
         </Button>
 
+        <TourButton />
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>

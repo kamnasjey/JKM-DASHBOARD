@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { LucideIcon } from "lucide-react"
 
 interface MetricCardProps {
-  title: string
+  title: React.ReactNode
   value: string | number
   subtitle?: string
   icon: LucideIcon

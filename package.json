@@ -52,6 +52,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
+    "driver.js": "^1.4.0",
     "embla-carousel-react": "8.5.1",
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
@@ -79,9 +80,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
+    "@types/bcryptjs": "^3.0.0",
     "@types/caseless": "^0.12.5",
     "@types/connect": "^3.4.38",
-    "@types/bcryptjs": "^3.0.0",
     "@types/json5": "^0.0.29",
     "@types/mysql": "^2.15.26",
     "@types/node": "^22",

@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useLanguage } from "@/contexts/language-context"
+import { InfoTooltip } from "@/components/guide/info-tooltip"
 
 // Admin email address for full Live Ops access
 const ADMIN_EMAIL = "kamnasjey@gmail.com"
@@ -670,11 +671,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <MetricCard title={t("Total Setups", "Нийт setup")} value={totalSignalsText} subtitle={t("Recent stats", "Сүүлийн статистик")} icon={BarChart3} />
-          <MetricCard title={t("Win Rate", "Ялалтын хувь")} value={winRateText} subtitle={t("Success rate", "Амжилтын хувь")} icon={Activity} />
+        <div className="grid gap-4 md:grid-cols-3" data-tour="status-cards">
+          <MetricCard title={<span className="flex items-center gap-1">{t("Total Setups", "Нийт setup")} <InfoTooltip textMn="Сүүлийн хугацаанд олдсон нийт setup-ийн тоо" textEn="Total number of setups found recently" /></span>} value={totalSignalsText} subtitle={t("Recent stats", "Сүүлийн статистик")} icon={BarChart3} />
+          <MetricCard title={<span className="flex items-center gap-1">{t("Win Rate", "Ялалтын хувь")} <InfoTooltip textMn="TP хүрсэн trade-ийн хувь. 30-45% нь R:R 2.5+ үед сайн" textEn="Percentage of trades that hit TP. 30-45% is good with RR 2.5+" /></span>} value={winRateText} subtitle={t("Success rate", "Амжилтын хувь")} icon={Activity} />
           <MetricCard
-            title={t("Active Strategies", "Идэвхтэй стратеги")}
+            title={<span className="flex items-center gap-1">{t("Active Strategies", "Идэвхтэй стратеги")} <InfoTooltip textMn="Идэвхжүүлсэн стратеги + symbol хослолын тоо" textEn="Number of enabled strategy-symbol combinations" /></span>}
             value={uniqueActiveStrategies || "—"}
             subtitle={`${activeSymbolCount} symbol-стратеги хос`}
             icon={Layers3}
@@ -691,7 +692,7 @@ export default function DashboardPage() {
 
 
         {/* Active Strategies - Scanner Config-оос идэвхжүүлсэн */}
-        <Card>
+        <Card data-tour="strategies-panel">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
@@ -733,6 +734,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Signals History with Entry Tracking (last 20) - uses firestoreSignals for deduplication + entry tracking */}
+        <div data-tour="signals-panel">
         <SignalsHistoryPanel
           signals={firestoreSignals.slice(0, 20).map((s) => ({
             // Extract actual signal_key from UnifiedSignal.id (format: "signals:ACTUAL_KEY")
@@ -751,6 +753,7 @@ export default function DashboardPage() {
           onOutcomeSet={handleOutcomeSet}
           showWinRate={true}
         />
+        </div>
       </div>
     </DashboardLayout>
     </AccessGateViewOnly>

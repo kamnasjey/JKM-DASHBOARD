@@ -9,6 +9,7 @@ import { AccessDeniedGuard } from "./access-denied-guard"
 import { SupportChat } from "./support-chat"
 import { useSession } from "next-auth/react"
 import { LanguageProvider } from "@/contexts/language-context"
+import { TourProvider } from "@/components/guide/tour-provider"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -58,6 +59,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <LanguageProvider>
+      <TourProvider>
       <AccessDeniedGuard>
         <div className="flex h-screen overflow-hidden bg-background dashboard-grid-bg">
           {/* Desktop Sidebar */}
@@ -89,6 +91,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <SupportChat isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
         </div>
       </AccessDeniedGuard>
+      </TourProvider>
     </LanguageProvider>
   )
 }

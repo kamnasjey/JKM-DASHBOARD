@@ -277,3 +277,38 @@
 .animate-neon-pulse {
   animation: neon-pulse 2s ease-in-out infinite;
 }
+
+/* Driver.js dark theme override */
+.driver-popover {
+  background: hsl(240 6% 10%) !important;
+  border: 1px solid hsl(240 6% 20%) !important;
+  color: hsl(0 0% 90%) !important;
+}
+.driver-popover .driver-popover-title {
+  color: hsl(0 0% 95%) !important;
+  font-size: 15px !important;
+}
+.driver-popover .driver-popover-description {
+  color: hsl(0 0% 70%) !important;
+  font-size: 13px !important;
+}
+.driver-popover .driver-popover-progress-text {
+  color: hsl(0 0% 50%) !important;
+}
+.driver-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  color: hsl(0 0% 70%) !important;
+  border: 1px solid hsl(240 6% 25%) !important;
+}
+.driver-popover .driver-popover-next-btn,
+.driver-popover .driver-popover-close-btn-text {
+  background: hsl(217 91% 60%) !important;
+  color: white !important;
+  border: none !important;
+}
+.driver-popover-arrow-side-left .driver-popover-arrow,
+.driver-popover-arrow-side-right .driver-popover-arrow,
+.driver-popover-arrow-side-top .driver-popover-arrow,
+.driver-popover-arrow-side-bottom .driver-popover-arrow {
+  border-color: hsl(240 6% 10%) !important;
+}
