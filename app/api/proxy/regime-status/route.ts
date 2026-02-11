@@ -3,7 +3,7 @@ import { json } from "@/lib/proxy-auth"
 export const runtime = "nodejs"
 
 // Backend URL for regime status (Python backend)
-const BACKEND_URL = process.env.JKM_BOT_API || "http://159.65.11.255:8000"
+const BACKEND_URL = process.env.JKM_BOT_API || "https://api.jkmcopilot.com"
 
 export async function GET() {
   try {

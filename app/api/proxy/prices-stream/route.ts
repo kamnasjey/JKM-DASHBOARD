@@ -3,7 +3,7 @@ import { NextRequest } from "next/server"
 export const runtime = "nodejs"
 
 // Backend URL for prices (Python backend)
-const BACKEND_URL = process.env.JKM_BOT_API || "http://159.65.11.255:8000"
+const BACKEND_URL = process.env.JKM_BOT_API || "https://api.jkmcopilot.com"
 
 export async function GET(request: NextRequest) {
   // Create a readable stream

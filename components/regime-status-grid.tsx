@@ -13,7 +13,8 @@ import {
 import { cn } from "@/lib/utils"
 
 // API URL from environment
-const API_URL = process.env.NEXT_PUBLIC_JKM_BOT_API || "http://159.65.11.255:8000"
+// Use the proxy route (not direct VPS access — port 8000 is localhost-only)
+const API_URL = ""
 
 interface RegimeCell {
   regime: string
@@ -107,7 +108,7 @@ export function RegimeStatusGrid({
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/api/regime-status`)
+      const response = await fetch(`/api/proxy/regime-status`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const result = await response.json()
       if (result.ok) {
