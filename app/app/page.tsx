@@ -157,7 +157,7 @@ export default function DashboardPage() {
             )}
             <div className="mt-4">
               <Button variant="outline" asChild className="w-full bg-transparent">
-                <Link href="/app/signals">Бүх илэрцүүдийг үзэх</Link>
+                <Link href="/signals">Бүх илэрцүүдийг үзэх</Link>
               </Button>
             </div>
           </CardContent>

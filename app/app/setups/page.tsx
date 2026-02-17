@@ -74,7 +74,7 @@ export default function SetupsPage() {
           <p className="text-muted-foreground">Таны үүсгэсэн арга барилууд</p>
         </div>
         <Button asChild>
-          <Link href="/app/setups/new">
+          <Link href="/strategies/maker">
             <Plus className="mr-2 h-4 w-4" />
             Шинэ Setup
           </Link>
@@ -101,7 +101,7 @@ export default function SetupsPage() {
             </p>
             {!search && (
               <Button asChild className="mt-4">
-                <Link href="/app/setups/new">
+                <Link href="/strategies/maker">
                   <Plus className="mr-2 h-4 w-4" />
                   Шинэ Setup үүсгэх
                 </Link>

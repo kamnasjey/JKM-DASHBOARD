@@ -73,8 +73,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "OTP код илгээгдлээ",
-      // MVP only - remove in production:
-      _dev_hint: "MVP: Use code 123456",
     })
   } catch (error) {
     console.error("[Auth] OTP request error:", error)

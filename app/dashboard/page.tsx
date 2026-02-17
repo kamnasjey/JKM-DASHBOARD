@@ -30,7 +30,7 @@ import { useLanguage } from "@/contexts/language-context"
 import { InfoTooltip } from "@/components/guide/info-tooltip"
 
 // Admin email address for full Live Ops access
-const ADMIN_EMAIL = "kamnasjey@gmail.com"
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_OWNER_EMAIL || ""
 
 interface SymbolInfo {
   symbol: string
@@ -230,7 +230,7 @@ export default function DashboardPage() {
       newSignals.forEach((signal) => {
         toast({
           title: `🔔 Шинэ setup: ${signal.symbol}`,
-          description: `${signal.direction} @ ${signal.entry} | RR: ${signal.rr?.toFixed(2) || "N/A"}`,
+          description: `${signal.direction} @ ${signal.entry}${signal.rr ? ` | RR: ${signal.rr.toFixed(2)}` : ""}`,
         })
       })
       clearNewSignals()

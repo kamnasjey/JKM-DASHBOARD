@@ -349,14 +349,14 @@ function RegisterContent() {
                     <Input
                       id="otp"
                       type="text"
-                      placeholder="123456"
+                      placeholder="OTP код оруулна уу"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                       maxLength={6}
                       required
                     />
                     <p className="text-xs text-muted-foreground">
-                      MVP: Тест код нь 123456
+                      Утасны дугаар руу илгээсэн 6 оронтой код
                     </p>
                   </div>
                 )}

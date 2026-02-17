@@ -168,9 +168,9 @@ export default function LandingPage() {
                     </svg>
                   </span>
                   <span className="flex items-center gap-3 text-[10px] font-mono text-gray-500">
-                    <span><span className="text-white">80</span> {t("trades", "trade")}</span>
-                    <span><span className="text-[#0df269]">46%</span> {t("winrate", "winrate")}</span>
-                    <span><span className="text-white">7</span> {t("strategies", "стратеги")}</span>
+                    <span>{t("15 symbols", "15 хос")}</span>
+                    <span>{t("5 min scan", "5 мин скан")}</span>
+                    <span>{t("5 strategies", "5 стратеги")}</span>
                   </span>
 
                   {/* Dashboard Preview on Hover */}
@@ -190,16 +190,16 @@ export default function LandingPage() {
                       {/* Mini Stats */}
                       <div className="grid grid-cols-3 gap-2 p-3">
                         <div className="bg-[#111] rounded p-2">
-                          <div className="text-[8px] text-gray-500">Total Setups</div>
-                          <div className="text-sm font-bold text-white">41</div>
+                          <div className="text-[8px] text-gray-500">Symbols</div>
+                          <div className="text-sm font-bold text-white">15</div>
                         </div>
                         <div className="bg-[#111] rounded p-2">
-                          <div className="text-[8px] text-gray-500">Win Rate</div>
-                          <div className="text-sm font-bold text-[#0df269]">46%</div>
+                          <div className="text-[8px] text-gray-500">Scan</div>
+                          <div className="text-sm font-bold text-[#0df269]">5 min</div>
                         </div>
                         <div className="bg-[#111] rounded p-2">
                           <div className="text-[8px] text-gray-500">Strategies</div>
-                          <div className="text-sm font-bold text-white">7</div>
+                          <div className="text-sm font-bold text-white">5</div>
                         </div>
                       </div>
                       {/* Mini Live Ops */}
