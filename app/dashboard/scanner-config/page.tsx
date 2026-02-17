@@ -58,6 +58,7 @@ interface RegimeCell {
   emoji: string
   label: string
   strength?: number
+  close?: number
 }
 
 interface RegimeStatusData {

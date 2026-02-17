@@ -10,6 +10,7 @@ export type StoredSignal = {
   sl: number
   tp: number
   rr: number
+  strategy_id?: string
   strategy_name?: string
   generated_at?: string
   status?: string

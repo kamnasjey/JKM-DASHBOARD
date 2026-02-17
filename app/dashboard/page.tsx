@@ -282,7 +282,7 @@ export default function DashboardPage() {
       setFirestoreSignals(prev => prev.map(s => {
         const sKey = s.id.startsWith("signals:") ? s.id.slice(8) : s.id
         if (sKey === signalKey) {
-          return { ...s, outcome: outcome }
+          return { ...s, outcome: outcome || undefined }
         }
         return s
       }))
@@ -766,7 +766,7 @@ export default function DashboardPage() {
               engineStatus247={engineStatus247}
               feedStatus={feedStatus}
               lastSignals={Object.fromEntries(
-                displaySignals.map((s) => [s.symbol, { direction: s.direction, entry: s.entry, time: s.timestamp || "" }])
+                displaySignals.map((s) => [s.symbol, { direction: s.direction, entry: s.entry ?? 0, time: s.ts || "" }])
               )}
               onSymbolClick={(symbol) => setLiveOpsSymbol(symbol)}
             />

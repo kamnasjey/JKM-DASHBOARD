@@ -108,23 +108,25 @@ interface TagInsight {
 }
 
 interface TradeDetail {
-  entry_ts: number
-  exit_ts: number
-  direction: "BUY" | "SELL"
+  entry_ts?: number
+  exit_ts?: number | null
+  direction?: "BUY" | "SELL"
+  side?: "long" | "short"
   entry: number
   sl: number
   tp: number
-  outcome: "TP" | "SL"
-  r: number
-  duration_bars: number
-  detector: string
+  exit?: number | null
+  outcome: string
+  r?: number
+  duration_bars?: number
+  detector?: string
   symbol?: string
   tf?: string // 5m, 15m, 30m, 1h, 4h
   // Backend may return these alternative field names
   holdingBars?: number
   tEntry?: string
-  tExit?: string
-  side?: string
+  tExit?: string | null
+  horizon?: string
   reasonTags?: string[]
 }
 
@@ -156,6 +158,7 @@ function formatDuration(bars: number, tf?: string): string {
 
 interface MultiTFResult {
   ok: boolean
+  summary?: TFSummary  // Top-level summary (single-TF or fallback)
   trades?: TradeDetail[]  // Per-trade details from mode="detailed"
   combined?: {
     summary: TFSummary
@@ -694,7 +697,7 @@ export default function SimulatorPage() {
     const sanitizedTrades = trades
       .map(sanitizeTrade)
       .filter((t): t is TradeDetail => t !== null)
-      .sort((a, b) => a.entry_ts - b.entry_ts)
+      .sort((a, b) => (a.entry_ts ?? 0) - (b.entry_ts ?? 0))
     
     for (let i = 0; i < sanitizedTrades.length; i++) {
       const trade = sanitizedTrades[i]
@@ -704,15 +707,15 @@ export default function SimulatorPage() {
         ...prev,
         {
           id: `trade-${i}`,
-          entry_ts: trade.entry_ts,
-          exit_ts: trade.exit_ts,
-          direction: trade.direction,
+          entry_ts: trade.entry_ts ?? 0,
+          exit_ts: trade.exit_ts ?? undefined,
+          direction: (trade.direction ?? "BUY") as "BUY" | "SELL",
           entry: trade.entry,
           sl: trade.sl,
           tp: trade.tp,
           r: trade.r,
           duration_bars: trade.duration_bars,
-          detector: trade.detector,
+          detector: trade.detector ?? "",
           symbol: trade.symbol,
           tf: trade.tf,
           outcome: "PENDING" as const,
@@ -735,7 +738,7 @@ export default function SimulatorPage() {
       setStreamingTrades(prev =>
         prev.map((t, idx) =>
           idx === i
-            ? { ...t, outcome: trade.outcome, status: "resolved" as const, r: trade.r }
+            ? { ...t, outcome: trade.outcome as "TP" | "SL" | "PENDING", status: "resolved" as const, r: trade.r }
             : t
         )
       )
@@ -833,8 +836,8 @@ export default function SimulatorPage() {
         symbols: [symbol],
         from: rangeDates.from,
         to: rangeDates.to,
-        timeframe: "auto",  // Let backend decide TF based on range
-        mode: "detailed",   // Request all trades (not just sample)
+        timeframe: "auto" as const,  // Let backend decide TF based on range
+        mode: "detailed" as const,   // Request all trades (not just sample)
         demoMode: false,
       }
       console.log("[simulator] API request payload:", JSON.stringify(requestPayload, null, 2))
@@ -964,7 +967,7 @@ export default function SimulatorPage() {
     try {
       let customFrom = rangeDates.from
       let customTo = rangeDates.to
-      let customTimeframe = "auto"
+      let customTimeframe: "auto" | "5m" | "15m" | "1h" | "4h" | "1d" = "auto"
       let customDetectors: string[] | undefined
 
       switch (action) {
@@ -1001,8 +1004,8 @@ export default function SimulatorPage() {
         symbols: [symbol],
         from: customFrom,
         to: customTo,
-        timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
-        mode: "detailed",
+        timeframe: customTimeframe,
+        mode: "detailed" as const,
         demoMode: false,
       }
       console.log("[simulator] QuickFix API payload:", JSON.stringify(quickFixPayload, null, 2))
@@ -1016,8 +1019,8 @@ export default function SimulatorPage() {
           symbols: [symbol],
           from: customFrom,
           to: customTo,
-          timeframe: customTimeframe as "auto" | "5m" | "15m" | "1h" | "4h" | "1d",
-          mode: "detailed",
+          timeframe: customTimeframe,
+          mode: "detailed" as const,
           demoMode: true,
         })
         const warning = "Data quality issue detected. Ran in demo mode with gaps allowed."

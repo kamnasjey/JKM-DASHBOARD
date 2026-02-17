@@ -19,8 +19,20 @@ function maskPhone(phone: string): string {
   return `${phone.slice(0, 2)}****${phone.slice(-2)}`
 }
 
+// Firestore user document shape (partial — only fields used by auth)
+interface FirestoreUser {
+  id: string
+  email?: string | null
+  name?: string | null
+  image?: string | null
+  phone?: string | null
+  passwordHash?: string | null
+  provider?: string
+  [key: string]: unknown
+}
+
 // Helper to find user by email in Firestore
-async function findUserByEmail(email: string) {
+async function findUserByEmail(email: string): Promise<FirestoreUser | null> {
   const db = getFirebaseAdminDb()
   const snapshot = await db
     .collection("users")
@@ -31,11 +43,11 @@ async function findUserByEmail(email: string) {
   if (snapshot.empty) return null
 
   const doc = snapshot.docs[0]
-  return { id: doc.id, ...doc.data() }
+  return { id: doc.id, ...doc.data() } as FirestoreUser
 }
 
 // Helper to find user by phone in Firestore
-async function findUserByPhone(phone: string) {
+async function findUserByPhone(phone: string): Promise<FirestoreUser | null> {
   const db = getFirebaseAdminDb()
   const snapshot = await db
     .collection("users")
@@ -46,7 +58,7 @@ async function findUserByPhone(phone: string) {
   if (snapshot.empty) return null
 
   const doc = snapshot.docs[0]
-  return { id: doc.id, ...doc.data() }
+  return { id: doc.id, ...doc.data() } as FirestoreUser
 }
 
 export const authOptions: NextAuthOptions = {

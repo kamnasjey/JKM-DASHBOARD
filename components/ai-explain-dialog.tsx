@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast"
 interface AIExplainDialogProps {
   signalId: string
   symbol: string
-  direction: "BUY" | "SELL" | "NA"
+  direction: string
   trigger?: React.ReactNode
 }
 

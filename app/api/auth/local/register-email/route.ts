@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const trialFields = trialAvailable ? getTrialFields() : {}
 
     // Determine plan and access
-    const userPlan = trialAvailable ? trialFields.plan : (plan || "free")
+    const userPlan = trialAvailable ? (trialFields as Record<string, unknown>).plan as string : (plan || "free")
     const hasPaidAccess = trialAvailable ? true : false
 
     // Create user in Firestore

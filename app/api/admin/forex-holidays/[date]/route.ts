@@ -11,7 +11,7 @@ const HOLIDAYS_COLLECTION = "forex-holidays"
 // DELETE - Remove a forex holiday by date
 export async function DELETE(
   request: Request,
-  { params }: { params: { date: string } }
+  { params }: { params: Promise<{ date: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -23,7 +23,7 @@ export async function DELETE(
     return NextResponse.json({ ok: false, message: "Admin only" }, { status: 403 })
   }
 
-  const { date } = params
+  const { date } = await params
 
   try {
     const db = getFirebaseAdminDb()

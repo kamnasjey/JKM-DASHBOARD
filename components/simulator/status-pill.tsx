@@ -7,7 +7,7 @@ import { Target, X, Clock } from "lucide-react"
 type Status = "TP" | "SL" | "PENDING" | "WIN" | "LOSS"
 
 interface StatusPillProps {
-  status: Status
+  status: string
   className?: string
   showIcon?: boolean
   size?: "sm" | "md"
@@ -55,7 +55,7 @@ export function StatusPill({
   showIcon = true,
   size = "sm",
 }: StatusPillProps) {
-  const config = statusConfig[status] || statusConfig.PENDING
+  const config = statusConfig[status as Status] || statusConfig.PENDING
   const Icon = config.icon
 
   return (

@@ -37,8 +37,7 @@ export function SignalsProvider({
             setLoading(true);
             setError(null);
 
-            const data = await api.getSignals({ limit: 200 });
-            const fetchedSignals = data.signals || [];
+            const fetchedSignals = await api.getSignals({ limit: 200 });
 
             setSignals(fetchedSignals);
             setLastUpdated(new Date());
@@ -64,9 +63,9 @@ export function SignalsProvider({
     }, [refresh, refreshInterval]);
 
     // Computed values
-    const pendingCount = signals.filter(s => s.status === 'pending' || !s.status).length;
-    const winCount = signals.filter(s => s.status === 'win').length;
-    const lossCount = signals.filter(s => s.status === 'loss').length;
+    const pendingCount = signals.filter(s => s.outcome === 'pending' || !s.outcome).length;
+    const winCount = signals.filter(s => s.outcome === 'win').length;
+    const lossCount = signals.filter(s => s.outcome === 'loss').length;
 
     return (
         <SignalsContext.Provider
