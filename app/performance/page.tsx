@@ -156,7 +156,7 @@ function OutcomeCell({
   return (
     <span className="inline-flex items-center gap-1 text-yellow-500 text-sm">
       <Clock className="h-3.5 w-3.5" />
-      Pending
+      Хүлээгдэж буй
     </span>
   )
 }
@@ -389,7 +389,7 @@ export default function PerformancePage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription className="text-xs sm:text-sm">Нийт setup</CardDescription>
@@ -476,6 +476,7 @@ export default function PerformancePage() {
             {setupSummaries.length === 0 ? (
               <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -519,6 +520,7 @@ export default function PerformancePage() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -540,6 +542,7 @@ export default function PerformancePage() {
                 Одоогоор орсон арилжаа байхгүй. Доорх жагсаалтаас &quot;Орсон&quot; товч дарж тэмдэглэнэ үү.
               </p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -609,6 +612,7 @@ export default function PerformancePage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -622,6 +626,7 @@ export default function PerformancePage() {
             {recentSignals.length === 0 ? (
               <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -697,6 +702,7 @@ export default function PerformancePage() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

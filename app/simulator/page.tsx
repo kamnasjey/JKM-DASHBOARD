@@ -70,7 +70,11 @@ function incrementSimulatorUsage(): number {
   const today = new Date().toISOString().split("T")[0]
   const currentCount = getSimulatorUsageToday()
   const newCount = currentCount + 1
-  localStorage.setItem(key, JSON.stringify({ date: today, count: newCount }))
+  try {
+    localStorage.setItem(key, JSON.stringify({ date: today, count: newCount }))
+  } catch {
+    // Private browsing or storage full — ignore
+  }
   return newCount
 }
 

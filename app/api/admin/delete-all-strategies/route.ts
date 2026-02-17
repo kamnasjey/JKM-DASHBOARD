@@ -11,12 +11,12 @@ import { getFirebaseAdminDb } from "@/lib/firebase-admin"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET || "delete-all-strategies-2026"
+const ADMIN_SECRET = process.env.ADMIN_SECRET
 
 export async function DELETE(request: NextRequest) {
   // Simple auth check
   const authHeader = request.headers.get("x-admin-secret")
-  if (authHeader !== ADMIN_SECRET) {
+  if (!ADMIN_SECRET || authHeader !== ADMIN_SECRET) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   }
 

@@ -122,6 +122,13 @@ function RegisterContent() {
 
   const handleRequestOtp = async () => {
     setError("")
+
+    const cleaned = phone.replace(/\D/g, "")
+    if (cleaned.length < 8) {
+      setError("Утасны дугаар хамгийн багадаа 8 оронтой байх ёстой")
+      return
+    }
+
     setLoading(true)
 
     try {

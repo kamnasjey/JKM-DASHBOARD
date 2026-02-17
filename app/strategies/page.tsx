@@ -457,7 +457,7 @@ export default function StrategiesPage() {
     return (
       <DashboardLayout>
         <div className="py-12 text-center">
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Ачааллаж байна...</p>
         </div>
       </DashboardLayout>
     )

@@ -14,8 +14,7 @@ import { FieldValue } from "firebase-admin/firestore"
 
 export const runtime = "nodejs"
 
-// Admin email - hardcoded for security
-const ADMIN_USER_EMAIL = "Kamnasjey@gmail.com"
+const ADMIN_USER_EMAIL = process.env.NEXT_PUBLIC_OWNER_EMAIL || ""
 
 // API key check
 function isValidKey(request: NextRequest): boolean {
