@@ -275,32 +275,6 @@ export default function DashboardPage() {
     }
   }, [toast])
 
-  // Handle manual outcome setting (TP/SL hit)
-  const handleOutcomeSet = useCallback(async (signalKey: string, outcome: "win" | "loss" | null) => {
-    try {
-      await api.updateSignalEntry(signalKey, null, outcome)
-      // Update local state immediately for instant UI feedback
-      setFirestoreSignals(prev => prev.map(s => {
-        const sKey = s.id.startsWith("signals:") ? s.id.slice(8) : s.id
-        if (sKey === signalKey) {
-          return { ...s, outcome: outcome || undefined }
-        }
-        return s
-      }))
-      toast({
-        title: outcome === "win" ? "✓ TP цохисон" : outcome === "loss" ? "✗ SL цохисон" : "↺ Үр дүн арилгав",
-        description: `Signal ${signalKey.slice(0, 8)}...`,
-      })
-    } catch (err: any) {
-      console.error("[handleOutcomeSet] Error:", err)
-      toast({
-        title: "Алдаа",
-        description: err.message || "Үр дүн хадгалж чадсангүй",
-        variant: "destructive",
-      })
-    }
-  }, [toast])
-
   // Calculate win rate from Firestore signals (entry_taken only, deduplicated)
   const winRateText = useMemo(() => {
     // Only count signals where entry was taken
@@ -841,7 +815,6 @@ export default function DashboardPage() {
             outcome: s.outcome === "expired" ? "pending" : s.outcome ?? null,
           }))}
           onEntryToggle={handleEntryToggle}
-          onOutcomeSet={handleOutcomeSet}
           showWinRate={true}
         />
         </div>

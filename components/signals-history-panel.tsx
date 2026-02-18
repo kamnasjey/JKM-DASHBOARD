@@ -44,14 +44,12 @@ interface SignalWithEntry {
 interface SignalsHistoryPanelProps {
   signals: SignalWithEntry[]
   onEntryToggle?: (signalId: string, taken: boolean) => void
-  onOutcomeSet?: (signalId: string, outcome: "win" | "loss" | null) => void
   showWinRate?: boolean
 }
 
 export function SignalsHistoryPanel({
   signals,
   onEntryToggle,
-  onOutcomeSet,
   showWinRate = true,
 }: SignalsHistoryPanelProps) {
   const stats = useMemo(() => {
@@ -249,72 +247,23 @@ export function SignalsHistoryPanel({
                       </Button>
                     </TableCell>
                     <TableCell className="text-center">
-                      {onOutcomeSet ? (
-                        <div className="flex flex-col items-center gap-1">
-                          {entryTaken === true && !signal.outcome && (
-                            <div className="flex items-center gap-1 text-yellow-500" title="VPS 5 минут тутам SL/TP автоматаар шалгаж байна">
-                              <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
-                              </span>
-                              <span className="text-[10px]">Хянагдаж байна</span>
-                            </div>
-                          )}
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant={signal.outcome === "win" ? "default" : "ghost"}
-                              size="sm"
-                              className={`h-6 px-2 text-xs ${
-                                signal.outcome === "win"
-                                  ? "bg-green-600 hover:bg-green-700 text-white"
-                                  : "text-green-600 hover:bg-green-100"
-                              }`}
-                              onClick={() => onOutcomeSet(signalId, signal.outcome === "win" ? null : "win")}
-                              title="TP цохисон"
-                            >
-                              TP
-                            </Button>
-                            <Button
-                              variant={signal.outcome === "loss" ? "default" : "ghost"}
-                              size="sm"
-                              className={`h-6 px-2 text-xs ${
-                                signal.outcome === "loss"
-                                  ? "bg-red-600 hover:bg-red-700 text-white"
-                                  : "text-red-600 hover:bg-red-100"
-                              }`}
-                              onClick={() => onOutcomeSet(signalId, signal.outcome === "loss" ? null : "loss")}
-                              title="SL цохисон"
-                            >
-                              SL
-                            </Button>
-                          </div>
+                      {signal.outcome === "win" && (
+                        <Badge className="bg-green-600 text-white">TP</Badge>
+                      )}
+                      {signal.outcome === "loss" && (
+                        <Badge className="bg-red-600 text-white">SL</Badge>
+                      )}
+                      {entryTaken === true && !signal.outcome && (
+                        <div className="flex items-center justify-center gap-1 text-yellow-500" title="VPS 5 минут тутам SL/TP автоматаар шалгаж байна">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+                          </span>
+                          <span className="text-[10px]">Хянагдаж байна</span>
                         </div>
-                      ) : (
-                        <>
-                          {signal.outcome === "win" && (
-                            <Badge className="bg-green-600 text-white">WIN</Badge>
-                          )}
-                          {signal.outcome === "loss" && (
-                            <Badge className="bg-red-600 text-white">LOSS</Badge>
-                          )}
-                          {entryTaken === true && !signal.outcome && (
-                            <div className="flex items-center justify-center gap-1 text-yellow-500" title="VPS 5 минут тутам SL/TP автоматаар шалгаж байна">
-                              <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
-                              </span>
-                              <span className="text-[10px]">Хянагдаж байна</span>
-                            </div>
-                          )}
-                          {signal.outcome === "pending" && entryTaken !== true && (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              Хүлээгдэж буй
-                            </Badge>
-                          )}
-                          {!signal.outcome && entryTaken !== true && (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </>
+                      )}
+                      {!signal.outcome && entryTaken !== true && (
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   </TableRow>
