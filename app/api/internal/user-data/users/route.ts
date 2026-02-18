@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         plan_status: u.plan_status ?? null,
         min_rr: u.min_rr ?? null,
         min_score: u.min_score ?? null,
+        poi_notify_symbols: u.poi_notify_symbols ?? null,
       })),
       count: users.length,
       source: "firestore",

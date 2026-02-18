@@ -22,6 +22,7 @@ const WRITABLE_PREFS_KEYS = [
   "plan",
   "plan_status",
   "strategies",
+  "poi_notify_symbols",
 ] as const
 
 /**

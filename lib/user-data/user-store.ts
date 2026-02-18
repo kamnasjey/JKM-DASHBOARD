@@ -16,6 +16,7 @@
  *   - telegram_enabled (bool|null)
  *   - telegram_connected_ts (number|null)
  *   - scan_enabled (bool|null)
+ *   - poi_notify_symbols (string[]|null) - POI zone notification symbols
  *   - strategies (array) - managed by strategies-store.ts
  *   - updatedAt (string ISO)
  * 
@@ -47,6 +48,8 @@ export type UserPrefs = {
   // Trading settings
   min_rr?: number | null
   min_score?: number | null
+  // POI zone notification
+  poi_notify_symbols?: string[] | null
 }
 
 export type UserDoc = UserIdentity & UserPrefs & {
@@ -84,6 +87,8 @@ export async function getUserDoc(userId: string): Promise<UserDoc | null> {
     // Trading settings
     min_rr: data.min_rr !== undefined ? Number(data.min_rr) : null,
     min_score: data.min_score !== undefined ? Number(data.min_score) : null,
+    // POI zone notification
+    poi_notify_symbols: Array.isArray(data.poi_notify_symbols) ? (data.poi_notify_symbols as string[]) : null,
     strategies: Array.isArray(data.strategies) ? data.strategies : undefined,
     updatedAt: data.updatedAt !== undefined ? String(data.updatedAt) : undefined,
     createdAt: data.createdAt !== undefined ? String(data.createdAt) : undefined,
@@ -135,6 +140,8 @@ export async function updateUserPrefs(userId: string, prefs: Partial<UserPrefs>)
   // Trading settings
   if (prefs.min_rr !== undefined) update.min_rr = prefs.min_rr
   if (prefs.min_score !== undefined) update.min_score = prefs.min_score
+  // POI zone notification
+  if (prefs.poi_notify_symbols !== undefined) update.poi_notify_symbols = prefs.poi_notify_symbols
 
   // Handle strategies field deletion (strategies should be in subcollection, not here)
   const { FieldValue } = await import("firebase-admin/firestore")
@@ -199,6 +206,7 @@ export async function listUsersFromFirestore(options?: {
       scan_enabled: data.scan_enabled !== undefined ? Boolean(data.scan_enabled) : null,
       min_rr: data.min_rr !== undefined ? Number(data.min_rr) : null,
       min_score: data.min_score !== undefined ? Number(data.min_score) : null,
+      poi_notify_symbols: Array.isArray(data.poi_notify_symbols) ? (data.poi_notify_symbols as string[]) : null,
       updatedAt: data.updatedAt !== undefined ? String(data.updatedAt) : undefined,
     })
   }
