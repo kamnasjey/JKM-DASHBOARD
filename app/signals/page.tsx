@@ -331,7 +331,16 @@ function EmptySignalsState() {
   return (
     <Card className="border-dashed">
       <CardContent className="py-12 text-center">
-        <p className="text-muted-foreground">Setup олдсонгүй</p>
+        <Filter className="h-10 w-10 mx-auto text-muted-foreground/40 mb-4" />
+        <h3 className="text-base font-medium mb-1">Setup олдсонгүй</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Scanner 5 минут тутам шалгаж байна. Стратеги идэвхтэй эсэхийг шалгана уу.
+        </p>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/strategies">
+            Стратеги тохируулах
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   )

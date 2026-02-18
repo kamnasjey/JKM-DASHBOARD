@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select"
 import { useLanguage } from "@/contexts/language-context"
 import { InfoTooltip } from "@/components/guide/info-tooltip"
+import { OnboardingChecklist } from "@/components/onboarding-checklist"
 
 // Admin email address for full Live Ops access
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_OWNER_EMAIL || ""
@@ -710,6 +711,31 @@ export default function DashboardPage() {
             </a>
           </div>
         )}
+
+        {/* Onboarding Checklist (auto-hides when complete) */}
+        <OnboardingChecklist />
+
+        {/* Scanner Status Bar */}
+        <div className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm ${
+          marketClosed
+            ? "bg-amber-500/10 text-amber-600"
+            : "bg-green-500/10 text-green-600"
+        }`}>
+          <span className="relative flex h-2 w-2 shrink-0">
+            {!marketClosed && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            )}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${marketClosed ? "bg-amber-500" : "bg-green-500"}`} />
+          </span>
+          {marketClosed ? (
+            <span>{t("Forex market closed — Crypto scanning 24/7", "Forex зах зээл хаалттай — Crypto 24/7 ажиллаж байна")}</span>
+          ) : (
+            <span>
+              {t("Scanner active", "Scanner идэвхтэй")} — 15 {t("pairs", "хос")}, {t("every 5 min", "5 мин тутам")}
+              {recentSignals.length > 0 && <> | {recentSignals.length} {t("signals", "дохио")}</>}
+            </span>
+          )}
+        </div>
 
         <div className="grid gap-4 md:grid-cols-3" data-tour="status-cards">
           <MetricCard title={<span className="flex items-center gap-1">{t("Total Setups", "Нийт setup")} <InfoTooltip textMn="Сүүлийн хугацаанд олдсон нийт setup-ийн тоо" textEn="Total number of setups found recently" /></span>} value={totalSignalsText} subtitle={t("Recent stats", "Сүүлийн статистик")} icon={BarChart3} />

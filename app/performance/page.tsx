@@ -105,7 +105,7 @@ function EntryTrackingCell({
         className="h-7 w-7 p-0 hover:text-green-500 hover:bg-green-500/10"
         onClick={() => handleClick(true)}
         disabled={loading}
-        title="Орсон"
+        title="Орсон — Энэ trade-д орсон бол дарна уу"
       >
         <Check className="h-3.5 w-3.5" />
       </Button>
@@ -115,7 +115,7 @@ function EntryTrackingCell({
         className="h-7 w-7 p-0 hover:text-red-500 hover:bg-red-500/10"
         onClick={() => handleClick(false)}
         disabled={loading}
-        title="Алгассан"
+        title="Алгассан — Энэ trade-д ороогүй бол дарна уу"
       >
         <X className="h-3.5 w-3.5" />
       </Button>
@@ -474,7 +474,14 @@ export default function PerformancePage() {
           </CardHeader>
           <CardContent>
             {setupSummaries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
+              <div className="py-8 text-center">
+                <BarChart3 className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-sm font-medium mb-1">Setup олдсоны дараа энд харагдана</p>
+                <p className="text-xs text-muted-foreground mb-3">Scanner дохио олдвол автоматаар бүртгэгдэнэ</p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/signals">Signals хуудас руу очих</a>
+                </Button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
               <Table>
@@ -624,9 +631,16 @@ export default function PerformancePage() {
           </CardHeader>
           <CardContent>
             {recentSignals.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Өгөгдөл байхгүй</p>
+              <div className="py-8 text-center">
+                <BarChart3 className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-sm font-medium mb-1">Setup олдсоны дараа энд харагдана</p>
+                <p className="text-xs text-muted-foreground">Scanner дохио олдвол автоматаар бүртгэгдэнэ</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
+              <p className="text-xs text-muted-foreground mb-2">
+                ✓/✗ товчоор trade-д орсон эсэхийг тэмдэглэнэ. Орсон бол TP/SL автоматаар хянагдана.
+              </p>
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -116,9 +116,11 @@ export function SignalsHistoryPanel({
           <CardDescription>Олдсон setup-үүд энд харагдана</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground py-8">
-            Одоогоор setup олдоогүй байна
-          </p>
+          <div className="text-center py-8">
+            <Clock className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+            <p className="text-sm font-medium mb-1">Scanner 5 минут тутам шалгаж байна</p>
+            <p className="text-xs text-muted-foreground">Удахгүй setup олдож болно. Стратеги идэвхтэй эсэхийг шалгана уу.</p>
+          </div>
         </CardContent>
       </Card>
     )

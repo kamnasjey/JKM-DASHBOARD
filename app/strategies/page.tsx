@@ -715,8 +715,24 @@ export default function StrategiesPage() {
               <DialogTitle>
                 {editingIndex !== null ? t("Edit Strategy", "Стратеги засах") : t("Create New Strategy", "Шинэ Strategy үүсгэх")}
               </DialogTitle>
-              <DialogDescription>
-                {t("Select and combine detectors. Minimum: 1 Gate + 1 Trigger.", "Detector-уудыг сонгож combine хийнэ үү. Хамгийн багадаа 1 Gate + 1 Trigger сонгоно уу.")}
+              <DialogDescription asChild>
+                <div className="space-y-2">
+                  <p>{t("Select and combine detectors. Minimum: 1 Gate + 1 Trigger.", "Detector-уудыг сонгож combine хийнэ үү. Хамгийн багадаа 1 Gate + 1 Trigger сонгоно уу.")}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-md bg-muted/50 p-2">
+                      <span className="font-medium">{t("Gate", "Gate")}</span>
+                      <p className="text-muted-foreground mt-0.5">{t("Market filter — when to trade", "Зах зээлийн шүүлтүүр — хэзээ trade хийх")}</p>
+                    </div>
+                    <div className="rounded-md bg-muted/50 p-2">
+                      <span className="font-medium">{t("Trigger", "Trigger")}</span>
+                      <p className="text-muted-foreground mt-0.5">{t("Entry signal — where to enter", "Entry дохио — хаана орох")}</p>
+                    </div>
+                    <div className="rounded-md bg-muted/50 p-2">
+                      <span className="font-medium">{t("Confluence", "Confluence")}</span>
+                      <p className="text-muted-foreground mt-0.5">{t("Confirmation — adds confidence", "Баталгаажуулалт — итгэлийг нэмнэ")}</p>
+                    </div>
+                  </div>
+                </div>
               </DialogDescription>
             </DialogHeader>
 
