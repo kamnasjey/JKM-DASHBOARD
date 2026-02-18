@@ -203,40 +203,40 @@ export default function DashboardPage() {
     const has = (id: string) => detectors.includes(id)
     const notes: string[] = []
 
-    if (has("GATE_REGIME")) notes.push("Зах зээлийн нөхцөлийг шүүж, хэт choppy үед оролтыг багасгана")
-    if (has("GATE_VOLATILITY")) notes.push("Volatility‑ийн хэт бага/өндөр үед шүүлтүүр хийж false setup‑ийг бууруулна")
-    if (has("GATE_DRIFT_SENTINEL")) notes.push("Хүчтэй drift үед эсрэг чиглэлд оролт хийх эрсдэлийг бууруулна")
+    if (has("GATE_REGIME")) notes.push(t("Filters market conditions, reduces entries during choppy markets", "Зах зээлийн нөхцөлийг шүүж, хэт choppy үед оролтыг багасгана"))
+    if (has("GATE_VOLATILITY")) notes.push(t("Filters extreme volatility to reduce false setups", "Volatility‑ийн хэт бага/өндөр үед шүүлтүүр хийж false setup‑ийг бууруулна"))
+    if (has("GATE_DRIFT_SENTINEL")) notes.push(t("Reduces risk of counter-trend entries during strong drift", "Хүчтэй drift үед эсрэг чиглэлд оролт хийх эрсдэлийг бууруулна"))
 
-    if (has("BOS")) notes.push("Structure break илэрмэгц трендийн үргэлжлэлийг барина")
-    if (has("MOMENTUM_CONTINUATION")) notes.push("Хүчтэй momentum‑ын дараах continuation‑г баталгаажуулна")
-    if (has("BREAK_RETEST")) notes.push("Breakout + retest үед илүү найдвартай оролт өгнө")
-    if (has("SR_BOUNCE")) notes.push("Support/Resistance bounce нь range үед ажиллах боломж нэмнэ")
-    if (has("MEAN_REVERSION_SNAPBACK")) notes.push("Overextended үед mean‑reversion оролтыг барина")
-    if (has("SFP")) notes.push("Swing failure нь reversal‑ийг илрүүлэхэд тусална")
+    if (has("BOS")) notes.push(t("Captures trend continuation on structure break", "Structure break илэрмэгц трендийн үргэлжлэлийг барина"))
+    if (has("MOMENTUM_CONTINUATION")) notes.push(t("Confirms continuation after strong momentum", "Хүчтэй momentum‑ын дараах continuation‑г баталгаажуулна"))
+    if (has("BREAK_RETEST")) notes.push(t("Provides more reliable entry on breakout + retest", "Breakout + retest үед илүү найдвартай оролт өгнө"))
+    if (has("SR_BOUNCE")) notes.push(t("Adds range trading opportunity via S/R bounce", "Support/Resistance bounce нь range үед ажиллах боломж нэмнэ"))
+    if (has("MEAN_REVERSION_SNAPBACK")) notes.push(t("Captures mean-reversion entries when overextended", "Overextended үед mean‑reversion оролтыг барина"))
+    if (has("SFP")) notes.push(t("Swing failure helps detect reversals", "Swing failure нь reversal‑ийг илрүүлэхэд тусална"))
 
-    if (has("FIBO_RETRACE_CONFLUENCE")) notes.push("Retrace бүс дээр нэмэлт баталгаажуулалт өгнө")
-    if (has("FLAG_PENNANT")) notes.push("Continuation pattern‑оор трендийг улам баталгаажуулна")
-    if (has("SR_ROLE_REVERSAL")) notes.push("Polarity flip нь breakout‑ын хүчийг баталгаажуулна")
-    if (has("PINBAR_AT_LEVEL")) notes.push("Key level дээрх pinbar нь rejection‑ийг батална")
-    if (has("PRICE_MOMENTUM_WEAKENING")) notes.push("Momentum‑ын суларлыг барьж reversal эрсдэлийг илрүүлнэ")
+    if (has("FIBO_RETRACE_CONFLUENCE")) notes.push(t("Adds extra confirmation at retrace zones", "Retrace бүс дээр нэмэлт баталгаажуулалт өгнө"))
+    if (has("FLAG_PENNANT")) notes.push(t("Confirms trend via continuation pattern", "Continuation pattern‑оор трендийг улам баталгаажуулна"))
+    if (has("SR_ROLE_REVERSAL")) notes.push(t("Confirms breakout strength via polarity flip", "Polarity flip нь breakout‑ын хүчийг баталгаажуулна"))
+    if (has("PINBAR_AT_LEVEL")) notes.push(t("Confirms rejection via pinbar at key level", "Key level дээрх pinbar нь rejection‑ийг батална"))
+    if (has("PRICE_MOMENTUM_WEAKENING")) notes.push(t("Detects reversal risk by catching momentum weakness", "Momentum‑ын суларлыг барьж reversal эрсдэлийг илрүүлнэ"))
 
-    const base = "AI тайлбар: Gate detectors нь зах зээлийг шүүж, trigger detectors нь оролтын setup өгч, confluence нь баталгаажуулалтыг нэмэгдүүлдэг."
+    const base = t("AI explanation: Gate detectors filter the market, trigger detectors provide entry setups, and confluence adds confirmation.", "AI тайлбар: Gate detectors нь зах зээлийг шүүж, trigger detectors нь оролтын setup өгч, confluence нь баталгаажуулалтыг нэмэгдүүлдэг.")
     const extra = notes.length ? ` ${notes.join(". ")}.` : ""
     return `${base}${extra}`
-  }, [])
+  }, [t])
   
   // Show toast when new signals arrive via WebSocket
   useEffect(() => {
     if (newSignals.length > 0) {
       newSignals.forEach((signal) => {
         toast({
-          title: `🔔 Шинэ setup: ${signal.symbol}`,
+          title: `🔔 ${t("New setup", "Шинэ setup")}: ${signal.symbol}`,
           description: `${signal.direction} @ ${signal.entry}${signal.rr ? ` | RR: ${signal.rr.toFixed(2)}` : ""}`,
         })
       })
       clearNewSignals()
     }
-  }, [newSignals, toast, clearNewSignals])
+  }, [newSignals, toast, clearNewSignals, t])
   
   // Use WS signals if available, otherwise HTTP - limit to 20
   const displaySignals = useMemo(() => {
@@ -262,18 +262,18 @@ export default function DashboardPage() {
         return s
       }))
       toast({
-        title: taken ? "✓ Entry жагсаалтад орлоо" : "✗ Entry жагсаалтаас хасагдлаа",
-        description: `Signal ${signalKey.slice(0, 8)}... амжилттай хадгалагдлаа`,
+        title: taken ? t("✓ Added to entry list", "✓ Entry жагсаалтад орлоо") : t("✗ Removed from entry list", "✗ Entry жагсаалтаас хасагдлаа"),
+        description: `Signal ${signalKey.slice(0, 8)}... ${t("saved successfully", "амжилттай хадгалагдлаа")}`,
       })
     } catch (err: any) {
       console.error("[handleEntryToggle] Error:", err)
       toast({
-        title: "Алдаа",
-        description: err.message || "Entry tracking хадгалж чадсангүй",
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to save entry tracking", "Entry tracking хадгалж чадсангүй"),
         variant: "destructive",
       })
     }
-  }, [toast])
+  }, [toast, t])
 
   // Calculate win rate from Firestore signals (entry_taken only, deduplicated)
   const winRateText = useMemo(() => {
@@ -369,8 +369,8 @@ export default function DashboardPage() {
       setEngineStatus(eng)
     } catch (err: any) {
       toast({
-        title: "Алдаа гарлаа",
-        description: err?.message ?? "Dashboard ачаалж чадсангүй",
+        title: t("An error occurred", "Алдаа гарлаа"),
+        description: err?.message ?? t("Failed to load dashboard", "Dashboard ачаалж чадсангүй"),
         variant: "destructive",
       })
     } finally {
@@ -410,9 +410,9 @@ export default function DashboardPage() {
           for (const sig of deduped) {
             const old = prev.find(p => p.id === sig.id)
             if (old && !old.outcome && sig.outcome === "win") {
-              toast({ title: `TP цохисон: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"} — RR: ${sig.rr?.toFixed(2) ?? "—"}` })
+              toast({ title: `${t("TP hit", "TP цохисон")}: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"} — RR: ${sig.rr?.toFixed(2) ?? "—"}` })
             } else if (old && !old.outcome && sig.outcome === "loss") {
-              toast({ title: `SL цохисон: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"}`, variant: "destructive" })
+              toast({ title: `${t("SL hit", "SL цохисон")}: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"}`, variant: "destructive" })
             }
           }
           return deduped
@@ -437,7 +437,7 @@ export default function DashboardPage() {
                   setCandlePulse(true)
                   setTimeout(() => setCandlePulse(false), 2000)
                 }
-                return lastCandleTime
+                return ts
               })
               setLastCandleTime(ts)
             }
@@ -502,7 +502,7 @@ export default function DashboardPage() {
       clearInterval(feedStatusInterval)
       clearInterval(tickInterval)
     }
-  }, [status, liveOpsSymbol])
+  }, [status, liveOpsSymbol, t])
 
   // Admin: Fetch all 15 symbols' candle data for Live Ops panel
   useEffect(() => {
@@ -653,7 +653,7 @@ export default function DashboardPage() {
   }, [nextScanIn])
 
   if (status === "loading") {
-    return <div className="flex min-h-screen items-center justify-center">Ачааллаж байна...</div>
+    return <div className="flex min-h-screen items-center justify-center">{t("Loading...", "Ачааллаж байна...")}</div>
   }
 
   if (!session) {
@@ -742,7 +742,7 @@ export default function DashboardPage() {
           <MetricCard
             title={<span className="flex items-center gap-1">{t("Active Strategies", "Идэвхтэй стратеги")} <InfoTooltip textMn="Идэвхжүүлсэн стратеги + symbol хослолын тоо" textEn="Number of enabled strategy-symbol combinations" /></span>}
             value={uniqueActiveStrategies || "—"}
-            subtitle={`${activeSymbolCount} symbol-стратеги хос`}
+            subtitle={`${activeSymbolCount} ${t("symbol-strategy pairs", "symbol-стратеги хос")}`}
             icon={Layers3}
           />
         </div>
@@ -761,7 +761,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5" />
-              Идэвхтэй хослолууд ({activeSymbolCount})
+              {t("Active combinations", "Идэвхтэй хослолууд")} ({activeSymbolCount})
               {wsConnected && (
                 <Badge className="ml-auto bg-green-600 text-xs flex items-center gap-1">
                   <Wifi className="h-3 w-3" />
@@ -769,19 +769,18 @@ export default function DashboardPage() {
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Скан тохиргооноос идэвхжүүлсэн symbol-стратеги хослолууд</CardDescription>
+            <CardDescription>{t("Symbol-strategy combinations enabled from scanner config", "Скан тохиргооноос идэвхжүүлсэн symbol-стратеги хослолууд")}</CardDescription>
           </CardHeader>
           <CardContent>
             {/* Explanation */}
             <div className="text-xs bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 mb-4 space-y-1.5">
-              <p className="font-medium text-blue-600">💡 Энэ юу харуулдаг вэ?</p>
+              <p className="font-medium text-blue-600">{t("💡 What does this show?", "💡 Энэ юу харуулдаг вэ?")}</p>
               <p className="text-muted-foreground">
-                <span className="text-foreground font-medium">Скан тохиргоо</span> хуудсанд идэвхжүүлсэн symbol болон стратегийн хослолууд энд харагдана.
-                Scanner эдгээр хослолуудыг 5 минут тутамд шалгаж, setup олдвол мэдэгдэл илгээнэ.
+                <span className="text-foreground font-medium">{t("Scanner Config", "Скан тохиргоо")}</span> {t("shows symbol-strategy combinations enabled on the config page. Scanner checks these every 5 minutes and sends notifications when setups are found.", "хуудсанд идэвхжүүлсэн symbol болон стратегийн хослолууд энд харагдана. Scanner эдгээр хослолуудыг 5 минут тутамд шалгаж, setup олдвол мэдэгдэл илгээнэ.")}
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground mt-1">
-                <span>• <span className="text-green-500">Ногоон</span> = Сүүлийн setup</span>
-                <span>• Symbol дарж дэлгэрэнгүй харах</span>
+                <span>• <span className="text-green-500">{t("Green", "Ногоон")}</span> = {t("Latest setup", "Сүүлийн setup")}</span>
+                <span>• {t("Click symbol for details", "Symbol дарж дэлгэрэнгүй харах")}</span>
               </div>
             </div>
             <ActiveStrategiesPanel

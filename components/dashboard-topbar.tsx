@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, LogOut, Menu, Clock, Globe } from "lucide-react"
+import { LogOut, Menu, Clock, Globe } from "lucide-react"
 import { TourButton } from "@/components/guide/tour-button"
 import { Button } from "@/components/ui/button"
 import {
@@ -68,7 +68,7 @@ function getSessionStatus(openUTC: number, closeUTC: number): { isOpen: boolean;
     (utcDay === 0 && utcHour < 22)
 
   if (weekendClosed) {
-    return { isOpen: false, timeLeft: "амралт" }
+    return { isOpen: false, timeLeft: "weekend" }
   }
   const isOpen = isSessionOpen(openUTC, closeUTC)
   
@@ -95,7 +95,7 @@ function getSessionStatus(openUTC: number, closeUTC: number): { isOpen: boolean;
   return { isOpen, timeLeft }
 }
 
-function MarketSessions() {
+function MarketSessions({ t }: { t: (en: string, mn: string) => string }) {
   const [, setTick] = useState(0)
   
   useEffect(() => {
@@ -116,7 +116,7 @@ function MarketSessions() {
                 ? "bg-green-500/15 border border-green-500/40" 
                 : "bg-zinc-800/50 border border-zinc-700/50"
             }`}
-            title={`${session.name}: ${utcToUB(session.openUTC)} - ${utcToUB(session.closeUTC)} (Улаанбаатар)`}
+            title={`${session.name}: ${utcToUB(session.openUTC)} - ${utcToUB(session.closeUTC)} (${t("Ulaanbaatar", "Улаанбаатар")})`}
           >
             <span className="text-sm">{session.emoji}</span>
             <div className="flex flex-col leading-tight">
@@ -128,13 +128,13 @@ function MarketSessions() {
                   <>
                     <span className="text-green-400">OPEN</span>
                     <span className="mx-1">•</span>
-                    <span>хаах {timeLeft}</span>
+                    <span>{t("closes", "хаах")} {timeLeft}</span>
                   </>
                 ) : (
                   <>
                     <span className="text-zinc-500">CLOSED</span>
                     <span className="mx-1">•</span>
-                    <span>нээх {utcToUB(session.openUTC)}</span>
+                    <span>{t("opens", "нээх")} {utcToUB(session.openUTC)}</span>
                   </>
                 )}
               </span>
@@ -180,7 +180,7 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
           <Menu className="h-5 w-5" />
         </Button>
         <BackButton fallbackHref="/dashboard" />
-        <MarketSessions />
+        <MarketSessions t={t} />
       </div>
 
       <div className="flex items-center gap-2">
@@ -199,9 +199,6 @@ export function DashboardTopbar({ user, onMenuToggle }: TopbarProps) {
         </Button>
 
         <TourButton />
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
-        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">

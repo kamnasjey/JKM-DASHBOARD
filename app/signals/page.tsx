@@ -85,6 +85,7 @@ function ScannerHealthStrip({
   onRefresh: () => void
 }) {
   const dashboardVersion = getDashboardVersion()
+  const { t } = useLanguage()
 
   if (!status) {
     return (
@@ -93,7 +94,7 @@ function ScannerHealthStrip({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-yellow-500">
               <AlertTriangle className="h-4 w-4" />
-              <span className="text-sm">Scanner статус авахад алдаа гарлаа</span>
+              <span className="text-sm">{t("Failed to get scanner status", "Scanner статус авахад алдаа гарлаа")}</span>
             </div>
             <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
@@ -120,12 +121,12 @@ function ScannerHealthStrip({
               {isRunning ? (
                 <Badge variant="default" className="bg-green-600 flex items-center gap-1">
                   <Wifi className="h-3 w-3 animate-pulse" />
-                  Scanner Running
+                  {t("Scanner Running", "Scanner ажиллаж байна")}
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <WifiOff className="h-3 w-3" />
-                  Scanner Stopped
+                  {t("Scanner Stopped", "Scanner зогссон")}
                 </Badge>
               )}
             </div>
@@ -135,16 +136,16 @@ function ScannerHealthStrip({
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Activity className="h-3 w-3" />
-                  Cycles: {counters.cycles}
+                  {t("Cycles", "Цикл")}: {counters.cycles}
                 </span>
                 <span className="flex items-center gap-1 text-green-500">
                   <CheckCircle className="h-3 w-3" />
-                  Setups: {counters.setupsFound}
+                  {t("Setups", "Setup")}: {counters.setupsFound}
                 </span>
                 {counters.errors > 0 && (
                   <span className="flex items-center gap-1 text-red-500">
                     <XCircle className="h-3 w-3" />
-                    Errors: {counters.errors}
+                    {t("Errors", "Алдаа")}: {counters.errors}
                   </span>
                 )}
               </div>
@@ -156,7 +157,7 @@ function ScannerHealthStrip({
             {status.lastCycleAt && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Last: {formatTimestamp(status.lastCycleAt)}
+                {t("Last", "Сүүлд")}: {formatTimestamp(status.lastCycleAt)}
               </span>
             )}
 
@@ -192,6 +193,7 @@ function SignalRow({
   signal: UnifiedSignal
   onToggle?: (id: string, taken: boolean) => void
 }) {
+  const { t } = useLanguage()
   const lowCoverage = hasLowCoverage(signal)
   const confidenceLevel = getConfidenceLevel(signal.confidence)
   const entryTaken = signal.entry_taken
@@ -215,9 +217,9 @@ function SignalRow({
           )}
         >
           {signal.source === "scanner" ? (
-            <><Zap className="h-3 w-3 mr-1" />Scanner</>
+            <><Zap className="h-3 w-3 mr-1" />{t("Scanner", "Сканнер")}</>
           ) : (
-            "Setup"
+            t("Setup", "Setup")
           )}
         </Badge>
       </TableCell>
@@ -273,7 +275,7 @@ function SignalRow({
               const rawId = signal.id.replace("signals:", "")
               onToggle?.(rawId, entryTaken !== true)
             }}
-            title={entryTaken === true ? "Entry Taken" : "Mark as Taken"}
+            title={entryTaken === true ? t("Entry Taken", "Орсон") : t("Mark as Taken", "Орсон гэж тэмдэглэх")}
           >
             {entryTaken === true ? (
               <Check className="h-4 w-4" />
@@ -294,7 +296,7 @@ function SignalRow({
           <Button variant="ghost" size="sm" asChild>
             <Link href={signal.links.openSimulator}>
               <ExternalLink className="h-4 w-4 mr-1" />
-              Sim
+              {t("Sim", "Сим")}
             </Link>
           </Button>
         )}
@@ -308,18 +310,19 @@ function SignalRow({
 // ============================================================
 
 function EmptyScannerState() {
+  const { t } = useLanguage()
   return (
     <Card className="border-dashed">
       <CardContent className="py-12 text-center">
         <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Scanner setup олдсонгүй</h3>
+        <h3 className="text-lg font-semibold mb-2">{t("No scanner setups found", "Scanner setup олдсонгүй")}</h3>
         <p className="text-muted-foreground mb-4">
-          Scanner ажиллаж байна уу? Шалгана уу.
+          {t("Is the scanner running? Please check.", "Scanner ажиллаж байна уу? Шалгана уу.")}
         </p>
         <Button variant="outline" asChild>
           <Link href="/scanner">
             <Activity className="h-4 w-4 mr-2" />
-            Scanner хуудас руу очих
+            {t("Go to Scanner page", "Scanner хуудас руу очих")}
           </Link>
         </Button>
       </CardContent>
@@ -328,17 +331,18 @@ function EmptyScannerState() {
 }
 
 function EmptySignalsState() {
+  const { t } = useLanguage()
   return (
     <Card className="border-dashed">
       <CardContent className="py-12 text-center">
         <Filter className="h-10 w-10 mx-auto text-muted-foreground/40 mb-4" />
-        <h3 className="text-base font-medium mb-1">Setup олдсонгүй</h3>
+        <h3 className="text-base font-medium mb-1">{t("No setups found", "Setup олдсонгүй")}</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Scanner 5 минут тутам шалгаж байна. Стратеги идэвхтэй эсэхийг шалгана уу.
+          {t("Scanner checks every 5 minutes. Please ensure your strategy is active.", "Scanner 5 минут тутам шалгаж байна. Стратеги идэвхтэй эсэхийг шалгана уу.")}
         </p>
         <Button variant="outline" size="sm" asChild>
           <Link href="/strategies">
-            Стратеги тохируулах
+            {t("Configure Strategy", "Стратеги тохируулах")}
           </Link>
         </Button>
       </CardContent>
@@ -347,15 +351,16 @@ function EmptySignalsState() {
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useLanguage()
   return (
     <Card className="border-red-500/30 bg-red-950/10">
       <CardContent className="py-8 text-center">
         <AlertTriangle className="h-10 w-10 mx-auto text-red-500 mb-4" />
-        <h3 className="text-lg font-semibold text-red-500 mb-2">Алдаа гарлаа</h3>
+        <h3 className="text-lg font-semibold text-red-500 mb-2">{t("An error occurred", "Алдаа гарлаа")}</h3>
         <p className="text-muted-foreground mb-4">{message}</p>
         <Button variant="outline" onClick={onRetry}>
           <RefreshCw className="h-4 w-4 mr-2" />
-          Дахин оролдох
+          {t("Try again", "Дахин оролдох")}
         </Button>
       </CardContent>
     </Card>
@@ -373,22 +378,23 @@ function UnifiedSignalsTable({
   signals: UnifiedSignal[]
   onToggle?: (id: string, taken: boolean) => void
 }) {
+  const { t } = useLanguage()
   return (
     <Card>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Source</TableHead>
-              <TableHead>Symbol</TableHead>
-              <TableHead>TF</TableHead>
-              <TableHead>Direction</TableHead>
-              <TableHead>Confidence</TableHead>
-              <TableHead>RR</TableHead>
-              <TableHead>Strategy</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead className="text-center">Entry</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="w-[100px]">{t("Source", "Эх сурвалж")}</TableHead>
+              <TableHead>{t("Symbol", "Валют хос")}</TableHead>
+              <TableHead>{t("TF", "TF")}</TableHead>
+              <TableHead>{t("Direction", "Чиглэл")}</TableHead>
+              <TableHead>{t("Confidence", "Итгэлцүүр")}</TableHead>
+              <TableHead>{t("RR", "RR")}</TableHead>
+              <TableHead>{t("Strategy", "Стратеги")}</TableHead>
+              <TableHead>{t("Time", "Цаг")}</TableHead>
+              <TableHead className="text-center">{t("Entry", "Орсон")}</TableHead>
+              <TableHead className="w-[80px]">{t("Actions", "Үйлдэл")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -445,11 +451,11 @@ export default function SignalsPage() {
       setOldSignals(signalsData)
 
     } catch (e: any) {
-      setError(e.message || "Алдаа гарлаа")
+      setError(e.message || t("An error occurred", "Алдаа гарлаа"))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   // Handle entry toggle
   const handleEntryToggle = useCallback(async (signalId: string, taken: boolean) => {
@@ -462,19 +468,19 @@ export default function SignalsPage() {
       await api.updateSignalEntry(signalId, taken)
 
       toast({
-        title: taken ? "Entry Taken ✅" : "Entry Removed ❌",
-        description: "Setup tracking updated"
+        title: taken ? t("Entry Taken ✅", "Орсон ✅") : t("Entry Removed ❌", "Хасагдсан ❌"),
+        description: t("Setup tracking updated", "Setup tracking шинэчлэгдлээ")
       })
     } catch (e: any) {
       toast({
-        title: "Error",
-        description: e.message || "Failed to update tracking",
+        title: t("Error", "Алдаа"),
+        description: e.message || t("Failed to update tracking", "Tracking шинэчлэхэд алдаа гарлаа"),
         variant: "destructive"
       })
       // Revert on error (fetch fresh data)
       fetchData()
     }
-  }, [fetchData, toast])
+  }, [fetchData, toast, t])
 
   useEffect(() => {
     fetchData()
@@ -537,7 +543,7 @@ export default function SignalsPage() {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Setups</h1>
+          <h1 className="text-3xl font-bold">{t("Setups", "Setup-үүд")}</h1>
           <ErrorState message={error} onRetry={fetchData} />
         </div>
       </DashboardLayout>
@@ -552,7 +558,7 @@ export default function SignalsPage() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Zap className="h-8 w-8 text-yellow-500" />
-              Setups
+              {t("Setups", "Setup-үүд")}
             </h1>
             <p className="text-muted-foreground">
               {t("Setups found by Scanner", "Scanner-ээс олдсон setup-үүд")}
@@ -582,10 +588,10 @@ export default function SignalsPage() {
               </TabsTrigger>
               <TabsTrigger value="scanner">
                 <Zap className="h-4 w-4 mr-1" />
-                Scanner ({scannerCount})
+                {t("Scanner", "Сканнер")} ({scannerCount})
               </TabsTrigger>
               <TabsTrigger value="signals">
-                Setups ({signalsCount})
+                {t("Setups", "Setup-үүд")} ({signalsCount})
               </TabsTrigger>
             </TabsList>
           </div>
@@ -601,7 +607,7 @@ export default function SignalsPage() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">Symbol</label>
+                  <label className="text-xs font-medium">{t("Symbol", "Валют хос")}</label>
                   <Select
                     value={filters.symbol}
                     onValueChange={(v) => setFilters(f => ({ ...f, symbol: v }))}
@@ -610,7 +616,7 @@ export default function SignalsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Бүгд</SelectItem>
+                      <SelectItem value="all">{t("All", "Бүгд")}</SelectItem>
                       {uniqueSymbols.map(s => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
@@ -619,7 +625,7 @@ export default function SignalsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">Чиглэл</label>
+                  <label className="text-xs font-medium">{t("Direction", "Чиглэл")}</label>
                   <Select
                     value={filters.direction}
                     onValueChange={(v) => setFilters(f => ({ ...f, direction: v }))}
@@ -628,7 +634,7 @@ export default function SignalsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Бүгд</SelectItem>
+                      <SelectItem value="all">{t("All", "Бүгд")}</SelectItem>
                       <SelectItem value="long">LONG</SelectItem>
                       <SelectItem value="short">SHORT</SelectItem>
                     </SelectContent>
@@ -636,7 +642,7 @@ export default function SignalsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">RR Min</label>
+                  <label className="text-xs font-medium">{t("RR Min", "RR Доод")}</label>
                   <Input
                     type="number"
                     placeholder="0.0"
@@ -646,7 +652,7 @@ export default function SignalsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">RR Max</label>
+                  <label className="text-xs font-medium">{t("RR Max", "RR Дээд")}</label>
                   <Input
                     type="number"
                     placeholder="10.0"
@@ -664,7 +670,7 @@ export default function SignalsPage() {
               <Card>
                 <CardContent className="py-12 text-center">
                   <RefreshCw className="h-8 w-8 mx-auto animate-spin text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Ачааллаж байна...</p>
+                  <p className="text-muted-foreground">{t("Loading...", "Ачааллаж байна...")}</p>
                 </CardContent>
               </Card>
             ) : filteredSignals.length === 0 ? (
@@ -710,7 +716,7 @@ export default function SignalsPage() {
               <div className="flex items-center gap-2 text-yellow-500">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="text-sm">
-                  Зарим setup дээр data coverage бага байна. 90 хоног сонгох эсвэл 1H/4H timeframe ашиглана уу.
+                  {t("Some setups have low data coverage. Try selecting 90 days or using 1H/4H timeframe.", "Зарим setup дээр data coverage бага байна. 90 хоног сонгох эсвэл 1H/4H timeframe ашиглана уу.")}
                 </span>
               </div>
             </CardContent>

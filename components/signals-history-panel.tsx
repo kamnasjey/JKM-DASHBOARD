@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +22,7 @@ import {
   ShieldAlert,
   History,
 } from "lucide-react"
-import type { SignalPayloadPublicV1 } from "@/lib/types"
+import { useLanguage } from "@/contexts/language-context"
 
 interface SignalWithEntry {
   signal_id?: string
@@ -34,9 +34,8 @@ interface SignalWithEntry {
   rr?: number
   created_at?: string | number
   timestamp?: string | number
-  generated_at?: string // Signal generation timestamp
-  ts?: string // Alias for generated_at
-  // Entry tracking
+  generated_at?: string
+  ts?: string
   entry_taken?: boolean | null
   outcome?: "win" | "loss" | "pending" | null
 }
@@ -52,6 +51,8 @@ export function SignalsHistoryPanel({
   onEntryToggle,
   showWinRate = true,
 }: SignalsHistoryPanelProps) {
+  const { t } = useLanguage()
+
   const stats = useMemo(() => {
     const taken = signals.filter((s) => s.entry_taken === true)
     const wins = taken.filter((s) => s.outcome === "win").length
@@ -66,17 +67,13 @@ export function SignalsHistoryPanel({
     try {
       let timestamp: number
       if (typeof ts === "string") {
-        // Check if it's a numeric string (Unix timestamp) or ISO string
         const parsed = parseInt(ts, 10)
         if (!isNaN(parsed) && ts.match(/^\d+$/)) {
-          // Unix timestamp as string - need to convert to milliseconds
           timestamp = parsed < 4102444800 ? parsed * 1000 : parsed
         } else {
-          // ISO date string
           timestamp = new Date(ts).getTime()
         }
       } else {
-        // Number - check if seconds or milliseconds
         timestamp = ts < 4102444800 ? ts * 1000 : ts
       }
 
@@ -99,7 +96,6 @@ export function SignalsHistoryPanel({
     if (price === undefined || price === null) return "—"
     const num = typeof price === "string" ? parseFloat(price) : price
     if (!Number.isFinite(num)) return "—"
-    // For forex pairs, show 5 decimals; for others (gold, crypto) show 2
     return num > 100 ? num.toFixed(2) : num.toFixed(5)
   }
 
@@ -109,15 +105,15 @@ export function SignalsHistoryPanel({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Setups History
+            {t("Setups History", "Setup-ийн түүх")}
           </CardTitle>
-          <CardDescription>Олдсон setup-үүд энд харагдана</CardDescription>
+          <CardDescription>{t("Found setups will appear here", "Олдсон setup-үүд энд харагдана")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <Clock className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-sm font-medium mb-1">Scanner 5 минут тутам шалгаж байна</p>
-            <p className="text-xs text-muted-foreground">Удахгүй setup олдож болно. Стратеги идэвхтэй эсэхийг шалгана уу.</p>
+            <p className="text-sm font-medium mb-1">{t("Scanner checks every 5 minutes", "Scanner 5 минут тутам шалгаж байна")}</p>
+            <p className="text-xs text-muted-foreground">{t("Setups may appear soon. Check that your strategy is active.", "Удахгүй setup олдож болно. Стратеги идэвхтэй эсэхийг шалгана уу.")}</p>
           </div>
         </CardContent>
       </Card>
@@ -131,9 +127,9 @@ export function SignalsHistoryPanel({
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5" />
-              Setups History ({signals.length})
+              {t("Setups History", "Setup-ийн түүх")} ({signals.length})
             </CardTitle>
-            <CardDescription>Олдсон setup-үүд • Entry орсон/алгассан</CardDescription>
+            <CardDescription>{t("Found setups — Entered / Skipped", "Олдсон setup-үүд • Entry орсон/алгассан")}</CardDescription>
           </div>
 
           {showWinRate && stats.total > 0 && (
@@ -142,7 +138,7 @@ export function SignalsHistoryPanel({
                 {stats.winRate.toFixed(1)}%
               </div>
               <div className="text-xs text-muted-foreground">
-                Win Rate ({stats.wins}W / {stats.losses}L)
+                {t("Win Rate", "Win Rate")} ({stats.wins}W / {stats.losses}L)
               </div>
             </div>
           )}
@@ -154,13 +150,13 @@ export function SignalsHistoryPanel({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Symbol</TableHead>
-                <TableHead>Direction</TableHead>
+                <TableHead>{t("Direction", "Чиглэл")}</TableHead>
                 <TableHead className="text-right">Entry</TableHead>
                 <TableHead className="text-right">TP</TableHead>
                 <TableHead className="text-right">SL</TableHead>
-                <TableHead>Цаг</TableHead>
-                <TableHead className="text-center">Entry</TableHead>
-                <TableHead className="text-center">Үр дүн</TableHead>
+                <TableHead>{t("Time", "Цаг")}</TableHead>
+                <TableHead className="text-center">{t("Entered", "Орсон")}</TableHead>
+                <TableHead className="text-center">{t("Result", "Үр дүн")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -233,8 +229,8 @@ export function SignalsHistoryPanel({
                         }}
                         title={
                           entryTaken === true
-                            ? "Entry орсон (дарж болихгүй болгох)"
-                            : "Entry ороогүй (дарж орсон болгох)"
+                            ? t("Entered (click to undo)", "Entry орсон (дарж болихгүй болгох)")
+                            : t("Not entered (click to mark entered)", "Entry ороогүй (дарж орсон болгох)")
                         }
                       >
                         {entryTaken === true ? (
@@ -254,12 +250,12 @@ export function SignalsHistoryPanel({
                         <Badge className="bg-red-600 text-white">SL</Badge>
                       )}
                       {entryTaken === true && !signal.outcome && (
-                        <div className="flex items-center justify-center gap-1 text-yellow-500" title="VPS 5 минут тутам SL/TP автоматаар шалгаж байна">
+                        <div className="flex items-center justify-center gap-1 text-yellow-500" title={t("VPS checks SL/TP automatically every 5 min", "VPS 5 минут тутам SL/TP автоматаар шалгаж байна")}>
                           <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
                           </span>
-                          <span className="text-[10px]">Хянагдаж байна</span>
+                          <span className="text-[10px]">{t("Monitoring", "Хянагдаж байна")}</span>
                         </div>
                       )}
                       {!signal.outcome && entryTaken !== true && (

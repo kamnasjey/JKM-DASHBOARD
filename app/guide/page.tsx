@@ -1,6 +1,7 @@
 "use client"
 
 import { DashboardLayout } from "@/components/dashboard-layout"
+import { useLanguage } from "@/contexts/language-context"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import {
   Accordion,
@@ -25,11 +26,12 @@ import {
 } from "lucide-react"
 
 function Tip({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage()
   return (
     <div className="text-xs bg-blue-500/5 border border-blue-500/20 rounded-lg p-3 my-3 space-y-1">
       <p className="font-medium text-blue-400 flex items-center gap-1.5">
         <Lightbulb className="h-3.5 w-3.5" />
-        Зөвлөгөө
+        {t("Tip", "Зөвлөгөө")}
       </p>
       <p className="text-muted-foreground">{children}</p>
     </div>
@@ -37,11 +39,12 @@ function Tip({ children }: { children: React.ReactNode }) {
 }
 
 function Warning({ children }: { children: React.ReactNode }) {
+  const { t } = useLanguage()
   return (
     <div className="text-xs bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3 my-3 space-y-1">
       <p className="font-medium text-yellow-400 flex items-center gap-1.5">
         <AlertTriangle className="h-3.5 w-3.5" />
-        Анхааруулга
+        {t("Warning", "Анхааруулга")}
       </p>
       <p className="text-muted-foreground">{children}</p>
     </div>
@@ -69,6 +72,7 @@ function Term({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function GuidePage() {
+  const { t } = useLanguage()
   return (
     <DashboardLayout>
       <div className="container mx-auto max-w-4xl py-6 px-4 space-y-6">
@@ -76,10 +80,10 @@ export default function GuidePage() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold flex items-center gap-3">
             <BookOpen className="h-7 w-7 text-primary" />
-            Хэрэглэгчийн заавар
+            {t("User Guide", "Хэрэглэгчийн заавар")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            JKM AI Trading System-ийн бүх функцийг ойлгох гарын авлага
+            {t("Complete guide to understanding all features of JKM AI Trading System", "JKM AI Trading System-ийн бүх функцийг ойлгох гарын авлага")}
           </p>
         </div>
 
@@ -91,7 +95,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <Rocket className="h-5 w-5 text-primary" />
-                Эхлэх
+                {t("Getting Started", "Эхлэх")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -128,7 +132,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-400" />
-                Стратеги
+                {t("Strategy", "Стратеги")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -139,7 +143,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Detector-ийн 3 төрөл</CardTitle>
+                  <CardTitle className="text-sm">{t("3 Types of Detectors", "Detector-ийн 3 төрөл")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Term label="Trigger (Гол дохио)">
@@ -159,7 +163,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Detector Family (Гэр бүл)</CardTitle>
+                  <CardTitle className="text-sm">{t("Detector Family", "Detector гэр бүл")}</CardTitle>
                   <CardDescription>
                     Detector бүр нэг &quot;гэр бүл&quot;-д хамаарна. Стратеги дор хаяж 2
                     өөр гэр бүлээс detector тохирсон байх ёстой (confluence).
@@ -182,7 +186,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Бэлэн стратегиуд</CardTitle>
+                  <CardTitle className="text-sm">{t("Built-in Strategies", "Бэлэн стратегиуд")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-xs text-muted-foreground">
                   <div className="flex justify-between border-b border-border/50 py-1.5">
@@ -215,7 +219,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <Scan className="h-5 w-5 text-cyan-400" />
-                Сканнер (Live Scanning)
+                {t("Scanner (Live Scanning)", "Сканнер (Live Scanning)")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -226,7 +230,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Ажиллах дараалал</CardTitle>
+                  <CardTitle className="text-sm">{t("How It Works", "Ажиллах дараалал")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
@@ -254,7 +258,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Score тооцоолол</CardTitle>
+                  <CardTitle className="text-sm">{t("Score Calculation", "Score тооцоолол")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-xs text-muted-foreground">
                   <p>Score = <strong>Detector weight + Confluence bonus - Correlation discount</strong></p>
@@ -284,7 +288,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-green-400" />
-                Симулятор (Backtest)
+                {t("Simulator (Backtest)", "Симулятор (Backtest)")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -295,7 +299,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Backtest хийх</CardTitle>
+                  <CardTitle className="text-sm">{t("How to Backtest", "Backtest хийх")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <Step n={1}>Strategy сонгоно (detector-ууд автоматаар ачаалагдана)</Step>
@@ -307,7 +311,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Үр дүнг ойлгох</CardTitle>
+                  <CardTitle className="text-sm">{t("Understanding Results", "Үр дүнг ойлгох")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Term label="Entries (Нийт trade)">
@@ -338,7 +342,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <Send className="h-5 w-5 text-blue-400" />
-                Telegram дохио
+                {t("Telegram Signals", "Telegram дохио")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -348,7 +352,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Холболт хийх (Нэг товч)</CardTitle>
+                  <CardTitle className="text-sm">{t("Connect (One Click)", "Холболт хийх (Нэг товч)")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <Step n={1}>Dashboard-ийн <strong>Профайл</strong> хуудас руу орно</Step>
@@ -360,7 +364,7 @@ export default function GuidePage() {
 
               <Card className="bg-card/50">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Дохионы формат</CardTitle>
+                  <CardTitle className="text-sm">{t("Signal Format", "Дохионы формат")}</CardTitle>
                 </CardHeader>
                 <CardContent className="text-xs">
                   <div className="bg-muted/50 rounded-lg p-3 font-mono space-y-0.5">
@@ -386,7 +390,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <UserCog className="h-5 w-5 text-orange-400" />
-                Profile тохиргоо
+                {t("Profile Settings", "Profile тохиргоо")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">
@@ -466,7 +470,7 @@ export default function GuidePage() {
             <AccordionTrigger className="text-base">
               <span className="flex items-center gap-2">
                 <HelpCircle className="h-5 w-5 text-rose-400" />
-                Түгээмэл асуулт (FAQ)
+                {t("FAQ", "Түгээмэл асуулт (FAQ)")}
               </span>
             </AccordionTrigger>
             <AccordionContent className="space-y-4">

@@ -44,6 +44,7 @@ function EntryTrackingCell({
   onUpdate: () => void
 }) {
   const { toast } = useToast()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
 
   const handleClick = async (value: boolean | null) => {
@@ -53,15 +54,15 @@ function EntryTrackingCell({
       const result = await api.updateSignalEntry(signalId, value)
       console.log("[EntryTracking] Result:", result)
       toast({
-        title: "Хадгалагдлаа",
+        title: t("Saved", "Хадгалагдлаа"),
         description: `Signal ${signalId.slice(0, 20)}... updated`,
       })
       onUpdate()
     } catch (e: any) {
       console.error("[EntryTracking] Failed:", e)
       toast({
-        title: "Алдаа",
-        description: e?.message || "Failed to update",
+        title: t("Error", "Алдаа"),
+        description: e?.message || t("Failed to update", "Шинэчлэхэд алдаа гарлаа"),
         variant: "destructive",
       })
     } finally {
@@ -105,7 +106,7 @@ function EntryTrackingCell({
         className="h-7 w-7 p-0 hover:text-green-500 hover:bg-green-500/10"
         onClick={() => handleClick(true)}
         disabled={loading}
-        title="Орсон — Энэ trade-д орсон бол дарна уу"
+        title={t("Entered — Click if you entered this trade", "Орсон — Энэ trade-д орсон бол дарна уу")}
       >
         <Check className="h-3.5 w-3.5" />
       </Button>
@@ -115,7 +116,7 @@ function EntryTrackingCell({
         className="h-7 w-7 p-0 hover:text-red-500 hover:bg-red-500/10"
         onClick={() => handleClick(false)}
         disabled={loading}
-        title="Алгассан — Энэ trade-д ороогүй бол дарна уу"
+        title={t("Skipped — Click if you did not enter this trade", "Алгассан — Энэ trade-д ороогүй бол дарна уу")}
       >
         <X className="h-3.5 w-3.5" />
       </Button>
@@ -131,6 +132,7 @@ function OutcomeCell({
   outcome?: "win" | "loss" | "expired" | "pending" | null
   entryTaken?: boolean | null
 }) {
+  const { t } = useLanguage()
   // Only show outcome if entry was taken
   if (entryTaken !== true) {
     return <span className="text-muted-foreground">—</span>
@@ -154,23 +156,23 @@ function OutcomeCell({
 
   // Pending - waiting for automatic outcome detection
   return (
-    <span className="inline-flex items-center gap-1 text-yellow-500 text-sm" title="VPS 5 минут тутам SL/TP-г автоматаар шалгаж байна">
+    <span className="inline-flex items-center gap-1 text-yellow-500 text-sm" title={t("VPS checks SL/TP automatically every 5 minutes", "VPS 5 минут тутам SL/TP-г автоматаар шалгаж байна")}>
       <span className="relative flex h-2 w-2 shrink-0">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
         <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
       </span>
-      Хянагдаж байна
+      {t("Monitoring", "Хянагдаж байна")}
     </span>
   )
 }
 
 const rangeOptions = [
-  { label: "7 хоног", value: "7" },
-  { label: "30 хоног", value: "30" },
-  { label: "90 хоног", value: "90" },
-  { label: "180 хоног", value: "180" },
-  { label: "365 хоног", value: "365" },
-  { label: "Бүгд", value: "all" },
+  { en: "7 days", mn: "7 хоног", value: "7" },
+  { en: "30 days", mn: "30 хоног", value: "30" },
+  { en: "90 days", mn: "90 хоног", value: "90" },
+  { en: "180 days", mn: "180 хоног", value: "180" },
+  { en: "365 days", mn: "365 хоног", value: "365" },
+  { en: "All", mn: "Бүгд", value: "all" },
 ]
 
 // Check if a string looks like a Firestore document ID (random alphanumeric)
@@ -239,8 +241,8 @@ export default function PerformancePage() {
       setStrategyMap(mapping)
     } catch (err: any) {
       toast({
-        title: "Алдаа",
-        description: err.message || "Өгөгдөл ачаалж чадсангүй",
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to load data", "Өгөгдөл ачаалж чадсангүй"),
         variant: "destructive",
       })
     } finally {
@@ -370,7 +372,7 @@ export default function PerformancePage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Ачааллаж байна...</p>
+          <p className="text-muted-foreground">{t("Loading...", "Ачааллаж байна...")}</p>
         </div>
       </DashboardLayout>
     )
@@ -405,12 +407,12 @@ export default function PerformancePage() {
             <label className="text-xs font-medium text-muted-foreground">{t("Period", "Хугацаа")}</label>
             <Select value={rangeDays} onValueChange={setRangeDays}>
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Хугацаа сонгох" />
+                <SelectValue placeholder={t("Select period", "Хугацаа сонгох")} />
               </SelectTrigger>
               <SelectContent>
                 {rangeOptions.map(option => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.en, option.mn)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -422,7 +424,7 @@ export default function PerformancePage() {
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">Нийт setup</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">{t("Total setups", "Нийт setup")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -430,14 +432,14 @@ export default function PerformancePage() {
                 <span className="text-xl sm:text-2xl font-bold">{totals.total}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Орсон: {takenStats.total}
+                {t("Entered", "Орсон")}: {takenStats.total}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">TP болсон</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">{t("TP hit", "TP болсон")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -445,14 +447,14 @@ export default function PerformancePage() {
                 <span className="text-xl sm:text-2xl font-bold text-green-500">{takenStats.tp}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Орсон entry‑ээс
+                {t("From entered trades", "Орсон entry\u2011ээс")}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">SL болсон</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">{t("SL hit", "SL болсон")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -460,14 +462,14 @@ export default function PerformancePage() {
                 <span className="text-xl sm:text-2xl font-bold text-red-500">{takenStats.sl}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Орсон entry‑ээс
+                {t("From entered trades", "Орсон entry\u2011ээс")}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription className="text-xs sm:text-sm">Хүлээгдэж буй</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">{t("Pending", "Хүлээгдэж буй")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -475,7 +477,7 @@ export default function PerformancePage() {
                 <span className="text-xl sm:text-2xl font-bold">{takenStats.pending}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Орсон, үр дүн хүлээгдэж буй
+                {t("Entered, awaiting outcome", "Орсон, үр дүн хүлээгдэж буй")}
               </p>
             </CardContent>
           </Card>
@@ -491,7 +493,7 @@ export default function PerformancePage() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {takenStats.tp + takenStats.sl} trade‑ээс
+                {t(`From ${takenStats.tp + takenStats.sl} trades`, `${takenStats.tp + takenStats.sl} trade\u2011ээс`)}
               </p>
             </CardContent>
           </Card>
@@ -499,17 +501,17 @@ export default function PerformancePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Setup түүх</CardTitle>
-            <CardDescription>Strategy бүрийн орсон арилжаа, TP/SL тоо, Win Rate</CardDescription>
+            <CardTitle className="text-base sm:text-lg">{t("Setup history", "Setup түүх")}</CardTitle>
+            <CardDescription>{t("Entered trades, TP/SL count, Win Rate per strategy", "Strategy бүрийн орсон арилжаа, TP/SL тоо, Win Rate")}</CardDescription>
           </CardHeader>
           <CardContent>
             {setupSummaries.length === 0 ? (
               <div className="py-8 text-center">
                 <BarChart3 className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium mb-1">Setup олдсоны дараа энд харагдана</p>
-                <p className="text-xs text-muted-foreground mb-3">Scanner дохио олдвол автоматаар бүртгэгдэнэ</p>
+                <p className="text-sm font-medium mb-1">{t("Setups will appear here once found", "Setup олдсоны дараа энд харагдана")}</p>
+                <p className="text-xs text-muted-foreground mb-3">{t("Setups are recorded automatically when scanner finds signals", "Scanner дохио олдвол автоматаар бүртгэгдэнэ")}</p>
                 <Button variant="outline" size="sm" asChild>
-                  <a href="/signals">Signals хуудас руу очих</a>
+                  <a href="/signals">{t("Go to Signals page", "Signals хуудас руу очих")}</a>
                 </Button>
               </div>
             ) : (
@@ -517,13 +519,13 @@ export default function PerformancePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Strategy</TableHead>
-                    <TableHead className="text-right">Нийт</TableHead>
-                    <TableHead className="text-right">Орсон</TableHead>
+                    <TableHead>{t("Strategy", "Стратеги")}</TableHead>
+                    <TableHead className="text-right">{t("Total", "Нийт")}</TableHead>
+                    <TableHead className="text-right">{t("Entered", "Орсон")}</TableHead>
                     <TableHead className="text-right">TP</TableHead>
                     <TableHead className="text-right">SL</TableHead>
-                    <TableHead className="text-right">Win Rate</TableHead>
-                    <TableHead>Сүүлд</TableHead>
+                    <TableHead className="text-right">{t("Win Rate", "Win Rate")}</TableHead>
+                    <TableHead>{t("Last", "Сүүлд")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -567,31 +569,31 @@ export default function PerformancePage() {
           <CardHeader>
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
               <Check className="h-5 w-5 text-green-500" />
-              Орсон арилжаа
+              {t("Entered trades", "Орсон арилжаа")}
             </CardTitle>
             <CardDescription>
-              Entry авсан setup‑ууд — Win Rate зөвхөн эндээс тооцогдоно
+              {t("Setups where entry was taken — Win Rate is calculated from these only", "Entry авсан setup\u2011ууд — Win Rate зөвхөн эндээс тооцогдоно")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {takenEntries.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                Одоогоор орсон арилжаа байхгүй. Доорх жагсаалтаас &quot;Орсон&quot; товч дарж тэмдэглэнэ үү.
+                {t("No entered trades yet. Mark entries using the buttons in the list below.", "Одоогоор орсон арилжаа байхгүй. Доорх жагсаалтаас \u0022Орсон\u0022 товч дарж тэмдэглэнэ үү.")}
               </p>
             ) : (
               <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>TF</TableHead>
-                    <TableHead>Чиглэл</TableHead>
-                    <TableHead className="text-right">Entry</TableHead>
-                    <TableHead className="text-right">SL</TableHead>
-                    <TableHead className="text-right">TP</TableHead>
-                    <TableHead className="text-right">RR</TableHead>
-                    <TableHead>Үр дүн</TableHead>
-                    <TableHead>Огноо</TableHead>
+                    <TableHead>{t("Symbol", "Symbol")}</TableHead>
+                    <TableHead>{t("TF", "TF")}</TableHead>
+                    <TableHead>{t("Direction", "Чиглэл")}</TableHead>
+                    <TableHead className="text-right">{t("Entry", "Entry")}</TableHead>
+                    <TableHead className="text-right">{t("SL", "SL")}</TableHead>
+                    <TableHead className="text-right">{t("TP", "TP")}</TableHead>
+                    <TableHead className="text-right">{t("RR", "RR")}</TableHead>
+                    <TableHead>{t("Outcome", "Үр дүн")}</TableHead>
+                    <TableHead>{t("Date", "Огноо")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -656,34 +658,34 @@ export default function PerformancePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base sm:text-lg">Бүх setup‑ууд</CardTitle>
-            <CardDescription>Symbol, TF, чиглэл, RR, outcome‑ийг дэлгэрэнгүй харуулна</CardDescription>
+            <CardTitle className="text-base sm:text-lg">{t("All setups", "Бүх setup\u2011ууд")}</CardTitle>
+            <CardDescription>{t("Detailed view of Symbol, TF, direction, RR, and outcome", "Symbol, TF, чиглэл, RR, outcome\u2011ийг дэлгэрэнгүй харуулна")}</CardDescription>
           </CardHeader>
           <CardContent>
             {recentSignals.length === 0 ? (
               <div className="py-8 text-center">
                 <BarChart3 className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-                <p className="text-sm font-medium mb-1">Setup олдсоны дараа энд харагдана</p>
-                <p className="text-xs text-muted-foreground">Scanner дохио олдвол автоматаар бүртгэгдэнэ</p>
+                <p className="text-sm font-medium mb-1">{t("Setups will appear here once found", "Setup олдсоны дараа энд харагдана")}</p>
+                <p className="text-xs text-muted-foreground">{t("Setups are recorded automatically when scanner finds signals", "Scanner дохио олдвол автоматаар бүртгэгдэнэ")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
               <p className="text-xs text-muted-foreground mb-2">
-                ✓/✗ товчоор trade-д орсон эсэхийг тэмдэглэнэ. Орсон бол TP/SL автоматаар хянагдана.
+                {t("Use ✓/✗ buttons to mark whether you entered a trade. Entered trades will be monitored for TP/SL automatically.", "✓/✗ товчоор trade-д орсон эсэхийг тэмдэглэнэ. Орсон бол TP/SL автоматаар хянагдана.")}
               </p>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Symbol</TableHead>
-                    <TableHead>TF</TableHead>
-                    <TableHead>Чиглэл</TableHead>
-                    <TableHead className="text-right">Entry</TableHead>
-                    <TableHead className="text-right">SL</TableHead>
-                    <TableHead className="text-right">TP</TableHead>
-                    <TableHead className="text-right">RR</TableHead>
-                    <TableHead>Орсон</TableHead>
-                    <TableHead>Үр дүн</TableHead>
-                    <TableHead>Огноо</TableHead>
+                    <TableHead>{t("Symbol", "Symbol")}</TableHead>
+                    <TableHead>{t("TF", "TF")}</TableHead>
+                    <TableHead>{t("Direction", "Чиглэл")}</TableHead>
+                    <TableHead className="text-right">{t("Entry", "Entry")}</TableHead>
+                    <TableHead className="text-right">{t("SL", "SL")}</TableHead>
+                    <TableHead className="text-right">{t("TP", "TP")}</TableHead>
+                    <TableHead className="text-right">{t("RR", "RR")}</TableHead>
+                    <TableHead>{t("Entered", "Орсон")}</TableHead>
+                    <TableHead>{t("Outcome", "Үр дүн")}</TableHead>
+                    <TableHead>{t("Date", "Огноо")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

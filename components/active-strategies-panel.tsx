@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Zap, TrendingUp, TrendingDown, Clock, Radio, Check, AlertTriangle, X } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 // Client-side market closed detection (weekend check)
 const isMarketClosedNow = (symbol: string): boolean => {
@@ -41,24 +42,18 @@ interface FeedItem {
 }
 
 interface ActiveStrategiesPanelProps {
-  // Symbol -> StrategyId mapping from Scanner Config
   activeStrategyMap: Record<string, string>
-  // Symbol -> enabled/disabled
   symbolEnabled: Record<string, boolean>
-  // All strategies (to get names)
   strategies: Strategy[]
-  // Engine status 247 with effectiveSymbols
   engineStatus247?: {
     effectiveSymbols?: EffectiveSymbol[]
     engineRunning?: boolean
     lastCycleTs?: string
   } | null
-  // Feed status for data lag info
   feedStatus?: {
     items?: FeedItem[]
     serverTime?: string
   } | null
-  // Last signals per symbol
   lastSignals?: Record<string, { direction: string; entry: number; time: string }>
   onSymbolClick?: (symbol: string) => void
 }
@@ -72,7 +67,8 @@ export function ActiveStrategiesPanel({
   lastSignals = {},
   onSymbolClick,
 }: ActiveStrategiesPanelProps) {
-  // Build list of active symbol-strategy pairs
+  const { t } = useLanguage()
+
   const activeSymbols = useMemo(() => {
     const pairs: Array<{
       symbol: string
@@ -99,9 +95,7 @@ export function ActiveStrategiesPanel({
     return pairs.sort((a, b) => a.symbol.localeCompare(b.symbol))
   }, [activeStrategyMap, symbolEnabled, strategies])
 
-  // Get status for a symbol from engineStatus247 or feedStatus
   const getSymbolStatus = (symbol: string) => {
-    // Check engineStatus247 first
     const effSym = engineStatus247?.effectiveSymbols?.find(
       (e) => e.symbol?.toUpperCase() === symbol.toUpperCase()
     )
@@ -118,7 +112,6 @@ export function ActiveStrategiesPanel({
       return { status: "live", lagSec: effSym.lagSec, lastScan: effSym.lastScanTs }
     }
 
-    // Fallback to feedStatus
     const item = feedStatus?.items?.find(
       (i) => i.symbol?.toUpperCase() === symbol.toUpperCase()
     )
@@ -127,7 +120,6 @@ export function ActiveStrategiesPanel({
         return { status: "closed", lagSec: item.lagSec, lastScan: null }
       }
       if (item.lagSec && item.lagSec > 300) {
-        // Client-side fallback: check if weekend before marking delayed
         if (isMarketClosedNow(symbol)) {
           return { status: "closed", lagSec: item.lagSec, lastScan: null }
         }
@@ -136,7 +128,6 @@ export function ActiveStrategiesPanel({
       return { status: "live", lagSec: item.lagSec, lastScan: null }
     }
 
-    // No data at all - check if market closed
     if (isMarketClosedNow(symbol)) {
       return { status: "closed", lagSec: null, lastScan: null }
     }
@@ -156,11 +147,11 @@ export function ActiveStrategiesPanel({
     try {
       const diff = Date.now() - new Date(ts).getTime()
       const sec = Math.floor(diff / 1000)
-      if (sec < 60) return `${sec}s ago`
+      if (sec < 60) return `${sec}s ${t("ago", "өмнө")}`
       const min = Math.floor(sec / 60)
-      if (min < 60) return `${min}m ago`
+      if (min < 60) return `${min}m ${t("ago", "өмнө")}`
       const hr = Math.floor(min / 60)
-      return `${hr}h ago`
+      return `${hr}h ${t("ago", "өмнө")}`
     } catch {
       return "—"
     }
@@ -170,8 +161,8 @@ export function ActiveStrategiesPanel({
     return (
       <Card className="border-dashed border-muted-foreground/30">
         <CardContent className="py-8 text-center text-muted-foreground">
-          <p>Идэвхтэй хослол байхгүй</p>
-          <p className="text-sm mt-2">Scanner Config хуудаснаас хослол дээр strategy тохируулна уу</p>
+          <p>{t("No active pairs", "Идэвхтэй хослол байхгүй")}</p>
+          <p className="text-sm mt-2">{t("Set up strategy for pairs in Scanner Config", "Scanner Config хуудаснаас хослол дээр strategy тохируулна уу")}</p>
         </CardContent>
       </Card>
     )
@@ -203,13 +194,13 @@ export function ActiveStrategiesPanel({
                 {status === "delayed" && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-amber-500 border-amber-500 gap-1">
                     <AlertTriangle className="h-3 w-3" />
-                    DELAY
+                    {t("DELAY", "СААТАЛ")}
                   </Badge>
                 )}
                 {status === "closed" && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-blue-500 border-blue-500 gap-1">
                     <X className="h-3 w-3" />
-                    CLOSED
+                    {t("CLOSED", "ХААЛТТАЙ")}
                   </Badge>
                 )}
               </div>
@@ -217,28 +208,25 @@ export function ActiveStrategiesPanel({
 
             {/* Strategy Name */}
             <div className="text-sm text-primary font-medium truncate mb-2" title={strategyName}>
-              🎯 {strategyName}
+              {strategyName}
             </div>
 
             {/* Status Row */}
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {/* Data Feed */}
-              <div className="flex items-center gap-1" title="Data Feed Lag">
+              <div className="flex items-center gap-1" title={t("Data Feed Lag", "Дата саатал")}>
                 <Zap className="h-3 w-3" />
                 <span>{formatLag(lagSec)}</span>
               </div>
 
-              {/* Last Scan */}
               {lastScan && (
-                <div className="flex items-center gap-1" title="Last Scanned">
+                <div className="flex items-center gap-1" title={t("Last Scanned", "Сүүлд скан хийсэн")}>
                   <Clock className="h-3 w-3" />
                   <span>{formatRelativeTime(lastScan)}</span>
                 </div>
               )}
 
-              {/* Scanner Status */}
               {isEngineRunning && (
-                <div className="flex items-center gap-1 text-green-500" title="Scanner Running">
+                <div className="flex items-center gap-1 text-green-500" title={t("Scanner Running", "Scanner ажиллаж байна")}>
                   <Radio className="h-3 w-3 animate-pulse" />
                 </div>
               )}

@@ -186,8 +186,8 @@ export default function StrategiesPage() {
     } catch (err: any) {
       console.error("[v0] Failed to load data:", err)
       toast({
-        title: "Алдаа",
-        description: "Стратегиуд ачаалж чадсангүй",
+        title: t("Error", "Алдаа"),
+        description: t("Failed to load strategies", "Стратегиуд ачаалж чадсангүй"),
         variant: "destructive",
       })
     } finally {
@@ -218,8 +218,8 @@ export default function StrategiesPage() {
       newStrategies[index] = { ...newStrategies[index], enabled: !newEnabled }
       setStrategies([...newStrategies])
       toast({
-        title: "Алдаа",
-        description: "Төлөв өөрчлөх үед алдаа гарлаа",
+        title: t("Error", "Алдаа"),
+        description: t("Failed to change status", "Төлөв өөрчлөх үед алдаа гарлаа"),
         variant: "destructive",
       })
     }
@@ -228,8 +228,8 @@ export default function StrategiesPage() {
   const openCreateDialog = () => {
     if (strategies.length >= MAX_STRATEGIES) {
       toast({
-        title: "Хязгаарлалт",
-        description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+        title: t("Limit", "Хязгаарлалт"),
+        description: t(`Maximum ${MAX_STRATEGIES} strategies allowed.`, `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`),
         variant: "destructive",
       })
       return
@@ -243,8 +243,8 @@ export default function StrategiesPage() {
   const handleUseTemplate = async (preset: DetectorPreset) => {
     if (strategies.length >= MAX_STRATEGIES) {
       toast({
-        title: "Хязгаарлалт",
-        description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+        title: t("Limit", "Хязгаарлалт"),
+        description: t(`Maximum ${MAX_STRATEGIES} strategies allowed.`, `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`),
         variant: "destructive",
       })
       return
@@ -269,8 +269,8 @@ export default function StrategiesPage() {
       }
 
       toast({
-        title: "Амжилттай",
-        description: `"${preset.nameEn}" template-ээс стратеги үүсгэлээ`,
+        title: t("Success", "Амжилттай"),
+        description: t(`Strategy created from "${preset.nameEn}" template`, `"${preset.nameEn}" template-ээс стратеги үүсгэлээ`),
       })
 
       await loadData()
@@ -278,8 +278,8 @@ export default function StrategiesPage() {
     } catch (err: any) {
       console.error("[strategies] template save error:", err)
       toast({
-        title: "Алдаа",
-        description: err.message || "Стратеги үүсгэхэд алдаа гарлаа",
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Failed to create strategy", "Стратеги үүсгэхэд алдаа гарлаа"),
         variant: "destructive",
       })
     } finally {
@@ -315,8 +315,8 @@ export default function StrategiesPage() {
   const handleSaveStrategy = async () => {
     if (!editForm.name.trim()) {
       toast({
-        title: "Алдаа",
-        description: "Стратегийн нэр оруулна уу",
+        title: t("Error", "Алдаа"),
+        description: t("Enter strategy name", "Стратегийн нэр оруулна уу"),
         variant: "destructive",
       })
       return
@@ -326,7 +326,7 @@ export default function StrategiesPage() {
     const validation = validateSelection(editForm.detectors)
     if (!validation.isValid) {
       toast({
-        title: "Алдаа",
+        title: t("Error", "Алдаа"),
         description: validation.errors.join("; "),
         variant: "destructive",
       })
@@ -361,8 +361,8 @@ export default function StrategiesPage() {
         }
 
         toast({
-          title: "Амжилттай",
-          description: "Стратеги шинэчлэгдлээ",
+          title: t("Success", "Амжилттай"),
+          description: t("Strategy updated", "Стратеги шинэчлэгдлээ"),
         })
       } else {
         // Create new via v2 API
@@ -384,8 +384,8 @@ export default function StrategiesPage() {
         }
         
         toast({
-          title: "Амжилттай",
-          description: "Шинэ стратеги үүсгэлээ",
+          title: t("Success", "Амжилттай"),
+          description: t("New strategy created", "Шинэ стратеги үүсгэлээ"),
         })
       }
       
@@ -397,14 +397,14 @@ export default function StrategiesPage() {
       // Check for limit reached error
       if (err.message?.includes("LIMIT") || err.message?.includes("Maximum")) {
         toast({
-          title: "Хязгаарлалт",
-          description: `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`,
+          title: t("Limit", "Хязгаарлалт"),
+          description: t(`Maximum ${MAX_STRATEGIES} strategies allowed.`, `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`),
           variant: "destructive",
         })
       } else {
         toast({
-          title: "Алдаа",
-          description: err.message || "Хадгалах үед алдаа гарлаа",
+          title: t("Error", "Алдаа"),
+          description: err.message || t("Error while saving", "Хадгалах үед алдаа гарлаа"),
           variant: "destructive",
         })
       }
@@ -419,8 +419,8 @@ export default function StrategiesPage() {
     
     if (!strategyId) {
       toast({
-        title: "Алдаа",
-        description: "Strategy ID олдсонгүй",
+        title: t("Error", "Алдаа"),
+        description: t("Strategy ID not found", "Strategy ID олдсонгүй"),
         variant: "destructive",
       })
       return
@@ -435,8 +435,8 @@ export default function StrategiesPage() {
       }
       
       toast({
-        title: "Амжилттай",
-        description: "Стратеги устгагдлаа",
+        title: t("Success", "Амжилттай"),
+        description: t("Strategy deleted", "Стратеги устгагдлаа"),
       })
       
       await loadData()
@@ -444,8 +444,8 @@ export default function StrategiesPage() {
     } catch (err: any) {
       console.error("[strategies] delete error:", err)
       toast({
-        title: "Алдаа",
-        description: err.message || "Устгах үед алдаа гарлаа",
+        title: t("Error", "Алдаа"),
+        description: err.message || t("Error while deleting", "Устгах үед алдаа гарлаа"),
         variant: "destructive",
       })
     } finally {
@@ -457,7 +457,7 @@ export default function StrategiesPage() {
     return (
       <DashboardLayout>
         <div className="py-12 text-center">
-          <p className="text-muted-foreground">Ачааллаж байна...</p>
+          <p className="text-muted-foreground">{t("Loading...", "Ачааллаж байна...")}</p>
         </div>
       </DashboardLayout>
     )
@@ -521,7 +521,7 @@ export default function StrategiesPage() {
                     disabled={saving}
                     compact
                     showControls={false}
-                    title="Strategy Templates"
+                    title={t("Strategy Templates", "Стратеги загварууд")}
                   />
                 </CardContent>
               </Card>
@@ -530,9 +530,9 @@ export default function StrategiesPage() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>AI Strategy Maker</strong> - Арга барилаа бичээд AI-р strategy үүсгэ |{" "}
-                <strong>Templates</strong> - JKM санал болгосон бэлэн strategy |{" "}
-                <strong>Manual</strong> - Гараар үүсгэх
+                <strong>AI Strategy Maker</strong> - {t("Write your approach and AI creates a strategy", "Арга барилаа бичээд AI-р strategy үүсгэ")} |{" "}
+                <strong>Templates</strong> - {t("JKM recommended ready-made strategies", "JKM санал болгосон бэлэн strategy")} |{" "}
+                <strong>Manual</strong> - {t("Create manually", "Гараар үүсгэх")}
               </AlertDescription>
             </Alert>
 
@@ -607,7 +607,7 @@ export default function StrategiesPage() {
                 {/* Detectors grouped by category */}
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Detectors ({strategy.detectors?.length || 0})
+                    {t("Detectors", "Детекторууд")} ({strategy.detectors?.length || 0})
                   </p>
                   {(["gate", "trigger", "confluence"] as const).map(cat => {
                     const items = detectorsByCategory[cat]
@@ -649,7 +649,7 @@ export default function StrategiesPage() {
 
                 {open && (
                   <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-                    <div className="mb-2 font-medium text-foreground">Detector дэлгэрэнгүй</div>
+                    <div className="mb-2 font-medium text-foreground">{t("Detector Details", "Detector дэлгэрэнгүй")}</div>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {(strategy.detectors || []).map((id) => {
                         const meta = DETECTOR_BY_ID.get(id)
@@ -874,15 +874,15 @@ export default function StrategiesPage() {
                         detectors: normalizedDetectors,
                       })
                       toast({
-                        title: "Fixed & Saved",
-                        description: "Detectors normalized and saved to strategy",
+                        title: t("Fixed & Saved", "Засаж хадгаллаа"),
+                        description: t("Detectors normalized and saved", "Detector-ууд засагдаж хадгалагдлаа"),
                       })
                       // Refresh strategy list
                       loadData()
                     } catch (err) {
                       toast({
-                        title: "Save Failed",
-                        description: "Could not save normalized detectors",
+                        title: t("Error", "Алдаа"),
+                        description: t("Could not save detectors", "Detector хадгалж чадсангүй"),
                         variant: "destructive",
                       })
                     }

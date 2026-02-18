@@ -227,7 +227,7 @@ export default function ProfilePage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Profile</h1>
+          <h1 className="text-3xl font-bold">{t("Profile", "Профайл")}</h1>
           <p className="text-muted-foreground">{t("Your personal information and settings", "Таны хувийн мэдээлэл болон тохиргоо")}</p>
         </div>
 
@@ -241,7 +241,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="display_name">Харагдах нэр (Display Name)</Label>
+              <Label htmlFor="display_name">{t("Display Name", "Харагдах нэр")}</Label>
               <Input
                 id="display_name"
                 value={profile?.display_name || ""}
@@ -251,27 +251,27 @@ export default function ProfilePage() {
                     display_name: e.target.value,
                   }))
                 }
-                placeholder="Таны нэр (UI дээр харагдана)"
+                placeholder={t("Your name (shown on UI)", "Таны нэр (UI дээр харагдана)")}
               />
               <p className="text-xs text-muted-foreground">
-                Dashboard дээр харагдах нэр
+                {t("Name shown on dashboard", "Dashboard дээр харагдах нэр")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Google нэр</Label>
+              <Label htmlFor="name">{t("Google Name", "Google нэр")}</Label>
               <Input id="name" value={profile?.name || session?.user?.name || ""} disabled />
-              <p className="text-xs text-muted-foreground">Google-ээс авсан нэр (солих боломжгүй)</p>
+              <p className="text-xs text-muted-foreground">{t("Name from Google (cannot change)", "Google-ээс авсан нэр (солих боломжгүй)")}</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Имэйл</Label>
+              <Label htmlFor="email">{t("Email", "Имэйл")}</Label>
               <Input id="email" value={profile?.email || session?.user?.email || ""} disabled />
-              <p className="text-xs text-muted-foreground">Имэйл солих боломжгүй</p>
+              <p className="text-xs text-muted-foreground">{t("Email cannot be changed", "Имэйл солих боломжгүй")}</p>
             </div>
 
             <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
-              {saving ? "Хадгалж байна..." : "Хадгалах"}
+              {saving ? t("Saving...", "Хадгалж байна...") : t("Save", "Хадгалах")}
             </Button>
           </CardContent>
         </Card>
@@ -281,9 +281,9 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Trading тохиргоо
+              {t("Trading Settings", "Trading тохиргоо")}
             </CardTitle>
-            <CardDescription>Scanner болон Simulator-т ашиглагдах тохиргоо</CardDescription>
+            <CardDescription>{t("Settings used by Scanner and Simulator", "Scanner болон Simulator-т ашиглагдах тохиргоо")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -305,7 +305,7 @@ export default function ProfilePage() {
                   placeholder="2.5"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Хамгийн бага RR (1:X). Жишээ: 2.5 = 1:2.5
+                  {t("Minimum RR (1:X). Example: 2.5 = 1:2.5", "Хамгийн бага RR (1:X). Жишээ: 2.5 = 1:2.5")}
                 </p>
               </div>
 
@@ -327,20 +327,22 @@ export default function ProfilePage() {
                   placeholder="0"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Setup-ийн доод оноо (0 = шүүлтгүй)
+                  {t("Minimum setup score (0 = no filter)", "Setup-ийн доод оноо (0 = шүүлтгүй)")}
                 </p>
               </div>
             </div>
 
             <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-4">
               <p className="text-sm text-blue-600 dark:text-blue-400">
-                Эдгээр утгыг Scanner болон Simulator хоёулаа ашиглана.
-                RR {profile?.min_rr ?? 2.5}-ээс бага trade-ийг алгасна.
+                {t(
+                  `These values are used by both Scanner and Simulator. Trades with RR below ${profile?.min_rr ?? 2.5} will be skipped.`,
+                  `Эдгээр утгыг Scanner болон Simulator хоёулаа ашиглана. RR ${profile?.min_rr ?? 2.5}-ээс бага trade-ийг алгасна.`
+                )}
               </p>
             </div>
 
             <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
-              {saving ? "Хадгалж байна..." : "Хадгалах"}
+              {saving ? t("Saving...", "Хадгалж байна...") : t("Save", "Хадгалах")}
             </Button>
           </CardContent>
         </Card>
@@ -351,7 +353,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
-                Telegram мэдэгдэл
+                {t("Telegram Notifications", "Telegram мэдэгдэл")}
               </CardTitle>
               {connecting ? (
                 <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">
