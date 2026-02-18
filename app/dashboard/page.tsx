@@ -422,6 +422,30 @@ export default function DashboardPage() {
         .catch(() => {})
     }, 60_000)
 
+    // Firestore signals auto-refresh (30 sec) — SL/TP outcome auto-detect
+    const firestoreInterval = setInterval(async () => {
+      if (!uid) return
+      try {
+        const res = await api.userSignals({ limit: 500 })
+        const raw = Array.isArray(res) ? res : []
+        const unified = raw.map((s: any) => mapOldSignalToUnified(s))
+        const deduped = deduplicateSignals(unified)
+
+        setFirestoreSignals(prev => {
+          // Detect outcome changes → toast notification
+          for (const sig of deduped) {
+            const old = prev.find(p => p.id === sig.id)
+            if (old && !old.outcome && sig.outcome === "win") {
+              toast({ title: `TP цохисон: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"} — RR: ${sig.rr?.toFixed(2) ?? "—"}` })
+            } else if (old && !old.outcome && sig.outcome === "loss") {
+              toast({ title: `SL цохисон: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"}`, variant: "destructive" })
+            }
+          }
+          return deduped
+        })
+      } catch {}
+    }, 30_000)
+
     // Live Ops: Poll feed status from backend (anti-drift source of truth)
     const feedStatusInterval = setInterval(() => {
       api.feedStatus()
@@ -500,6 +524,7 @@ export default function DashboardPage() {
     return () => {
       clearInterval(engineInterval)
       clearInterval(signalsInterval)
+      clearInterval(firestoreInterval)
       clearInterval(feedStatusInterval)
       clearInterval(tickInterval)
     }

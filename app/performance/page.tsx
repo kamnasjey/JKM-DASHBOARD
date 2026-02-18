@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus } from "lucide-react"
+import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus, RefreshCw } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -154,9 +154,12 @@ function OutcomeCell({
 
   // Pending - waiting for automatic outcome detection
   return (
-    <span className="inline-flex items-center gap-1 text-yellow-500 text-sm">
-      <Clock className="h-3.5 w-3.5" />
-      Хүлээгдэж буй
+    <span className="inline-flex items-center gap-1 text-yellow-500 text-sm" title="VPS 5 минут тутам SL/TP-г автоматаар шалгаж байна">
+      <span className="relative flex h-2 w-2 shrink-0">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500" />
+      </span>
+      Хянагдаж байна
     </span>
   )
 }
@@ -210,6 +213,7 @@ export default function PerformancePage() {
   const [rangeDays, setRangeDays] = useState("30")
   const [oldSignals, setOldSignals] = useState<SignalPayloadPublicV1[]>([])
   const [strategyMap, setStrategyMap] = useState<Record<string, string>>({})
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -245,7 +249,15 @@ export default function PerformancePage() {
   }, [toast])
 
   useEffect(() => {
-    fetchData()
+    fetchData().then(() => setLastRefresh(new Date()))
+  }, [fetchData])
+
+  // Auto-refresh every 60 seconds for SL/TP outcome updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData().then(() => setLastRefresh(new Date()))
+    }, 60_000)
+    return () => clearInterval(interval)
   }, [fetchData])
 
   const unifiedSignals = useMemo<UnifiedSignal[]>(() => {
@@ -370,8 +382,25 @@ export default function PerformancePage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">{t("History", "Түүх")}</h1>
-            <p className="text-sm text-muted-foreground">{t("TP/SL history and results for each setup", "Setup бүрийн TP/SL түүх болон үр дүн")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("TP/SL history and results for each setup", "Setup бүрийн TP/SL түүх болон үр дүн")}
+              {lastRefresh && (
+                <span className="ml-2 text-xs text-muted-foreground/60">
+                  {t("Updated", "Шинэчилсэн")}: {lastRefresh.toLocaleTimeString("mn-MN", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </p>
           </div>
+          <div className="flex items-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => fetchData().then(() => setLastRefresh(new Date()))}
+              title={t("Refresh", "Шинэчлэх")}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           <div className="w-full sm:w-56">
             <label className="text-xs font-medium text-muted-foreground">{t("Period", "Хугацаа")}</label>
             <Select value={rangeDays} onValueChange={setRangeDays}>
@@ -386,6 +415,7 @@ export default function PerformancePage() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
           </div>
         </div>
 
