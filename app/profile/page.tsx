@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { User, CheckCircle, XCircle, MessageCircle, Send, TrendingUp, LinkIcon, RefreshCw, Unlink, Loader2, ExternalLink } from "lucide-react"
+import { User, CheckCircle, XCircle, MessageCircle, Send, TrendingUp, LinkIcon, RefreshCw, Unlink, Loader2, ExternalLink, Crown, Sparkles, Zap } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,9 @@ import { useAuthGuard } from "@/lib/auth-guard"
 import { useLanguage } from "@/contexts/language-context"
 import { useSession } from "next-auth/react"
 import { InfoTooltip } from "@/components/guide/info-tooltip"
+import { useUserPlan } from "@/hooks/use-user-plan"
+import { PlanSheet } from "@/components/plan-sheet"
+import { getPlanById, type PlanType } from "@/lib/constants/pricing"
 
 export default function ProfilePage() {
   useAuthGuard(true)
@@ -26,6 +29,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [profile, setProfile] = useState<any | null>(null)
+  const [planSheetOpen, setPlanSheetOpen] = useState(false)
+  const { plan, planStatus, hasPaidAccess, is_trial, trial_expired, trial_days_remaining, loading: planLoading } = useUserPlan()
 
   // Telegram connect state
   const [connecting, setConnecting] = useState(false)
@@ -275,6 +280,110 @@ export default function ProfilePage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Subscription Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-yellow-500" />
+              {t("Subscription", "Захиалга")}
+            </CardTitle>
+            <CardDescription>
+              {t("Your current plan and subscription status", "Таны одоогийн төлөвлөгөө болон захиалгын төлөв")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {planLoading ? (
+              <p className="text-sm text-muted-foreground">{t("Loading...", "Ачааллаж байна...")}</p>
+            ) : (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      plan === "pro_plus" ? "bg-amber-500/10 text-amber-500" :
+                      plan === "pro" ? "bg-primary/10 text-primary" :
+                      plan === "starter" ? "bg-emerald-500/10 text-emerald-500" :
+                      "bg-muted text-muted-foreground"
+                    }`}>
+                      {plan === "pro_plus" ? <Sparkles className="h-5 w-5" /> :
+                       plan === "pro" ? <Crown className="h-5 w-5" /> :
+                       <Zap className="h-5 w-5" />}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-lg">
+                        {getPlanById(plan as PlanType)?.nameMn || plan?.toUpperCase() || "Free"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {getPlanById(plan as PlanType)?.priceDisplay || "₮0"}
+                        {getPlanById(plan as PlanType)?.period || ""}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={
+                    planStatus === "active" ? "default" :
+                    planStatus === "expired" ? "destructive" :
+                    "secondary"
+                  } className={planStatus === "active" ? "bg-green-600" : ""}>
+                    {planStatus === "active" ? t("Active", "Идэвхтэй") :
+                     planStatus === "expired" ? t("Expired", "Дууссан") :
+                     t("Pending", "Хүлээгдэж буй")}
+                  </Badge>
+                </div>
+
+                {is_trial && !trial_expired && trial_days_remaining !== undefined && (
+                  <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+                    <p className="text-sm text-blue-600 dark:text-blue-400">
+                      {t(
+                        `Trial period: ${trial_days_remaining} day${trial_days_remaining !== 1 ? "s" : ""} remaining`,
+                        `Туршилтын хугацаа: ${trial_days_remaining} өдөр үлдсэн`
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {is_trial && trial_expired && (
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {t("Your trial has expired. Upgrade to continue.", "Туршилтын хугацаа дууссан. Үргэлжлүүлэхийн тулд шинэчлэнэ үү.")}
+                    </p>
+                  </div>
+                )}
+
+                {plan && plan !== "free" && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t("Plan includes", "Төлөвлөгөөнд багтсан")}
+                    </p>
+                    <ul className="space-y-1">
+                      {getPlanById(plan as PlanType)?.features
+                        .filter(f => f.included)
+                        .slice(0, 4)
+                        .map((f, i) => (
+                          <li key={i} className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                            <span>{f.text}</span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+
+                <Button
+                  onClick={() => setPlanSheetOpen(true)}
+                  variant={plan === "free" || is_trial ? "default" : "outline"}
+                  className="w-full"
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  {plan === "free"
+                    ? t("Upgrade Plan", "Төлөвлөгөө шинэчлэх")
+                    : t("Change Plan", "Төлөвлөгөө солих")}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <PlanSheet open={planSheetOpen} onOpenChange={setPlanSheetOpen} />
 
         {/* Trading Settings Card */}
         <Card data-tour="risk-settings">

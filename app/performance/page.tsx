@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus, RefreshCw } from "lucide-react"
+import { BarChart3, Calendar, CheckCircle2, Clock, XCircle, Check, X, Minus, RefreshCw, TrendingUp } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -18,6 +18,8 @@ import {
   formatTimestamp,
 } from "@/lib/signals/unified"
 import type { SignalPayloadPublicV1 } from "@/lib/types"
+import { EquityCurveChart } from "@/components/simulator/equity-curve-chart"
+import { ScrollTableWrapper } from "@/components/ui/scroll-table-wrapper"
 
 interface SetupSummary {
   name: string
@@ -341,6 +343,18 @@ export default function PerformancePage() {
     return { total: takenEntries.length, tp, sl, pending }
   }, [takenEntries])
 
+  // Map taken entries to equity curve data
+  const equityCurveData = useMemo(() => {
+    return takenEntries
+      .filter(s => s.outcome === "win" || s.outcome === "loss")
+      .sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime())
+      .map(s => ({
+        entry_ts: Math.floor(new Date(s.ts).getTime() / 1000),
+        r: s.outcome === "win" ? (s.rr || 2.0) : -1.0,
+        outcome: (s.outcome === "win" ? "TP" : "SL") as "TP" | "SL",
+      }))
+  }, [takenEntries])
+
   // Win rate from taken entries only
   const winRate = useMemo(() => {
     const decided = takenStats.tp + takenStats.sl
@@ -499,6 +513,26 @@ export default function PerformancePage() {
           </Card>
         </div>
 
+        {equityCurveData.length >= 2 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                {t("Equity Curve", "Ашгийн муруй")}
+              </CardTitle>
+              <CardDescription>
+                {t(
+                  "Cumulative R from entered trades (Win = +RR, Loss = -1R)",
+                  "Орсон арилжаануудын нийлбэр R (Win = +RR, Loss = -1R)"
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EquityCurveChart trades={equityCurveData} />
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">{t("Setup history", "Setup түүх")}</CardTitle>
@@ -515,7 +549,7 @@ export default function PerformancePage() {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <ScrollTableWrapper>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -559,7 +593,7 @@ export default function PerformancePage() {
                   })}
                 </TableBody>
               </Table>
-              </div>
+              </ScrollTableWrapper>
             )}
           </CardContent>
         </Card>
@@ -581,7 +615,7 @@ export default function PerformancePage() {
                 {t("No entered trades yet. Mark entries using the buttons in the list below.", "Одоогоор орсон арилжаа байхгүй. Доорх жагсаалтаас \u0022Орсон\u0022 товч дарж тэмдэглэнэ үү.")}
               </p>
             ) : (
-              <div className="overflow-x-auto">
+              <ScrollTableWrapper>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -651,7 +685,7 @@ export default function PerformancePage() {
                   ))}
                 </TableBody>
               </Table>
-              </div>
+              </ScrollTableWrapper>
             )}
           </CardContent>
         </Card>
@@ -669,7 +703,7 @@ export default function PerformancePage() {
                 <p className="text-xs text-muted-foreground">{t("Setups are recorded automatically when scanner finds signals", "Scanner дохио олдвол автоматаар бүртгэгдэнэ")}</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <ScrollTableWrapper>
               <p className="text-xs text-muted-foreground mb-2">
                 {t("Use ✓/✗ buttons to mark whether you entered a trade. Entered trades will be monitored for TP/SL automatically.", "✓/✗ товчоор trade-д орсон эсэхийг тэмдэглэнэ. Орсон бол TP/SL автоматаар хянагдана.")}
               </p>
@@ -748,7 +782,7 @@ export default function PerformancePage() {
                   ))}
                 </TableBody>
               </Table>
-              </div>
+              </ScrollTableWrapper>
             )}
           </CardContent>
         </Card>

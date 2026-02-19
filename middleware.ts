@@ -22,6 +22,15 @@ function needsCanonicalRedirect(hostname: string): boolean {
 
 export default withAuth(
   function middleware(req) {
+    const pathname = req.nextUrl.pathname
+
+    // Redirect /app/* beta zone to production /dashboard
+    if (pathname === "/app" || pathname.startsWith("/app/")) {
+      const url = req.nextUrl.clone()
+      url.pathname = "/dashboard"
+      return NextResponse.redirect(url, 308)
+    }
+
     const hostname = req.nextUrl.hostname
     if (needsCanonicalRedirect(hostname)) {
       const url = req.nextUrl.clone()

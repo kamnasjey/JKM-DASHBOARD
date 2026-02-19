@@ -29,6 +29,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# vscode tasks (may contain secrets)
+.vscode/tasks.json
+
 # prisma dev database
 prisma/dev.db
 prisma/dev.db-journal

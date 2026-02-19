@@ -2713,60 +2713,12 @@
 			"isBackground": false
 		},
 		{
-			"label": "shell: test map endpoint B",
-			"type": "shell",
-			"command": "ssh",
-			"args": [
-				"root@159.65.11.255",
-				"docker exec jkm_bot_backend python3 -c 'import requests,json; r=requests.post(\"http://localhost:8000/api/internal/user-data/active-strategy-map/SMOKE001\",headers={\"x-internal-api-key\":\"dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\",\"Content-Type\":\"application/json\"},json={\"map\":{\"EURUSD\":\"starter_EDGE_CONFLUENCE_SMOKE001\"}}); print(r.status_code, r.text)'"
-			],
-			"isBackground": false
-		},
-		{
-			"label": "shell: test B endpoint via file",
-			"type": "shell",
-			"command": "ssh",
-			"args": [
-				"root@159.65.11.255",
-				"cat > /tmp/testb.py << 'PYEOF'\nimport requests\nKEY=\"dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\"\nBASE=\"http://localhost:8000\"\nh={\"x-internal-api-key\": KEY, \"Content-Type\": \"application/json\"}\nUID=\"SMOKE001\"\n\nprint(\"=== Test B: POST strategy map ===\")\nr=requests.post(f\"{BASE}/api/internal/user-data/active-strategy-map/{UID}\",headers=h,json={\"map\":{\"EURUSD\":\"starter_EDGE_CONFLUENCE_SMOKE001\"}})\nprint(f\"status={r.status_code}\")\nprint(f\"body={r.text[:200]}\")\nPYEOF\n\npython3 /tmp/testb.py"
-			],
-			"isBackground": false
-		},
-		{
-			"label": "security test signals with key",
-			"type": "shell",
-			"command": "cmd",
-			"args": [
-				"/c",
-				"ssh root@159.65.11.255 curl -s -H x-internal-api-key:3d2ee6bbbb787c90ebc25f39b26eca1569c8dde81ab4be7d908df477c9d1bda6 http://localhost:8000/api/signals?limit=2"
-			]
-		},
-		{
-			"label": "security test with correct key",
-			"type": "shell",
-			"command": "cmd",
-			"args": [
-				"/c",
-				"ssh root@159.65.11.255 curl -s -H \"x-internal-api-key: dde0476eeb9449fd69a1cdfd3b120a1a27b3c61c80289b06ae7b54d09e39b9c6\" http://localhost:8000/api/signals?limit=2"
-			]
-		},
-		{
 			"label": "check provider env",
 			"type": "shell",
 			"command": "ssh",
 			"args": [
 				"root@159.65.11.255",
 				"cd /root/JKM-AI-BOT; grep -E '^(DATA_PROVIDER|MARKET_DATA_PROVIDER|ALLOW_USER_WATCHLIST_MARKET_DATA)=' .env || true"
-			],
-			"isBackground": false
-		},
-		{
-			"label": "write backend env",
-			"type": "shell",
-			"command": "ssh",
-			"args": [
-				"root@159.65.11.255",
-				"cd /root/JKM-AI-BOT; printf 'MARKET_DATA_API_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En\\nMARKET_DATA_S3_ACCESS_KEY_ID=083159b1-e401-4fa6-bc44-7e63585a82e4\\nMARKET_DATA_S3_SECRET_ACCESS_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En\\nMARKET_DATA_S3_ENDPOINT=https://files.market_data.com\\nMARKET_DATA_S3_BUCKET=flatfiles\\nUSE_ENHANCED_INGESTOR=1\\nENABLE_MARKETDATA_WEBSOCKET=1\\nINGESTOR_MAX_PARALLEL=5\\nINGESTOR_TIMEFRAME=m5\\nSNAPSHOT_ENABLED=1\\nDATA_PROVIDER=market_data\\nMARKET_DATA_PROVIDER=market_data\\nALLOW_USER_WATCHLIST_MARKET_DATA=0\\n' > .env"
 			],
 			"isBackground": false
 		},
@@ -2837,26 +2789,6 @@
 			"args": [
 				"root@159.65.11.255",
 				"docker logs --tail 500 jkm_bot_backend"
-			],
-			"isBackground": false
-		},
-		{
-			"label": "rewrite env lines",
-			"type": "shell",
-			"command": "ssh",
-			"args": [
-				"root@159.65.11.255",
-				"cd /root/JKM-AI-BOT; printf '%s\n' 'MARKET_DATA_API_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En' 'MARKET_DATA_S3_ACCESS_KEY_ID=083159b1-e401-4fa6-bc44-7e63585a82e4' 'MARKET_DATA_S3_SECRET_ACCESS_KEY=dlNBTPGpTcyJrZRZjUSWAlILpe0iA7En' 'MARKET_DATA_S3_ENDPOINT=https://files.market_data.com' 'MARKET_DATA_S3_BUCKET=flatfiles' 'USE_ENHANCED_INGESTOR=1' 'ENABLE_MARKETDATA_WEBSOCKET=1' 'INGESTOR_MAX_PARALLEL=5' 'INGESTOR_TIMEFRAME=m5' 'SNAPSHOT_ENABLED=1' 'DATA_PROVIDER=market_data' 'MARKET_DATA_PROVIDER=market_data' 'ALLOW_USER_WATCHLIST_MARKET_DATA=0' > .env"
-			],
-			"isBackground": false
-		},
-		{
-			"label": "scp env deploy",
-			"type": "shell",
-			"command": "scp",
-			"args": [
-				"c:\\Users\\Kamna\\OneDrive\\Desktop\\ganbayar_trading_bot\\.env.deploy",
-				"root@159.65.11.255:/root/JKM-AI-BOT/.env"
 			],
 			"isBackground": false
 		},
