@@ -378,35 +378,71 @@ export default function DashboardPage() {
     }
   }
 
+  // In-flight guards to prevent request pileup
+  const inflightRef = useRef<Record<string, boolean>>({})
+
   useEffect(() => {
     if (status !== "authenticated" || !uid) return
     refreshDashboard()
 
-    const engineInterval = setInterval(() => {
-      api.engineStatus().then(setEngineStatus).catch(() => {})
-      if (uid) {
-        api.engineStatus247(uid).then(setEngineStatus247).catch(() => {})
-      }
-    }, 5000)
+    // Helper: skip fetch if tab hidden or previous request still pending
+    const guarded = (key: string, fn: () => Promise<void>) => {
+      if (document.visibilityState === "hidden") return
+      if (inflightRef.current[key]) return
+      inflightRef.current[key] = true
+      fn().finally(() => { inflightRef.current[key] = false })
+    }
 
+    // Helper: process feed status response
+    const handleFeedStatus = (res: any) => {
+      if (res?.ok !== false) {
+        setFeedStatus(res)
+        setCandleError(null)
+        const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbol)
+        if (item?.lastCandleTs) {
+          const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
+          setPrevCandleTime((prev) => {
+            if (prev !== null && ts > prev) {
+              setCandlePulse(true)
+              setTimeout(() => setCandlePulse(false), 2000)
+            }
+            return ts
+          })
+          setLastCandleTime(ts)
+        }
+      }
+    }
+
+    // Engine status (every 30s)
+    const engineInterval = setInterval(() => {
+      guarded("engine", async () => {
+        const [eng, eng247] = await Promise.all([
+          api.engineStatus().catch(() => null),
+          uid ? api.engineStatus247(uid).catch(() => null) : null,
+        ])
+        if (eng) setEngineStatus(eng)
+        if (eng247) setEngineStatus247(eng247)
+      })
+    }, 30_000)
+
+    // Public signals (every 60s)
     const signalsInterval = setInterval(() => {
-      api
-        .signals({ limit: 10 })
-        .then((sigs) => setRecentSignals(Array.isArray(sigs) ? (sigs as any) : ((sigs as any)?.signals ?? [])))
-        .catch(() => {})
+      guarded("signals", async () => {
+        const sigs = await api.signals({ limit: 10 }).catch(() => [])
+        setRecentSignals(Array.isArray(sigs) ? (sigs as any) : ((sigs as any)?.signals ?? []))
+      })
     }, 60_000)
 
-    // Firestore signals auto-refresh (30 sec) — SL/TP outcome auto-detect
-    const firestoreInterval = setInterval(async () => {
-      if (!uid) return
-      try {
-        const res = await api.userSignals({ limit: 500 })
+    // Firestore signals auto-refresh (60s) — SL/TP outcome auto-detect
+    const firestoreInterval = setInterval(() => {
+      guarded("firestore", async () => {
+        if (!uid) return
+        const res = await api.userSignals({ limit: 500 }).catch(() => [])
         const raw = Array.isArray(res) ? res : []
         const unified = raw.map((s: any) => mapOldSignalToUnified(s))
         const deduped = deduplicateSignals(unified)
 
         setFirestoreSignals(prev => {
-          // Detect outcome changes → toast notification
           for (const sig of deduped) {
             const old = prev.find(p => p.id === sig.id)
             if (old && !old.outcome && sig.outcome === "win") {
@@ -417,83 +453,74 @@ export default function DashboardPage() {
           }
           return deduped
         })
-      } catch {}
+      })
+    }, 60_000)
+
+    // Feed status (every 30s)
+    const feedStatusInterval = setInterval(() => {
+      guarded("feed", async () => {
+        try {
+          const res = await api.feedStatus()
+          handleFeedStatus(res)
+        } catch {
+          if (liveOpsSymbol) {
+            try {
+              const res = await api.candles(liveOpsSymbol, "M5", 1)
+              const candles = (res as any)?.candles || res || []
+              if (candles.length > 0) {
+                const candleTs = candles[0].time || candles[0].t || 0
+                const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+                setLastCandleTime(ts)
+                setCandleError(null)
+              }
+            } catch {}
+          }
+        }
+      })
     }, 30_000)
 
-    // Live Ops: Poll feed status from backend (anti-drift source of truth)
-    const feedStatusInterval = setInterval(() => {
-      api.feedStatus()
-        .then((res: any) => {
-          if (res?.ok !== false) {
-            setFeedStatus(res)
-            setCandleError(null)
-            
-            // Find the selected symbol's feed item
-            const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbol)
-            if (item?.lastCandleTs) {
-              const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
-              setPrevCandleTime((prev) => {
-                if (prev !== null && ts > prev) {
-                  setCandlePulse(true)
-                  setTimeout(() => setCandlePulse(false), 2000)
-                }
-                return ts
-              })
-              setLastCandleTime(ts)
-            }
-          }
-        })
-        .catch((err: any) => {
-          // Fallback to candles endpoint if feed status not available
-          if (liveOpsSymbol) {
-            api.candles(liveOpsSymbol, "M5", 1)
-              .then((res: any) => {
-                const candles = res?.candles || res || []
-                if (candles.length > 0) {
-                  const candleTs = candles[0].time || candles[0].t || 0
-                  const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
-                  setLastCandleTime(ts)
-                  setCandleError(null)
-                }
-              })
-              .catch(() => {})
-          }
-        })
-    }, 10_000) // Poll every 10 seconds
-    
     // Live Ops: Update nowTs every second for countdown
     const tickInterval = setInterval(() => {
       setNowTs(Math.floor(Date.now() / 1000))
     }, 1000)
 
     // Initial feed status fetch
-    api.feedStatus()
-      .then((res: any) => {
-        if (res?.ok !== false) {
-          setFeedStatus(res)
-          // Find the selected symbol's feed item
-          const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbol)
-          if (item?.lastCandleTs) {
-            const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
-            setLastCandleTime(ts)
-          }
-        }
-      })
-      .catch(() => {
-        // Fallback to candles endpoint
+    guarded("feed", async () => {
+      try {
+        const res = await api.feedStatus()
+        handleFeedStatus(res)
+      } catch {
         if (liveOpsSymbol) {
-          api.candles(liveOpsSymbol, "M5", 1)
-            .then((res: any) => {
-              const candles = res?.candles || res || []
-              if (candles.length > 0) {
-                const candleTs = candles[0].time || candles[0].t || 0
-                const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
-                setLastCandleTime(ts)
-              }
-            })
-            .catch(() => {})
+          try {
+            const res = await api.candles(liveOpsSymbol, "M5", 1)
+            const candles = (res as any)?.candles || res || []
+            if (candles.length > 0) {
+              const candleTs = candles[0].time || candles[0].t || 0
+              const ts = typeof candleTs === "number" ? candleTs : Math.floor(new Date(candleTs).getTime() / 1000)
+              setLastCandleTime(ts)
+            }
+          } catch {}
         }
-      })
+      }
+    })
+
+    // Pause polling when tab is hidden, resume when visible
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        // Refresh on tab return (stale data)
+        guarded("engine", async () => {
+          const eng = await api.engineStatus().catch(() => null)
+          if (eng) setEngineStatus(eng)
+        })
+        guarded("feed", async () => {
+          try {
+            const res = await api.feedStatus()
+            handleFeedStatus(res)
+          } catch {}
+        })
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
 
     return () => {
       clearInterval(engineInterval)
@@ -501,48 +528,69 @@ export default function DashboardPage() {
       clearInterval(firestoreInterval)
       clearInterval(feedStatusInterval)
       clearInterval(tickInterval)
+      document.removeEventListener("visibilitychange", handleVisibility)
     }
   }, [status, liveOpsSymbol, t])
 
   // Admin: Fetch all 15 symbols' candle data for Live Ops panel
   useEffect(() => {
     if (!isAdmin) return
-    
+
     const fetchAllSymbolsCandles = async () => {
-      const results: Record<string, number | null> = {}
-      
-      // Fetch candles for all symbols in parallel
-      await Promise.all(
-        ALL_SYMBOLS.map(async (symbol) => {
-          try {
-            const res = await api.candles(symbol, "M5", 1)
-            const candles = (res as any)?.candles || res || []
-            if (candles.length > 0) {
-              const candleTs = candles[0].time || candles[0].t || 0
-              const ts = typeof candleTs === "number" 
-                ? candleTs 
-                : Math.floor(new Date(candleTs).getTime() / 1000)
-              results[symbol] = ts
-            } else {
-              results[symbol] = null
+      if (document.visibilityState === "hidden") return
+      if (inflightRef.current["adminCandles"]) return
+      inflightRef.current["adminCandles"] = true
+      try {
+        // Use feedStatus data if available (1 API call instead of 15)
+        if (feedStatus?.items?.length) {
+          const results: Record<string, number | null> = {}
+          for (const item of feedStatus.items) {
+            if (item?.symbol && item?.lastCandleTs) {
+              const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
+              results[item.symbol] = ts
             }
-          } catch {
-            results[symbol] = null
           }
-        })
-      )
-      
-      setAllSymbolsCandles(results)
+          setAllSymbolsCandles(results)
+        } else {
+          // Fallback: fetch in batches of 5 to limit concurrency
+          const results: Record<string, number | null> = {}
+          for (let i = 0; i < ALL_SYMBOLS.length; i += 5) {
+            const batch = ALL_SYMBOLS.slice(i, i + 5)
+            await Promise.all(
+              batch.map(async (symbol) => {
+                try {
+                  const res = await api.candles(symbol, "M5", 1)
+                  const candles = (res as any)?.candles || res || []
+                  if (candles.length > 0) {
+                    const candleTs = candles[0].time || candles[0].t || 0
+                    const ts = typeof candleTs === "number"
+                      ? candleTs
+                      : Math.floor(new Date(candleTs).getTime() / 1000)
+                    results[symbol] = ts
+                  } else {
+                    results[symbol] = null
+                  }
+                } catch {
+                  results[symbol] = null
+                }
+              })
+            )
+          }
+          setAllSymbolsCandles(results)
+        }
+      } finally {
+        inflightRef.current["adminCandles"] = false
+      }
     }
-    
+
     // Initial fetch
     fetchAllSymbolsCandles()
-    
-    // Poll every 30 seconds
-    const interval = setInterval(fetchAllSymbolsCandles, 30_000)
-    
+
+    // Poll every 60 seconds
+    const interval = setInterval(fetchAllSymbolsCandles, 60_000)
+
     return () => clearInterval(interval)
-  }, [isAdmin])
+  }, [isAdmin, feedStatus])
 
   // Live Ops computed values
   const candleAgeSec = useMemo(() => {
