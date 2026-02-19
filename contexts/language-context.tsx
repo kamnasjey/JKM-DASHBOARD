@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
 
 type Language = "en" | "mn"
 
@@ -23,12 +23,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const setLang = (newLang: Language) => {
+  const setLang = useCallback((newLang: Language) => {
     setLangState(newLang)
     localStorage.setItem("jkm-lang", newLang)
-  }
+  }, [])
 
-  const t = (en: string, mn: string) => (lang === "en" ? en : mn)
+  const t = useCallback((en: string, mn: string) => (lang === "en" ? en : mn), [lang])
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t }}>

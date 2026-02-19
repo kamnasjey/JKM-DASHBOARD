@@ -62,8 +62,8 @@ function normalizeSignals(input: any[]): Signal[] {
     .filter(Boolean) as Signal[]
 }
 
-// Fallback HTTP polling interval (5 seconds)
-const POLL_INTERVAL_MS = 5000
+// Fallback HTTP polling interval (30 seconds)
+const POLL_INTERVAL_MS = 30_000
 // Max WebSocket reconnect attempts before switching to polling
 const MAX_WS_ATTEMPTS = 3
 
