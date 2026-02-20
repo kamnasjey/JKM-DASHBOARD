@@ -124,6 +124,12 @@ export default function DashboardPage() {
   const { toast } = useToast()
   const { t } = useLanguage()
   const uid = (session as any)?.user?.id || ""
+
+  // Stable refs — prevent useEffect re-triggers when these change
+  const tRef = useRef(t)
+  tRef.current = t
+  const toastRef = useRef(toast)
+  toastRef.current = toast
   const { is_trial, trial_days_remaining, trial_expired } = useUserPlan()
 
   // Check if current user is admin
@@ -157,6 +163,8 @@ export default function DashboardPage() {
   
   // Live Ops: Market data heartbeat
   const [liveOpsSymbol, setLiveOpsSymbol] = useState<string>("XAUUSD")
+  const liveOpsSymbolRef = useRef(liveOpsSymbol)
+  liveOpsSymbolRef.current = liveOpsSymbol
   const [lastCandleTime, setLastCandleTime] = useState<number | null>(null)
   const [prevCandleTime, setPrevCandleTime] = useState<number | null>(null)
   const [candlePulse, setCandlePulse] = useState(false)
@@ -229,14 +237,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (newSignals.length > 0) {
       newSignals.forEach((signal) => {
-        toast({
-          title: `🔔 ${t("New setup", "Шинэ setup")}: ${signal.symbol}`,
+        toastRef.current({
+          title: `🔔 ${tRef.current("New setup", "Шинэ setup")}: ${signal.symbol}`,
           description: `${signal.direction} @ ${signal.entry}${signal.rr ? ` | RR: ${signal.rr.toFixed(2)}` : ""}`,
         })
       })
       clearNewSignals()
     }
-  }, [newSignals, toast, clearNewSignals, t])
+  }, [newSignals, clearNewSignals])
   
   // Use WS signals if available, otherwise HTTP - limit to 20
   const displaySignals = useMemo(() => {
@@ -261,19 +269,19 @@ export default function DashboardPage() {
         }
         return s
       }))
-      toast({
-        title: taken ? t("✓ Added to entry list", "✓ Entry жагсаалтад орлоо") : t("✗ Removed from entry list", "✗ Entry жагсаалтаас хасагдлаа"),
-        description: `Signal ${signalKey.slice(0, 8)}... ${t("saved successfully", "амжилттай хадгалагдлаа")}`,
+      toastRef.current({
+        title: taken ? tRef.current("✓ Added to entry list", "✓ Entry жагсаалтад орлоо") : tRef.current("✗ Removed from entry list", "✗ Entry жагсаалтаас хасагдлаа"),
+        description: `Signal ${signalKey.slice(0, 8)}... ${tRef.current("saved successfully", "амжилттай хадгалагдлаа")}`,
       })
     } catch (err: any) {
       console.error("[handleEntryToggle] Error:", err)
-      toast({
-        title: t("Error", "Алдаа"),
-        description: err.message || t("Failed to save entry tracking", "Entry tracking хадгалж чадсангүй"),
+      toastRef.current({
+        title: tRef.current("Error", "Алдаа"),
+        description: err.message || tRef.current("Failed to save entry tracking", "Entry tracking хадгалж чадсангүй"),
         variant: "destructive",
       })
     }
-  }, [toast, t])
+  }, [])
 
   // Calculate win rate from Firestore signals (entry_taken only, deduplicated)
   const winRateText = useMemo(() => {
@@ -368,9 +376,9 @@ export default function DashboardPage() {
 
       setEngineStatus(eng)
     } catch (err: any) {
-      toast({
-        title: t("An error occurred", "Алдаа гарлаа"),
-        description: err?.message ?? t("Failed to load dashboard", "Dashboard ачаалж чадсангүй"),
+      toastRef.current({
+        title: tRef.current("An error occurred", "Алдаа гарлаа"),
+        description: err?.message ?? tRef.current("Failed to load dashboard", "Dashboard ачаалж чадсангүй"),
         variant: "destructive",
       })
     } finally {
@@ -398,7 +406,7 @@ export default function DashboardPage() {
       if (res?.ok !== false) {
         setFeedStatus(res)
         setCandleError(null)
-        const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbol)
+        const item = res?.items?.find((i: any) => i.symbol === liveOpsSymbolRef.current)
         if (item?.lastCandleTs) {
           const ts = Math.floor(new Date(item.lastCandleTs).getTime() / 1000)
           setPrevCandleTime((prev) => {
@@ -446,9 +454,9 @@ export default function DashboardPage() {
           for (const sig of deduped) {
             const old = prev.find(p => p.id === sig.id)
             if (old && !old.outcome && sig.outcome === "win") {
-              toast({ title: `${t("TP hit", "TP цохисон")}: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"} — RR: ${sig.rr?.toFixed(2) ?? "—"}` })
+              toastRef.current({ title: `${tRef.current("TP hit", "TP цохисон")}: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"} — RR: ${sig.rr?.toFixed(2) ?? "—"}` })
             } else if (old && !old.outcome && sig.outcome === "loss") {
-              toast({ title: `${t("SL hit", "SL цохисон")}: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"}`, variant: "destructive" })
+              toastRef.current({ title: `${tRef.current("SL hit", "SL цохисон")}: ${sig.symbol}`, description: `${sig.direction === "long" ? "BUY" : "SELL"}`, variant: "destructive" })
             }
           }
           return deduped
@@ -463,9 +471,9 @@ export default function DashboardPage() {
           const res = await api.feedStatus()
           handleFeedStatus(res)
         } catch {
-          if (liveOpsSymbol) {
+          if (liveOpsSymbolRef.current) {
             try {
-              const res = await api.candles(liveOpsSymbol, "M5", 1)
+              const res = await api.candles(liveOpsSymbolRef.current, "M5", 1)
               const candles = (res as any)?.candles || res || []
               if (candles.length > 0) {
                 const candleTs = candles[0].time || candles[0].t || 0
@@ -490,9 +498,9 @@ export default function DashboardPage() {
         const res = await api.feedStatus()
         handleFeedStatus(res)
       } catch {
-        if (liveOpsSymbol) {
+        if (liveOpsSymbolRef.current) {
           try {
-            const res = await api.candles(liveOpsSymbol, "M5", 1)
+            const res = await api.candles(liveOpsSymbolRef.current, "M5", 1)
             const candles = (res as any)?.candles || res || []
             if (candles.length > 0) {
               const candleTs = candles[0].time || candles[0].t || 0
@@ -530,7 +538,8 @@ export default function DashboardPage() {
       clearInterval(tickInterval)
       document.removeEventListener("visibilitychange", handleVisibility)
     }
-  }, [status, liveOpsSymbol, t])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, uid])
 
   // Admin: Fetch all 15 symbols' candle data for Live Ops panel
   useEffect(() => {
