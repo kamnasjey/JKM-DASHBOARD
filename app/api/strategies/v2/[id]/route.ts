@@ -11,6 +11,7 @@ import {
   validateUpdateStrategy,
   formatZodErrors,
 } from "@/lib/schemas/strategy"
+import { validateStrategy } from "@/lib/strategies/strategy-validator"
 
 export const runtime = "nodejs"
 
@@ -128,15 +129,69 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    
+
+    // Semantic validation when detectors or timeframes change
+    const updatingDetectors = validation.data.detectors !== undefined
+    const updatingTf = validation.data.entry_tf !== undefined || validation.data.trend_tf !== undefined
+    let semanticValidation = null
+
+    if (updatingDetectors || updatingTf) {
+      // Fetch existing strategy to merge with updates
+      const existing = await getStrategy(userId, strategyId)
+      if (!existing) {
+        return NextResponse.json(
+          { ok: false, error: "NOT_FOUND" },
+          { status: 404 }
+        )
+      }
+
+      const mergedDetectors = validation.data.detectors ?? existing.detectors ?? []
+      const mergedEntryTf = validation.data.entry_tf !== undefined
+        ? validation.data.entry_tf
+        : existing.entry_tf ?? null
+      const mergedTrendTf = validation.data.trend_tf !== undefined
+        ? validation.data.trend_tf
+        : existing.trend_tf ?? null
+
+      semanticValidation = validateStrategy({
+        name: validation.data.name ?? existing.name,
+        detectors: mergedDetectors,
+        entry_tf: mergedEntryTf,
+        trend_tf: mergedTrendTf,
+        config: validation.data.config ?? (existing as any).config ?? null,
+      })
+
+      if (!semanticValidation.ok) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "STRATEGY_VALIDATION_ERROR",
+            errors: semanticValidation.errors,
+            warnings: semanticValidation.warnings,
+            healthScore: semanticValidation.healthScore,
+            healthGrade: semanticValidation.healthGrade,
+          },
+          { status: 422 }
+        )
+      }
+    }
+
     // Update
     const strategy = await updateStrategy(userId, strategyId, validation.data)
-    
-    console.log(`[${requestId}] Updated strategy ${strategyId} for user ${userId}`)
-    
+
+    console.log(`[${requestId}] Updated strategy ${strategyId} for user ${userId}${semanticValidation ? ` (health: ${semanticValidation.healthScore})` : ""}`)
+
     return NextResponse.json({
       ok: true,
       strategy,
+      ...(semanticValidation && {
+        validation: {
+          warnings: semanticValidation.warnings,
+          healthScore: semanticValidation.healthScore,
+          healthGrade: semanticValidation.healthGrade,
+          healthBreakdown: semanticValidation.healthBreakdown,
+        },
+      }),
     })
     
   } catch (error: any) {

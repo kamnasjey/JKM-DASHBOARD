@@ -11,6 +11,7 @@ import {
   validateCreateStrategy,
   formatZodErrors,
 } from "@/lib/schemas/strategy"
+import { validateStrategy } from "@/lib/strategies/strategy-validator"
 import { isValidInternalKey } from "@/lib/internal-api-auth"
 
 export const runtime = "nodejs"
@@ -177,27 +178,57 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Validate
-    const validation = validateCreateStrategy(body)
-    if (!validation.success) {
+    // Validate (structural - Zod)
+    const zodResult = validateCreateStrategy(body)
+    if (!zodResult.success) {
       return NextResponse.json(
         {
           ok: false,
           error: "VALIDATION_ERROR",
-          details: formatZodErrors(validation.error),
+          details: formatZodErrors(zodResult.error),
         },
         { status: 422 }
       )
     }
-    
+
+    // Validate (semantic - strategy health)
+    const { detectors, entry_tf, trend_tf, config, name } = zodResult.data
+    const semanticValidation = validateStrategy({
+      name,
+      detectors,
+      entry_tf: entry_tf ?? null,
+      trend_tf: trend_tf ?? null,
+      config: config ?? null,
+    })
+
+    if (!semanticValidation.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "STRATEGY_VALIDATION_ERROR",
+          errors: semanticValidation.errors,
+          warnings: semanticValidation.warnings,
+          healthScore: semanticValidation.healthScore,
+          healthGrade: semanticValidation.healthGrade,
+        },
+        { status: 422 }
+      )
+    }
+
     // Create
-    const strategy = await createStrategy(userId, validation.data)
-    
-    console.log(`[${requestId}] Created strategy ${strategy.id} for user ${userId}`)
-    
+    const strategy = await createStrategy(userId, zodResult.data)
+
+    console.log(`[${requestId}] Created strategy ${strategy.id} for user ${userId} (health: ${semanticValidation.healthScore})`)
+
     return NextResponse.json({
       ok: true,
       strategy,
+      validation: {
+        warnings: semanticValidation.warnings,
+        healthScore: semanticValidation.healthScore,
+        healthGrade: semanticValidation.healthGrade,
+        healthBreakdown: semanticValidation.healthBreakdown,
+      },
     }, { status: 201 })
     
   } catch (error: any) {

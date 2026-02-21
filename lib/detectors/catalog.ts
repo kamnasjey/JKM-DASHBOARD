@@ -41,6 +41,9 @@ export interface DetectorMeta {
   required?: boolean
   /** Tags for search/filtering */
   tags?: string[]
+  /** Whether this detector is implemented in the backend registry.
+   *  false = "coming soon", silently skipped by scanner */
+  implemented: boolean
 }
 
 // ============================================================
@@ -64,6 +67,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     cost: "light",
     required: true,
     tags: ["trend", "filter", "regime"],
+    implemented: true,
   },
   // NOTE: GATE_VOLATILITY and GATE_DRIFT_SENTINEL removed - deprecated
   // GATE_REGIME now handles all regime/volatility filtering
@@ -83,6 +87,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "light",
     tags: ["structure", "breakout", "trend"],
+    implemented: true,
   },
   {
     id: "FVG",
@@ -95,6 +100,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "light",
     tags: ["gap", "institutional", "imbalance"],
+    implemented: true,
   },
   {
     id: "OB",
@@ -107,6 +113,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "medium",
     tags: ["institutional", "zone", "supply-demand"],
+    implemented: true,
   },
   {
     id: "CHOCH",
@@ -119,6 +126,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "light",
     tags: ["reversal", "structure", "change"],
+    implemented: true,
   },
   {
     id: "EQ_BREAK",
@@ -131,6 +139,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["equilibrium", "50%", "continuation"],
+    implemented: false,
   },
   {
     id: "SWEEP",
@@ -143,6 +152,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "light",
     tags: ["liquidity", "sweep", "stop-hunt"],
+    implemented: true,
   },
   {
     id: "IMBALANCE",
@@ -155,6 +165,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["imbalance", "gap", "inefficiency"],
+    implemented: false,
   },
   {
     id: "SFP",
@@ -167,6 +178,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "light",
     tags: ["reversal", "failure", "trap"],
+    implemented: true,
   },
   {
     id: "BREAK_RETEST",
@@ -179,6 +191,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "medium",
     tags: ["breakout", "retest", "confirmation"],
+    implemented: true,
   },
   {
     id: "COMPRESSION_EXPANSION",
@@ -191,6 +204,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "medium",
     tags: ["compression", "expansion", "volatility"],
+    implemented: false,
   },
   {
     id: "MOMENTUM_CONTINUATION",
@@ -203,6 +217,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["momentum", "continuation", "trend"],
+    implemented: true,
   },
   {
     id: "MEAN_REVERSION_SNAPBACK",
@@ -215,6 +230,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "medium",
     tags: ["mean-reversion", "oversold", "overbought"],
+    implemented: false,
   },
   {
     id: "SR_BOUNCE",
@@ -227,6 +243,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "medium",
     tags: ["support", "resistance", "bounce"],
+    implemented: true,
   },
   {
     id: "SR_BREAK_CLOSE",
@@ -239,6 +256,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "medium",
     tags: ["support", "resistance", "breakout"],
+    implemented: true,
   },
   {
     id: "TRIANGLE_BREAKOUT_CLOSE",
@@ -251,6 +269,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "heavy",
     tags: ["triangle", "pattern", "breakout"],
+    implemented: true,
   },
 
   // ============================================================
@@ -268,6 +287,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "low",
     cost: "light",
     tags: ["candle", "indecision", "reversal"],
+    implemented: false,
   },
   {
     id: "DOUBLE_TOP_BOTTOM",
@@ -280,6 +300,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "medium",
     tags: ["pattern", "reversal", "double"],
+    implemented: true,
   },
   {
     id: "ENGULF_AT_LEVEL",
@@ -292,6 +313,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["candle", "engulfing", "reversal"],
+    implemented: true,
   },
   {
     id: "FAKEOUT_TRAP",
@@ -304,6 +326,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["trap", "fakeout", "reversal"],
+    implemented: true,
   },
   {
     id: "FIBO_EXTENSION",
@@ -316,6 +339,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "low",
     cost: "light",
     tags: ["fibonacci", "extension", "target"],
+    implemented: true,
   },
   {
     id: "FIBO_RETRACE_CONFLUENCE",
@@ -328,6 +352,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["fibonacci", "retracement", "entry"],
+    implemented: true,
   },
   {
     id: "FLAG_PENNANT",
@@ -340,6 +365,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "medium",
     tags: ["pattern", "flag", "continuation"],
+    implemented: true,
   },
   {
     id: "HEAD_SHOULDERS",
@@ -352,6 +378,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "heavy",
     tags: ["pattern", "reversal", "head-shoulders"],
+    implemented: true,
   },
   {
     id: "PINBAR_AT_LEVEL",
@@ -364,6 +391,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["candle", "pinbar", "rejection"],
+    implemented: true,
   },
   {
     id: "PRICE_MOMENTUM_WEAKENING",
@@ -376,6 +404,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "medium",
     tags: ["momentum", "divergence", "weakness"],
+    implemented: true,
   },
   {
     id: "RECTANGLE_RANGE_EDGE",
@@ -388,6 +417,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "medium",
     tags: ["range", "rectangle", "edge"],
+    implemented: true,
   },
   {
     id: "SR_ROLE_REVERSAL",
@@ -400,6 +430,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "high",
     cost: "medium",
     tags: ["support", "resistance", "flip"],
+    implemented: true,
   },
   {
     id: "TREND_FIBO",
@@ -412,6 +443,7 @@ export const DETECTOR_CATALOG: DetectorMeta[] = [
     impact: "medium",
     cost: "light",
     tags: ["trend", "fibonacci", "confluence"],
+    implemented: true,
   },
 ]
 
@@ -426,6 +458,16 @@ export const DETECTOR_BY_ID = new Map<string, DetectorMeta>(
 
 /** Set of all canonical detector IDs */
 export const CANONICAL_IDS = new Set(DETECTOR_CATALOG.map(d => d.id))
+
+/** Set of implemented (backend-ready) detector IDs */
+export const IMPLEMENTED_IDS = new Set(
+  DETECTOR_CATALOG.filter(d => d.implemented).map(d => d.id)
+)
+
+/** Set of phantom (not yet implemented) detector IDs */
+export const PHANTOM_IDS = new Set(
+  DETECTOR_CATALOG.filter(d => !d.implemented).map(d => d.id)
+)
 
 /** Alias map for legacy/alternative detector IDs */
 export const DETECTOR_ALIASES: Record<string, string> = {
@@ -690,6 +732,14 @@ export function validateSelection(selectedIds: string[]): SelectionValidation {
   
   if (counts.total > 10) {
     warnings.push("⚠️ Хэт олон detector сонгосон - илүү энгийн байлгах нь дээр")
+  }
+
+  // Rule 4: Warn about phantom (unimplemented) detectors
+  const phantomSelected = selectedIds.filter(id => PHANTOM_IDS.has(id))
+  if (phantomSelected.length > 0) {
+    warnings.push(
+      `⏳ ${phantomSelected.join(", ")} одоогоор хэрэгжээгүй (coming soon) — сканнер алгасна`
+    )
   }
   
   return {

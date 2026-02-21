@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Layers, Save, AlertCircle, Check, Plus, Trash2, Edit2, X, Sparkles, Info, LayoutGrid } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { AccessGate } from "@/components/access-gate"
 import { StrategyMakerPanel } from "@/components/strategy-maker-panel"
@@ -25,6 +26,12 @@ import { normalizeDetectorList } from "@/lib/detectors/normalize"
 import { DetectorSelect, validateSelection, ensureRequiredDetectors, getUnknownDetectors } from "@/components/detectors/detector-select"
 import { CATEGORY_INFO, DETECTOR_BY_ID, DETECTOR_PRESETS, type DetectorPreset } from "@/lib/detectors/catalog"
 import { TemplateGallery } from "@/components/strategy-templates"
+import {
+  validateStrategy,
+  getHealthScoreBadgeClass,
+  getHealthGradeLabel,
+  type StrategyValidationResult,
+} from "@/lib/strategies/strategy-validator"
 
 const MAX_STRATEGIES = 30
 
@@ -394,8 +401,19 @@ export default function StrategiesPage() {
       setEditingIndex(null)
     } catch (err: any) {
       console.error("[strategies] save error:", err)
+
+      // Check for strategy validation error (semantic)
+      const errData = err?.data || err?.response?.data
+      if (err.message?.includes("STRATEGY_VALIDATION") || errData?.error === "STRATEGY_VALIDATION_ERROR") {
+        const validationErrors = errData?.errors || []
+        const errorMessages = validationErrors.map((e: any) => t(e.messageEn, e.messageMn)).join("; ")
+        toast({
+          title: t("Strategy validation failed", "Стратеги шалгалт амжилтгүй"),
+          description: errorMessages || t("Check your detector and timeframe settings", "Detector болон timeframe тохиргоогоо шалгана уу"),
+          variant: "destructive",
+        })
       // Check for limit reached error
-      if (err.message?.includes("LIMIT") || err.message?.includes("Maximum")) {
+      } else if (err.message?.includes("LIMIT") || err.message?.includes("Maximum")) {
         toast({
           title: t("Limit", "Хязгаарлалт"),
           description: t(`Maximum ${MAX_STRATEGIES} strategies allowed.`, `Хамгийн ихдээ ${MAX_STRATEGIES} стратеги үүсгэх боломжтой.`),
@@ -571,6 +589,16 @@ export default function StrategiesPage() {
 
                 const unknownCount = detectorsByCategory["unknown"]?.length || 0
 
+                // Compute health score for this strategy
+                const healthResult = validateStrategy({
+                  name: strategy.name,
+                  detectors: strategy.detectors || [],
+                  entry_tf: strategy.entry_tf || strategy.config?.entry_tf || null,
+                  trend_tf: strategy.trend_tf || strategy.config?.trend_tf || null,
+                })
+                const gradeLabel = getHealthGradeLabel(healthResult.healthGrade)
+                const gradeBadgeClass = getHealthScoreBadgeClass(healthResult.healthGrade)
+
                 return (
                 <Card key={strategy.strategy_id || idx} className={!strategy.enabled ? "opacity-60" : ""}>
               <CardHeader className="pb-3">
@@ -587,9 +615,12 @@ export default function StrategiesPage() {
                       )}
                       {unknownCount > 0 && (
                         <Badge variant="outline" className="text-[10px] border-red-500/50 text-red-500">
-                          ⚠ {unknownCount} unknown
+                          {unknownCount} unknown
                         </Badge>
                       )}
+                      <Badge variant="outline" className={cn("text-[10px] border", gradeBadgeClass)}>
+                        {healthResult.healthScore}/100 {t(gradeLabel.en, gradeLabel.mn)}
+                      </Badge>
                     </CardTitle>
                     {strategy.description && (
                       <CardDescription className="mt-1">{strategy.description}</CardDescription>
@@ -648,7 +679,7 @@ export default function StrategiesPage() {
                 </div>
 
                 {open && (
-                  <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+                  <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground space-y-3">
                     <div className="mb-2 font-medium text-foreground">{t("Detector Details", "Detector дэлгэрэнгүй")}</div>
                     <div className="flex flex-wrap gap-1 mb-3">
                       {(strategy.detectors || []).map((id) => {
@@ -664,6 +695,44 @@ export default function StrategiesPage() {
                     <div>
                       {buildStrategyExplanation(strategy.detectors || [])}
                     </div>
+
+                    {/* Health Score Breakdown */}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="font-medium text-foreground mb-1">
+                        {t("Health Score", "Эрүүл мэндийн оноо")}: {healthResult.healthScore}/100
+                      </div>
+                      <div className="grid grid-cols-5 gap-1 text-[10px]">
+                        <div>Structure: {healthResult.healthBreakdown.structure}/30</div>
+                        <div>Impl: {healthResult.healthBreakdown.implementation}/25</div>
+                        <div>TF: {healthResult.healthBreakdown.timeframe}/15</div>
+                        <div>Synergy: {healthResult.healthBreakdown.synergy}/20</div>
+                        <div>Diversity: {healthResult.healthBreakdown.diversity}/10</div>
+                      </div>
+                    </div>
+
+                    {/* Warnings */}
+                    {healthResult.warnings.length > 0 && (
+                      <div className="space-y-1">
+                        {healthResult.warnings.map((w, i) => (
+                          <div key={i} className="flex items-start gap-1 text-yellow-600">
+                            <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <span>{t(w.messageEn, w.messageMn)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Errors */}
+                    {healthResult.errors.length > 0 && (
+                      <div className="space-y-1">
+                        {healthResult.errors.map((e, i) => (
+                          <div key={i} className="flex items-start gap-1 text-red-500">
+                            <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <span>{t(e.messageEn, e.messageMn)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

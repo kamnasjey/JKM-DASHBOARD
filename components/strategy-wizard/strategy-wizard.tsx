@@ -50,6 +50,12 @@ import {
   getConflictingDetectors,
   checkConflicts,
 } from "@/lib/detectors/synergies"
+import {
+  validateStrategy,
+  getHealthScoreBadgeClass,
+  getHealthGradeLabel,
+  getHealthScoreColor,
+} from "@/lib/strategies/strategy-validator"
 
 // ============================================================
 // Types
@@ -399,6 +405,55 @@ function SettingsStep({
             ))}
           </div>
 
+          {/* Health Score */}
+          {(() => {
+            const health = validateStrategy({
+              name,
+              detectors: selectedDetectors,
+              entry_tf,
+              trend_tf,
+            })
+            const gradeLabel = getHealthGradeLabel(health.healthGrade)
+            const gradeBadgeClass = getHealthScoreBadgeClass(health.healthGrade)
+            return (
+              <div className="space-y-2 border-t pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Health Score</span>
+                  <Badge variant="outline" className={cn("text-xs border", gradeBadgeClass)}>
+                    {health.healthScore}/100 {gradeLabel.mn}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-5 gap-1 text-[10px] text-muted-foreground">
+                  <div>Structure: {health.healthBreakdown.structure}/30</div>
+                  <div>Impl: {health.healthBreakdown.implementation}/25</div>
+                  <div>TF: {health.healthBreakdown.timeframe}/15</div>
+                  <div>Synergy: {health.healthBreakdown.synergy}/20</div>
+                  <div>Diversity: {health.healthBreakdown.diversity}/10</div>
+                </div>
+                {health.warnings.length > 0 && (
+                  <div className="space-y-0.5">
+                    {health.warnings.map((w, i) => (
+                      <div key={i} className="flex items-start gap-1 text-[10px] text-yellow-600">
+                        <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <span>{w.messageMn}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {health.errors.length > 0 && (
+                  <div className="space-y-0.5">
+                    {health.errors.map((e, i) => (
+                      <div key={i} className="flex items-start gap-1 text-[10px] text-red-500">
+                        <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <span>{e.messageMn}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
           {/* Validation */}
           {!validation.isValid && (
             <Alert variant="destructive" className="py-2">
@@ -602,8 +657,13 @@ export function StrategyWizard({
       case "confluence":
         return true // Confluence is optional
       case "settings":
-        const validation = validateSelection(state.selectedDetectors)
-        return validation.isValid && state.name.trim().length > 0
+        const health = validateStrategy({
+          name: state.name,
+          detectors: state.selectedDetectors,
+          entry_tf: state.entry_tf,
+          trend_tf: state.trend_tf,
+        })
+        return health.ok && state.name.trim().length > 0
       default:
         return false
     }
