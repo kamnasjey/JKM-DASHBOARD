@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@auth/core':
-        specifier: latest
+        specifier: 0.34.3
         version: 0.34.3(nodemailer@7.0.12)
       '@hookform/resolvers':
         specifier: ^3.10.0
@@ -147,7 +147,7 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       nodemailer:
-        specifier: latest
+        specifier: 7.0.12
         version: 7.0.12
       openai:
         specifier: ^6.16.0

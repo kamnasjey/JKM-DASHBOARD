@@ -15,7 +15,7 @@
     "vercel-build": "prisma generate && next build --webpack"
   },
   "dependencies": {
-    "@auth/core": "latest",
+    "@auth/core": "0.34.3",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "5.22.0",
     "@radix-ui/react-accordion": "1.2.2",
@@ -61,7 +61,7 @@
     "next": "16.0.10",
     "next-auth": "4.24.13",
     "next-themes": "^0.4.6",
-    "nodemailer": "latest",
+    "nodemailer": "7.0.12",
     "openai": "^6.16.0",
     "prisma": "5.22.0",
     "react": "19.2.0",
