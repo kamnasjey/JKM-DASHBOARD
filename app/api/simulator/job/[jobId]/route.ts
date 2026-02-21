@@ -49,6 +49,13 @@ export async function GET(
     }
 
     const data = await response.json()
+
+    // Hoist trades from combined.tradesSample to result.trades for frontend compatibility
+    // Multi-TF backend puts trades in job.result.combined.tradesSample
+    if (data?.job?.result && !data.job.result.trades && data.job.result.combined?.tradesSample?.length > 0) {
+      data.job.result.trades = data.job.result.combined.tradesSample
+    }
+
     return NextResponse.json(data)
   } catch (error: any) {
     console.error("[simulator/job] Error:", error)
